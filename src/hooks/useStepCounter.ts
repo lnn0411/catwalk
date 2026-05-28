@@ -30,7 +30,6 @@ const useMockStepCounter = (): StepCounterState => {
     setSpeed,
   };
 };
-};
 
 const useRealStepCounter = (): StepCounterState => ({
   steps: 0,
