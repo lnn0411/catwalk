@@ -11,3 +11,139 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding: 12px 16px 88px;
+  background: #f8fafc;
+  color: #111827;
+}
+
+.page-shell {
+  display: grid;
+  min-height: calc(100vh - 180px);
+  place-items: center;
+  padding: 32px 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.energy-bar {
+  width: 100%;
+  height: 14px;
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: #e2e8f0;
+}
+
+.energy-bar__fill {
+  height: 100%;
+  border-radius: 7px;
+}
+
+.currency-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 40px;
+  margin-bottom: 12px;
+}
+
+.currency-bar__item {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.bottom-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  min-height: 64px;
+  border-top: 1px solid #d1d5db;
+  background: #ffffff;
+}
+
+.bottom-nav__tab {
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.bottom-nav__tab--active {
+  color: #16a34a;
+  background: #ecfdf5;
+}
+
+.dev-tools {
+  position: fixed;
+  right: 16px;
+  bottom: 80px;
+  z-index: 20;
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
+.dev-tools__panel {
+  width: min(320px, calc(100vw - 32px));
+  padding: 12px;
+  border: 1px solid #94a3b8;
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgb(15 23 42 / 18%);
+}
+
+.dev-tools__row {
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.dev-tools__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.dev-tools button {
+  min-height: 32px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #111827;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dev-tools__toggle {
+  width: 52px;
+}
