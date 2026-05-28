@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEnergyStore } from '../store/energyStore';
 
 interface StepCounterState {
@@ -13,14 +13,15 @@ const useMockStepCounter = (): StepCounterState => {
   const addSteps = useEnergyStore((state) => state.addSteps);
   const setStoreSteps = useEnergyStore((state) => state.setSteps);
   const [speed, setSpeed] = useState(3);
+  const speedRef = useRef(speed);
+  speedRef.current = speed;
 
   useEffect(() => {
     const timer = window.setInterval(() => {
-      addSteps(speed);
+      addSteps(speedRef.current);
     }, 1000);
-
     return () => window.clearInterval(timer);
-  }, [addSteps, speed]);
+  }, [addSteps]);
 
   return {
     steps,
@@ -28,6 +29,7 @@ const useMockStepCounter = (): StepCounterState => {
     setSteps: setStoreSteps,
     setSpeed,
   };
+};
 };
 
 const useRealStepCounter = (): StepCounterState => ({
