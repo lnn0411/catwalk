@@ -24,6 +24,7 @@ jobs:
         with:
           version: 4.6.3
           use-dotnet: false
+          include-templates: true
 
       - name: Setup Android SDK
         uses: amyu/setup-android@v5
@@ -35,8 +36,13 @@ jobs:
       - name: Prepare output
         run: mkdir -p build
 
+      - name: Initialize Godot project
+        run: godot --headless --path . --editor --quit
+
       - name: Export debug APK
-        run: godot --headless --path . --export-debug "Android Debug" build/catwalk-step-counter-debug.apk
+        run: |
+          export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          godot --headless --path . --export-debug "Android Debug" build/catwalk-step-counter-debug.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
