@@ -15,15 +15,31 @@ run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://icon.svg"
 
-[autoload]
-
 [display]
 
 window/size/viewport_width=720
 window/size/viewport_height=1280
-window/handheld/orientation=1
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
+window/handheld/orientation=1
+
+[export]
+
+export/preset_0/name="Android"
+export/preset_0/platform="Android"
+export/preset_0/runnable=true
+export/preset_0/export_path=""
+export/preset_0/include_filter=""
+export/preset_0/exclude_filter=""
+export/preset_0/options/keystore/debug=""
+export/preset_0/options/keystore/release="C:/Users/Administrator/catwalk/catwalk-release.keystore"
+export/preset_0/options/keystore/release_password="android"
+export/preset_0/options/keystore/release_user="catwalk"
+export/preset_0/options/version/code=1
+export/preset_0/options/version/name="1.0"
+export/preset_0/options/package/name="com.catwalk.stepcounter"
+export/preset_0/options/screen/orientation="portrait"
+export/preset_0/options/modules=""
 
 [input_devices]
 
@@ -32,4 +48,4 @@ pointing/emulate_touch_from_mouse=true
 [rendering]
 
 renderer/rendering_method="mobile"
-renderer/rendering_method.mobile="mobile"
+textures/vram_compression/import_etc2_astc=true

@@ -20,3 +20,11 @@ android/build/*.aab
 .DS_Store
 Thumbs.db
 android/build/libs/
+
+# Keystore / signing
+*.keystore
+*.jks
+
+# APK files
+*.apk
+*.aab

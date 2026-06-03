@@ -82,16 +82,15 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		requestCode: Int,
 		permissions: Array<String>,
 		grantResults: IntArray
-	): Boolean {
+	) {
 		if (requestCode != ACTIVITY_RECOGNITION_REQUEST_CODE) {
-			return false
+			return
 		}
 		val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
 		emitSignal(permissionResultSignal, granted)
 		if (granted) {
 			startStepCounter()
 		}
-		return true
 	}
 
 	override fun onSensorChanged(event: SensorEvent) {

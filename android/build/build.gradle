@@ -44,7 +44,6 @@ dependencies {
     implementation "androidx.fragment:fragment:$versions.fragmentVersion"
     implementation "androidx.core:core-splashscreen:$versions.splashscreenVersion"
     implementation "androidx.documentfile:documentfile:$versions.documentfileVersion"
-    implementation 'androidx.core:core-ktx:1.13.1'
 
     if (rootProject.findProject(":lib")) {
         implementation project(":lib")
