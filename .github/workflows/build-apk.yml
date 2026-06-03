@@ -33,21 +33,29 @@ jobs:
           build-tools-version: 36.1.0
           ndk-version: 29.0.14206865
 
-      - name: Initialize Godot build template
+      - name: Initialize Godot project
         run: godot --headless --path . --editor --quit
 
-      - name: Copy plugin + icon resources
+      - name: Extract AAR dependencies
+        run: |
+          TEMPLATES=$HOME/.local/share/godot/export_templates/4.6.3.stable
+          mkdir -p /tmp/godot_android_source
+          unzip -q -o "$TEMPLATES/android_source.zip" -d /tmp/godot_android_source
+          mkdir -p android/build/libs/debug android/build/libs/release
+          cp /tmp/godot_android_source/build/libs/debug/*.aar android/build/libs/debug/ 2>/dev/null || true
+          cp /tmp/godot_android_source/build/libs/release/*.aar android/build/libs/release/ 2>/dev/null || true
+          ls -la android/build/libs/debug/
+
+      - name: Copy plugin source
         run: |
           mkdir -p android/build/src/main/java/com/catwalk/stepcounter
           cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
-          # godot init should create res dirs, add our icons if missing
-          mkdir -p android/build/res
-          cp -r android/build/res/* . 2>/dev/null || true
 
       - name: Gradle build APK
         run: |
-          export ANDROID_SDK_ROOT="${ANDROID_HOME}"
+          export ANDROID_HOME="${ANDROID_SDK_ROOT}"
           cd android/build
+          chmod +x gradlew
           ./gradlew assembleStandardDebug
 
       - name: Upload APK
