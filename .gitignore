@@ -1,0 +1,22 @@
+# Godot
+.godot/
+*.import
+*.uid
+export_presets.cfg.gradle
+
+# Gradle
+android/build/.gradle/
+android/build/build/
+android/build/local.properties
+android/build/*.apk
+android/build/*.aab
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+android/build/libs/

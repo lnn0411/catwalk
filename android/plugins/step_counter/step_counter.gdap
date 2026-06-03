@@ -1,0 +1,11 @@
+[config]
+
+name="StepCounter"
+binary_type="local"
+binary="StepCounterPlugin.kt"
+
+[dependencies]
+
+local=[]
+remote=[]
+custom_maven_repos=[]

@@ -1,0 +1,45 @@
+name: Build APK
+
+on:
+  push:
+    branches:
+      - godot-prototype
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Setup Godot
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+
+      - name: Setup Android SDK
+        uses: amyu/setup-android@v5
+        with:
+          sdk-version: 36
+          build-tools-version: 36.1.0
+          ndk-version: 29.0.14206865
+
+      - name: Prepare output
+        run: mkdir -p build
+
+      - name: Export debug APK
+        run: godot --headless --path . --export-debug "Android Debug" build/catwalk-step-counter-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: catwalk-step-counter-debug-apk
+          path: build/*.apk
