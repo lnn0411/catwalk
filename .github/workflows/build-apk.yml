@@ -33,19 +33,25 @@ jobs:
           build-tools-version: 36.1.0
           ndk-version: 29.0.14206865
 
-      - name: Prepare output
-        run: mkdir -p build
-
-      - name: Initialize Godot project
+      - name: Initialize Godot build template
         run: godot --headless --path . --editor --quit
 
-      - name: Export debug APK
+      - name: Copy plugin + icon resources
         run: |
-          export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
-          godot --headless --path . --export-debug "Android Debug" build/catwalk-step-counter-debug.apk
+          mkdir -p android/build/src/main/java/com/catwalk/stepcounter
+          cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
+          # godot init should create res dirs, add our icons if missing
+          mkdir -p android/build/res
+          cp -r android/build/res/* . 2>/dev/null || true
+
+      - name: Gradle build APK
+        run: |
+          export ANDROID_SDK_ROOT="${ANDROID_HOME}"
+          cd android/build
+          ./gradlew assembleStandardDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: catwalk-step-counter-debug-apk
-          path: build/*.apk
+          path: android/build/outputs/apk/standard/debug/*.apk
