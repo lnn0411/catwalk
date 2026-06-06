@@ -33,8 +33,8 @@ const BREED_CHARACTER_SCENES := {
 @export var friendship: int = 0
 @export var created_at: float = 0.0
 
-static func create(cat_id: String, species_name: String, cat_rarity: String, index: int) -> CatData:
-	var cat := CatData.new()
+static func create(cat_id: String, species_name: String, cat_rarity: String, index: int):
+	var cat = load("res://core/CatData.gd").new()
 	cat.id = cat_id
 	cat.species = species_name
 	cat.rarity = cat_rarity
@@ -63,7 +63,7 @@ static func get_hatch_cost(species_name: String) -> int:
 static func get_character_script_path(species_name: String) -> String:
 	return String(BREED_CHARACTER_SCENES.get(species_name, BREED_CHARACTER_SCENES[BREED_ORANGE]))
 
-static func serialize(cat: CatData) -> Dictionary:
+static func serialize(cat) -> Dictionary:
 	if cat == null:
 		return {}
 	return {
@@ -78,10 +78,10 @@ static func serialize(cat: CatData) -> Dictionary:
 		"created_at": cat.created_at,
 	}
 
-static func deserialize(data: Dictionary) -> CatData:
+static func deserialize(data: Dictionary):
 	var species_name := String(data.get("species", data.get("breed", BREED_ORANGE)))
 	var index := int(data.get("hatch_index", 1))
-	var cat := CatData.new()
+	var cat = load("res://core/CatData.gd").new()
 	cat.id = String(data.get("id", ""))
 	cat.species = species_name
 	cat.rarity = String(data.get("rarity", RARITY_COMMON))

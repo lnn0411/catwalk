@@ -1,5 +1,8 @@
 extends CanvasLayer
 
+const CatData := preload("res://core/CatData.gd")
+const UITheme := preload("res://ui/theme/UITheme.gd")
+
 var steps_label: Label
 var energy_pool_bar: ProgressBar
 var reserve_bar: ProgressBar
@@ -168,7 +171,7 @@ func _refresh_cats() -> void:
 		var row := _make_label(_format_cat(cat))
 		cat_list.add_child(row)
 
-func _format_cat(cat: CatData) -> String:
+func _format_cat(cat) -> String:
 	return "%s / %s / %s / Lv.%d" % [
 		cat.display_name,
 		cat.species,
@@ -236,7 +239,7 @@ func _on_hatch_started(_slot: int) -> void:
 func _on_hatch_progress(_slot: int, _progress: float) -> void:
 	_refresh()
 
-func _on_hatch_complete(_cat_data: CatData) -> void:
+func _on_hatch_complete(_cat_data) -> void:
 	_refresh()
 
 func _on_add_steps(amount: int) -> void:

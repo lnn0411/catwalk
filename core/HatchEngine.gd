@@ -2,13 +2,14 @@ extends Node
 
 signal hatch_started(slot: int)
 signal hatch_progress(slot: int, progress: float)
-signal hatch_complete(cat_data: CatData)
+signal hatch_complete(cat_data)
 
+const CatData := preload("res://core/CatData.gd")
 const SLOT_COUNT := 4
 const SLOT_UNLOCK_HATCH_COUNTS := [0, 1, 3, 10]
 
 var slots: Array = []
-var cats: Array[CatData] = []
+var cats: Array = []
 var hatched_count: int = 0
 var rng := RandomNumberGenerator.new()
 
@@ -22,18 +23,18 @@ func _ready() -> void:
 	_emit_all_progress()
 
 func feed_energy(amount: float) -> void:
-	var remaining := max(amount, 0.0)
+	var remaining: float = max(amount, 0.0)
 	if remaining <= 0.0:
 		return
 
 	while remaining > 0.0:
-		var slot_id := _get_active_filling_slot()
+		var slot_id: int = _get_active_filling_slot()
 		if slot_id == -1:
 			break
 
 		var slot: Dictionary = slots[slot_id]
-		var need := float(slot["max_energy"]) - float(slot["energy"])
-		var added = min(remaining, need)
+		var need: float = float(slot["max_energy"]) - float(slot["energy"])
+		var added: float = min(remaining, need)
 		slot["energy"] = float(slot["energy"]) + added
 		remaining -= added
 		slots[slot_id] = slot
@@ -73,7 +74,7 @@ func get_save_data() -> Dictionary:
 	}
 
 func get_unlocked_species() -> Array:
-	var total := _get_total_energy_produced()
+	var total: float = _get_total_energy_produced()
 	var species: Array = [CatData.BREED_ORANGE]
 	if total >= 15000.0:
 		species.append(CatData.BREED_BRITISH)
@@ -84,7 +85,7 @@ func get_unlocked_species() -> Array:
 func _on_steps_updated(delta: int, _total: int) -> void:
 	if EnergyEngine == null:
 		return
-	var produced := EnergyEngine.process_steps(delta)
+	var produced: float = EnergyEngine.process_steps(delta)
 	if produced > 0.0:
 		feed_energy(produced)
 		if SaveManager:
@@ -92,7 +93,7 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 
 func _ensure_slots() -> void:
 	while slots.size() < SLOT_COUNT:
-		var index := slots.size()
+		var index: int = slots.size()
 		slots.append({
 			"id": index,
 			"unlocked": index == 0,
@@ -118,7 +119,7 @@ func _ensure_slots() -> void:
 func _update_unlocks() -> void:
 	for i in range(SLOT_COUNT):
 		var slot: Dictionary = slots[i]
-		var unlocked := hatched_count >= int(SLOT_UNLOCK_HATCH_COUNTS[i])
+		var unlocked: bool = hatched_count >= int(SLOT_UNLOCK_HATCH_COUNTS[i])
 		slot["unlocked"] = unlocked
 		if not unlocked:
 			slot["status"] = "locked"
@@ -133,7 +134,7 @@ func _assign_next_empty_slots() -> void:
 	for i in range(SLOT_COUNT):
 		var slot: Dictionary = slots[i]
 		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "empty":
-			var species := _roll_next_species()
+			var species: String = _roll_next_species()
 			slot["status"] = "filling"
 			slot["energy"] = 0.0
 			slot["max_energy"] = float(CatData.get_hatch_cost(species))
@@ -154,10 +155,10 @@ func _complete_hatch(slot_id: int) -> void:
 		return
 
 	var slot: Dictionary = slots[slot_id]
-	var species := String(slot.get("species", CatData.BREED_ORANGE))
-	var rarity := _roll_rarity()
+	var species: String = String(slot.get("species", CatData.BREED_ORANGE))
+	var rarity: String = _roll_rarity()
 	hatched_count += 1
-	var cat := CatData.create("cat_%d" % hatched_count, species, rarity, hatched_count)
+	var cat = CatData.create("cat_%d" % hatched_count, species, rarity, hatched_count)
 	cats.append(cat)
 
 	slot["status"] = "empty"
@@ -171,13 +172,13 @@ func _complete_hatch(slot_id: int) -> void:
 	hatch_complete.emit(cat)
 
 func _roll_next_species() -> String:
-	var species := get_unlocked_species()
+	var species: Array = get_unlocked_species()
 	if hatched_count == 0:
 		return CatData.BREED_ORANGE
 	return String(species[rng.randi_range(0, species.size() - 1)])
 
 func _roll_rarity() -> String:
-	var roll := rng.randi_range(0, 99)
+	var roll: int = rng.randi_range(0, 99)
 	if roll <= 67:
 		return CatData.RARITY_COMMON
 	if roll <= 91:
@@ -195,8 +196,8 @@ func _emit_slot_progress(slot_id: int) -> void:
 	if slot_id < 0 or slot_id >= slots.size():
 		return
 	var slot: Dictionary = slots[slot_id]
-	var max_energy := float(slot.get("max_energy", 0.0))
-	var progress := 0.0
+	var max_energy: float = float(slot.get("max_energy", 0.0))
+	var progress: float = 0.0
 	if max_energy > 0.0:
 		progress = clamp(float(slot.get("energy", 0.0)) / max_energy, 0.0, 1.0)
 	hatch_progress.emit(slot_id, progress)

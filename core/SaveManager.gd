@@ -1,8 +1,10 @@
 extends Node
 
+const CatData := preload("res://core/CatData.gd")
 const SAVE_PATH := "user://save.cfg"
 
 var _config := ConfigFile.new()
+var _is_applying: bool = false
 
 func _ready() -> void:
 	load_and_apply()
@@ -20,16 +22,21 @@ func load_and_apply() -> void:
 	if err != OK:
 		_config.clear()
 
+	_is_applying = true
 	StepEngine.apply_save(_read_steps())
 	EnergyEngine.apply_save(_read_energy())
 	HatchEngine.apply_save(_read_hatch())
+	_is_applying = false
 
 func reset_all() -> void:
 	_config.clear()
 	_config.save(SAVE_PATH)
+	_is_applying = true
 	StepEngine.apply_save({})
 	EnergyEngine.apply_save({})
 	HatchEngine.apply_save({})
+	_is_applying = false
+	save_all()
 
 func _connect_auto_save() -> void:
 	if EnergyEngine and not EnergyEngine.energy_changed.is_connected(_on_auto_save):
@@ -38,9 +45,13 @@ func _connect_auto_save() -> void:
 		HatchEngine.hatch_complete.connect(_on_hatch_complete_auto_save)
 
 func _on_auto_save(_current = null, _pool_max = null, _backup = null) -> void:
+	if _is_applying:
+		return
 	save_all()
 
-func _on_hatch_complete_auto_save(_cat_data: CatData) -> void:
+func _on_hatch_complete_auto_save(_cat_data) -> void:
+	if _is_applying:
+		return
 	save_all()
 
 func _read_steps() -> Dictionary:
@@ -115,7 +126,7 @@ func _read_cat(section: String) -> Dictionary:
 	}
 
 func _write_cat(section: String, cat_value) -> void:
-	var data := CatData.serialize(cat_value) if cat_value is CatData else Dictionary(cat_value)
+	var data: Dictionary = CatData.serialize(cat_value) if cat_value is CatData else Dictionary(cat_value)
 	_config.set_value(section, "id", String(data.get("id", "")))
 	_config.set_value(section, "species", String(data.get("species", CatData.BREED_ORANGE)))
 	_config.set_value(section, "rarity", String(data.get("rarity", CatData.RARITY_COMMON)))

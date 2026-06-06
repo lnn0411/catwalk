@@ -16,7 +16,7 @@ func _ready() -> void:
 
 func add_mock_steps(n: int) -> void:
 	_check_daily_reset()
-	var delta := max(n, 0)
+	var delta: int = max(n, 0)
 	if delta <= 0:
 		_emit_steps_updated(0)
 		return
@@ -70,7 +70,7 @@ func _on_plugin_steps_changed(raw_steps: int) -> void:
 		_emit_steps_updated(0)
 		return
 
-	var delta := raw_steps - last_plugin_steps
+	var delta: int = raw_steps - last_plugin_steps
 	last_plugin_steps = raw_steps
 	if delta <= 0:
 		_emit_steps_updated(0)
@@ -81,7 +81,7 @@ func _on_plugin_steps_changed(raw_steps: int) -> void:
 	_emit_steps_updated(delta)
 
 func _check_daily_reset() -> void:
-	var today := _today_key()
+	var today: String = _today_key()
 	if last_step_date == "":
 		last_step_date = today
 		return
@@ -94,5 +94,5 @@ func _emit_steps_updated(delta: int) -> void:
 	steps_updated.emit(delta, total_steps)
 
 func _today_key() -> String:
-	var date := Time.get_date_dict_from_system()
+	var date: Dictionary = Time.get_date_dict_from_system()
 	return "%04d-%02d-%02d" % [int(date["year"]), int(date["month"]), int(date["day"])]
