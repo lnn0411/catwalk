@@ -14,30 +14,9 @@ var cat_list: VBoxContainer
 var confirm_reset: ConfirmationDialog
 
 func _ready() -> void:
-	print("=== DebugPanel _ready() START ===")
-	
-	# 诊断：全屏红色背景验证渲染
-	var bg := ColorRect.new()
-	bg.color = Color.RED
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
-	print("=== red background added ===")
-	
-	# 诊断：直接加一个白色 Label
-	var test := Label.new()
-	test.text = "TEST WHITE LABEL"
-	test.add_theme_color_override("font_color", Color.WHITE)
-	test.add_theme_font_size_override("font_size", 40)
-	test.position = Vector2(50, 100)
-	add_child(test)
-	print("=== test label added ===")
-	
 	_build_ui()
-	print("=== _build_ui() DONE ===")
 	_connect_signals()
-	print("=== _connect_signals() DONE ===")
 	_refresh()
-	print("=== _refresh() DONE, child count: ", get_child_count())
 
 func _build_ui() -> void:
 	var root := MarginContainer.new()
