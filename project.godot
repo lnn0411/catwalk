@@ -49,3 +49,7 @@ pointing/emulate_touch_from_mouse=true
 renderer/rendering_method="mobile"
 textures/vram_compression/import_etc2_astc=true
 config/icon="res://icon.svg"
+
+[autoload]
+
+Palette="*res://autoload/Palette.gd"
