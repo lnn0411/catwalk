@@ -113,6 +113,10 @@ func test_hatch_serial() -> void:
 
 	# 喂刚好一个橘猫的孵化门槛 4250 能量
 	HatchEngine.feed_energy(4250.0)
+	print("  DEBUG after feed 4250: cats=%d, hatched=%d" % [HatchEngine.get_cats().size(), HatchEngine.hatched_count])
+	for si in range(4):
+		var s = HatchEngine.get_slots()[si]
+		print("  DEBUG   slot%d: status=%s species=%s energy=%.0f/%.0f" % [si, str(s.get("status")), str(s.get("species")), float(s.get("energy", 0)), float(s.get("max_energy", 0))])
 	var cats := HatchEngine.get_cats()
 	assert_eq("孵出1只猫", 1, cats.size())
 	if cats.size() > 0:
@@ -120,6 +124,10 @@ func test_hatch_serial() -> void:
 
 	# 继续喂 15000 能量 → 第二个槽应该孵化（英短门槛）
 	HatchEngine.feed_energy(15000.0)
+	print("  DEBUG after feed 15000: cats=%d, hatched=%d" % [HatchEngine.get_cats().size(), HatchEngine.hatched_count])
+	for si in range(4):
+		var s = HatchEngine.get_slots()[si]
+		print("  DEBUG   slot%d: status=%s species=%s energy=%.0f/%.0f" % [si, str(s.get("status")), str(s.get("species")), float(s.get("energy", 0)), float(s.get("max_energy", 0))])
 	cats = HatchEngine.get_cats()
 	assert_gt("孵出>=2只", cats.size(), 1)
 	if cats.size() >= 2:
