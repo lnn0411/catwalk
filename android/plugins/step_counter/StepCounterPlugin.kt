@@ -67,7 +67,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 	fun requestActivityRecognitionPermission() {
 		val hostActivity = activity ?: return
 		if (hasActivityRecognitionPermission()) {
-			emitSignal(permissionResultSignal, java.lang.Boolean(true))
+			emitSignal("permission_result", true)
 			startStepCounter()
 			return
 		}
@@ -78,7 +78,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		)
 	}
 
-	override fun onMainRequestPermissionsResult(
+	fun onRequestPermissionsResult(
 		requestCode: Int,
 		permissions: Array<String>,
 		grantResults: IntArray
@@ -87,7 +87,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 			return
 		}
 		val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-		emitSignal(permissionResultSignal, java.lang.Boolean(granted))
+		emitSignal("permission_result", granted)
 		if (granted) {
 			startStepCounter()
 		}
@@ -101,7 +101,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		} else {
 			currentSteps = (event.values[0] - firstReading).toInt().coerceAtLeast(0)
 		}
-		emitSignal(stepsChangedSignal, Integer(currentSteps))
+		emitSignal("steps_changed", currentSteps)
 	}
 
 	override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
