@@ -29,16 +29,36 @@ jobs:
       - name: Setup Android SDK
         uses: amyu/setup-android@v5
         with:
-          sdk-version: 34
-          build-tools-version: 34.0.0
+          sdk-version: 36
+          build-tools-version: 36.1.0
+          ndk-version: 29.0.14206865
 
-      - name: Export APK
+      - name: Initialize Godot project
+        run: godot --headless --path . --editor --quit
+
+      - name: Extract AAR dependencies
         run: |
-          export ANDROID_HOME="$ANDROID_SDK_ROOT"
-          godot --headless --path . --export-release "Android Debug" catwalk-debug.apk 2>&1
+          TEMPLATES=$HOME/.local/share/godot/export_templates/4.6.3.stable
+          mkdir -p /tmp/godot_android_source
+          unzip -q -o "$TEMPLATES/android_source.zip" -d /tmp/godot_android_source
+          mkdir -p android/build/libs/debug android/build/libs/release
+          cp /tmp/godot_android_source/build/libs/debug/*.aar android/build/libs/debug/ 2>/dev/null || true
+          cp /tmp/godot_android_source/build/libs/release/*.aar android/build/libs/release/ 2>/dev/null || true
+
+      - name: Copy plugin source
+        run: |
+          mkdir -p android/build/src/main/java/com/catwalk/stepcounter
+          cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
+
+      - name: Gradle build APK
+        run: |
+          export ANDROID_HOME="${ANDROID_SDK_ROOT}"
+          cd android/build
+          chmod +x gradlew
+          ./gradlew assembleStandardDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: catwalk-debug-apk
-          path: catwalk-debug.apk
+          name: catwalk-step-counter-debug-apk
+          path: android/build/outputs/apk/standard/debug/*.apk
