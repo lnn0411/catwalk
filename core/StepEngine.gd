@@ -1,78 +1,61 @@
 extends Node
 
-signal steps_changed(today_steps: int, total_steps: int, delta_steps: int)
-signal permission_changed(granted: bool)
+signal steps_updated(delta: int, total: int)
 
 const PLUGIN_NAME := "StepCounter"
 
 var today_steps: int = 0
 var total_steps: int = 0
 var last_plugin_steps: int = 0
-var permission_granted: bool = false
+var last_step_date: String = ""
 var step_plugin: Object
-var debug_mode: bool = false
 
 func _ready() -> void:
-	_load_state()
+	last_step_date = _today_key()
 	_load_plugin()
 
-func _load_state() -> void:
-	if SaveManager:
-		var state := SaveManager.get_step_state()
-		today_steps = int(state.get("today_steps", 0))
-		total_steps = int(state.get("total_steps", 0))
-		last_plugin_steps = int(state.get("last_plugin_steps", 0))
+func add_mock_steps(n: int) -> void:
+	_check_daily_reset()
+	var delta := max(n, 0)
+	if delta <= 0:
+		_emit_steps_updated(0)
+		return
 
-func _load_plugin() -> void:
-	if Engine.has_singleton(PLUGIN_NAME):
-		step_plugin = Engine.get_singleton(PLUGIN_NAME)
-		permission_granted = _has_permission()
-		if step_plugin.has_signal("steps_changed"):
-			step_plugin.steps_changed.connect(_on_plugin_steps_changed)
-		if step_plugin.has_signal("permission_result"):
-			step_plugin.permission_result.connect(_on_permission_result)
-		_refresh_plugin_steps()
-	else:
-		debug_mode = true
-		permission_granted = true
-		_emit_steps_changed(0)
+	today_steps += delta
+	total_steps += delta
+	_emit_steps_updated(delta)
 
-func request_permission() -> void:
-	if step_plugin != null and step_plugin.has_method("requestActivityRecognitionPermission"):
-		step_plugin.requestActivityRecognitionPermission()
+func apply_save(data: Dictionary) -> void:
+	today_steps = max(int(data.get("today_steps", 0)), 0)
+	total_steps = max(int(data.get("total_steps", 0)), 0)
+	last_plugin_steps = max(int(data.get("last_plugin_steps", 0)), 0)
+	last_step_date = String(data.get("last_step_date", _today_key()))
+	_check_daily_reset()
+	_emit_steps_updated(0)
 
 func get_today_steps() -> int:
+	_check_daily_reset()
 	return today_steps
 
 func get_total_steps() -> int:
 	return total_steps
 
-func get_current_tier() -> int:
-	if today_steps <= 1000:
-		return 0
-	if today_steps <= 3000:
-		return 1
-	if today_steps <= 5000:
-		return 2
-	return 3
+func get_save_data() -> Dictionary:
+	return {
+		"today_steps": today_steps,
+		"total_steps": total_steps,
+		"last_plugin_steps": last_plugin_steps,
+		"last_step_date": last_step_date,
+	}
 
-func add_debug_steps(amount: int) -> void:
-	if amount <= 0:
-		return
-	debug_mode = true
-	today_steps += amount
-	total_steps += amount
-	_save_state()
-	_emit_steps_changed(amount)
-
-func set_debug_steps(value: int) -> void:
-	debug_mode = true
-	var next_steps: int = max(value, 0)
-	var delta: int = max(next_steps - today_steps, 0)
-	total_steps += delta
-	today_steps = next_steps
-	_save_state()
-	_emit_steps_changed(delta)
+func _load_plugin() -> void:
+	if Engine.has_singleton(PLUGIN_NAME):
+		step_plugin = Engine.get_singleton(PLUGIN_NAME)
+		if step_plugin.has_signal("steps_changed"):
+			step_plugin.steps_changed.connect(_on_plugin_steps_changed)
+		_refresh_plugin_steps()
+	else:
+		_emit_steps_updated(0)
 
 func _refresh_plugin_steps() -> void:
 	if step_plugin == null or not step_plugin.has_method("getSteps"):
@@ -80,40 +63,36 @@ func _refresh_plugin_steps() -> void:
 	_on_plugin_steps_changed(int(step_plugin.getSteps()))
 
 func _on_plugin_steps_changed(raw_steps: int) -> void:
+	_check_daily_reset()
+	raw_steps = max(raw_steps, 0)
 	if raw_steps < last_plugin_steps:
 		last_plugin_steps = raw_steps
-		_save_state()
+		_emit_steps_updated(0)
 		return
 
 	var delta := raw_steps - last_plugin_steps
 	last_plugin_steps = raw_steps
 	if delta <= 0:
-		_emit_steps_changed(0)
+		_emit_steps_updated(0)
 		return
 
 	today_steps += delta
 	total_steps += delta
-	_save_state()
-	_emit_steps_changed(delta)
+	_emit_steps_updated(delta)
 
-func _on_permission_result(granted: bool) -> void:
-	permission_granted = granted
-	permission_changed.emit(granted)
-	if granted:
-		_refresh_plugin_steps()
+func _check_daily_reset() -> void:
+	var today := _today_key()
+	if last_step_date == "":
+		last_step_date = today
+		return
+	if last_step_date != today:
+		today_steps = 0
+		last_plugin_steps = 0
+		last_step_date = today
 
-func _has_permission() -> bool:
-	if step_plugin != null and step_plugin.has_method("hasActivityRecognitionPermission"):
-		return bool(step_plugin.hasActivityRecognitionPermission())
-	return true
+func _emit_steps_updated(delta: int) -> void:
+	steps_updated.emit(delta, total_steps)
 
-func _emit_steps_changed(delta: int) -> void:
-	steps_changed.emit(today_steps, total_steps, delta)
-
-func _save_state() -> void:
-	if SaveManager:
-		SaveManager.set_step_state({
-			"today_steps": today_steps,
-			"total_steps": total_steps,
-			"last_plugin_steps": last_plugin_steps,
-		})
+func _today_key() -> String:
+	var date := Time.get_date_dict_from_system()
+	return "%04d-%02d-%02d" % [int(date["year"]), int(date["month"]), int(date["day"])]

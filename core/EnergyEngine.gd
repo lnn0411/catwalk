@@ -1,23 +1,25 @@
 extends Node
 
-signal energy_changed(energy_pool: int, energy_reserve: int, total_energy_produced: int)
-signal energy_produced(amount: int, today_energy: int)
-signal energy_overflow(amount: int)
+signal energy_changed(current: float, pool_max: float, backup: float)
 
-const MAX_ENERGY_POOL := 15000
-const MAX_ENERGY_RESERVE := 6000
-const OVERFLOW_WARNING_THRESHOLD := 13500
+const MAX_ENERGY_POOL := 15000.0
+const MAX_RESERVE_TANK := 6000.0
+const NEW_PLAYER_DAYS := 7
 
-var energy_pool: int = 0
-var energy_reserve: int = 0
-var total_energy_produced: int = 0
-var today_energy: int = 0
+var energy_pool: float = 0.0
+var reserve_tank: float = 0.0
+var total_energy_produced: float = 0.0
+var today_energy: float = 0.0
+var today_steps_processed: int = 0
+var created_at: float = 0.0
+var last_energy_date: String = ""
 
 func _ready() -> void:
-	_load_state()
-	if StepEngine:
-		StepEngine.steps_changed.connect(_on_steps_changed)
-		_recalculate_from_steps(StepEngine.get_today_steps())
+	if created_at <= 0.0:
+		created_at = Time.get_unix_time_from_system()
+	if last_energy_date == "":
+		last_energy_date = _today_key()
+	_emit_energy_changed()
 
 func calc_energy(steps: int, is_new_player: bool) -> int:
 	var t1 := 0.3
@@ -32,83 +34,84 @@ func calc_energy(steps: int, is_new_player: bool) -> int:
 		return int(1000.0 * t1 + 2000.0 * 1.0 + float(steps - 3000) * 1.2)
 	return int(1000.0 * t1 + 2000.0 * 1.0 + 2000.0 * 1.2 + float(steps - 5000) * 1.5)
 
-func add_energy(amount: int) -> void:
-	if amount <= 0:
-		return
+func process_steps(delta_steps: int) -> float:
+	_check_daily_reset()
+	var delta := max(delta_steps, 0)
+	if delta <= 0:
+		_emit_energy_changed()
+		return 0.0
 
-	var remaining := amount
-	var pool_space := MAX_ENERGY_POOL - energy_pool
+	today_steps_processed += delta
+	var next_today_energy := float(calc_energy(today_steps_processed, is_new_player()))
+	var produced := max(next_today_energy - today_energy, 0.0)
+	today_energy = next_today_energy
+	if produced <= 0.0:
+		_emit_energy_changed()
+		return 0.0
+
+	var remaining := produced
+	var pool_space := max(MAX_ENERGY_POOL - energy_pool, 0.0)
 	var to_pool = min(remaining, pool_space)
 	energy_pool += to_pool
 	remaining -= to_pool
 
-	if remaining > 0:
-		var reserve_space := MAX_ENERGY_RESERVE - energy_reserve
+	if remaining > 0.0:
+		var reserve_space := max(MAX_RESERVE_TANK - reserve_tank, 0.0)
 		var to_reserve = min(remaining, reserve_space)
-		energy_reserve += to_reserve
-		remaining -= to_reserve
+		reserve_tank += to_reserve
 
-	total_energy_produced += amount
-	if remaining > 0:
-		energy_overflow.emit(remaining)
+	total_energy_produced += produced
+	_emit_energy_changed()
+	return produced
 
-	_save_state()
-	energy_produced.emit(amount, today_energy)
-	energy_changed.emit(energy_pool, energy_reserve, total_energy_produced)
+func newbie_protection_remaining_days() -> int:
+	var elapsed := max(Time.get_unix_time_from_system() - created_at, 0.0)
+	var remaining_seconds := max(float(NEW_PLAYER_DAYS * 24 * 60 * 60) - elapsed, 0.0)
+	return int(ceil(remaining_seconds / float(24 * 60 * 60)))
 
-	if HatchEngine:
-		HatchEngine.add_energy(amount)
+func is_new_player() -> bool:
+	return newbie_protection_remaining_days() > 0
 
-func consume_pool(amount: int) -> int:
-	var consumed = min(max(amount, 0), energy_pool)
-	energy_pool -= consumed
-	_save_state()
-	energy_changed.emit(energy_pool, energy_reserve, total_energy_produced)
-	return consumed
+func apply_save(data: Dictionary) -> void:
+	energy_pool = clamp(float(data.get("energy_pool", 0.0)), 0.0, MAX_ENERGY_POOL)
+	reserve_tank = clamp(float(data.get("reserve_tank", data.get("energy_reserve", 0.0))), 0.0, MAX_RESERVE_TANK)
+	total_energy_produced = max(float(data.get("total_energy_produced", 0.0)), 0.0)
+	today_energy = max(float(data.get("today_energy", 0.0)), 0.0)
+	today_steps_processed = max(int(data.get("today_steps_processed", 0)), 0)
+	created_at = float(data.get("created_at", Time.get_unix_time_from_system()))
+	last_energy_date = String(data.get("last_energy_date", _today_key()))
+	_check_daily_reset()
+	_emit_energy_changed()
 
-func inject_reserve_to_hatch(amount: int) -> int:
-	var injected = min(max(amount, 0), energy_reserve)
-	energy_reserve -= injected
-	_save_state()
-	energy_changed.emit(energy_pool, energy_reserve, total_energy_produced)
-	if HatchEngine:
-		HatchEngine.add_energy(injected)
-	return injected
+func get_save_data() -> Dictionary:
+	return {
+		"energy_pool": energy_pool,
+		"reserve_tank": reserve_tank,
+		"total_energy_produced": total_energy_produced,
+		"today_energy": today_energy,
+		"today_steps_processed": today_steps_processed,
+		"created_at": created_at,
+		"last_energy_date": last_energy_date,
+	}
 
 func get_pool_fill_ratio() -> float:
-	return float(energy_pool) / float(MAX_ENERGY_POOL)
+	if MAX_ENERGY_POOL <= 0.0:
+		return 0.0
+	return energy_pool / MAX_ENERGY_POOL
 
-func _on_steps_changed(steps: int, _total_steps: int, _delta_steps: int) -> void:
-	_recalculate_from_steps(steps)
+func _emit_energy_changed() -> void:
+	energy_changed.emit(energy_pool, MAX_ENERGY_POOL, reserve_tank)
 
-func _recalculate_from_steps(steps: int) -> void:
-	var new_today_energy := calc_energy(steps, _is_new_player())
-	var delta := new_today_energy - today_energy
-	today_energy = new_today_energy
-	if delta > 0:
-		add_energy(delta)
-	else:
-		_save_state()
-		energy_changed.emit(energy_pool, energy_reserve, total_energy_produced)
+func _check_daily_reset() -> void:
+	var today := _today_key()
+	if last_energy_date == "":
+		last_energy_date = today
+		return
+	if last_energy_date != today:
+		today_energy = 0.0
+		today_steps_processed = 0
+		last_energy_date = today
 
-func _is_new_player() -> bool:
-	if SaveManager:
-		return SaveManager.is_new_player()
-	return true
-
-func _load_state() -> void:
-	if SaveManager:
-		var state := SaveManager.get_energy_state()
-		energy_pool = int(state.get("energy_pool", 0))
-		energy_reserve = int(state.get("energy_reserve", 0))
-		total_energy_produced = int(state.get("total_energy_produced", 0))
-		today_energy = int(state.get("today_energy", 0))
-
-func _save_state() -> void:
-	if SaveManager:
-		SaveManager.set_energy_state({
-			"energy_pool": energy_pool,
-			"energy_reserve": energy_reserve,
-			"total_energy_produced": total_energy_produced,
-			"today_energy": today_energy,
-		})
+func _today_key() -> String:
+	var date := Time.get_date_dict_from_system()
+	return "%04d-%02d-%02d" % [int(date["year"]), int(date["month"]), int(date["day"])]
