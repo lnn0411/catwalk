@@ -45,11 +45,6 @@ jobs:
           cp /tmp/godot_android_source/build/libs/debug/*.aar android/build/libs/debug/ 2>/dev/null || true
           cp /tmp/godot_android_source/build/libs/release/*.aar android/build/libs/release/ 2>/dev/null || true
 
-      - name: Copy plugin source
-        run: |
-          mkdir -p android/build/src/main/java/com/catwalk/stepcounter
-          cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
-
       - name: Gradle build APK
         run: |
           export ANDROID_HOME="${ANDROID_SDK_ROOT}"
@@ -60,5 +55,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: catwalk-step-counter-debug-apk
+          name: catwalk-debug-apk
           path: android/build/outputs/apk/standard/debug/*.apk
