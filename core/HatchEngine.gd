@@ -43,6 +43,8 @@ func feed_energy(amount: float) -> void:
 		if float(slot["energy"]) >= float(slot["max_energy"]):
 			_complete_hatch(slot_id)
 
+	_assign_next_empty_slots()
+
 func apply_save(data: Dictionary) -> void:
 	slots = Array(data.get("slots", []))
 	cats.clear()
@@ -168,7 +170,6 @@ func _complete_hatch(slot_id: int) -> void:
 	slots[slot_id] = slot
 
 	_update_unlocks()
-	_assign_next_empty_slots()
 	hatch_complete.emit(cat)
 
 func _roll_next_species() -> String:
