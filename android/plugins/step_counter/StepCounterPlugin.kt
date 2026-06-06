@@ -80,7 +80,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 
 	override fun onMainRequestPermissionsResult(
 		requestCode: Int,
-		permissions: Array<String>,
+		permissions: Array<out String>,
 		grantResults: IntArray
 	): Boolean {
 		if (requestCode != ACTIVITY_RECOGNITION_REQUEST_CODE) {
