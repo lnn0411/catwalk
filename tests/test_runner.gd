@@ -140,17 +140,14 @@ func test_save_roundtrip() -> void:
 	SaveManager.reset_all()
 
 	StepEngine.add_mock_steps(2000)
-	var save_data := SaveManager.load_all()
-	assert_eq("save有step_state", true, save_data.has("step_state"))
-	assert_eq("save有energy_state", true, save_data.has("energy_state"))
-	assert_eq("save有hatch_state", true, save_data.has("hatch_state"))
+	SaveManager.save_all()
 
-	# 重置后重新 apply
+	# 重置后重新加载
 	StepEngine.apply_save({})
 	EnergyEngine.apply_save({})
 	HatchEngine.apply_save({"slots": [], "cats": [], "hatched_count": 0})
 
-	SaveManager.restore_from(save_data)
+	SaveManager.load_and_apply()
 	# 验证步数恢复
 	assert_eq("恢复后步数", 2000, StepEngine.get_today_steps())
 
