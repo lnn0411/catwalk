@@ -16,10 +16,17 @@ var confirm_reset: ConfirmationDialog
 func _ready() -> void:
 	print("=== DebugPanel _ready() START ===")
 	
-	# 诊断：直接加一个红色 Label 看渲染是否正常
+	# 诊断：全屏红色背景验证渲染
+	var bg := ColorRect.new()
+	bg.color = Color.RED
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+	print("=== red background added ===")
+	
+	# 诊断：直接加一个白色 Label
 	var test := Label.new()
-	test.text = "TEST RED LABEL - CAN YOU SEE THIS?"
-	test.add_theme_color_override("font_color", Color.RED)
+	test.text = "TEST WHITE LABEL"
+	test.add_theme_color_override("font_color", Color.WHITE)
 	test.add_theme_font_size_override("font_size", 40)
 	test.position = Vector2(50, 100)
 	add_child(test)
