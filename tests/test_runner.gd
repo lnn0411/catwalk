@@ -140,15 +140,17 @@ func test_save_roundtrip() -> void:
 	SaveManager.reset_all()
 
 	StepEngine.add_mock_steps(2000)
+	# 触发存档（add_mock_steps 已通过 energy_changed 自动存档）
 	SaveManager.save_all()
 
-	# 重置后重新加载
-	StepEngine.apply_save({})
-	EnergyEngine.apply_save({})
-	HatchEngine.apply_save({"slots": [], "cats": [], "hatched_count": 0})
+	# 手动清空引擎状态（不触发存档）
+	StepEngine.today_steps = 0
+	StepEngine.total_steps = 0
+	EnergyEngine.energy_pool = 0.0
+	EnergyEngine.reserve_tank = 0.0
 
+	# 从磁盘恢复
 	SaveManager.load_and_apply()
-	# 验证步数恢复
 	assert_eq("恢复后步数", 2000, StepEngine.get_today_steps())
 
 # ────────────────────────────────────────────
