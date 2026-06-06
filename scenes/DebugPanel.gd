@@ -63,6 +63,16 @@ func _build_ui() -> void:
 	step_reset.pressed.connect(_on_reset_steps)
 	mock_row.add_child(step_reset)
 
+	# 快捷填充按钮
+	var fast_row := HBoxContainer.new()
+	fast_row.visible = OS.has_feature("editor")
+	fast_row.add_theme_constant_override("separation", 8)
+	content.add_child(fast_row)
+	for amount in [5000, 15000, 30000, 50000]:
+		var btn := _make_secondary_button("+%d步" % amount)
+		btn.pressed.connect(_on_add_steps.bind(amount))
+		fast_row.add_child(btn)
+
 	content.add_child(_make_section_label("Energy Pool"))
 	energy_pool_bar = _make_progress_bar(EnergyEngine.MAX_ENERGY_POOL)
 	content.add_child(energy_pool_bar)
