@@ -14,9 +14,13 @@ var cat_list: VBoxContainer
 var confirm_reset: ConfirmationDialog
 
 func _ready() -> void:
+	print("=== DebugPanel _ready() START ===")
 	_build_ui()
+	print("=== _build_ui() DONE ===")
 	_connect_signals()
+	print("=== _connect_signals() DONE ===")
 	_refresh()
+	print("=== _refresh() DONE, child count: ", get_child_count())
 
 func _build_ui() -> void:
 	var root := MarginContainer.new()
