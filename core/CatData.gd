@@ -29,7 +29,7 @@ const BREED_CHARACTER_SCENES := {
 @export var hatch_index: int = 1
 @export var display_name: String = ""
 @export var level: int = 1
-@export var exp: int = 0
+@export var experience: int = 0
 @export var friendship: int = 0
 @export var created_at: float = 0.0
 
@@ -41,7 +41,7 @@ static func create(cat_id: String, species_name: String, cat_rarity: String, ind
 	cat.hatch_index = index
 	cat.display_name = get_default_name(species_name, index)
 	cat.level = 1
-	cat.exp = 0
+	cat.experience = 0
 	cat.friendship = 0
 	cat.created_at = Time.get_unix_time_from_system()
 	return cat
@@ -73,7 +73,7 @@ static func serialize(cat) -> Dictionary:
 		"hatch_index": cat.hatch_index,
 		"display_name": cat.display_name,
 		"level": cat.level,
-		"exp": cat.exp,
+		"exp": cat.experience,
 		"friendship": cat.friendship,
 		"created_at": cat.created_at,
 	}
@@ -88,7 +88,7 @@ static func deserialize(data: Dictionary):
 	cat.hatch_index = index
 	cat.display_name = String(data.get("display_name", data.get("name", get_default_name(species_name, index))))
 	cat.level = int(data.get("level", 1))
-	cat.exp = int(data.get("exp", 0))
+	cat.experience = int(data.get("exp", 0))
 	cat.friendship = int(data.get("friendship", 0))
 	cat.created_at = float(data.get("created_at", Time.get_unix_time_from_system()))
 	return cat

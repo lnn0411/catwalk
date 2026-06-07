@@ -33,40 +33,29 @@ jobs:
           build-tools-version: 36.1.0
           ndk-version: 29.0.14206865
 
-      - name: Initialize Godot project
+      - name: Initialize Godot
         run: godot --headless --path . --editor --quit
 
-      - name: Extract AAR dependencies
+      - name: Extract AAR
         run: |
-          TEMPLATES=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable -name "android_source.zip" 2>/dev/null | head -1)
-          if [ -z "$TEMPLATES" ]; then
-            echo "ERROR: android_source.zip not found in export templates"
-            find $HOME/.local/share/godot/export_templates/4.6.3.stable -type f | head -20
-            exit 1
-          fi
-          mkdir -p /tmp/godot_android_source
-          unzip -q -o "$TEMPLATES" -d /tmp/godot_android_source
+          ZIP=$(find $HOME/.local/share/godot -name "android_source.zip" | head -1)
+          unzip -q -o "$ZIP" -d /tmp/ga
           mkdir -p android/build/libs/debug android/build/libs/release
-          cp /tmp/godot_android_source/libs/debug/*.aar android/build/libs/debug/ 2>/dev/null || true
-          cp /tmp/godot_android_source/libs/release/*.aar android/build/libs/release/ 2>/dev/null || true
+          cp /tmp/ga/libs/debug/*.aar android/build/libs/debug/ 2>/dev/null || true
+          cp /tmp/ga/libs/release/*.aar android/build/libs/release/ 2>/dev/null || true
 
-      - name: Copy plugin source
+      - name: Copy plugin
         run: |
           mkdir -p android/build/src/main/java/com/catwalk/stepcounter
           cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
 
-      - name: Gradle build APK
-        run: |
-          export ANDROID_HOME="${ANDROID_SDK_ROOT}"
-          cd android/build
-          chmod +x gradlew
-          ./gradlew assembleStandardDebug
+      - name: Build APK
+        run: cd android/build && chmod +x gradlew && ./gradlew assembleStandardDebug
+        env:
+          ANDROID_HOME: ${{ env.ANDROID_SDK_ROOT }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: catwalk-debug-apk
-          path: |
-            android/build/outputs/apk/**/*.apk
-            catwalk-debug.apk
-          if-no-files-found: error
+          path: android/build/outputs/apk/**/*.apk

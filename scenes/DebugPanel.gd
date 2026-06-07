@@ -1,7 +1,7 @@
 extends CanvasLayer
 
-const CatData := preload("res://core/CatData.gd")
-const UITheme := preload("res://ui/theme/UITheme.gd")
+
+
 
 var steps_label: Label
 var energy_pool_bar: ProgressBar

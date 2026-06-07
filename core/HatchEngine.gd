@@ -4,7 +4,7 @@ signal hatch_started(slot: int)
 signal hatch_progress(slot: int, progress: float)
 signal hatch_complete(cat_data)
 
-const CatData := preload("res://core/CatData.gd")
+
 const SLOT_COUNT := 4
 const SLOT_UNLOCK_HATCH_COUNTS := [0, 1, 3, 10]
 

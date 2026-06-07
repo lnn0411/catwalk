@@ -21,9 +21,9 @@ func _ready() -> void:
 		last_energy_date = _today_key()
 	_emit_energy_changed()
 
-func calc_energy(steps: int, is_new_player: bool) -> int:
+func calc_energy(steps: int, _new_player: bool) -> int:
 	var t1 := 0.3
-	if is_new_player:
+	if _new_player:
 		t1 = 0.8
 
 	if steps <= 1000:
