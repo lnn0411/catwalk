@@ -1,4 +1,4 @@
-package org.godotengine.plugin.v1
+package com.catwalk.stepcounter
 
 import android.Manifest
 import android.content.Context
@@ -101,7 +101,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		} else {
 			currentSteps = (event.values[0] - firstReading).toInt().coerceAtLeast(0)
 		}
-		emitSignal(stepsChangedSignal, Integer(currentSteps))
+		emitSignal(stepsChangedSignal, java.lang.Integer(currentSteps))
 	}
 
 	override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit

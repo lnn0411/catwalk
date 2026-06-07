@@ -2,7 +2,7 @@
 
 name="StepCounter"
 binary_type="local"
-binary="org/godotengine/plugin/v1/StepCounterPlugin.kt"
+binary="StepCounterPlugin.kt"
 
 [dependencies]
 
