@@ -193,7 +193,7 @@ final String VALUE_SEPARATOR_REGEX = "\\|"
 ext.getExportEnabledABIs = { ->
     String enabledABIs = project.hasProperty("export_enabled_abis") ? project.property("export_enabled_abis") : ""
     if (enabledABIs == null || enabledABIs.isEmpty()) {
-        enabledABIs = "armeabi-v7a|arm64-v8a|x86|x86_64|"
+        enabledABIs = "arm64-v8a|"
     }
     Set<String> exportAbiFilter = []
     for (String abi_name : enabledABIs.split(VALUE_SEPARATOR_REGEX)) {
@@ -390,19 +390,8 @@ ext.shouldNotStrip = { ->
  * - https://stackoverflow.com/a/44704840
  */
 ext.shouldUseLegacyPackaging = { ->
-    String legacyPackagingFlag = project.hasProperty("compress_native_libraries") ? project.property("compress_native_libraries") : ""
-    if (legacyPackagingFlag != null && !legacyPackagingFlag.isEmpty()) {
-        return Boolean.parseBoolean(legacyPackagingFlag)
-    }
-
-    if (getExportMinSdkVersion() <= 29) {
-        // Use legacy packaging for compatibility with device running api <= 29.
-        // See https://github.com/godotengine/godot/issues/108842 for reference.
-        return true
-    }
-
-    // Default behavior for minSdk > 29.
-    return false
+    // 强制开启压缩，忽略 export_presets.cfg 中的设置，减小 APK 体积
+    return true
 }
 
 ext.getAddonsDirectory = { ->
