@@ -3,6 +3,7 @@
 name="StepCounter"
 binary_type="local"
 binary="StepCounterPlugin.kt"
+plugin_type="v2"
 
 [dependencies]
 
