@@ -40,26 +40,16 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 			startStepCounter()
 		} else {
 			// Defer permission request until window has focus (required by Android)
-			activity?.window?.decorView?.let { decorView ->
-				if (decorView.hasWindowFocus()) {
-					requestActivityRecognitionPermission()
-				} else {
-					decorView.viewTreeObserver.addOnWindowFocusChangeListener(
-						object : ViewTreeObserver.OnWindowFocusChangeListener {
-							override fun onWindowFocusChanged(hasFocus: Boolean) {
-								if (hasFocus) {
-									decorView.viewTreeObserver.removeOnWindowFocusChangeListener(this)
-									requestActivityRecognitionPermission()
-								}
-							}
-						})
-				}
-			} ?: run {
-				// Fallback: try after delay if decorView not ready
-				Handler(Looper.getMainLooper()).postDelayed({
-					requestActivityRecognitionPermission()
-				}, 500)
-			}
+			val view = activity?.window?.decorView ?: return
+			view.viewTreeObserver.addOnWindowFocusChangeListener(
+				object : ViewTreeObserver.OnWindowFocusChangeListener {
+					override fun onWindowFocusChanged(hasFocus: Boolean) {
+						if (hasFocus) {
+							view.viewTreeObserver.removeOnWindowFocusChangeListener(this)
+							requestActivityRecognitionPermission()
+						}
+					}
+				})
 		}
 	}
 
