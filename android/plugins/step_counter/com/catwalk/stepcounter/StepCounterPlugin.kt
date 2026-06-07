@@ -37,6 +37,11 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		super.onGodotMainLoopStarted()
 		if (hasActivityRecognitionPermission()) {
 			startStepCounter()
+		} else {
+			// Activity is guaranteed ready here, safe to request
+			Handler(Looper.getMainLooper()).postDelayed({
+				requestActivityRecognitionPermission()
+			}, 300)
 		}
 	}
 
