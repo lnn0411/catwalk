@@ -28,3 +28,8 @@ android/build/libs/
 # APK files
 *.apk
 *.aab
+
+# Godot android/build 完整忽略
+android/build/res/
+android/build/src/main/java/com/
+android/build/src/main/assets/
