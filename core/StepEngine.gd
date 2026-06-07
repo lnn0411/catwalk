@@ -53,9 +53,18 @@ func _load_plugin() -> void:
 		step_plugin = Engine.get_singleton(PLUGIN_NAME)
 		if step_plugin.has_signal("steps_changed"):
 			step_plugin.steps_changed.connect(_on_plugin_steps_changed)
+		if step_plugin.has_signal("permission_result"):
+			step_plugin.permission_result.connect(_on_permission_result)
+		if step_plugin.has_method("hasActivityRecognitionPermission") and not step_plugin.hasActivityRecognitionPermission():
+			if step_plugin.has_method("requestActivityRecognitionPermission"):
+				step_plugin.requestActivityRecognitionPermission()
 		_refresh_plugin_steps()
 	else:
 		_emit_steps_updated(0)
+
+func _on_permission_result(granted: bool) -> void:
+	if granted:
+		_refresh_plugin_steps()
 
 func _refresh_plugin_steps() -> void:
 	if step_plugin == null or not step_plugin.has_method("getSteps"):

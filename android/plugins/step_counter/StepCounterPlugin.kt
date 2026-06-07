@@ -1,4 +1,4 @@
-package com.catwalk.stepcounter
+package org.godotengine.plugin.v1
 
 import android.Manifest
 import android.content.Context
@@ -16,7 +16,7 @@ import org.godotengine.godot.plugin.SignalInfo
 import org.godotengine.godot.plugin.UsedByGodot
 
 class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener {
-	private val stepsChangedSignal = SignalInfo("steps_changed", Integer::class.java)
+	private val stepsChangedSignal = SignalInfo("steps_changed", java.lang.Integer::class.java)
 	private val permissionResultSignal = SignalInfo("permission_result", java.lang.Boolean::class.java)
 	private val sensorManager by lazy {
 		activity?.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
