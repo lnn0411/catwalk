@@ -8,8 +8,6 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.os.Build
-import android.os.Handler
-import android.os.Looper
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.godotengine.godot.Godot
@@ -22,11 +20,9 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 	private val permissionResultSignal = SignalInfo("permission_result", java.lang.Boolean::class.java)
 	private val sensorManager: SensorManager?
 		get() = activity?.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-	private val handler = Handler(Looper.getMainLooper())
 
 	private var initialSensorSteps: Float? = null
 	private var currentSteps = 0
-	private var permissionRetryCount = 0
 
 	override fun getPluginName() = "StepCounter"
 
@@ -79,8 +75,6 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 			arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
 			ACTIVITY_RECOGNITION_REQUEST_CODE
 		)
-		permissionRetryCount = 0
-		schedulePermissionFallbackCheck()
 	}
 
 	override fun onMainRequestPermissionsResult(
@@ -91,34 +85,10 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		if (requestCode != ACTIVITY_RECOGNITION_REQUEST_CODE) {
 			return
 		}
-		cancelPermissionFallbackCheck()
 		val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
 		emitSignal(permissionResultSignal, java.lang.Boolean(granted))
 		if (granted) {
 			startStepCounter()
-		}
-	}
-
-	private fun schedulePermissionFallbackCheck() {
-		cancelPermissionFallbackCheck()
-		handler.postDelayed(permissionFallbackRunnable, PERMISSION_FALLBACK_DELAY_MS)
-	}
-
-	private fun cancelPermissionFallbackCheck() {
-		handler.removeCallbacks(permissionFallbackRunnable)
-	}
-
-	private val permissionFallbackRunnable = object : Runnable {
-		override fun run() {
-			if (hasActivityRecognitionPermission()) {
-				emitSignal(permissionResultSignal, java.lang.Boolean(true))
-				startStepCounter()
-				return
-			}
-			permissionRetryCount++
-			if (permissionRetryCount < 6) {
-				handler.postDelayed(this, PERMISSION_FALLBACK_DELAY_MS)
-			}
 		}
 	}
 
@@ -143,6 +113,5 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 
 	companion object {
 		private const val ACTIVITY_RECOGNITION_REQUEST_CODE = 2101
-		private const val PERMISSION_FALLBACK_DELAY_MS = 800L
 	}
 }

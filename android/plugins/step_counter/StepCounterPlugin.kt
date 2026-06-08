@@ -18,9 +18,8 @@ import org.godotengine.godot.plugin.UsedByGodot
 class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener {
 	private val stepsChangedSignal = SignalInfo("steps_changed", java.lang.Integer::class.java)
 	private val permissionResultSignal = SignalInfo("permission_result", java.lang.Boolean::class.java)
-	private val sensorManager by lazy {
-		activity?.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
-	}
+	private val sensorManager: SensorManager?
+		get() = activity?.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
 
 	private var initialSensorSteps: Float? = null
 	private var currentSteps = 0
@@ -101,14 +100,15 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		} else {
 			currentSteps = (event.values[0] - firstReading).toInt().coerceAtLeast(0)
 		}
-		emitSignal(stepsChangedSignal, java.lang.Integer(currentSteps))
+		emitSignal(stepsChangedSignal, Integer.valueOf(currentSteps))
 	}
 
 	override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
 
 	private fun startStepCounter() {
-		val sensor = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) ?: return
-		sensorManager?.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+		val sm = sensorManager ?: return
+		val sensor = sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) ?: return
+		sm.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
 	}
 
 	companion object {

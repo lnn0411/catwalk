@@ -1,34 +1,29 @@
-# Godot
-.godot/
-*.import
-*.uid
-export_presets.cfg.gradle
 
-# Gradle
-android/build/.gradle/
-android/build/build/
-android/build/local.properties
-android/build/*.apk
+*.aab
 android/build/*.aab
-
+android/build/*.apk
+android/build/build/
+android/build/.gradle/
+android/build/libs/
+android/build/local.properties
+android/build/res/
+android/build/src/main/assets/
+*.apk
+# APK files
+.DS_Store
+export_presets.cfg.gradle
+.godot/
+# Godot
+# Godot android/build 完整忽略
+# Gradle
 # IDE
 .idea/
 *.iml
-.vscode/
-
-# OS
-.DS_Store
-Thumbs.db
-android/build/libs/
-
-# Keystore / signing
-*.keystore
+*.import
 *.jks
-
-# APK files
-*.apk
-*.aab
-
-# Godot android/build 完整忽略
-android/build/res/
-android/build/src/main/assets/
+*.keystore
+# Keystore / signing
+# OS
+Thumbs.db
+*.uid
+.vscode/

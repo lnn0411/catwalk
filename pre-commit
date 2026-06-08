@@ -1,0 +1,33 @@
+#!/bin/bash
+# 猫步天下 Godot 项目 — git pre-commit 强制质量关
+# 安装: cp pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+# 跳过（紧急时）: git commit --no-verify
+
+PROJECT_DIR=$(git rev-parse --show-toplevel)
+FAILED=0
+
+# 第0关：扫描字面转义残留（\t \n \r 写成字面值）
+scan_literal_escapes() {
+    local FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(gd|kt|java|yml|yaml|sh|cfg|toml)$')
+    [ -z "$FILES" ] && return 0
+    
+    CHECK_SCRIPT="/home/agentuser/.hermes/profiles/dev_agent/scripts/check_literal_escapes.py"
+    python3 "$CHECK_SCRIPT" $FILES 2>/dev/null || {
+        echo "❌ pre-commit BLOCKED: 字面转义字符残留（\\t \\n \\r）"
+        echo "   修复: write_file 重写文件，确保用真实控制字符"
+        return 1
+    }
+    return 0
+}
+
+echo "🔍 pre-commit: 字面转义扫描..."
+scan_literal_escapes || FAILED=1
+
+if [ $FAILED -ne 0 ]; then
+    echo ""
+    echo "⛔ commit 被拦截。修复后重试，或 git commit --no-verify 强制跳过。"
+    exit 1
+fi
+
+echo "✅ pre-commit 通过"
+exit 0
