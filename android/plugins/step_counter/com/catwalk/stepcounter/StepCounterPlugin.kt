@@ -135,11 +135,11 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 
 	override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
 
-\tprivate fun startStepCounter() {
-\t\tval sm = sensorManager ?: return
-\t\tval sensor = sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) ?: return
-\t\tsm.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-\t}
+	private fun startStepCounter() {
+		val sm = sensorManager ?: return
+		val sensor = sm.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) ?: return
+		sm.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
+	}
 
 	companion object {
 		private const val ACTIVITY_RECOGNITION_REQUEST_CODE = 2101
