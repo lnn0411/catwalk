@@ -42,6 +42,7 @@ func feed_energy(amount: float) -> void:
 
 		if float(slot["energy"]) >= float(slot["max_energy"]):
 			_complete_hatch(slot_id)
+			_assign_next_empty_slots()
 
 	_assign_next_empty_slots()
 
@@ -78,9 +79,17 @@ func get_save_data() -> Dictionary:
 func get_unlocked_species() -> Array:
 	var total: float = _get_total_energy_produced()
 	var species: Array = [CatData.BREED_ORANGE]
-	if total >= 15000.0:
+	for cat in cats:
+		var cat_species: String = CatData.BREED_ORANGE
+		if cat is CatData:
+			cat_species = String(cat.species)
+		elif cat is Dictionary:
+			cat_species = String(cat.get("species", CatData.BREED_ORANGE))
+		if not species.has(cat_species):
+			species.append(cat_species)
+	if total >= 15000.0 and not species.has(CatData.BREED_BRITISH):
 		species.append(CatData.BREED_BRITISH)
-	if total >= 30000.0:
+	if total >= 30000.0 and not species.has(CatData.BREED_SIAMESE):
 		species.append(CatData.BREED_SIAMESE)
 	return species
 

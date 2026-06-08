@@ -76,7 +76,12 @@ func _on_plugin_steps_changed(raw_steps: int) -> void:
 	raw_steps = max(raw_steps, 0)
 	if raw_steps < last_plugin_steps:
 		last_plugin_steps = raw_steps
-		_emit_steps_updated(0)
+		if raw_steps <= 0:
+			_emit_steps_updated(0)
+			return
+		today_steps += raw_steps
+		total_steps += raw_steps
+		_emit_steps_updated(raw_steps)
 		return
 
 	var delta: int = raw_steps - last_plugin_steps

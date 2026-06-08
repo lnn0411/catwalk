@@ -5,16 +5,20 @@ const SAVE_PATH := "user://save.cfg"
 
 var _config := ConfigFile.new()
 var _is_applying: bool = false
+var _save_pending: bool = false
 
 func _ready() -> void:
 	load_and_apply()
 	_connect_auto_save()
 
 func save_all() -> void:
+	_save_pending = false
 	_write_steps()
 	_write_energy()
 	_write_hatch()
-	_config.save(SAVE_PATH)
+	var err := _config.save(SAVE_PATH)
+	if err != OK:
+		push_error("Failed to save game data to %s: %s" % [SAVE_PATH, error_string(err)])
 
 func load_and_apply() -> void:
 	_config = ConfigFile.new()
@@ -22,21 +26,26 @@ func load_and_apply() -> void:
 	if err != OK:
 		_config.clear()
 
-	_is_applying = true
-	StepEngine.apply_save(_read_steps())
-	EnergyEngine.apply_save(_read_energy())
-	HatchEngine.apply_save(_read_hatch())
-	_is_applying = false
+	_apply_all_saves(_read_steps(), _read_energy(), _read_hatch())
 
 func reset_all() -> void:
+	_save_pending = false
 	_config.clear()
-	_config.save(SAVE_PATH)
-	_is_applying = true
-	StepEngine.apply_save({})
-	EnergyEngine.apply_save({})
-	HatchEngine.apply_save({})
-	_is_applying = false
+	var err := _config.save(SAVE_PATH)
+	if err != OK:
+		push_error("Failed to reset save data at %s: %s" % [SAVE_PATH, error_string(err)])
+	_apply_all_saves({}, {}, {})
 	save_all()
+
+func _apply_all_saves(steps_data: Dictionary, energy_data: Dictionary, hatch_data: Dictionary) -> void:
+	_is_applying = true
+	if StepEngine != null:
+		StepEngine.apply_save(steps_data)
+	if EnergyEngine != null:
+		EnergyEngine.apply_save(energy_data)
+	if HatchEngine != null:
+		HatchEngine.apply_save(hatch_data)
+	_is_applying = false
 
 func _connect_auto_save() -> void:
 	if EnergyEngine and not EnergyEngine.energy_changed.is_connected(_on_auto_save):
@@ -47,10 +56,21 @@ func _connect_auto_save() -> void:
 func _on_auto_save(_current = null, _pool_max = null, _backup = null) -> void:
 	if _is_applying:
 		return
-	save_all()
+	_queue_auto_save()
 
 func _on_hatch_complete_auto_save(_cat_data) -> void:
 	if _is_applying:
+		return
+	_queue_auto_save()
+
+func _queue_auto_save() -> void:
+	if _save_pending:
+		return
+	_save_pending = true
+	save_all.call_deferred()
+
+func _flush_auto_save() -> void:
+	if not _save_pending:
 		return
 	save_all()
 
