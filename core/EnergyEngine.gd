@@ -55,16 +55,14 @@ func process_steps(delta_steps: int) -> float:
 	energy_pool += to_pool
 	remaining -= to_pool
 
-	var stored: float = to_pool
 	if remaining > 0.0:
 		var reserve_space: float = max(MAX_RESERVE_TANK - reserve_tank, 0.0)
 		var to_reserve: float = min(remaining, reserve_space)
 		reserve_tank += to_reserve
-		stored += to_reserve
 
-	total_energy_produced += stored
+	total_energy_produced += produced
 	_emit_energy_changed()
-	return stored
+	return produced
 
 func newbie_protection_remaining_days() -> int:
 	var elapsed: float = max(Time.get_unix_time_from_system() - created_at, 0.0)
@@ -72,6 +70,9 @@ func newbie_protection_remaining_days() -> int:
 	return int(ceil(remaining_seconds / float(24 * 60 * 60)))
 
 func is_new_player() -> bool:
+	if created_at <= 0.0:
+		created_at = Time.get_unix_time_from_system()
+		return true
 	return newbie_protection_remaining_days() > 0
 
 func apply_save(data: Dictionary) -> void:
@@ -80,7 +81,7 @@ func apply_save(data: Dictionary) -> void:
 	total_energy_produced = max(float(data.get("total_energy_produced", 0.0)), 0.0)
 	today_energy = max(float(data.get("today_energy", 0.0)), 0.0)
 	today_steps_processed = max(int(data.get("today_steps_processed", 0)), 0)
-	var saved_created_at: float = float(data.get("created_at", Time.get_unix_time_from_system()))
+	var saved_created_at: float = float(data.get("created_at", 0.0))
 	created_at = saved_created_at if saved_created_at > 0.0 else Time.get_unix_time_from_system()
 	last_energy_date = String(data.get("last_energy_date", _today_key()))
 	_check_daily_reset()

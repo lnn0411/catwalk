@@ -70,21 +70,13 @@ func get_hatched_count() -> int:
 func get_save_data() -> Dictionary:
 	return {
 		"slots": slots.duplicate(true),
-		"cats": cats.duplicate(true),
+		"cats": cats.map(func(c): return CatData.serialize(c) if c is CatData else c),
 		"hatched_count": hatched_count,
 	}
 
 func get_unlocked_species() -> Array:
 	var total: float = _get_total_energy_produced()
 	var species: Array = [CatData.BREED_ORANGE]
-	for cat in cats:
-		var cat_species: String = CatData.BREED_ORANGE
-		if cat is CatData:
-			cat_species = String(cat.species)
-		elif cat is Dictionary:
-			cat_species = String(cat.get("species", CatData.BREED_ORANGE))
-		if not species.has(cat_species):
-			species.append(cat_species)
 	if total >= 15000.0 and not species.has(CatData.BREED_BRITISH):
 		species.append(CatData.BREED_BRITISH)
 	if total >= 30000.0 and not species.has(CatData.BREED_SIAMESE):
@@ -144,9 +136,12 @@ func _assign_next_empty_slots() -> void:
 		var slot: Dictionary = slots[i]
 		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "empty":
 			var species: String = _roll_next_species()
+			var cost: int = CatData.get_hatch_cost(species)
+			if cost <= 0:
+				continue
 			slot["status"] = "filling"
 			slot["energy"] = 0.0
-			slot["max_energy"] = float(CatData.get_hatch_cost(species))
+			slot["max_energy"] = float(cost)
 			slot["species"] = species
 			slots[i] = slot
 			hatch_started.emit(i)
@@ -187,11 +182,11 @@ func _roll_next_species() -> String:
 
 func _roll_rarity() -> String:
 	var roll: int = rng.randi_range(0, 99)
-	if roll <= 67:
+	if roll < 67:
 		return CatData.RARITY_COMMON
-	if roll <= 91:
+	if roll < 91:
 		return CatData.RARITY_RARE
-	if roll <= 98:
+	if roll < 99:
 		return CatData.RARITY_EPIC
 	return CatData.RARITY_LEGENDARY
 

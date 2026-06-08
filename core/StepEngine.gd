@@ -100,7 +100,6 @@ func _check_daily_reset() -> void:
 		return
 	if last_step_date != today:
 		today_steps = 0
-		last_plugin_steps = 0
 		last_step_date = today
 
 func _emit_steps_updated(delta: int) -> void:

@@ -6,16 +6,22 @@ const SAVE_PATH := "user://save.cfg"
 var _config := ConfigFile.new()
 var _is_applying: bool = false
 var _save_pending: bool = false
+var _save_generation: int = 0
 
 func _ready() -> void:
 	load_and_apply()
 	_connect_auto_save()
 
-func save_all() -> void:
+func save_all(generation: int = -1) -> void:
+	if generation != -1 and generation != _save_generation:
+		return
 	_save_pending = false
-	_write_steps()
-	_write_energy()
-	_write_hatch()
+	if StepEngine != null:
+		_write_steps()
+	if EnergyEngine != null:
+		_write_energy()
+	if HatchEngine != null:
+		_write_hatch()
 	var err := _config.save(SAVE_PATH)
 	if err != OK:
 		push_error("Failed to save game data to %s: %s" % [SAVE_PATH, error_string(err)])
@@ -29,6 +35,7 @@ func load_and_apply() -> void:
 	_apply_all_saves(_read_steps(), _read_energy(), _read_hatch())
 
 func reset_all() -> void:
+	_save_generation += 1
 	_save_pending = false
 	_config.clear()
 	_apply_all_saves({}, {}, {})
@@ -64,7 +71,10 @@ func _queue_auto_save() -> void:
 	if _save_pending:
 		return
 	_save_pending = true
-	save_all.call_deferred()
+	save_all.call_deferred(_save_generation)
+
+func _exit_tree() -> void:
+	_flush_auto_save()
 
 func _flush_auto_save() -> void:
 	if not _save_pending:
