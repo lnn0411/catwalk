@@ -1,6 +1,0 @@
-[configuration]
-
-android_plugin_name="StepCounter"
-android_plugin_type="v2"
- android_plugin_binary_type="local"
-android_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"
