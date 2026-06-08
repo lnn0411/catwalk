@@ -52,6 +52,20 @@ func _build_ui() -> void:
 	steps_label = _make_label("")
 	content.add_child(steps_label)
 
+	# === DIAGNOSTIC ===
+	var diag_title := _make_section_label("Plugin Status")
+	content.add_child(diag_title)
+	var plugin_found_label := _make_label("Plugin: checking...")
+	plugin_found_label.name = "diag_plugin"
+	content.add_child(plugin_found_label)
+	var perm_label := _make_label("Permission: checking...")
+	perm_label.name = "diag_perm"
+	content.add_child(perm_label)
+	var signal_label := _make_label("Last signal: none")
+	signal_label.name = "diag_signal"
+	content.add_child(signal_label)
+	# === END DIAGNOSTIC ===
+
 	var mock_row := HBoxContainer.new()
 	mock_row.visible = OS.has_feature("editor")
 	mock_row.add_theme_constant_override("separation", 8)
@@ -139,6 +153,20 @@ func _connect_signals() -> void:
 			HatchEngine.hatch_complete.connect(_on_hatch_complete)
 
 func _refresh() -> void:
+	# Diagnostic
+	var plugin_label = find_child("diag_plugin", true, false)
+	var perm_label = find_child("diag_perm", true, false)
+	var sig_label = find_child("diag_signal", true, false)
+	if plugin_label:
+		var has_plugin = Engine.has_singleton("StepCounter")
+		plugin_label.text = "Plugin: %s" % ("FOUND" if has_plugin else "NOT FOUND")
+		plugin_label.add_theme_color_override("font_color", Color.GREEN if has_plugin else Color.RED)
+	if perm_label and has_plugin:
+		var plugin = Engine.get_singleton("StepCounter")
+		var has_perm = plugin.hasActivityRecognitionPermission() if plugin.has_method("hasActivityRecognitionPermission") else false
+		perm_label.text = "Permission: %s" % ("GRANTED" if has_perm else "DENIED")
+		perm_label.add_theme_color_override("font_color", Color.GREEN if has_perm else Color.RED)
+
 	steps_label.text = "Steps: today %d / total %d" % [
 		StepEngine.get_today_steps(),
 		StepEngine.get_total_steps(),
@@ -244,7 +272,10 @@ func _make_secondary_button(text: String) -> Button:
 	button.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	return button
 
-func _on_steps_updated(_delta: int, _total: int) -> void:
+func _on_steps_updated(delta: int, _total: int) -> void:
+	var sig_label = find_child("diag_signal", true, false)
+	if sig_label:
+		sig_label.text = "Last signal: +%d steps at %s" % [delta, Time.get_time_string_from_system()]
 	_refresh()
 
 func _on_energy_changed(_current: float, _pool_max: float, _backup: float) -> void:
