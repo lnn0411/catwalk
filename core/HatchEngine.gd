@@ -44,8 +44,6 @@ func feed_energy(amount: float) -> void:
 			_complete_hatch(slot_id)
 			_assign_next_empty_slots()
 
-	_assign_next_empty_slots()
-
 func apply_save(data: Dictionary) -> void:
 	slots = Array(data.get("slots", []))
 	cats.clear()

@@ -34,9 +34,10 @@ const BREED_CHARACTER_SCENES := {
 @export var created_at: float = 0.0
 
 static func create(cat_id: String, species_name: String, cat_rarity: String, index: int):
-	var cat = load("res://core/CatData.gd").new()
+	var cat := CatData.new()
 	cat.id = cat_id
 	cat.species = species_name
+	assert(species_name in BREED_COSTS, "CatData: unknown species '%s'" % species_name)
 	cat.rarity = cat_rarity
 	cat.hatch_index = index
 	cat.display_name = get_default_name(species_name, index)
@@ -81,13 +82,14 @@ static func serialize(cat) -> Dictionary:
 static func deserialize(data: Dictionary):
 	var species_name := String(data.get("species", data.get("breed", BREED_ORANGE)))
 	var index := int(data.get("hatch_index", 1))
-	var cat = load("res://core/CatData.gd").new()
+	var cat := CatData.new()
 	cat.id = String(data.get("id", ""))
 	cat.species = species_name
+	assert(species_name in BREED_COSTS, "CatData: unknown species '%s'" % species_name)
 	cat.rarity = String(data.get("rarity", RARITY_COMMON))
 	cat.hatch_index = index
 	cat.display_name = String(data.get("display_name", data.get("name", get_default_name(species_name, index))))
-	cat.level = int(data.get("level", 1))
+	cat.level = maxi(1, int(data.get("level", 1)))
 	cat.experience = int(data.get("exp", 0))
 	cat.friendship = int(data.get("friendship", 0))
 	cat.created_at = float(data.get("created_at", Time.get_unix_time_from_system()))

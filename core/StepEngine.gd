@@ -18,7 +18,6 @@ func add_mock_steps(n: int) -> void:
 	_check_daily_reset()
 	var delta: int = max(n, 0)
 	if delta <= 0:
-		_emit_steps_updated(0)
 		return
 
 	today_steps += delta

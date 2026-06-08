@@ -144,7 +144,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		} else {
 			currentSteps = (event.values[0] - firstReading).toInt().coerceAtLeast(0)
 		}
-		emitSignal(stepsChangedSignal, Integer(currentSteps))
+		emitSignal(stepsChangedSignal, Integer.valueOf(currentSteps))
 	}
 
 	override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit

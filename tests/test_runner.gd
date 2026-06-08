@@ -254,11 +254,10 @@ func test_rarity_distribution() -> void:
 		HatchEngine.feed_energy(300000.0)
 
 	var total := 0
-	for k in counts.keys():
-		for cat in HatchEngine.get_cats():
-			if cat.rarity == k:
-				counts[k] += 1
-		total += counts[k]
+	for cat in HatchEngine.get_cats():
+		if counts.has(cat.rarity):
+			counts[cat.rarity] += 1
+		total += 1
 
 	assert_gt("孵出足够样本", total, 0)
 

@@ -31,9 +31,6 @@ func load_and_apply() -> void:
 func reset_all() -> void:
 	_save_pending = false
 	_config.clear()
-	var err := _config.save(SAVE_PATH)
-	if err != OK:
-		push_error("Failed to reset save data at %s: %s" % [SAVE_PATH, error_string(err)])
 	_apply_all_saves({}, {}, {})
 	save_all()
 
@@ -90,13 +87,14 @@ func _write_steps() -> void:
 	_config.set_value("steps", "last_step_date", String(data.get("last_step_date", "")))
 
 func _read_energy() -> Dictionary:
+	var now := Time.get_unix_time_from_system()
 	return {
 		"energy_pool": float(_config.get_value("energy", "energy_pool", 0.0)),
 		"reserve_tank": float(_config.get_value("energy", "reserve_tank", 0.0)),
 		"total_energy_produced": float(_config.get_value("energy", "total_energy_produced", 0.0)),
 		"today_energy": float(_config.get_value("energy", "today_energy", 0.0)),
 		"today_steps_processed": int(_config.get_value("energy", "today_steps_processed", 0)),
-		"created_at": float(_config.get_value("energy", "created_at", Time.get_unix_time_from_system())),
+		"created_at": float(_config.get_value("energy", "created_at", now)),
 		"last_energy_date": String(_config.get_value("energy", "last_energy_date", "")),
 	}
 
@@ -133,6 +131,7 @@ func _write_hatch() -> void:
 		_write_cat("cat_%d" % i, cats[i])
 
 func _read_cat(section: String) -> Dictionary:
+	var now := Time.get_unix_time_from_system()
 	return {
 		"id": String(_config.get_value(section, "id", "")),
 		"species": String(_config.get_value(section, "species", CatData.BREED_ORANGE)),
@@ -142,7 +141,7 @@ func _read_cat(section: String) -> Dictionary:
 		"level": int(_config.get_value(section, "level", 1)),
 		"exp": int(_config.get_value(section, "exp", 0)),
 		"friendship": int(_config.get_value(section, "friendship", 0)),
-		"created_at": float(_config.get_value(section, "created_at", Time.get_unix_time_from_system())),
+		"created_at": float(_config.get_value(section, "created_at", now)),
 	}
 
 func _write_cat(section: String, cat_value) -> void:
