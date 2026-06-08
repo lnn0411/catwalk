@@ -157,8 +157,8 @@ func _refresh() -> void:
 	var plugin_label = find_child("diag_plugin", true, false)
 	var perm_label = find_child("diag_perm", true, false)
 	var sig_label = find_child("diag_signal", true, false)
+	var has_plugin = Engine.has_singleton("StepCounter")
 	if plugin_label:
-		var has_plugin = Engine.has_singleton("StepCounter")
 		plugin_label.text = "Plugin: %s" % ("FOUND" if has_plugin else "NOT FOUND")
 		plugin_label.add_theme_color_override("font_color", Color.GREEN if has_plugin else Color.RED)
 	if perm_label and has_plugin:
