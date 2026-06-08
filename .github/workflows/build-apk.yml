@@ -61,4 +61,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: catwalk-debug-apk
-          path: android/build/outputs/apk/**/*.apk
+          path: android/build/build/outputs/apk/**/*.apk
