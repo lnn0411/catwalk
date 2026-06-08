@@ -48,7 +48,9 @@ func get_save_data() -> Dictionary:
 	}
 
 func _load_plugin() -> void:
+	print("[DEBUG] _load_plugin called")
 	if Engine.has_singleton(PLUGIN_NAME):
+		print("[DEBUG] StepCounter plugin FOUND")
 		step_plugin = Engine.get_singleton(PLUGIN_NAME)
 		if step_plugin.has_signal("steps_changed"):
 			step_plugin.steps_changed.connect(_on_plugin_steps_changed)
@@ -62,6 +64,7 @@ func _load_plugin() -> void:
 		_emit_steps_updated(0)
 
 func _on_permission_result(granted: bool) -> void:
+	print("[DEBUG] permission_result: granted=%s" % granted)
 	if granted:
 		_refresh_plugin_steps()
 
@@ -71,6 +74,7 @@ func _refresh_plugin_steps() -> void:
 	_on_plugin_steps_changed(int(step_plugin.getSteps()))
 
 func _on_plugin_steps_changed(raw_steps: int) -> void:
+	print("[DEBUG] steps_changed signal: raw=%d, last_plugin=%d" % [raw_steps, last_plugin_steps])
 	_check_daily_reset()
 	raw_steps = max(raw_steps, 0)
 	if raw_steps < last_plugin_steps:
