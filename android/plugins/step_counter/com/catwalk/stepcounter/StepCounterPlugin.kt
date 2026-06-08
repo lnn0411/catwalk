@@ -100,7 +100,8 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		)
 		// Godot 4.x plugin system does not reliably forward onRequestPermissionsResult
 		// to onMainRequestPermissionsResult. As a fallback, poll the permission state
-		// after a short delay to detect when the user has granted it.
+		// every 800ms for up to 6 attempts (4.8s total).
+		permissionRetryCount = 0
 		schedulePermissionFallbackCheck()
 	}
 
@@ -130,10 +131,16 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		handler.removeCallbacks(PERMISSION_FALLBACK_RUNNABLE)
 	}
 
+	private var permissionRetryCount = 0
 	private val PERMISSION_FALLBACK_RUNNABLE = Runnable {
-		if (!countingStarted && hasActivityRecognitionPermission()) {
+		if (hasActivityRecognitionPermission()) {
 			emitSignal(permissionResultSignal, java.lang.Boolean(true))
 			startStepCounter()
+			return
+		}
+		permissionRetryCount++
+		if (permissionRetryCount < 6) {
+			handler.postDelayed(this, PERMISSION_FALLBACK_DELAY_MS)
 		}
 	}
 
