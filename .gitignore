@@ -31,5 +31,4 @@ android/build/libs/
 
 # Godot android/build 完整忽略
 android/build/res/
-android/build/src/main/java/com/
 android/build/src/main/assets/
