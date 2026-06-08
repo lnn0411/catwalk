@@ -59,6 +59,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 
 	override fun onMainPause() {
 		super.onMainPause()
+		countingStarted = false
 		sensorManager?.unregisterListener(this)
 	}
 

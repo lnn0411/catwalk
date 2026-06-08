@@ -12,6 +12,7 @@ var slot_bars: Array[ProgressBar] = []
 var slot_labels: Array[Label] = []
 var cat_list: VBoxContainer
 var confirm_reset: ConfirmationDialog
+var confirm_reset_steps: ConfirmationDialog
 
 func _ready() -> void:
 	_build_ui()
@@ -111,6 +112,12 @@ func _build_ui() -> void:
 	var archive_reset := _make_primary_button("Archive Reset")
 	archive_reset.pressed.connect(func(): confirm_reset.popup_centered())
 	content.add_child(archive_reset)
+
+	confirm_reset_steps = ConfirmationDialog.new()
+	confirm_reset_steps.title = "Reset Debug State"
+	confirm_reset_steps.dialog_text = "Clear saved steps, energy, slots, and cats?"
+	confirm_reset_steps.confirmed.connect(_on_reset_steps_confirmed)
+	add_child(confirm_reset_steps)
 
 	confirm_reset = ConfirmationDialog.new()
 	confirm_reset.title = "Archive Reset"
@@ -256,6 +263,9 @@ func _on_add_steps(amount: int) -> void:
 	StepEngine.add_mock_steps(amount)
 
 func _on_reset_steps() -> void:
+	confirm_reset_steps.popup_centered()
+
+func _on_reset_steps_confirmed() -> void:
 	StepEngine.apply_save({})
 	EnergyEngine.apply_save({})
 	HatchEngine.apply_save({})
