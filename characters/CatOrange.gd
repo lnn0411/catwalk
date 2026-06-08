@@ -16,11 +16,11 @@ func _ready():
 
 func _draw():
 	# 身体
-	draw_ellipse(Rect2(Vector2(0, 8) - Vector2(25, 19), Vector2(50.0, 38.0)), body_color)
+	draw_ellipse(Vector2(0, 8), 50.0, 38.0, body_color)
 	draw_arc(Vector2(0, 8), 50, 0, TAU, 32, outline_color, 1.5)
 
 	# 胸腹浅色区
-	draw_ellipse(Rect2(Vector2(0, 14) - Vector2(14, 11), Vector2(28.0, 22.0)), light_color)
+	draw_ellipse(Vector2(0, 14), 28.0, 22.0, light_color)
 
 	# 头
 	draw_circle(Vector2(0, -28), 22, body_color)
@@ -33,8 +33,8 @@ func _draw():
 	draw_polygon(ear_r, [body_color])
 
 	# 眼睛 - 扁椭圆（半眯）
-	draw_ellipse(Rect2(Vector2(-9, -30) - Vector2(3, 1.5), Vector2(6.0, 3.0)), outline_color)
-	draw_ellipse(Rect2(Vector2(9, -30) - Vector2(3, 1.5), Vector2(6.0, 3.0)), outline_color)
+	draw_ellipse(Vector2(-9, -30), 6.0, 3.0, outline_color)
+	draw_ellipse(Vector2(9, -30), 6.0, 3.0, outline_color)
 
 	# 鼻子
 	draw_polygon(PackedVector2Array([Vector2(0, -24), Vector2(-3, -21), Vector2(3, -21)]),

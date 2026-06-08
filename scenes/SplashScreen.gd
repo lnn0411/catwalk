@@ -10,7 +10,7 @@ func _draw():
 	var center = screen / 2.0
 
 	# 主掌垫（椭圆，宽48，高38）
-	draw_ellipse(Rect2(center + Vector2(0, 24) - Vector2(24, 19), Vector2(48.0, 38.0)), Palette.AMBER)
+	draw_ellipse(center + Vector2(0, 24), 48.0, 38.0, Palette.AMBER)
 
 	# 四个趾垫（小圆，半径12，排成弧形）
 	var toe_offsets = [

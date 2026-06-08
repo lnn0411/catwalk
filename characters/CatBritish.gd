@@ -16,11 +16,11 @@ func _ready():
 
 func _draw():
 	# 身体 - 更圆墩 46x40
-	draw_ellipse(Rect2(Vector2(0, 8) - Vector2(23, 20), Vector2(46.0, 40.0)), body_color)
+	draw_ellipse(Vector2(0, 8), 46.0, 40.0, body_color)
 	draw_arc(Vector2(0, 8), 46, 0, TAU, 32, outline_color, 1.5)
 
 	# 胸腹浅色区 - 稍大
-	draw_ellipse(Rect2(Vector2(0, 14) - Vector2(13, 12), Vector2(26.0, 24.0)), light_color)
+	draw_ellipse(Vector2(0, 14), 26.0, 24.0, light_color)
 
 	# 头 - 更大更圆 半径24
 	draw_circle(Vector2(0, -28), 24, body_color)
