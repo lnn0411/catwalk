@@ -42,6 +42,13 @@ func _build_ui() -> void:
 	content.add_theme_constant_override("separation", 14)
 	scroll.add_child(content)
 
+	var build_info := Label.new()
+	build_info.text = "Build: SERVER " + Time.get_datetime_string_from_system()
+	build_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	build_info.add_theme_color_override("font_color", Color.DIM_GRAY)
+	build_info.add_theme_font_size_override("font_size", 12)
+	content.add_child(build_info)
+
 	var title := Label.new()
 	title.text = "Catwalk Debug"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
