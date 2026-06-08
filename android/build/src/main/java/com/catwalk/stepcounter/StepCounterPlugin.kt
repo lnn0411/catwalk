@@ -10,7 +10,6 @@ import android.hardware.SensorManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import android.view.ViewTreeObserver
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.godotengine.godot.Godot
@@ -28,7 +27,6 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 
 	private var initialSensorSteps: Float? = null
 	private var currentSteps = 0
-	private var countingStarted = false
 	private var permissionRetryCount = 0
 
 	override fun getPluginName() = "StepCounter"
@@ -39,27 +37,11 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		super.onGodotMainLoopStarted()
 		if (hasActivityRecognitionPermission()) {
 			startStepCounter()
-		} else {
-			val view = activity?.window?.decorView ?: return
-			if (view.hasWindowFocus()) {
-				requestActivityRecognitionPermission()
-			} else {
-				view.viewTreeObserver.addOnWindowFocusChangeListener(
-					object : ViewTreeObserver.OnWindowFocusChangeListener {
-						override fun onWindowFocusChanged(hasFocus: Boolean) {
-							if (hasFocus) {
-								view.viewTreeObserver.removeOnWindowFocusChangeListener(this)
-								requestActivityRecognitionPermission()
-							}
-						}
-					})
-			}
 		}
 	}
 
 	override fun onMainPause() {
 		super.onMainPause()
-		countingStarted = false
 		sensorManager?.unregisterListener(this)
 	}
 
@@ -112,8 +94,8 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		}
 		cancelPermissionFallbackCheck()
 		val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+		emitSignal(permissionResultSignal, java.lang.Boolean(granted))
 		if (granted) {
-			emitSignal(permissionResultSignal, java.lang.Boolean(true))
 			startStepCounter()
 		}
 	}
@@ -155,10 +137,8 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 	override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
 
 	private fun startStepCounter() {
-		if (countingStarted) return
 		val sensor = sensorManager?.getDefaultSensor(Sensor.TYPE_STEP_COUNTER) ?: return
 		sensorManager?.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
-		countingStarted = true
 	}
 
 	companion object {
