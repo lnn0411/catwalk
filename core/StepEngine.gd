@@ -18,6 +18,7 @@ func add_mock_steps(n: int) -> void:
 	_check_daily_reset()
 	var delta: int = max(n, 0)
 	if delta <= 0:
+		_emit_steps_updated(0)
 		return
 
 	today_steps += delta
@@ -75,12 +76,7 @@ func _on_plugin_steps_changed(raw_steps: int) -> void:
 	raw_steps = max(raw_steps, 0)
 	if raw_steps < last_plugin_steps:
 		last_plugin_steps = raw_steps
-		if raw_steps <= 0:
-			_emit_steps_updated(0)
-			return
-		today_steps += raw_steps
-		total_steps += raw_steps
-		_emit_steps_updated(raw_steps)
+		_emit_steps_updated(0)
 		return
 
 	var delta: int = raw_steps - last_plugin_steps
@@ -100,6 +96,7 @@ func _check_daily_reset() -> void:
 		return
 	if last_step_date != today:
 		today_steps = 0
+		last_plugin_steps = 0
 		last_step_date = today
 
 func _emit_steps_updated(delta: int) -> void:
