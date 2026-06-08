@@ -29,6 +29,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 	private var initialSensorSteps: Float? = null
 	private var currentSteps = 0
 	private var countingStarted = false
+	private var permissionRetryCount = 0
 
 	override fun getPluginName() = "StepCounter"
 
@@ -39,7 +40,6 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		if (hasActivityRecognitionPermission()) {
 			startStepCounter()
 		} else {
-			// Defer permission request until window has focus (required by Android)
 			val view = activity?.window?.decorView ?: return
 			if (view.hasWindowFocus()) {
 				requestActivityRecognitionPermission()
@@ -98,9 +98,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 			arrayOf(Manifest.permission.ACTIVITY_RECOGNITION),
 			ACTIVITY_RECOGNITION_REQUEST_CODE
 		)
-		// Godot 4.x plugin system does not reliably forward onRequestPermissionsResult
-		// to onMainRequestPermissionsResult. As a fallback, poll the permission state
-		// after a short delay to detect when the user has granted it.
+		permissionRetryCount = 0
 		schedulePermissionFallbackCheck()
 	}
 
@@ -112,28 +110,34 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 		if (requestCode != ACTIVITY_RECOGNITION_REQUEST_CODE) {
 			return
 		}
-		// Cancel the fallback poll since we received the real callback
 		cancelPermissionFallbackCheck()
 		val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-		emitSignal(permissionResultSignal, java.lang.Boolean(granted))
 		if (granted) {
+			emitSignal(permissionResultSignal, java.lang.Boolean(true))
 			startStepCounter()
 		}
 	}
 
 	private fun schedulePermissionFallbackCheck() {
 		cancelPermissionFallbackCheck()
-		handler.postDelayed(PERMISSION_FALLBACK_RUNNABLE, PERMISSION_FALLBACK_DELAY_MS)
+		handler.postDelayed(permissionFallbackRunnable, PERMISSION_FALLBACK_DELAY_MS)
 	}
 
 	private fun cancelPermissionFallbackCheck() {
-		handler.removeCallbacks(PERMISSION_FALLBACK_RUNNABLE)
+		handler.removeCallbacks(permissionFallbackRunnable)
 	}
 
-	private val PERMISSION_FALLBACK_RUNNABLE = Runnable {
-		if (!countingStarted && hasActivityRecognitionPermission()) {
-			emitSignal(permissionResultSignal, java.lang.Boolean(true))
-			startStepCounter()
+	private val permissionFallbackRunnable = object : Runnable {
+		override fun run() {
+			if (hasActivityRecognitionPermission()) {
+				emitSignal(permissionResultSignal, java.lang.Boolean(true))
+				startStepCounter()
+				return
+			}
+			permissionRetryCount++
+			if (permissionRetryCount < 6) {
+				handler.postDelayed(this, PERMISSION_FALLBACK_DELAY_MS)
+			}
 		}
 	}
 
