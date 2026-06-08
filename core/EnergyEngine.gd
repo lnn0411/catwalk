@@ -84,8 +84,8 @@ func apply_save(data: Dictionary) -> void:
 	var saved_created_at: float = float(data.get("created_at", 0.0))
 	created_at = saved_created_at if saved_created_at > 0.0 else Time.get_unix_time_from_system()
 	last_energy_date = String(data.get("last_energy_date", _today_key()))
-\t_check_daily_reset()
-\t_emit_energy_changed()
+	_check_daily_reset()
+	_emit_energy_changed()
 
 func get_save_data() -> Dictionary:
 	return {
