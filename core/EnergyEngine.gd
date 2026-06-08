@@ -13,15 +13,13 @@ var today_energy: float = 0.0
 var today_steps_processed: int = 0
 var created_at: float = 0.0
 var last_energy_date: String = ""
-var _data_loaded := false
 
 func _ready() -> void:
-	if created_at <= 0.0:
-		created_at = Time.get_unix_time_from_system()
-	if last_energy_date == "":
-		last_energy_date = _today_key()
-	if _data_loaded:
-		_emit_energy_changed()
+\tif created_at <= 0.0:
+\t\tcreated_at = Time.get_unix_time_from_system()
+\tif last_energy_date == "":
+\t\tlast_energy_date = _today_key()
+\t_emit_energy_changed()
 
 func calc_energy(steps: int, new_player: bool) -> int:
 	var t1 := 0.3
@@ -86,9 +84,8 @@ func apply_save(data: Dictionary) -> void:
 	var saved_created_at: float = float(data.get("created_at", 0.0))
 	created_at = saved_created_at if saved_created_at > 0.0 else Time.get_unix_time_from_system()
 	last_energy_date = String(data.get("last_energy_date", _today_key()))
-	_check_daily_reset()
-	_data_loaded = true
-	_emit_energy_changed()
+\t_check_daily_reset()
+\t_emit_energy_changed()
 
 func get_save_data() -> Dictionary:
 	return {

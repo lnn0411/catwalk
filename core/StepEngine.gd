@@ -9,10 +9,10 @@ var total_steps: int = 0
 var last_plugin_steps: int = 0
 var last_step_date: String = ""
 var step_plugin: Object
-var _plugin_loaded := false
 
 func _ready() -> void:
 	last_step_date = _today_key()
+	_load_plugin()
 
 func add_mock_steps(n: int) -> void:
 	_check_daily_reset()
@@ -30,8 +30,6 @@ func apply_save(data: Dictionary) -> void:
 	last_plugin_steps = max(int(data.get("last_plugin_steps", 0)), 0)
 	last_step_date = String(data.get("last_step_date", _today_key()))
 	_check_daily_reset()
-	if not _plugin_loaded:
-		_load_plugin()
 	_emit_steps_updated(0)
 
 func get_today_steps() -> int:
@@ -60,9 +58,7 @@ func _load_plugin() -> void:
 			if step_plugin.has_method("requestActivityRecognitionPermission"):
 				step_plugin.requestActivityRecognitionPermission()
 		_refresh_plugin_steps()
-		_plugin_loaded = true
 	else:
-		_plugin_loaded = true
 		_emit_steps_updated(0)
 
 func _on_permission_result(granted: bool) -> void:
