@@ -47,7 +47,7 @@ jobs:
       - name: Copy plugin
         run: |
           mkdir -p android/build/src/main/java/com/catwalk/stepcounter
-          cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
+          cp android/plugins/step_counter/com/catwalk/stepcounter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
 
       - name: Build APK
         run: cd android/build && chmod +x gradlew && ./gradlew assembleStandardDebug
