@@ -15,11 +15,11 @@ var created_at: float = 0.0
 var last_energy_date: String = ""
 
 func _ready() -> void:
-\tif created_at <= 0.0:
-\t\tcreated_at = Time.get_unix_time_from_system()
-\tif last_energy_date == "":
-\t\tlast_energy_date = _today_key()
-\t_emit_energy_changed()
+	if created_at <= 0.0:
+		created_at = Time.get_unix_time_from_system()
+	if last_energy_date == "":
+		last_energy_date = _today_key()
+	_emit_energy_changed()
 
 func calc_energy(steps: int, new_player: bool) -> int:
 	var t1 := 0.3
