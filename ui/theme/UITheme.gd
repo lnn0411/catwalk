@@ -1,6 +1,5 @@
 extends Node
 
-class_name UITheme
 
 static func get_card_stylebox() -> StyleBoxFlat:
 	var s = StyleBoxFlat.new()

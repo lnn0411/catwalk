@@ -53,7 +53,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Palette="*res://autoload/Palette.gd"
-UITheme="*res://autoload/UITheme.gd"
+UITheme="*res://ui/theme/UITheme.gd"
 StepEngine="*res://core/StepEngine.gd"
 EnergyEngine="*res://core/EnergyEngine.gd"
 HatchEngine="*res://core/HatchEngine.gd"
