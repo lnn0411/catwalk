@@ -74,6 +74,11 @@ jobs:
           EOF
           echo "Plugin registration files created"
 
+      - name: Clean duplicate resources
+        run: |
+          find android/build/res -name "*.png" -delete
+          find android/build/res -name "*.webp" -not -path "*/template/*" 2>/dev/null | head -5
+
       - name: Export APK
         run: |
           godot --headless --path . --export-debug "Android Debug" catwalk-debug.apk
