@@ -58,26 +58,8 @@ jobs:
           mkdir -p android/build/src/main/java/com/catwalk/stepcounter
           cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
 
-      - name: Create plugin registration files
-        run: |
-          mkdir -p android/build/src/main/assets/.godot
-          mkdir -p android/build/src/main/assets/addons/step_counter
-          echo "res://addons/step_counter/StepCounter.gdextension" > android/build/src/main/assets/.godot/extension_list.cfg
-          echo "res://android/plugins/step_counter/StepCounter.gdextension" >> android/build/src/main/assets/.godot/extension_list.cfg
-          cat > android/build/src/main/assets/addons/step_counter/StepCounter.gdextension << 'EOF'
-          [configuration]
-
-          android_plugin_name="StepCounter"
-          android_plugin_type="v2"
-          android_plugin_binary_type="local"
-          android_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"
-          EOF
-          echo "Plugin registration files created"
-
       - name: Clean duplicate resources
-        run: |
-          find android/build/res -name "*.png" -delete
-          find android/build/res -name "*.webp" -not -path "*/template/*" 2>/dev/null | head -5
+        run: find android/build/res -name "*.png" -delete
 
       - name: Export APK
         run: |
@@ -85,38 +67,25 @@ jobs:
           [ -f catwalk-debug.apk ] || { echo "ERROR: APK not generated"; exit 1; }
           echo "APK exported: $(ls -lh catwalk-debug.apk)"
 
-      - name: Inject plugin registration + sign
+      - name: Inject plugin registration
+        shell: bash
         run: |
+          set -e
           mkdir -p /tmp/apk_work
           cd /tmp/apk_work
-          unzip -q -o $GITHUB_WORKSPACE/catwalk-debug.apk
+          unzip -q -o "$GITHUB_WORKSPACE/catwalk-debug.apk"
           mkdir -p assets/.godot assets/addons/step_counter
-          echo "res://addons/step_counter/StepCounter.gdextension" > assets/.godot/extension_list.cfg
-          echo "res://android/plugins/step_counter/StepCounter.gdextension" >> assets/.godot/extension_list.cfg
-          cat > assets/addons/step_counter/StepCounter.gdextension << 'EOF'
-          [configuration]
-          
-          android_plugin_name="StepCounter"
-          android_plugin_type="v2"
-          android_plugin_binary_type="local"
-          android_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"
-          EOF
-          zip -r -q $GITHUB_WORKSPACE/catwalk-debug.apk .
-          cd $GITHUB_WORKSPACE
-          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner sign 
-            --ks debug.keystore 
-            --ks-pass pass:android 
-            --ks-key-alias debug 
-            --key-pass pass:android 
-            catwalk-debug.apk
+          printf 'res://addons/step_counter/StepCounter.gdextension\nres://android/plugins/step_counter/StepCounter.gdextension\n' > assets/.godot/extension_list.cfg
+          printf '[configuration]\n\nandroid_plugin_name="StepCounter"\nandroid_plugin_type="v2"\nandroid_plugin_binary_type="local"\nandroid_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"\n' > assets/addons/step_counter/StepCounter.gdextension
+          zip -r -q "$GITHUB_WORKSPACE/catwalk-debug.apk" .
+          echo "Plugin registration injected"
+
+      - name: Sign APK
+        run: |
+          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner sign --ks debug.keystore --ks-pass pass:android --ks-key-alias debug --key-pass pass:android catwalk-debug.apk
           echo "Signed: $(ls -lh catwalk-debug.apk)"
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: catwalk-debug-apk
-          path: catwalk-debug.apk
-          if-no-files-found: error
         uses: actions/upload-artifact@v4
         with:
           name: catwalk-debug-apk
