@@ -80,6 +80,8 @@ jobs:
           printf '[configuration]\n\nandroid_plugin_name="StepCounter"\nandroid_plugin_type="v2"\nandroid_plugin_binary_type="local"\nandroid_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"\n' > assets/addons/step_counter/StepCounter.gdextension
           cp assets/addons/step_counter/StepCounter.gdextension assets/android/plugins/step_counter/StepCounter.gdextension
           zip -r -q "$GITHUB_WORKSPACE/catwalk-debug.apk" .
+          zipalign -p -f 4 "$GITHUB_WORKSPACE/catwalk-debug.apk" "$GITHUB_WORKSPACE/catwalk-aligned.apk"
+          mv "$GITHUB_WORKSPACE/catwalk-aligned.apk" "$GITHUB_WORKSPACE/catwalk-debug.apk"
           echo "Plugin registration injected"
 
       - name: Sign APK
