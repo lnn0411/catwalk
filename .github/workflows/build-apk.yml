@@ -58,24 +58,29 @@ jobs:
           mkdir -p android/build/src/main/java/com/catwalk/stepcounter
           cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
 
-      - name: Create plugin registration files
-        run: |
-          mkdir -p android/build/src/main/assets/.godot
-          mkdir -p android/build/src/main/assets/addons/step_counter
-          mkdir -p android/build/src/main/assets/android/plugins/step_counter
-          printf 'res://addons/step_counter/StepCounter.gdextension\nres://android/plugins/step_counter/StepCounter.gdextension\n' > android/build/src/main/assets/.godot/extension_list.cfg
-          printf '[configuration]\n\nandroid_plugin_name="StepCounter"\nandroid_plugin_type="v2"\nandroid_plugin_binary_type="local"\nandroid_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"\n' > android/build/src/main/assets/addons/step_counter/StepCounter.gdextension
-          cp android/build/src/main/assets/addons/step_counter/StepCounter.gdextension android/build/src/main/assets/android/plugins/step_counter/StepCounter.gdextension
-          echo "Plugin registration files created"
 
       - name: Clean duplicate resources
         run: find android/build/res -name "*.png" -delete
+
+      - name: Create plugin registration files
+        run: |
+          mkdir -p /tmp/apk_add/assets/.godot
+          mkdir -p /tmp/apk_add/assets/addons/step_counter
+          mkdir -p /tmp/apk_add/assets/android/plugins/step_counter
+          printf 'res://addons/step_counter/StepCounter.gdextension\nres://android/plugins/step_counter/StepCounter.gdextension\n' > /tmp/apk_add/assets/.godot/extension_list.cfg
+          printf '[configuration]\n\nandroid_plugin_name="StepCounter"\nandroid_plugin_type="v2"\nandroid_plugin_binary_type="local"\nandroid_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"\n' > /tmp/apk_add/assets/addons/step_counter/StepCounter.gdextension
+          cp /tmp/apk_add/assets/addons/step_counter/StepCounter.gdextension /tmp/apk_add/assets/android/plugins/step_counter/StepCounter.gdextension
 
       - name: Export APK
         run: |
           godot --headless --path . --export-debug "Android Debug" catwalk-debug.apk
           [ -f catwalk-debug.apk ] || { echo "ERROR: APK not generated"; exit 1; }
           echo "APK exported: $(ls -lh catwalk-debug.apk)"
+
+      - name: Append plugin registration to APK
+        run: |
+          cd /tmp/apk_add
+          zip -u "$GITHUB_WORKSPACE/catwalk-debug.apk" assets/.godot/extension_list.cfg assets/addons/step_counter/StepCounter.gdextension assets/android/plugins/step_counter/StepCounter.gdextension
 
       - name: Sign APK
         run: |
