@@ -58,6 +58,16 @@ jobs:
           mkdir -p android/build/src/main/java/com/catwalk/stepcounter
           cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
 
+      - name: Create plugin registration files
+        run: |
+          mkdir -p android/build/src/main/assets/.godot
+          mkdir -p android/build/src/main/assets/addons/step_counter
+          mkdir -p android/build/src/main/assets/android/plugins/step_counter
+          printf 'res://addons/step_counter/StepCounter.gdextension\nres://android/plugins/step_counter/StepCounter.gdextension\n' > android/build/src/main/assets/.godot/extension_list.cfg
+          printf '[configuration]\n\nandroid_plugin_name="StepCounter"\nandroid_plugin_type="v2"\nandroid_plugin_binary_type="local"\nandroid_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"\n' > android/build/src/main/assets/addons/step_counter/StepCounter.gdextension
+          cp android/build/src/main/assets/addons/step_counter/StepCounter.gdextension android/build/src/main/assets/android/plugins/step_counter/StepCounter.gdextension
+          echo "Plugin registration files created"
+
       - name: Clean duplicate resources
         run: find android/build/res -name "*.png" -delete
 
