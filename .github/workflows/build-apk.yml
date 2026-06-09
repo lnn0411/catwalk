@@ -85,6 +85,6 @@ jobs:
         with:
           name: catwalk-debug-apk
           path: |
-            android/build/outputs/apk/**/*.apk
+            android/build/build/outputs/apk/**/*.apk
             catwalk-debug.apk
           if-no-files-found: error
