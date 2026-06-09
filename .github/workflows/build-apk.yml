@@ -83,16 +83,25 @@ jobs:
       - name: Generate debug keystore
         run: keytool -genkey -v -keystore debug.keystore -storepass android -keypass android -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Godot export (package everything)
+
+      - name: Sign APK
         run: |
-          sed -i "s/gradle_build\/use_gradle_build=true/gradle_build\/use_gradle_build=false/" export_presets.cfg
-          godot --headless --path . --export-debug "Android Debug" catwalk-debug.apk
-          [ -f catwalk-debug.apk ] || { echo "ERROR: APK not found"; exit 1; }
-          echo "APK: $(ls -lh catwalk-debug.apk)"
+          APK=$(find android/build -path "*/outputs/apk/**/*.apk" | head -1)
+          [ -z "$APK" ] && echo "ERROR: no APK found" && exit 1
+          UNSIGNED="${APK%.apk}-unsigned.apk"
+          mv "$APK" "$UNSIGNED"
+          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner sign \
+            --ks debug.keystore \
+            --ks-pass pass:android \
+            --ks-key-alias debug \
+            --key-pass pass:android \
+            --out "$APK" \
+            "$UNSIGNED"
+          echo "Signed: $(ls -lh "$APK")"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: catwalk-debug-apk
-          path: catwalk-debug.apk
+          path: android/build/**/outputs/apk/**/*.apk
           if-no-files-found: error
