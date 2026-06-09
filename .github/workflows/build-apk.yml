@@ -77,12 +77,14 @@ jobs:
           [ -f catwalk-debug.apk ] || { echo "ERROR: APK not generated"; exit 1; }
           echo "APK exported: $(ls -lh catwalk-debug.apk)"
 
-      - name: Append plugin registration to APK
+          mv "$GITHUB_WORKSPACE/catwalk-aligned.apk" "$GITHUB_WORKSPACE/catwalk-debug.apk"
+
+      - name: Repack APK with plugin registration
         run: |
           cd /tmp/apk_add
-          zip -u "$GITHUB_WORKSPACE/catwalk-debug.apk" assets/.godot/extension_list.cfg assets/addons/step_counter/StepCounter.gdextension assets/android/plugins/step_counter/StepCounter.gdextension
-          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/zipalign -p -f 4 "$GITHUB_WORKSPACE/catwalk-debug.apk" "$GITHUB_WORKSPACE/catwalk-aligned.apk"
-          mv "$GITHUB_WORKSPACE/catwalk-aligned.apk" "$GITHUB_WORKSPACE/catwalk-debug.apk"
+          unzip -q -o "$GITHUB_WORKSPACE/catwalk-debug.apk"
+          zip -9 -r -q "$GITHUB_WORKSPACE/catwalk-repacked.apk" .
+          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/zipalign -p -f 4 "$GITHUB_WORKSPACE/catwalk-repacked.apk" "$GITHUB_WORKSPACE/catwalk-debug.apk"
 
       - name: Sign APK
         run: |
