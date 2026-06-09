@@ -73,14 +73,26 @@ jobs:
           cp android/build/src/main/assets/addons/step_counter/StepCounter.gdextension android/build/src/main/assets/android/plugins/step_counter/StepCounter.gdextension
           echo "Plugin registration files created"
 
-      - name: Gradle build APK
+      - name: Gradle build (compile Kotlin)
         run: |
           export ANDROID_HOME="${ANDROID_SDK_ROOT}"
           cd android/build
           chmod +x gradlew
           ./gradlew assembleStandardDebug
 
+      - name: Godot export (package everything)
+        run: |
+          sed -i "s/gradle_build\/use_gradle_build=true/gradle_build\/use_gradle_build=false/" export_presets.cfg
+          godot --headless --path . --export-debug "Android Debug" catwalk-debug.apk
+          [ -f catwalk-debug.apk ] || { echo "ERROR: APK not found"; exit 1; }
+          echo "APK: $(ls -lh catwalk-debug.apk)"
+
       - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: catwalk-debug-apk
+          path: catwalk-debug.apk
+          if-no-files-found: error
         uses: actions/upload-artifact@v4
         with:
           name: catwalk-debug-apk
