@@ -1,0 +1,108 @@
+name: Build APK (喵酱版)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.6.3
+          use-dotnet: false
+          include-templates: true
+
+      - uses: amyu/setup-android@v5
+        with:
+          sdk-version: 36
+          build-tools-version: 36.1.0
+          ndk-version: 29.0.14206865
+
+      - name: Generate debug keystore
+        run: |
+          keytool -genkey -v -keystore debug.keystore -storepass android -keypass android \
+            -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS \
+            -dname "CN=Android Debug,O=Android,C=US"
+
+      - name: Init Godot project
+        run: godot --headless --editor --quit
+
+      - name: Extract AAR
+        run: |
+          ZIP=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable \
+            -name "android_source.zip" | head -1)
+          mkdir -p /tmp/ga android/build/libs/debug
+          unzip -qo "$ZIP" -d /tmp/ga
+          cp /tmp/ga/libs/debug/*.aar android/build/libs/debug/ 2>/dev/null || true
+
+      - name: Copy plugin source
+        run: |
+          mkdir -p android/build/src/main/java/com/catwalk/stepcounter
+          cp android/plugins/step_counter/StepCounterPlugin.kt \
+             android/build/src/main/java/com/catwalk/stepcounter/
+
+      - name: Clean duplicate res
+        run: find android/build/res \( -name "*.png" -o -name "*.webp" \) -delete
+
+      - name: Set compress_native_libraries=true
+        run: |
+          sed -i 's/gradle_build\/compress_native_libraries=false/gradle_build\/compress_native_libraries=true/' export_presets.cfg
+          grep "compress_native_libraries=true" export_presets.cfg || {
+            echo "⚠️ 没找到 false→true 替换，可能是其他值"
+            grep "compress_native_libraries" export_presets.cfg
+          }
+
+      - name: Write registration files
+        run: |
+          mkdir -p addons/step_counter android/plugins/step_counter .godot
+          printf 'res://addons/step_counter/StepCounter.gdextension\nres://android/plugins/step_counter/StepCounter.gdextension\n' > .godot/extension_list.cfg
+          cat > addons/step_counter/StepCounter.gdextension << 'GDFILE'
+[configuration]
+
+android_plugin_name="StepCounter"
+android_plugin_type="v2"
+android_plugin_binary_type="local"
+android_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"
+GDFILE
+          cp addons/step_counter/StepCounter.gdextension android/plugins/step_counter/StepCounter.gdextension
+
+      - name: Export APK
+        run: |
+          rm -f catwalk-debug.apk
+          godot --headless --export-debug "Android Debug" catwalk-debug.apk 2>&1 || true
+          if [ ! -f catwalk-debug.apk ]; then
+            echo "❌ APK 未生成"
+            ls -la
+            exit 1
+          fi
+          echo "✅ APK: $(ls -lh catwalk-debug.apk)"
+
+      - name: Sign APK
+        run: |
+          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner sign \
+            --ks debug.keystore --ks-pass pass:android \
+            --ks-key-alias debug --key-pass pass:android catwalk-debug.apk
+          echo "✅ 签名完成"
+
+      - name: Verify
+        run: |
+          echo "大小: $(du -h catwalk-debug.apk | cut -f1)"
+          echo "libgodot: $(unzip -lv catwalk-debug.apk 2>/dev/null | grep libgodot | awk '{print $2, $3}')"
+          echo "注册文件: $(unzip -l catwalk-debug.apk 2>/dev/null | grep -c gdextension) 个"
+          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner verify catwalk-debug.apk && echo "签名: ✅ Valid" || echo "签名: ❌ Invalid"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: catwalk-debug-apk
+          path: catwalk-debug.apk
+          if-no-files-found: error
