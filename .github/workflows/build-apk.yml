@@ -83,9 +83,40 @@ jobs:
         run: |
           godot --headless --path . --export-debug "Android Debug" catwalk-debug.apk
           [ -f catwalk-debug.apk ] || { echo "ERROR: APK not generated"; exit 1; }
-          echo "APK: $(ls -lh catwalk-debug.apk)"
+          echo "APK exported: $(ls -lh catwalk-debug.apk)"
+
+      - name: Inject plugin registration + sign
+        run: |
+          mkdir -p /tmp/apk_work
+          cd /tmp/apk_work
+          unzip -q -o $GITHUB_WORKSPACE/catwalk-debug.apk
+          mkdir -p assets/.godot assets/addons/step_counter
+          echo "res://addons/step_counter/StepCounter.gdextension" > assets/.godot/extension_list.cfg
+          echo "res://android/plugins/step_counter/StepCounter.gdextension" >> assets/.godot/extension_list.cfg
+          cat > assets/addons/step_counter/StepCounter.gdextension << 'EOF'
+          [configuration]
+          
+          android_plugin_name="StepCounter"
+          android_plugin_type="v2"
+          android_plugin_binary_type="local"
+          android_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"
+          EOF
+          zip -r -q $GITHUB_WORKSPACE/catwalk-debug.apk .
+          cd $GITHUB_WORKSPACE
+          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner sign 
+            --ks debug.keystore 
+            --ks-pass pass:android 
+            --ks-key-alias debug 
+            --key-pass pass:android 
+            catwalk-debug.apk
+          echo "Signed: $(ls -lh catwalk-debug.apk)"
 
       - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: catwalk-debug-apk
+          path: catwalk-debug.apk
+          if-no-files-found: error
         uses: actions/upload-artifact@v4
         with:
           name: catwalk-debug-apk
