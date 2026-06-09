@@ -33,6 +33,9 @@ jobs:
           build-tools-version: 36.1.0
           ndk-version: 29.0.14206865
 
+      - name: Generate debug keystore
+        run: keytool -genkey -v -keystore debug.keystore -storepass android -keypass android -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Initialize Godot project
         run: godot --headless --path . --editor --quit
 
@@ -59,49 +62,27 @@ jobs:
         run: |
           mkdir -p android/build/src/main/assets/.godot
           mkdir -p android/build/src/main/assets/addons/step_counter
-          mkdir -p android/build/src/main/assets/android/plugins/step_counter
           echo "res://addons/step_counter/StepCounter.gdextension" > android/build/src/main/assets/.godot/extension_list.cfg
           echo "res://android/plugins/step_counter/StepCounter.gdextension" >> android/build/src/main/assets/.godot/extension_list.cfg
           cat > android/build/src/main/assets/addons/step_counter/StepCounter.gdextension << 'EOF'
           [configuration]
-          
+
           android_plugin_name="StepCounter"
           android_plugin_type="v2"
           android_plugin_binary_type="local"
           android_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"
           EOF
-          cp android/build/src/main/assets/addons/step_counter/StepCounter.gdextension android/build/src/main/assets/android/plugins/step_counter/StepCounter.gdextension
           echo "Plugin registration files created"
 
-      - name: Gradle build (compile Kotlin)
+      - name: Export APK
         run: |
-          export ANDROID_HOME="${ANDROID_SDK_ROOT}"
-          cd android/build
-          chmod +x gradlew
-          ./gradlew assembleStandardDebug
-
-      - name: Generate debug keystore
-        run: keytool -genkey -v -keystore debug.keystore -storepass android -keypass android -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS -dname "CN=Android Debug,O=Android,C=US"
-
-
-      - name: Sign APK
-        run: |
-          APK=$(find android/build -path "*/outputs/apk/**/*.apk" | head -1)
-          [ -z "$APK" ] && echo "ERROR: no APK found" && exit 1
-          UNSIGNED="${APK%.apk}-unsigned.apk"
-          mv "$APK" "$UNSIGNED"
-          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner sign \
-            --ks debug.keystore \
-            --ks-pass pass:android \
-            --ks-key-alias debug \
-            --key-pass pass:android \
-            --out "$APK" \
-            "$UNSIGNED"
-          echo "Signed: $(ls -lh "$APK")"
+          godot --headless --path . --export-debug "Android Debug" catwalk-debug.apk
+          [ -f catwalk-debug.apk ] || { echo "ERROR: APK not generated"; exit 1; }
+          echo "APK: $(ls -lh catwalk-debug.apk)"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: catwalk-debug-apk
-          path: android/build/**/outputs/apk/**/*.apk
+          path: catwalk-debug.apk
           if-no-files-found: error
