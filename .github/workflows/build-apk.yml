@@ -93,10 +93,3 @@ jobs:
           name: catwalk-debug-apk
           path: catwalk-debug.apk
           if-no-files-found: error
-        uses: actions/upload-artifact@v4
-        with:
-          name: catwalk-debug-apk
-          path: |
-            android/build/**/outputs/apk/**/*.apk
-            catwalk-debug.apk
-          if-no-files-found: error
