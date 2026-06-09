@@ -10,6 +10,72 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # ═══ #1 关键文件保护 ═══
+      - name: 🔒 关键文件完整性检查
+        run: |
+          errors=0
+
+          echo "── StepCounterPlugin.kt ──"
+          F="android/plugins/step_counter/StepCounterPlugin.kt"
+          if [ ! -f "$F" ]; then echo "❌ 不存在"; errors=$((errors+1))
+          else
+            for kw in onSensorChanged onAccuracyChanged getCurrentSteps; do
+              grep -q "$kw" "$F" || { echo "❌ 缺少 $kw"; errors=$((errors+1)); }
+            done
+            [ $errors -eq 0 ] && echo "✅ StepCounterPlugin.kt"
+          fi
+
+          echo "── AndroidManifest.xml ──"
+          F="android/build/src/main/AndroidManifest.xml"
+          if [ ! -f "$F" ]; then echo "❌ 不存在"; errors=$((errors+1))
+          else
+            for kw in ACTIVITY_RECOGNITION FOREGROUND_SERVICE; do
+              grep -q "$kw" "$F" || { echo "❌ 缺少 $kw"; errors=$((errors+1)); }
+            done
+            [ $errors -eq 0 ] && echo "✅ AndroidManifest.xml"
+          fi
+
+          echo "── step_counter.gdap ──"
+          F="android/plugins/step_counter/step_counter.gdap"
+          if [ ! -f "$F" ]; then echo "❌ 不存在"; errors=$((errors+1))
+          else
+            grep -q "StepCounter" "$F" || { echo "❌ 缺少 StepCounter"; errors=$((errors+1)); }
+            [ $errors -eq 0 ] && echo "✅ step_counter.gdap"
+          fi
+
+          echo "── export_presets.cfg ──"
+          F="export_presets.cfg"
+          if [ ! -f "$F" ]; then echo "❌ 不存在"; errors=$((errors+1))
+          else
+            for kw in "package/signed=true" "gradle_build/use_gradle_build=true"; do
+              grep -q "$kw" "$F" || { echo "❌ 缺少 $kw"; errors=$((errors+1)); }
+            done
+            [ $errors -eq 0 ] && echo "✅ export_presets.cfg"
+          fi
+
+          if [ $errors -gt 0 ]; then
+            echo ""
+            echo "🔴 $errors 个关键检查失败，停止打包！"
+            exit 1
+          fi
+          echo "🔒 全部 4 个文件检查通过"
+
+      # ═══ #3 传感器代码变更检测 ═══
+      - name: ⚠️ 传感器代码变更检测
+        run: |
+          if git diff --name-only HEAD~1 HEAD 2>/dev/null | grep -q "StepCounterPlugin.kt"; then
+            echo "⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️"
+            echo "⚠️ 传感器代码 (StepCounterPlugin.kt) 已变更！"
+            echo "⚠️ 需真机复测:"
+            echo "⚠️   1. 统计步数"
+            echo "⚠️   3. 杀进程重开步数不归零"
+            echo "⚠️   4. 最小化后继续计步"
+            echo "⚠️   5. 健康授权（手动）"
+            echo "⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️⚠️"
+          else
+            echo "✅ 传感器代码无变更"
+          fi
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -57,7 +123,7 @@ jobs:
         run: |
           sed -i 's/gradle_build\/compress_native_libraries=false/gradle_build\/compress_native_libraries=true/' export_presets.cfg
           grep "compress_native_libraries=true" export_presets.cfg || {
-            echo "⚠️ 没找到 false→true 替换，可能是其他值"
+            echo "⚠️ 未找到 compress_native_libraries=true，检查当前值"
             grep "compress_native_libraries" export_presets.cfg
           }
 
@@ -92,12 +158,50 @@ jobs:
             --ks-key-alias debug --key-pass pass:android catwalk-debug.apk
           echo "✅ 签名完成"
 
-      - name: Verify
+      # ═══ #2 APK 自检 ═══
+      - name: 🔍 APK 自检
         run: |
-          echo "大小: $(du -h catwalk-debug.apk | cut -f1)"
-          echo "libgodot: $(unzip -lv catwalk-debug.apk 2>/dev/null | grep libgodot | awk '{print $2, $3}')"
-          echo "注册文件: $(unzip -l catwalk-debug.apk 2>/dev/null | grep -c gdextension) 个"
-          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner verify catwalk-debug.apk && echo "签名: ✅ Valid" || echo "签名: ❌ Invalid"
+          APK="catwalk-debug.apk"
+          ERR=0
+
+          echo "── 签名 ──"
+          ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner verify $APK && echo "✅ V2+V3" || { echo "❌"; ERR=$((ERR+1)); }
+
+          echo ""
+          echo "── 大小 / 压缩 ──"
+          SIZE=$(du -h $APK | cut -f1)
+          COMPRESS=$(unzip -lv $APK 2>/dev/null | grep libgodot | awk '{print $2}')
+          echo "大小: $SIZE | libgodot: $COMPRESS"
+          [ "$COMPRESS" != "Stored" ] || { echo "❌ lib 未压缩"; ERR=$((ERR+1)); }
+
+          echo ""
+          echo "── 注册文件 ──"
+          unzip -p $APK assets/.godot/extension_list.cfg >/dev/null 2>&1 && echo "✅ extension_list.cfg" || { echo "❌"; ERR=$((ERR+1)); }
+          GFILES=$(unzip -l $APK 2>/dev/null | grep -c "gdextension" || true)
+          [ "$GFILES" -ge 2 ] && echo "✅ gdextension × $GFILES" || { echo "❌ 不足 ($GFILES/2)"; ERR=$((ERR+1)); }
+
+          echo ""
+          echo "── StepCounter DEX ──"
+          HITS=$(for i in 1 2 3 4; do unzip -p $APK classes${i}.dex 2>/dev/null | strings | grep -c StepCounter 2>/dev/null; done | paste -sd+ | bc 2>/dev/null || echo 0)
+          [ "$HITS" -ge 3 ] && echo "✅ DEX $HITS hits" || { echo "❌ 不足 ($HITS hits)"; ERR=$((ERR+1)); }
+
+          echo ""
+          echo "── Android 权限 ──"
+          MANIFEST=$(unzip -p $APK AndroidManifest.xml 2>/dev/null || true)
+          echo "$MANIFEST" | grep -q "ACTIVITY_RECOGNITION" && echo "✅ ACTIVITY_RECOGNITION" || { echo "❌ 缺少 ACTIVITY_RECOGNITION"; ERR=$((ERR+1)); }
+          echo "$MANIFEST" | grep -q "FOREGROUND_SERVICE" && echo "✅ FOREGROUND_SERVICE" || { echo "❌ 缺少 FOREGROUND_SERVICE"; ERR=$((ERR+1)); }
+
+          echo ""
+          echo "── .gdc 脚本 ──"
+          GDC=$(unzip -l $APK 2>/dev/null | grep -c "\.gdc$" || true)
+          [ "$GDC" -ge 5 ] && echo "✅ gdc × $GDC" || { echo "❌ 不足 ($GDC)"; ERR=$((ERR+1)); }
+
+          echo ""
+          if [ $ERR -gt 0 ]; then
+            echo "🔴 自检失败: $ERR 项"
+            exit 1
+          fi
+          echo "🔍 自检全绿 ✅"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
