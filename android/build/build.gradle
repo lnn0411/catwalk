@@ -6,6 +6,9 @@ plugins {
 
 apply from: 'config.gradle'
 
+// Redirect build output to avoid double build/ in path
+buildDir = file('outputs')
+
 allprojects {
     repositories {
         google()
