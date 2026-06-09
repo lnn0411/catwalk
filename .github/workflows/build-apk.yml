@@ -58,11 +58,10 @@ jobs:
           mkdir -p android/build/src/main/java/com/catwalk/stepcounter
           cp android/plugins/step_counter/StepCounterPlugin.kt android/build/src/main/java/com/catwalk/stepcounter/
 
-
       - name: Clean duplicate resources
         run: find android/build/res -name "*.png" -delete
 
-      - name: Create plugin registration files
+      - name: Prepare plugin registration files
         run: |
           mkdir -p /tmp/apk_add/assets/.godot
           mkdir -p /tmp/apk_add/assets/addons/step_counter
@@ -70,6 +69,7 @@ jobs:
           printf 'res://addons/step_counter/StepCounter.gdextension\nres://android/plugins/step_counter/StepCounter.gdextension\n' > /tmp/apk_add/assets/.godot/extension_list.cfg
           printf '[configuration]\n\nandroid_plugin_name="StepCounter"\nandroid_plugin_type="v2"\nandroid_plugin_binary_type="local"\nandroid_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"\n' > /tmp/apk_add/assets/addons/step_counter/StepCounter.gdextension
           cp /tmp/apk_add/assets/addons/step_counter/StepCounter.gdextension /tmp/apk_add/assets/android/plugins/step_counter/StepCounter.gdextension
+          echo "Registration files prepared"
 
       - name: Export APK
         run: |
@@ -77,14 +77,13 @@ jobs:
           [ -f catwalk-debug.apk ] || { echo "ERROR: APK not generated"; exit 1; }
           echo "APK exported: $(ls -lh catwalk-debug.apk)"
 
-          mv "$GITHUB_WORKSPACE/catwalk-aligned.apk" "$GITHUB_WORKSPACE/catwalk-debug.apk"
-
       - name: Repack APK with plugin registration
         run: |
           cd /tmp/apk_add
           unzip -q -o "$GITHUB_WORKSPACE/catwalk-debug.apk"
           zip -9 -r -q "$GITHUB_WORKSPACE/catwalk-repacked.apk" .
           ${ANDROID_SDK_ROOT}/build-tools/36.1.0/zipalign -p -f 4 "$GITHUB_WORKSPACE/catwalk-repacked.apk" "$GITHUB_WORKSPACE/catwalk-debug.apk"
+          ls -lh "$GITHUB_WORKSPACE/catwalk-debug.apk"
 
       - name: Sign APK
         run: |
