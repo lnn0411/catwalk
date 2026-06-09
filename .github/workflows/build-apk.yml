@@ -76,9 +76,10 @@ jobs:
           unzip -q -o "$GITHUB_WORKSPACE/catwalk-debug.apk"
           mkdir -p assets/.godot assets/addons/step_counter
           mkdir -p assets/android/plugins/step_counter
-          cp assets/addons/step_counter/StepCounter.gdextension assets/android/plugins/step_counter/StepCounter.gdextension
           printf 'res://addons/step_counter/StepCounter.gdextension\nres://android/plugins/step_counter/StepCounter.gdextension\n' > assets/.godot/extension_list.cfg
+          cp assets/addons/step_counter/StepCounter.gdextension assets/android/plugins/step_counter/StepCounter.gdextension
           printf '[configuration]\n\nandroid_plugin_name="StepCounter"\nandroid_plugin_type="v2"\nandroid_plugin_binary_type="local"\nandroid_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"\n' > assets/addons/step_counter/StepCounter.gdextension
+          cp assets/addons/step_counter/StepCounter.gdextension assets/android/plugins/step_counter/StepCounter.gdextension
           zip -r -q "$GITHUB_WORKSPACE/catwalk-debug.apk" .
           echo "Plugin registration injected"
 
