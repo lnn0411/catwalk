@@ -469,12 +469,13 @@ class EnergyMeter:
 		_refresh()
 
 	func _refresh() -> void:
-		print("[EnergyMeter._refresh] fill=%s label=%s current=%.0f max=%.0f" % [_fill != null, _label != null, current, max_value])
+		print("[EnergyMeter._refresh] fill=%s label=%s current=%.0f max=%.0f in_tree=%s" % [_fill != null, _label != null, current, max_value, is_inside_tree()])
 		if _fill == null or _label == null:
 			return
 		var ratio: float = clampf(current / max_value, 0.0, 1.0)
 		_fill.size = Vector2(200.0 * ratio, 16.0)
 		_label.text = "%s/%s" % [_format_number(int(current)), _format_number(int(max_value))]
+		print("[EnergyMeter] ratio=%.2f fill_size=(%.0f,%.0f) label=%s" % [ratio, _fill.size.x, _fill.size.y, _label.text])
 
 	func _format_number(value: int) -> String:
 		var raw: String = str(value)
