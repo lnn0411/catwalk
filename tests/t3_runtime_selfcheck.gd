@@ -1,5 +1,7 @@
 extends Node
 
+const CatData := preload("res://core/CatData.gd")
+
 # ============================================================
 # 猫步天下 · 运行时自检测试套件 v2（严谨版）
 # ------------------------------------------------------------
@@ -193,14 +195,14 @@ func _t_hatch_engine() -> void:
 	_ok("非ready槽 collect=null", H.collect_ready_slot(0) == null)
 	_eq("非ready collect 不产猫", H.get_cats().size(), 0)
 
-	# C5 串行填充：slot0 满才轮到 slot1
+	# C5 轮询填充：collect slot0 后 _next_fill_slot=1，下一轮轮到 slot1
 	SaveManager.reset_all()
 	H.feed_energy(4250.0)
-	H.collect_ready_slot(0)                       # 产1猫，slot1解锁，slot0/1都incubating
-	H.feed_energy(4250.0)                          # 只够1颗
+	H.collect_ready_slot(0)                       # 产1猫，slot1解锁，slot0/1都incubating，_next_fill_slot=1
+	H.feed_energy(4250.0)                          # 轮询从 slot1 开始
 	var s = H.get_slots()
-	_eq("串行: slot0 先满=ready", String(s[0].get("status","")), "ready")
-	_near("串行: slot1 仍为0", float(s[1].get("energy",0)), 0.0)
+	_eq("轮询: collect slot0 后轮到 slot1=ready", String(s[1].get("status","")), "ready")
+	_near("轮询: slot1 满 4250", float(s[1].get("energy",0)), 4250.0)
 
 	# C6 槽位按孵化数解锁
 	SaveManager.reset_all()
