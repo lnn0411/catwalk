@@ -18,11 +18,19 @@ static func show_confirm(title: String, content: String, on_confirm: Callable) -
 	for child in root.get_children():
 		if child is DialogOverlay:
 			child.queue_free()
+		elif child is CanvasLayer:
+			for sub in child.get_children():
+				if sub is DialogOverlay:
+					sub.queue_free()
 	var overlay := DialogOverlay.new()
 	overlay.title = title
 	overlay.content = content
 	overlay.confirm_callback = on_confirm
-	root.add_child(overlay)
+	# Wrap in CanvasLayer(layer=100) to render above UIManager (layer=10)
+	var canvas := CanvasLayer.new()
+	canvas.layer = 100
+	canvas.add_child(overlay)
+	root.add_child(canvas)
 
 static func show_toast(message: String) -> void:
 	var root := _get_root()
