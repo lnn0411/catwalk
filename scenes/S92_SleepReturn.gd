@@ -23,7 +23,7 @@ func _draw() -> void:
 func _days_since_last_open() -> int:
 	if EnergyEngine == null:
 		return 0
-	var elapsed := max(Time.get_unix_time_from_system() - EnergyEngine.created_at, 0.0)
+	var elapsed: float = max(Time.get_unix_time_from_system() - EnergyEngine.created_at, 0.0)
 	return int(floor(elapsed / float(24 * 60 * 60)))
 
 func _released_position(event: InputEvent) -> Variant:
