@@ -298,6 +298,7 @@ func _refresh_energy() -> void:
 	if EnergyEngine:
 		current = EnergyEngine.energy_pool
 		max_value = EnergyEngine.MAX_ENERGY_POOL
+	print("[Refresh] energy bar set: %.0f/%.0f" % [current, max_value])
 	_energy_bar.set_energy(current, max_value)
 
 func _refresh_slots() -> void:
@@ -371,8 +372,10 @@ func _add_mock_steps(amount: int) -> void:
 		SaveManager.save_all()
 
 func _reset_save() -> void:
+	print("[Reset] before: steps=%d energy=%.0f" % [StepEngine.get_today_steps(), EnergyEngine.energy_pool])
 	if SaveManager:
 		SaveManager.reset_all()
+	print("[Reset] after: steps=%d energy=%.0f" % [StepEngine.get_today_steps(), EnergyEngine.energy_pool])
 	# 清除画面上的猫
 	if cat_container:
 		for child in cat_container.get_children():
