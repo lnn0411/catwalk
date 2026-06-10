@@ -7,6 +7,7 @@ const MAX_RESERVE_TANK := 6000.0
 const NEW_PLAYER_DAYS := 7
 
 var energy_pool: float = 0.0
+# Reserve energy auto-drains back into the pool whenever the pool has space.
 var reserve_tank: float = 0.0
 var total_energy_produced: float = 0.0
 var today_energy: float = 0.0
@@ -38,6 +39,7 @@ func process_steps(delta_steps: int) -> float:
 	_check_daily_reset()
 	var delta: int = max(delta_steps, 0)
 	if delta <= 0:
+		_drain_reserve_to_pool()
 		_emit_energy_changed()
 		return 0.0
 
@@ -46,6 +48,7 @@ func process_steps(delta_steps: int) -> float:
 	var produced: float = max(next_today_energy - today_energy, 0.0)
 	today_energy = next_today_energy
 	if produced <= 0.0:
+		_drain_reserve_to_pool()
 		_emit_energy_changed()
 		return 0.0
 
@@ -61,6 +64,7 @@ func process_steps(delta_steps: int) -> float:
 		reserve_tank += to_reserve
 
 	total_energy_produced += produced
+	_drain_reserve_to_pool()
 	_emit_energy_changed()
 	return produced
 
@@ -101,6 +105,13 @@ func get_pool_fill_ratio() -> float:
 
 func _emit_energy_changed() -> void:
 	energy_changed.emit(energy_pool, MAX_ENERGY_POOL, reserve_tank)
+
+func _drain_reserve_to_pool() -> void:
+	while energy_pool < MAX_ENERGY_POOL and reserve_tank > 0.0:
+		var pool_space: float = MAX_ENERGY_POOL - energy_pool
+		var to_pool: float = min(pool_space, reserve_tank)
+		energy_pool += to_pool
+		reserve_tank -= to_pool
 
 func _check_daily_reset() -> void:
 	var today: String = _today_key()
