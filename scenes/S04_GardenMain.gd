@@ -469,6 +469,7 @@ class EnergyMeter:
 		_refresh()
 
 	func _refresh() -> void:
+		print("[EnergyMeter._refresh] fill=%s label=%s current=%.0f max=%.0f" % [_fill != null, _label != null, current, max_value])
 		if _fill == null or _label == null:
 			return
 		var ratio: float = clampf(current / max_value, 0.0, 1.0)
