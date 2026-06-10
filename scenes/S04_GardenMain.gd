@@ -432,32 +432,16 @@ class EnergyMeter:
 
 	var current: float = 0.0
 	var max_value: float = 15000.0
-	var _bg: TextureRect
-	var _fill: TextureRect
 	var _label: Label
 
 	func set_energy(value: float, limit: float) -> void:
 		current = maxf(value, 0.0)
 		max_value = maxf(limit, 1.0)
-		_refresh()
+		queue_redraw()
+		if _label:
+			_label.text = "%s/%s" % [_fmt(int(current)), _fmt(int(max_value))]
 
 	func _ready() -> void:
-		_bg = TextureRect.new()
-		_bg.texture = load(UI_TEXTURE_PATH + "energy_bar_bg.png")
-		_bg.stretch_mode = TextureRect.STRETCH_SCALE
-		_bg.position = Vector2(0.0, 8.0)
-		_bg.size = Vector2(200.0, 16.0)
-		_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(_bg)
-
-		_fill = TextureRect.new()
-		_fill.texture = load(UI_TEXTURE_PATH + "energy_bar_fill.png")
-		_fill.stretch_mode = TextureRect.STRETCH_SCALE
-		_fill.position = Vector2(0.0, 8.0)
-		_fill.size = Vector2(0.0, 16.0)
-		_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(_fill)
-
 		_label = Label.new()
 		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -466,18 +450,15 @@ class EnergyMeter:
 		_label.size = Vector2(200.0, 36.0)
 		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_label)
-		_refresh()
 
-	func _refresh() -> void:
-		print("[EnergyMeter._refresh] fill=%s label=%s current=%.0f max=%.0f in_tree=%s" % [_fill != null, _label != null, current, max_value, is_inside_tree()])
-		if _fill == null or _label == null:
-			return
+	func _draw() -> void:
+		var bar_rect := Rect2(0.0, 8.0, 200.0, 16.0)
+		draw_rect(bar_rect, Palette.BORDER_DEFAULT, true)
 		var ratio: float = clampf(current / max_value, 0.0, 1.0)
-		_fill.size = Vector2(200.0 * ratio, 16.0)
-		_label.text = "%s/%s" % [_format_number(int(current)), _format_number(int(max_value))]
-		print("[EnergyMeter] ratio=%.2f fill_size=(%.0f,%.0f) label=%s" % [ratio, _fill.size.x, _fill.size.y, _label.text])
+		draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * ratio, bar_rect.size.y)), Palette.AMBER, true)
+		draw_rect(bar_rect, Palette.BORDER_ACTIVE, false, 2.0)
 
-	func _format_number(value: int) -> String:
+	func _fmt(value: int) -> String:
 		var raw: String = str(value)
 		var result: String = ""
 		var count: int = 0
