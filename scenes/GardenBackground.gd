@@ -49,9 +49,9 @@ func _draw():
 		Vector2(60, 800), Vector2(1970, 750),
 	]
 	for pos in grass_positions:
-		draw_ellipse(pos, Vector2(8, 4), grass_color)
-		draw_ellipse(pos + Vector2(6, -3), Vector2(6, 3), grass_color)
-		draw_ellipse(pos + Vector2(-5, -2), Vector2(5, 3), grass_color)
+		draw_ellipse(pos, 8.0, 4.0, grass_color)
+		draw_ellipse(pos + Vector2(6, -3), 6.0, 3.0, grass_color)
+		draw_ellipse(pos + Vector2(-5, -2), 5.0, 3.0, grass_color)
 
 	# 瓷碗（右下区域，固定坐标 1680, 1320）
 	var bowl_color = Color("#D4C8BC")
