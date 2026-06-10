@@ -19,7 +19,7 @@ jobs:
           F="android/plugins/step_counter/StepCounterPlugin.kt"
           if [ ! -f "$F" ]; then echo "❌ 不存在"; errors=$((errors+1))
           else
-            for kw in onSensorChanged onAccuracyChanged getCurrentSteps; do
+            for kw in onSensorChanged onAccuracyChanged getSteps rawSensorSteps; do
               grep -q "$kw" "$F" || { echo "❌ 缺少 $kw"; errors=$((errors+1)); }
             done
             [ $errors -eq 0 ] && echo "✅ StepCounterPlugin.kt"
