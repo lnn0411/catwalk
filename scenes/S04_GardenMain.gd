@@ -11,6 +11,7 @@ const ACTION_HEIGHT := 64.0
 const HATCH_HEIGHT := 56.0
 const NAV_HEIGHT := 56.0
 const CONTENT_SCALE := 0.48
+const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 
 var garden_layer: Node2D
 var cat_container: Node2D
@@ -90,11 +91,19 @@ func _build_hud() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
-	var top_bar := ColorRect.new()
-	top_bar.color = Palette.BG_WARM_WHITE
-	top_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
-	top_bar.custom_minimum_size = Vector2(0.0, HUD_HEIGHT)
+	var top_bar := TextureRect.new()
+	top_bar.texture = load(UI_TEXTURE_PATH + "hud_top_bg.png")
+	top_bar.stretch_mode = TextureRect.STRETCH_SCALE
+	top_bar.anchor_left = 0.0
+	top_bar.anchor_right = 1.0
+	top_bar.anchor_top = 0.0
+	top_bar.anchor_bottom = 0.0
+	top_bar.offset_left = 0.0
+	top_bar.offset_right = 0.0
+	top_bar.offset_top = 0.0
+	top_bar.offset_bottom = HUD_HEIGHT
 	top_bar.size = Vector2(720.0, HUD_HEIGHT)
+	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_bar)
 
 	var top_row := HBoxContainer.new()
@@ -108,10 +117,11 @@ func _build_hud() -> void:
 	steps_box.add_theme_constant_override("separation", 5)
 	top_row.add_child(steps_box)
 
-	var steps_icon := Label.new()
-	steps_icon.text = "👣"
-	steps_icon.add_theme_font_size_override("font_size", 20)
-	steps_icon.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+	var steps_icon := TextureRect.new()
+	steps_icon.texture = load(UI_TEXTURE_PATH + "icon_steps.png")
+	steps_icon.custom_minimum_size = Vector2(30.0, 30.0)
+	steps_icon.stretch_mode = TextureRect.STRETCH_SCALE
+	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	steps_box.add_child(steps_icon)
 
 	_steps_label = Label.new()
@@ -121,9 +131,21 @@ func _build_hud() -> void:
 	_steps_label.gui_input.connect(_on_steps_label_input)
 	steps_box.add_child(_steps_label)
 
+	var energy_box := HBoxContainer.new()
+	energy_box.custom_minimum_size = Vector2(248.0, 50.0)
+	energy_box.add_theme_constant_override("separation", 5)
+	top_row.add_child(energy_box)
+
+	var energy_icon := TextureRect.new()
+	energy_icon.texture = load(UI_TEXTURE_PATH + "icon_energy.png")
+	energy_icon.custom_minimum_size = Vector2(30.0, 30.0)
+	energy_icon.stretch_mode = TextureRect.STRETCH_SCALE
+	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	energy_box.add_child(energy_icon)
+
 	_energy_bar = EnergyMeter.new()
 	_energy_bar.custom_minimum_size = Vector2(200.0, 36.0)
-	top_row.add_child(_energy_bar)
+	energy_box.add_child(_energy_bar)
 
 	var currency_box := HBoxContainer.new()
 	currency_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -152,9 +174,15 @@ func _build_hud() -> void:
 	action_row.size = Vector2(624.0, ACTION_HEIGHT)
 	action_row.add_theme_constant_override("separation", 11)
 	root.add_child(action_row)
-	for title in ["喂食", "抚摸", "玩耍", "拍照"]:
+	for data in [
+		{"title": "喂食", "texture": "btn_feed.png"},
+		{"title": "抚摸", "texture": "btn_pet.png"},
+		{"title": "玩耍", "texture": "btn_play.png"},
+		{"title": "拍照", "texture": "btn_photo.png"},
+	]:
 		var button := GardenActionButton.new()
-		button.text = title
+		button.text = String(data["title"])
+		button.texture_path = UI_TEXTURE_PATH + String(data["texture"])
 		button.custom_minimum_size = Vector2(150.0, 48.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		action_row.add_child(button)
@@ -210,13 +238,15 @@ func _build_debug_panel() -> void:
 		["Reset Save", func() -> void: _reset_save()],
 		["Show/Hide stats", func() -> void: _toggle_stats()],
 	]:
-		var button := Button.new()
-		button.text = String(item[0])
+		var button := DebugTextureButton.new()
+		button.label_text = String(item[0])
+		var texture_name := "btn_speedup.png" if String(item[0]) == "Reset Save" else "btn_inject.png"
+		button.texture_normal = load(UI_TEXTURE_PATH + texture_name)
+		button.texture_pressed = button.texture_normal
+		button.texture_hover = button.texture_normal
+		button.stretch_mode = TextureButton.STRETCH_SCALE
 		button.custom_minimum_size = Vector2(0.0, 37.0)
 		button.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
-		button.add_theme_stylebox_override("normal", _make_box_style(Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, 6))
-		button.add_theme_stylebox_override("hover", _make_box_style(Palette.BG_WARM_WHITE, Palette.BORDER_ACTIVE, 6))
-		button.add_theme_stylebox_override("pressed", _make_box_style(Palette.AMBER, Palette.BORDER_ACTIVE, 6))
 		button.pressed.connect(item[1])
 		box.add_child(button)
 
@@ -386,23 +416,48 @@ class EnergyMeter:
 
 	var current: float = 0.0
 	var max_value: float = 15000.0
+	var _bg: TextureRect
+	var _fill: TextureRect
+	var _label: Label
 
 	func set_energy(value: float, limit: float) -> void:
 		current = maxf(value, 0.0)
 		max_value = maxf(limit, 1.0)
-		queue_redraw()
+		_refresh()
 
-	func _draw() -> void:
-		var bar_rect: Rect2 = Rect2(0.0, 8.0, 200.0, 16.0)
-		draw_rect(bar_rect, Palette.BORDER_DEFAULT, true)
+	func _ready() -> void:
+		_bg = TextureRect.new()
+		_bg.texture = load(UI_TEXTURE_PATH + "energy_bar_bg.png")
+		_bg.stretch_mode = TextureRect.STRETCH_SCALE
+		_bg.position = Vector2(0.0, 8.0)
+		_bg.size = Vector2(200.0, 16.0)
+		_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_bg)
+
+		_fill = TextureRect.new()
+		_fill.texture = load(UI_TEXTURE_PATH + "energy_bar_fill.png")
+		_fill.stretch_mode = TextureRect.STRETCH_SCALE
+		_fill.position = Vector2(0.0, 8.0)
+		_fill.size = Vector2(0.0, 16.0)
+		_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_fill)
+
+		_label = Label.new()
+		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_label.add_theme_font_size_override("font_size", 14)
+		_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+		_label.size = Vector2(200.0, 36.0)
+		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_label)
+		_refresh()
+
+	func _refresh() -> void:
+		if _fill == null or _label == null:
+			return
 		var ratio: float = clampf(current / max_value, 0.0, 1.0)
-		draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * ratio, bar_rect.size.y)), Palette.AMBER, true)
-		draw_rect(bar_rect, Palette.BORDER_ACTIVE, false, 2.0)
-
-		var font: Font = ThemeDB.fallback_font
-		var text: String = "%s/%s" % [_format_number(int(current)), _format_number(int(max_value))]
-		var text_size: Vector2 = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14)
-		draw_string(font, Vector2((bar_rect.size.x - text_size.x) * 0.5, 22.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Palette.TEXT_PRIMARY)
+		_fill.size = Vector2(200.0 * ratio, 16.0)
+		_label.text = "%s/%s" % [_format_number(int(current)), _format_number(int(max_value))]
 
 	func _format_number(value: int) -> String:
 		var raw: String = str(value)
@@ -416,26 +471,48 @@ class EnergyMeter:
 		return result
 
 class GardenActionButton:
-	extends Button
+	extends TextureButton
+
+	var texture_path := ""
+	var text := ""
+	var _label: Label
 
 	func _ready() -> void:
-		flat = true
-		add_theme_font_size_override("font_size", 16)
+		texture_normal = load(texture_path)
+		texture_pressed = texture_normal
+		texture_hover = texture_normal
+		texture_disabled = texture_normal
+		stretch_mode = TextureButton.STRETCH_SCALE
+		_label = Label.new()
+		_label.text = text
+		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_label.add_theme_font_size_override("font_size", 16)
+		_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_label)
 		set_enabled(true)
 
 	func set_enabled(value: bool) -> void:
 		disabled = not value
-		add_theme_color_override("font_color", Palette.TEXT_ON_AMBER if value else Palette.TEXT_SECONDARY)
-		queue_redraw()
+		if _label:
+			_label.add_theme_color_override("font_color", Palette.TEXT_ON_AMBER if value else Palette.TEXT_SECONDARY)
 
-	func _draw() -> void:
-		var bg := Palette.AMBER if not disabled else Palette.BORDER_DEFAULT
-		var style := StyleBoxFlat.new()
-		style.bg_color = bg
-		style.border_color = Palette.BORDER_ACTIVE if not disabled else Palette.BORDER_DEFAULT
-		style.set_border_width_all(2)
-		style.set_corner_radius_all(8)
-		draw_style_box(style, Rect2(Vector2.ZERO, size))
+class DebugTextureButton:
+	extends TextureButton
+
+	var label_text := ""
+
+	func _ready() -> void:
+		var label := Label.new()
+		label.text = label_text
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.add_theme_font_size_override("font_size", 13)
+		label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+		label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(label)
 
 class HatchSlotView:
 	extends Control
@@ -444,13 +521,37 @@ class HatchSlotView:
 
 	var slot_index := 0
 	var slot_data: Dictionary = {}
+	var _frame: TextureRect
+	var _icon_label: Label
+	var _detail_label: Label
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
+		_frame = TextureRect.new()
+		_frame.texture = load(UI_TEXTURE_PATH + "slot_frame_empty.png")
+		_frame.stretch_mode = TextureRect.STRETCH_SCALE
+		_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_frame)
+
+		_icon_label = Label.new()
+		_icon_label.position = Vector2(11.0, 5.0)
+		_icon_label.size = Vector2(28.0, 24.0)
+		_icon_label.add_theme_font_size_override("font_size", 16)
+		_icon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_icon_label)
+
+		_detail_label = Label.new()
+		_detail_label.position = Vector2(41.0, 5.0)
+		_detail_label.size = Vector2(104.0, 24.0)
+		_detail_label.add_theme_font_size_override("font_size", 12)
+		_detail_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+		_detail_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_detail_label)
 
 	func set_slot_data(data: Dictionary) -> void:
 		slot_data = data
-		queue_redraw()
+		_refresh()
 
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -460,7 +561,9 @@ class HatchSlotView:
 			slot_pressed.emit(slot_index)
 			accept_event()
 
-	func _draw() -> void:
+	func _refresh() -> void:
+		if _frame == null:
+			return
 		var unlocked := bool(slot_data.get("unlocked", slot_index == 0))
 		var status := String(slot_data.get("status", "empty" if slot_index == 0 else "locked"))
 		var energy := float(slot_data.get("energy", 0.0))
@@ -468,14 +571,6 @@ class HatchSlotView:
 		var progress: float = 0.0
 		if max_energy > 0.0:
 			progress = clamp(energy / max_energy, 0.0, 1.0)
-
-		var border_color := Palette.BORDER_ACTIVE if unlocked else Palette.BORDER_DEFAULT
-		var style := StyleBoxFlat.new()
-		style.bg_color = Palette.BG_WARM_WHITE
-		style.border_color = border_color
-		style.set_border_width_all(2)
-		style.set_corner_radius_all(8)
-		draw_style_box(style, Rect2(Vector2.ZERO, size))
 
 		var icon := "🔒"
 		var detail := ""
@@ -486,14 +581,14 @@ class HatchSlotView:
 			icon = "🥚"
 			detail = "等待能量填充"
 
-		var font := ThemeDB.fallback_font
-		draw_string(font, Vector2(11.0, 22.0), icon, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Palette.TEXT_PRIMARY if unlocked else Palette.TEXT_SECONDARY)
-		draw_string(font, Vector2(41.0, 22.0), detail, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Palette.TEXT_SECONDARY)
-
-		var bar_rect := Rect2(11.0, size.y - 14.0, size.x - 22.0, 5.0)
-		draw_rect(bar_rect, Palette.BORDER_DEFAULT, true)
-		if unlocked and progress > 0.0:
-			draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * progress, bar_rect.size.y)), Palette.AMBER, true)
-		elif unlocked:
-			var y := size.y - 21.0
-			draw_dashed_line(Vector2(11.0, y), Vector2(size.x - 11.0, y), Palette.BORDER_DEFAULT, 2.0, 5.0)
+		var frame_name := "slot_frame_empty.png"
+		if unlocked and status == "filling" and progress >= 1.0:
+			frame_name = "slot_frame_ready.png"
+		elif unlocked and status == "filling":
+			frame_name = "slot_frame_filling.png"
+		elif unlocked and status == "ready":
+			frame_name = "slot_frame_ready.png"
+		_frame.texture = load(UI_TEXTURE_PATH + frame_name)
+		_icon_label.text = icon
+		_icon_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY if unlocked else Palette.TEXT_SECONDARY)
+		_detail_label.text = detail

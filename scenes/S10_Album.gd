@@ -9,13 +9,16 @@ const GRID_LEFT := 48.0
 const GRID_TOP := 215.0
 const GRID_WIDTH := 624.0
 const TAB_TOP := 123.0
+const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 
 var _back_rect: Rect2 = Rect2()
 var _card_rects: Array[Rect2] = []
+var _card_textures: Array[TextureRect] = []
 var _cats: Array = []
 
 func _ready() -> void:
 	super._ready()
+	_build_texture_layers()
 	_refresh_cats()
 
 func on_enter(_data: Dictionary = {}) -> void:
@@ -40,11 +43,26 @@ func _gui_input(event: InputEvent) -> void:
 			return
 
 func _draw() -> void:
-	var screen: Vector2 = get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_WARM_WHITE, true)
 	_draw_top_bar()
 	_draw_tabs()
 	_draw_content()
+
+func _build_texture_layers() -> void:
+	var bg := TextureRect.new()
+	bg.texture = load(UI_TEXTURE_PATH + "grid_album_bg.png")
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg.show_behind_parent = true
+	add_child(bg)
+
+	var back := TextureRect.new()
+	back.name = "BackTexture"
+	back.texture = load(UI_TEXTURE_PATH + "btn_album.png")
+	back.stretch_mode = TextureRect.STRETCH_SCALE
+	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	back.show_behind_parent = true
+	add_child(back)
 
 func _refresh_cats() -> void:
 	_cats = HatchEngine.get_cats() if HatchEngine else []
@@ -52,7 +70,11 @@ func _refresh_cats() -> void:
 
 func _draw_top_bar() -> void:
 	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
-	_draw_button(_back_rect, "返回", Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
+	var back := get_node_or_null("BackTexture") as TextureRect
+	if back:
+		back.position = _back_rect.position
+		back.size = _back_rect.size
+	_draw_centered_in_rect("返回", _back_rect, 16, Palette.TEXT_PRIMARY)
 	_draw_centered_text("图鉴", 91.0, 24, Palette.TEXT_PRIMARY)
 
 func _draw_tabs() -> void:
@@ -67,6 +89,7 @@ func _draw_tabs() -> void:
 
 func _draw_content() -> void:
 	_card_rects.clear()
+	_sync_card_textures(_cats.size())
 	if _cats.is_empty():
 		_draw_centered_in_rect("还没有猫咪。多走几步，第一只就来了", Rect2(Vector2(64.0, 507.0), Vector2(592.0, 64.0)), 19, Palette.TEXT_SECONDARY)
 		return
@@ -77,10 +100,12 @@ func _draw_content() -> void:
 		var row: int = i / 2
 		var rect: Rect2 = Rect2(Vector2(GRID_LEFT + float(col) * (card_width + CARD_GAP), GRID_TOP + float(row) * (CARD_HEIGHT + CARD_GAP)), Vector2(card_width, CARD_HEIGHT))
 		_card_rects.append(rect)
+		_card_textures[i].position = rect.position
+		_card_textures[i].size = rect.size
+		_card_textures[i].visible = true
 		_draw_cat_card(rect, _cats[i])
 
 func _draw_cat_card(rect: Rect2, cat) -> void:
-	_draw_round_rect(rect, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
 	var swatch_rect: Rect2 = Rect2(rect.position + Vector2(13.0, 16.0), Vector2(59.0, 59.0))
 	_draw_round_rect(swatch_rect, 5.0, _cat_color(cat), _rarity_color(cat), 1.0)
 	_draw_cat_icon(swatch_rect.position + swatch_rect.size * 0.5, _cat_color(cat), 0.42)
@@ -89,6 +114,18 @@ func _draw_cat_card(rect: Rect2, cat) -> void:
 	_draw_text(_breed_label(cat), Vector2(text_x, rect.position.y + 30.0), 17, Palette.TEXT_PRIMARY)
 	_draw_text("%s  Lv.%d" % [_rarity_label(cat), _cat_level(cat)], Vector2(text_x, rect.position.y + 56.0), 14, _rarity_color(cat))
 	_draw_text("亲密 %d" % _cat_friendship(cat), Vector2(text_x, rect.position.y + 80.0), 13, Palette.TEXT_SECONDARY)
+
+func _sync_card_textures(count: int) -> void:
+	while _card_textures.size() < count:
+		var texture_rect := TextureRect.new()
+		texture_rect.texture = load(UI_TEXTURE_PATH + "panel_cat_card.png")
+		texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+		texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		texture_rect.show_behind_parent = true
+		add_child(texture_rect)
+		_card_textures.append(texture_rect)
+	for i in range(_card_textures.size()):
+		_card_textures[i].visible = i < count
 
 func _open_cat(index: int) -> void:
 	if index < 0 or index >= _cats.size():

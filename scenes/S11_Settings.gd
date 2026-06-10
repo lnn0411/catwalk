@@ -1,17 +1,20 @@
 extends "res://ui/UIPage.gd"
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
+const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 
 var _back_rect: Rect2 = Rect2()
 var _toggle_rects: Array[Rect2] = []
 var _row_rects: Array[Rect2] = []
 var _clear_rect: Rect2 = Rect2()
+var _toggle_buttons: Array[TextureButton] = []
 var _push_notifications: bool = true
 var _sound_enabled: bool = true
 var _music_enabled: bool = true
 
 func _ready() -> void:
 	super._ready()
+	_build_texture_layers()
 	_load_settings()
 
 func on_enter(_data: Dictionary = {}) -> void:
@@ -51,9 +54,42 @@ func _draw() -> void:
 	_draw_rows()
 	_draw_clear_cache()
 
+func _build_texture_layers() -> void:
+	var back := TextureRect.new()
+	back.name = "BackTexture"
+	back.texture = load(UI_TEXTURE_PATH + "btn_settings.png")
+	back.stretch_mode = TextureRect.STRETCH_SCALE
+	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	back.show_behind_parent = true
+	add_child(back)
+
+	for name in ["TogglePanelTexture", "RowsPanelTexture", "ClearTexture"]:
+		var panel := TextureRect.new()
+		panel.name = name
+		panel.texture = load(UI_TEXTURE_PATH + ("btn_secondary.png" if name == "ClearTexture" else "panel_settings.png"))
+		panel.stretch_mode = TextureRect.STRETCH_SCALE
+		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.show_behind_parent = true
+		add_child(panel)
+
+	for i in range(3):
+		var toggle := TextureButton.new()
+		toggle.texture_normal = load(UI_TEXTURE_PATH + "toggle_on.png")
+		toggle.texture_pressed = toggle.texture_normal
+		toggle.texture_hover = toggle.texture_normal
+		toggle.stretch_mode = TextureButton.STRETCH_SCALE
+		toggle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		toggle.show_behind_parent = true
+		add_child(toggle)
+		_toggle_buttons.append(toggle)
+
 func _draw_top_bar() -> void:
 	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
-	_draw_button(_back_rect, "返回", Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
+	var back := get_node_or_null("BackTexture") as TextureRect
+	if back:
+		back.position = _back_rect.position
+		back.size = _back_rect.size
+	_draw_centered_in_rect("返回", _back_rect, 16, Palette.TEXT_PRIMARY)
 	_draw_centered_text("设置", 91.0, 24, Palette.TEXT_PRIMARY)
 
 func _draw_toggles() -> void:
@@ -61,13 +97,21 @@ func _draw_toggles() -> void:
 	var labels: Array[String] = ["推送通知", "音效", "音乐"]
 	var values: Array[bool] = [_push_notifications, _sound_enabled, _music_enabled]
 	var panel: Rect2 = Rect2(Vector2(48.0, 152.0), Vector2(624.0, 200.0))
-	_draw_round_rect(panel, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
+	var panel_texture := get_node_or_null("TogglePanelTexture") as TextureRect
+	if panel_texture:
+		panel_texture.position = panel.position
+		panel_texture.size = panel.size
 	for i in range(labels.size()):
 		var y: float = panel.position.y + 24.0 + float(i) * 57.0
 		_draw_text(labels[i], Vector2(panel.position.x + 24.0, y + 28.0), 19, Palette.TEXT_PRIMARY)
 		var toggle_rect: Rect2 = Rect2(Vector2(panel.position.x + panel.size.x - 105.0, y + 5.0), Vector2(69.0, 36.0))
 		_toggle_rects.append(toggle_rect)
-		_draw_toggle(toggle_rect, values[i])
+		if i < _toggle_buttons.size():
+			_toggle_buttons[i].position = toggle_rect.position
+			_toggle_buttons[i].size = toggle_rect.size
+			_toggle_buttons[i].texture_normal = load(UI_TEXTURE_PATH + ("toggle_on.png" if values[i] else "toggle_off.png"))
+			_toggle_buttons[i].texture_pressed = _toggle_buttons[i].texture_normal
+			_toggle_buttons[i].texture_hover = _toggle_buttons[i].texture_normal
 		if i < labels.size() - 1:
 			draw_line(Vector2(panel.position.x + 24.0, y + 53.0), Vector2(panel.position.x + panel.size.x - 24.0, y + 53.0), Palette.BORDER_DEFAULT, 1.0)
 
@@ -75,7 +119,10 @@ func _draw_rows() -> void:
 	_row_rects.clear()
 	var rows: Array[String] = ["语言", "关于", "隐私", "协议"]
 	var panel: Rect2 = Rect2(Vector2(48.0, 389.0), Vector2(624.0, 261.0))
-	_draw_round_rect(panel, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
+	var panel_texture := get_node_or_null("RowsPanelTexture") as TextureRect
+	if panel_texture:
+		panel_texture.position = panel.position
+		panel_texture.size = panel.size
 	for i in range(rows.size()):
 		var row_rect: Rect2 = Rect2(Vector2(panel.position.x, panel.position.y + float(i) * 65.0), Vector2(panel.size.x, 65.0))
 		_row_rects.append(row_rect)
@@ -86,15 +133,12 @@ func _draw_rows() -> void:
 
 func _draw_clear_cache() -> void:
 	_clear_rect = Rect2(Vector2(48.0, 688.0), Vector2(624.0, 65.0))
-	_draw_round_rect(_clear_rect, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
+	var clear_texture := get_node_or_null("ClearTexture") as TextureRect
+	if clear_texture:
+		clear_texture.position = _clear_rect.position
+		clear_texture.size = _clear_rect.size
 	_draw_text("清除缓存", _clear_rect.position + Vector2(24.0, 40.0), 19, Palette.TEXT_PRIMARY)
 	_draw_text("12.5 MB>", _clear_rect.position + Vector2(_clear_rect.size.x - 117.0, 40.0), 16, Palette.TEXT_SECONDARY)
-
-func _draw_toggle(rect: Rect2, enabled: bool) -> void:
-	var bg: Color = Palette.AMBER if enabled else Palette.BORDER_DEFAULT
-	_draw_round_rect(rect, 18.0, bg, bg, 0.0)
-	var knob_x: float = rect.position.x + 51.0 if enabled else rect.position.x + 19.0
-	draw_circle(Vector2(knob_x, rect.position.y + rect.size.y * 0.5), 15.0, Palette.BG_WARM_WHITE)
 
 func _toggle_setting(index: int) -> void:
 	match index:

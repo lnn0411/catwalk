@@ -5,11 +5,12 @@ signal tab_selected(index: int)
 
 const BAR_HEIGHT := 56.0
 const MIN_TOUCH := 48.0
+const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 const TABS := [
 	{"label": "花园", "page": "res://scenes/S04_GardenMain.tscn", "icon": "home"},
 	{"label": "图鉴", "page": "res://scenes/S10_Album.tscn", "icon": "album"},
 	{"label": "商店", "page": "", "icon": "shop"},
-	{"label": "好友", "page": "", "icon": "friends"},
+	{"label": "好友", "page": "", "icon": "friend"},
 	{"label": "设置", "page": "res://scenes/S11_Settings.tscn", "icon": "settings"},
 ]
 
@@ -32,7 +33,7 @@ func _ready() -> void:
 func set_current_tab(index: int) -> void:
 	current_index = clampi(index, 0, TABS.size() - 1)
 	for button in _buttons:
-		button.queue_redraw()
+		button.update_state()
 
 func get_target_page(index: int) -> String:
 	if index < 0 or index >= TABS.size():
@@ -43,6 +44,13 @@ func _build_tabs() -> void:
 	for child in get_children():
 		child.queue_free()
 	_buttons.clear()
+
+	var bg := TextureRect.new()
+	bg.texture = load(UI_TEXTURE_PATH + "nav_bg.png")
+	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(bg)
 
 	var box := HBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -70,10 +78,57 @@ class NavTab:
 
 	var index := 0
 	var nav: BottomNav
+	var _icon: TextureRect
+	var _label: Label
+	var _active_bar: ColorRect
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
 		custom_minimum_size = Vector2(BottomNav.MIN_TOUCH, BottomNav.BAR_HEIGHT)
+		_build_visuals()
+		update_state()
+
+	func _build_visuals() -> void:
+		_active_bar = ColorRect.new()
+		_active_bar.color = Palette.BORDER_ACTIVE
+		_active_bar.anchor_right = 1.0
+		_active_bar.offset_bottom = 3.0
+		_active_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_active_bar)
+
+		_icon = TextureRect.new()
+		_icon.custom_minimum_size = Vector2(28.0, 28.0)
+		_icon.stretch_mode = TextureRect.STRETCH_SCALE
+		_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_icon.anchor_left = 0.5
+		_icon.anchor_right = 0.5
+		_icon.offset_left = -14.0
+		_icon.offset_right = 14.0
+		_icon.offset_top = 8.0
+		_icon.offset_bottom = 36.0
+		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_icon)
+
+		_label = Label.new()
+		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_label.add_theme_font_size_override("font_size", 13)
+		_label.anchor_right = 1.0
+		_label.offset_top = 36.0
+		_label.offset_bottom = BottomNav.BAR_HEIGHT
+		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_label)
+
+	func update_state() -> void:
+		if _icon == null or _label == null:
+			return
+		var active := index == nav.current_index
+		var icon_name := String(BottomNav.TABS[index]["icon"])
+		var suffix := "_active" if active else ""
+		_icon.texture = load(BottomNav.UI_TEXTURE_PATH + "nav_%s%s.png" % [icon_name, suffix])
+		_label.text = String(BottomNav.TABS[index]["label"])
+		_label.add_theme_color_override("font_color", Palette.AMBER if active else Palette.TEXT_SECONDARY)
+		_active_bar.visible = active
 
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventScreenTouch and event.pressed:
@@ -82,55 +137,3 @@ class NavTab:
 		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			nav._on_tab_pressed(index)
 			accept_event()
-
-	func _draw() -> void:
-		var active := index == nav.current_index
-		var color: Color = Palette.AMBER if active else Palette.TEXT_SECONDARY
-		var bg: Color = Palette.BG_WARM_WHITE
-		draw_rect(Rect2(Vector2.ZERO, size), bg, true)
-
-		var center := Vector2(size.x * 0.5, 22.0)
-		_draw_icon(center, color)
-
-		var font := ThemeDB.fallback_font
-		var label := String(BottomNav.TABS[index]["label"])
-		var font_size := 13
-		var text_size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-		draw_string(font, Vector2((size.x - text_size.x) * 0.5, 48.0), label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
-
-		if active:
-			draw_rect(Rect2(0.0, 0.0, size.x, 3.0), Palette.BORDER_ACTIVE, true)
-
-	func _draw_icon(center: Vector2, color: Color) -> void:
-		var icon := String(BottomNav.TABS[index]["icon"])
-		match icon:
-			"home":
-				var pts := PackedVector2Array([
-					center + Vector2(-11.0, 0.0),
-					center + Vector2(0.0, -10.0),
-					center + Vector2(11.0, 0.0),
-					center + Vector2(11.0, 11.0),
-					center + Vector2(-11.0, 11.0),
-					center + Vector2(-11.0, 0.0),
-				])
-				draw_polyline(pts, color, 2.0)
-				draw_line(center + Vector2(-3.0, 11.0), center + Vector2(-3.0, 4.0), color, 2.0)
-				draw_line(center + Vector2(3.0, 11.0), center + Vector2(3.0, 4.0), color, 2.0)
-			"album":
-				for x in range(2):
-					for y in range(2):
-						draw_rect(Rect2(center + Vector2(-11.0 + x * 13.0, -9.0 + y * 13.0), Vector2(8.0, 8.0)), color, false, 2.0)
-			"shop":
-				draw_rect(Rect2(center + Vector2(-10.0, -3.0), Vector2(20.0, 15.0)), color, false, 2.0)
-				draw_arc(center + Vector2(0.0, -3.0), 6.0, PI, TAU, 12, color, 2.0)
-			"friends":
-				draw_circle(center + Vector2(-6.0, -3.0), 4.0, color)
-				draw_circle(center + Vector2(7.0, -4.0), 4.0, color)
-				draw_arc(center + Vector2(-6.0, 9.0), 8.0, PI, TAU, 14, color, 2.0)
-				draw_arc(center + Vector2(7.0, 9.0), 8.0, PI, TAU, 14, color, 2.0)
-			"settings":
-				draw_circle(center, 8.0, color)
-				draw_circle(center, 4.0, Palette.BG_WARM_WHITE)
-				for i in range(8):
-					var a := float(i) * TAU / 8.0
-					draw_line(center + Vector2(cos(a), sin(a)) * 10.0, center + Vector2(cos(a), sin(a)) * 13.0, color, 2.0)
