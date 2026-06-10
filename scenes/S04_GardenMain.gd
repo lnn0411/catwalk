@@ -80,14 +80,10 @@ func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, la
 	layer.add_child(background)
 
 func _build_hud() -> void:
-	var canvas := CanvasLayer.new()
-	canvas.name = "HUD"
-	canvas.layer = 5
-	add_child(canvas)
-
 	var root := Control.new()
+	root.name = "HUD"
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	canvas.add_child(root)
+	add_child(root)
 
 	var top_bar := ColorRect.new()
 	top_bar.color = Palette.BG_WARM_WHITE
