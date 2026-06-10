@@ -131,9 +131,6 @@ class NavTab:
 		_active_bar.visible = active
 
 	func _gui_input(event: InputEvent) -> void:
-		if event is InputEventScreenTouch and event.pressed:
-			nav._on_tab_pressed(index)
-			accept_event()
-		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			nav._on_tab_pressed(index)
 			accept_event()

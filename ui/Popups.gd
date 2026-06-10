@@ -14,6 +14,10 @@ static func show_confirm(title: String, content: String, on_confirm: Callable) -
 	var root := _get_root()
 	if root == null:
 		return
+	# Close any existing dialog overlay to prevent stacking
+	for child in root.get_children():
+		if child is DialogOverlay:
+			child.queue_free()
 	var overlay := DialogOverlay.new()
 	overlay.title = title
 	overlay.content = content
