@@ -5,6 +5,9 @@ const GardenBackground := preload("res://scenes/GardenBackground.gd")
 var cat_container: Node2D
 var debug_panel
 var toggle_button: TextureButton
+var _dragging: bool = false
+var _drag_start: Vector2
+var _camera: Camera2D
 
 func _ready() -> void:
 	_build_parallax_background()
@@ -43,6 +46,7 @@ func _build_camera() -> void:
 	camera.position = Vector2(1024.0, 768.0)
 	add_child(camera)
 	camera.make_current()
+	_camera = camera
 
 func _connect_cat_spawner() -> void:
 	if CatSpawner:
@@ -74,3 +78,25 @@ func _build_debug_toggle() -> void:
 func _on_debug_toggle_pressed() -> void:
 	if debug_panel:
 		debug_panel.visible = not debug_panel.visible
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed:
+			_dragging = true
+			_drag_start = get_global_mouse_position()
+		else:
+			_dragging = false
+	elif event is InputEventMouseMotion and _dragging and _camera:
+		var drag_delta := get_global_mouse_position() - _drag_start
+		_camera.position -= drag_delta
+		_clamp_camera_to_world()
+		_drag_start = get_global_mouse_position()
+
+func _clamp_camera_to_world() -> void:
+	if not _camera:
+		return
+
+	_camera.position = Vector2(
+		clampf(_camera.position.x, 360.0, 2048.0 - 360.0),
+		clampf(_camera.position.y, 640.0, 1536.0 - 640.0)
+	)
