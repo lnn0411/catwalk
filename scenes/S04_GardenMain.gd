@@ -101,7 +101,6 @@ func _build_hud() -> void:
 	top_bar.offset_right = 0.0
 	top_bar.offset_top = 0.0
 	top_bar.offset_bottom = HUD_HEIGHT
-	top_bar.size = Vector2(720.0, HUD_HEIGHT)
 	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_bar)
 
