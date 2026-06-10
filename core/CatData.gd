@@ -11,10 +11,16 @@ const RARITY_RARE := "rare"
 const RARITY_EPIC := "epic"
 const RARITY_LEGENDARY := "legendary"
 
+# 每颗蛋孵化所需能量（energy_required）统一为 4250，不分品种/槽位。
+# 依据：孵化能量需求值设计决策 v1.0 / GDD v2.13 §2.2 §17.3 §18.1。
+# 注意：4250/15000/30000 是品种「解锁门槛」(total_energy_produced)，
+#       与每颗蛋的孵化成本是两回事，解锁门槛见 HatchEngine.get_unlocked_species()。
+const HATCH_ENERGY_REQUIRED := 4250
+
 const BREED_COSTS := {
-	BREED_ORANGE: 4250,
-	BREED_BRITISH: 15000,
-	BREED_SIAMESE: 30000,
+	BREED_ORANGE: HATCH_ENERGY_REQUIRED,
+	BREED_BRITISH: HATCH_ENERGY_REQUIRED,
+	BREED_SIAMESE: HATCH_ENERGY_REQUIRED,
 }
 
 const BREED_CHARACTER_SCENES := {
@@ -46,16 +52,21 @@ static func create(cat_id: String, species_name: String, cat_rarity: String, ind
 	cat.created_at = Time.get_unix_time_from_system()
 	return cat
 
-static func get_default_name(species_name: String, hatch_index_value: int) -> String:
+static func get_default_name(species_name: String, _hatch_index_value: int = 1) -> String:
+	# GDD §6.2：未命名时存为「未命名+品种」，猫咪正常进入花园
+	var zh := OS.get_locale_language() == "zh"
 	match species_name:
 		BREED_ORANGE:
-			return "Orange %d" % hatch_index_value
+			return "未命名橘猫" if zh else "Unnamed Orange"
 		BREED_BRITISH:
-			return "British %d" % hatch_index_value
+			return "未命名英短" if zh else "Unnamed British"
 		BREED_SIAMESE:
-			return "Siamese %d" % hatch_index_value
+			return "未命名暹罗" if zh else "Unnamed Siamese"
 		_:
-			return "Cat %d" % hatch_index_value
+			return "未命名猫咪" if zh else "Unnamed Cat"
+
+static func is_default_name(display_name: String) -> bool:
+	return display_name.begins_with("未命名") or display_name.begins_with("Unnamed")
 
 static func get_hatch_cost(species_name: String) -> int:
 	return int(BREED_COSTS.get(species_name, BREED_COSTS[BREED_ORANGE]))

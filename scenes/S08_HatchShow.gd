@@ -53,7 +53,7 @@ func _update_phase() -> void:
 	else:
 		_phase = 4
 		if _elapsed >= _phase4_start() + 1.5:
-			UIManager.pop()
+			UIManager.pop_to_root()
 
 func _phase4_start() -> float:
 	return 5.0 if _is_first_orange() else 8.5

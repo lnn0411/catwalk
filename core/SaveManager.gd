@@ -27,6 +27,10 @@ func load_and_apply() -> void:
 	EnergyEngine.apply_save(_read_energy())
 	HatchEngine.apply_save(_read_hatch())
 	_is_applying = false
+	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
+	# 避免冷启动时"应用关闭期间累积的步数"在首帧丢失。
+	if StepEngine and StepEngine.has_method("_refresh_plugin_steps"):
+		StepEngine._refresh_plugin_steps()
 
 func reset_all() -> void:
 	_config.clear()
@@ -100,6 +104,8 @@ func _read_hatch() -> Dictionary:
 		"slots": Array(_config.get_value("hatch", "slots", [])),
 		"cats": cats,
 		"hatched_count": int(_config.get_value("hatch", "hatched_count", cat_count)),
+		"epic_pity_count": int(_config.get_value("hatch", "epic_pity_count", 0)),
+		"legendary_pity_count": int(_config.get_value("hatch", "legendary_pity_count", 0)),
 	}
 
 func _write_hatch() -> void:
@@ -108,6 +114,8 @@ func _write_hatch() -> void:
 	_clear_cat_sections()
 	_config.set_value("hatch", "slots", Array(data.get("slots", [])))
 	_config.set_value("hatch", "hatched_count", int(data.get("hatched_count", cats.size())))
+	_config.set_value("hatch", "epic_pity_count", int(data.get("epic_pity_count", 0)))
+	_config.set_value("hatch", "legendary_pity_count", int(data.get("legendary_pity_count", 0)))
 	_config.set_value("hatch", "cat_count", cats.size())
 	for i in range(cats.size()):
 		_write_cat("cat_%d" % i, cats[i])

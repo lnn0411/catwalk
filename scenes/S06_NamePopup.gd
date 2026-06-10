@@ -2,10 +2,16 @@ extends "res://ui/UIPage.gd"
 
 const CatData := preload("res://core/CatData.gd")
 
-const NAME_POOLS := {
-	CatData.BREED_ORANGE: ["橘子", "小橘", "橙橙"],
-	CatData.BREED_BRITISH: ["蓝蓝", "灰灰", "英英"],
-	CatData.BREED_SIAMESE: ["暹暹", "可可", "奶茶"],
+const NAME_POOLS_CN := {
+	CatData.BREED_ORANGE: ["大胖", "橘子", "小橘", "阿福", "蛋黄"],
+	CatData.BREED_BRITISH: ["绅士", "阿蓝", "小雪", "团团", "圆圆"],
+	CatData.BREED_SIAMESE: ["小话痨", "芝麻", "点点", "墨墨", "阿喵"],
+}
+
+const NAME_POOLS_EN := {
+	CatData.BREED_ORANGE: ["Mango", "Sunny", "Biscuit", "Cheeto", "Marmalade"],
+	CatData.BREED_BRITISH: ["Ash", "Slate", "Chester", "Earl", "Sterling"],
+	CatData.BREED_SIAMESE: ["Coco", "Pepper", "Mochi", "Sable", "Latte"],
 }
 
 var _cat
@@ -95,8 +101,10 @@ func _build_ui() -> void:
 func _apply_cat() -> void:
 	if _name_input == null:
 		return
-	if _cat != null and String(_cat.display_name).length() >= 2:
-		_name_input.text = String(_cat.display_name)
+	var current := String(_cat.display_name) if _cat != null else ""
+	# 「未命名+品种」默认名视为尚未命名 → 预填一个随机建议名给玩家
+	if current.length() >= 2 and not CatData.is_default_name(current):
+		_name_input.text = current
 	else:
 		_name_input.text = _random_name()
 
@@ -117,7 +125,8 @@ func _confirm_name() -> void:
 	UIManager.close_overlay()
 
 func _random_name() -> String:
-	var pool := Array(NAME_POOLS.get(_species(), NAME_POOLS[CatData.BREED_ORANGE]))
+	var pools := NAME_POOLS_CN if OS.get_locale_language() == "zh" else NAME_POOLS_EN
+	var pool := Array(pools.get(_species(), pools[CatData.BREED_ORANGE]))
 	return String(pool[_rng.randi_range(0, pool.size() - 1)])
 
 func _species() -> String:

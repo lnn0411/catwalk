@@ -205,6 +205,24 @@ func close_overlay() -> void:
 func get_stack_depth() -> int:
 	return stack.size()
 
+# 清掉栈顶所有页面，回到根页面（通常是 S04 花园）。
+# 用于孵化演出结束后直接回花园（GDD §6.1 phase4「转场S04」）。
+func pop_to_root(instant: bool = false) -> void:
+	if _transitioning:
+		_enqueue(func() -> void: pop_to_root(instant))
+		return
+	while stack.size() > 1:
+		var page: UIPage = stack.pop_back()
+		if is_instance_valid(page):
+			page.on_exit()
+			page.queue_free()
+	var root_page := _current_page()
+	if root_page != null:
+		root_page.visible = true
+		root_page.position = Vector2.ZERO
+		root_page.on_enter(root_page.page_data)
+	page_changed.emit(_current_page_name())
+
 func go_back() -> void:
 	if _overlay != null and is_instance_valid(_overlay):
 		close_overlay()

@@ -103,6 +103,15 @@ func get_pool_fill_ratio() -> float:
 		return 0.0
 	return energy_pool / MAX_ENERGY_POOL
 
+# 从主能量池扣除能量（孵化消耗调用）。返回实际扣除量。
+func spend_pool(amount: float) -> float:
+	var take: float = clamp(amount, 0.0, energy_pool)
+	if take <= 0.0:
+		return 0.0
+	energy_pool -= take
+	_emit_energy_changed()
+	return take
+
 func _emit_energy_changed() -> void:
 	energy_changed.emit(energy_pool, MAX_ENERGY_POOL, reserve_tank)
 

@@ -13,6 +13,9 @@ const NAV_HEIGHT := 56.0
 const CONTENT_SCALE := 0.48
 const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 
+# 互动子状态（喂食/抚摸/玩耍/拍照），对应测试 C6-C9
+enum SubState { IDLE, INTERACT_FEED, INTERACT_PET, INTERACT_PLAY, INTERACT_PHOTO }
+
 var garden_layer: Node2D
 var cat_container: Node2D
 var _camera: Camera2D
@@ -28,6 +31,8 @@ var _debug_panel: PanelContainer
 var _steps_hold_timer: Timer
 var _stats_visible := false
 var _hatch_navigating := false
+var _sub_state: int = SubState.IDLE
+var _interact_reset_timer: Timer
 
 func _ready() -> void:
 	super()
@@ -186,16 +191,18 @@ func _build_hud() -> void:
 	action_row.size = Vector2(624.0, ACTION_HEIGHT)
 	action_row.add_theme_constant_override("separation", 11)
 	root.add_child(action_row)
-	for data in [
-		{"title": "喂食", "texture": "btn_feed.png"},
-		{"title": "抚摸", "texture": "btn_pet.png"},
-		{"title": "玩耍", "texture": "btn_play.png"},
-		{"title": "拍照", "texture": "btn_photo.png"},
-	]:
+	var action_data := [
+		{"title": "喂食", "texture": "btn_feed.png", "state": SubState.INTERACT_FEED},
+		{"title": "抚摸", "texture": "btn_pet.png", "state": SubState.INTERACT_PET},
+		{"title": "玩耍", "texture": "btn_play.png", "state": SubState.INTERACT_PLAY},
+		{"title": "拍照", "texture": "btn_photo.png", "state": SubState.INTERACT_PHOTO},
+	]
+	for data in action_data:
 		var button := GardenActionButton.new()
 		button.text = String(data["title"])
 		button.custom_minimum_size = Vector2(150.0, 48.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.pressed.connect(_on_action_pressed.bind(int(data["state"])))
 		action_row.add_child(button)
 		_action_buttons.append(button)
 
@@ -224,9 +231,16 @@ func _build_hud() -> void:
 	_steps_hold_timer.timeout.connect(_toggle_debug_panel)
 	add_child(_steps_hold_timer)
 
+	# 互动子状态在 2 秒后自动回到 IDLE
+	_interact_reset_timer = Timer.new()
+	_interact_reset_timer.one_shot = true
+	_interact_reset_timer.wait_time = 2.0
+	_interact_reset_timer.timeout.connect(_on_interact_reset)
+	add_child(_interact_reset_timer)
+
 func _build_debug_panel() -> void:
 	_debug_panel = PanelContainer.new()
-	_debug_panel.visible = true
+	_debug_panel.visible = OS.is_debug_build()
 	_debug_panel.position = Vector2(40.0, 220.0)
 	_debug_panel.size = Vector2(280.0, 240.0)
 	_debug_panel.z_index = 20
@@ -341,6 +355,22 @@ func _on_hatch_slot_pressed(_slot_index: int) -> void:
 	_hatch_navigating = true
 	UIManager.push("res://scenes/S06_HatchPage.tscn")
 
+func _on_action_pressed(state: int) -> void:
+	# 没有猫时按钮本就 disabled，这里双保险
+	if _empty_label.visible:
+		return
+	var prev := _sub_state
+	_sub_state = state
+	print("[Interact] %s → %s" % [SubState.keys()[prev], SubState.keys()[_sub_state]])
+	# TODO: 在此触发对应猫咪动画 / 反馈表现
+	_interact_reset_timer.start()
+
+func _on_interact_reset() -> void:
+	var prev := _sub_state
+	_sub_state = SubState.IDLE
+	if prev != SubState.IDLE:
+		print("[Interact] %s → IDLE" % SubState.keys()[prev])
+
 func _on_bottom_nav_tab_selected(index: int) -> void:
 	if index < 0 or index >= BottomNav.TABS.size():
 		return
@@ -363,6 +393,8 @@ func _on_steps_label_input(event: InputEvent) -> void:
 			_steps_hold_timer.stop()
 
 func _toggle_debug_panel() -> void:
+	if not OS.is_debug_build():
+		return
 	_debug_panel.visible = not _debug_panel.visible
 
 func _add_mock_steps(amount: int) -> void:
@@ -582,7 +614,10 @@ class HatchSlotView:
 
 		var icon := "🔒"
 		var detail := ""
-		if unlocked and status == "filling":
+		if unlocked and status == "ready":
+			icon = "🥚"
+			detail = "点击孵化"
+		elif unlocked and status == "incubating":
 			icon = "🥚"
 			detail = "等待能量填充" if progress <= 0.0 else "%d%%" % int(progress * 100.0)
 		elif unlocked:
@@ -590,12 +625,12 @@ class HatchSlotView:
 			detail = "等待能量填充"
 
 		var frame_name := "slot_frame_empty.png"
-		if unlocked and status == "filling" and progress >= 1.0:
+		if unlocked and status == "ready":
 			frame_name = "slot_frame_ready.png"
-		elif unlocked and status == "filling":
+		elif unlocked and status == "incubating" and progress >= 1.0:
+			frame_name = "slot_frame_ready.png"
+		elif unlocked and status == "incubating":
 			frame_name = "slot_frame_filling.png"
-		elif unlocked and status == "ready":
-			frame_name = "slot_frame_ready.png"
 		_frame.texture = load(UI_TEXTURE_PATH + frame_name)
 		_icon_label.text = icon
 		_icon_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY if unlocked else Palette.TEXT_SECONDARY)

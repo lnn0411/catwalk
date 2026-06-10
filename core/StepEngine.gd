@@ -14,6 +14,13 @@ func _ready() -> void:
 	last_step_date = _today_key()
 	_load_plugin()
 
+# app 从后台回到前台时，重读硬件累计步数，补回最小化/进程被杀期间走的步。
+# TYPE_STEP_COUNTER 在固件层计数，进程死了也照常累加，这里读一次即可对齐。
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_RESUMED:
+		_check_daily_reset()
+		_refresh_plugin_steps()
+
 func add_mock_steps(n: int) -> void:
 	_check_daily_reset()
 	var delta: int = max(n, 0)

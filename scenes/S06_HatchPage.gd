@@ -111,7 +111,7 @@ func _draw_slot_grid() -> void:
 
 func _draw_slot(rect: Rect2, index: int, slot: Dictionary) -> void:
 	var status := _slot_status(slot)
-	var border := Palette.BORDER_ACTIVE if status == "ready" or status == "filling" else Palette.BORDER_DEFAULT
+	var border := Palette.BORDER_ACTIVE if status == "ready" or status == "incubating" else Palette.BORDER_DEFAULT
 	var bg := Palette.BG_CEMENT if status != "locked" else Color(Palette.CITY_GRAY, 0.18)
 	_draw_round_rect(rect, 5.0, bg, border, 2.0)
 	var center := rect.position + rect.size * 0.5
@@ -141,7 +141,7 @@ func _slot_status(slot: Dictionary) -> String:
 	var status := String(slot.get("status", "empty"))
 	var energy := float(slot.get("energy", 0.0))
 	var max_energy := float(slot.get("max_energy", 0.0))
-	if status == "filling" and max_energy > 0.0 and energy >= max_energy:
+	if status == "incubating" and max_energy > 0.0 and energy >= max_energy:
 		return "ready"
 	return status
 
@@ -154,8 +154,14 @@ func _slot_progress(slot: Dictionary) -> float:
 func _on_slot_pressed(index: int) -> void:
 	if index < 0 or index >= _slots.size():
 		return
+	if HatchEngine == null:
+		return
 	if _slot_status(Dictionary(_slots[index])) == "ready":
-		_push_latest_cat()
+		# 完成孵化 → 发出 hatch_complete → _on_hatch_complete 推送 S08 演出
+		HatchEngine.collect_ready_slot(index)
+		if SaveManager:
+			SaveManager.save_all()
+		_refresh_slots()
 
 func _inject_energy() -> void:
 	if HatchEngine == null or EnergyEngine == null:
@@ -187,14 +193,6 @@ func _on_hatch_complete(cat_data) -> void:
 
 func _on_energy_changed(_current: float, _pool_max: float, _backup: float) -> void:
 	queue_redraw()
-
-func _push_latest_cat() -> void:
-	if HatchEngine == null:
-		return
-	var cats := HatchEngine.get_cats()
-	if cats.is_empty():
-		return
-	UIManager.push("res://scenes/S08_HatchShow.tscn", {"cat": cats[cats.size() - 1]})
 
 func _species_color(species: String) -> Color:
 	match species:

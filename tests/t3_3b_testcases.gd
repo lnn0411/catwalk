@@ -139,12 +139,18 @@ func test_B3_hatch_flow() -> void:
 	ok("  S08→命名弹窗存在", "S06_NamePopup" in s08)
 	ok("  S08→S04 pop存在", "UIManager.pop" in s08 or "S04" in s08)
 	
-	# Runtime: verify hatch chain works
+	# Runtime: verify hatch chain works (手动孵化模型)
 	SaveManager.reset_all()
 	StepEngine.add_mock_steps(5000)
 	await get_tree().process_frame
+	# 走路后蛋应进入 ready 态（不自动产猫）
+	var slot0_ready = String(Dictionary(HatchEngine.get_slots()[0]).get("status", "")) == "ready"
+	ok("  B3 运行时: 走5000步后蛋ready", slot0_ready)
+	# 玩家点击 ready 蛋 → 领取 → 产猫
+	HatchEngine.collect_ready_slot(0)
+	await get_tree().process_frame
 	var cats = HatchEngine.get_cats().size()
-	ok("  B3 运行时: 孵化产猫 %d只" % cats, cats >= 1)
+	ok("  B3 运行时: 领取后孵化产猫 %d只" % cats, cats >= 1)
 
 func test_B_navigation_chains() -> void:
 	print("  B4-B8 导航链路:")
@@ -253,11 +259,14 @@ func tD_signal_data() -> void:
 	
 	SaveManager.reset_all()
 	
-	# D1: 孵化完成生成猫
+	# D1: 孵化完成生成猫（手动孵化：走路→ready→领取）
 	StepEngine.add_mock_steps(5000)
 	await get_tree().process_frame
+	ok("  D1 走路后蛋ready", String(Dictionary(HatchEngine.get_slots()[0]).get("status", "")) == "ready")
+	HatchEngine.collect_ready_slot(0)
+	await get_tree().process_frame
 	var cats = HatchEngine.get_cats().size()
-	ok("  D1 孵化→生成猫 (%d只)" % cats, cats >= 1)
+	ok("  D1 领取→生成猫 (%d只)" % cats, cats >= 1)
 	
 	# D2/D3: 步数/能量刷新 HUD
 	if cats >= 1:
@@ -296,7 +305,8 @@ func tE_persistence() -> void:
 	SaveManager.reset_all()
 	StepEngine.add_mock_steps(5000)
 	await get_tree().process_frame
-	
+	HatchEngine.collect_ready_slot(0)
+	await get_tree().process_frame
 	var s1 = StepEngine.get_today_steps()
 	var e1 = int(EnergyEngine.energy_pool)
 	var c1 = HatchEngine.get_cats().size()
