@@ -16,13 +16,28 @@ func _ready() -> void:
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 
-	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(280.0, 350.0)
-	card.add_theme_stylebox_override("panel", UITheme.get_modal_stylebox())
+	var card := TextureRect.new()
+	card.texture = load('res://assets/temp/ui/popup_bg.png')
+	card.custom_minimum_size = Vector2(400.0, 300.0)
+	card.size = Vector2(400.0, 300.0)
+	card.stretch_mode = TextureRect.STRETCH_SCALE
 	center.add_child(card)
+
+	var rarity_icon := TextureRect.new()
+	rarity_icon.texture = load('res://assets/temp/rarity/rarity_%s.png' % cat_data.rarity)
+	rarity_icon.custom_minimum_size = Vector2(48.0, 48.0)
+	rarity_icon.size = Vector2(48.0, 48.0)
+	rarity_icon.position = Vector2(328.0, 24.0)
+	rarity_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	card.add_child(rarity_icon)
 
 	var content := VBoxContainer.new()
 	content.add_theme_constant_override("separation", 12)
+	content.set_anchors_preset(Control.PRESET_FULL_RECT)
+	content.offset_left = 42.0
+	content.offset_top = 48.0
+	content.offset_right = -42.0
+	content.offset_bottom = -42.0
 	card.add_child(content)
 
 	var name_label := Label.new()
@@ -43,10 +58,13 @@ func _ready() -> void:
 	rarity_label.add_theme_color_override("font_color", _get_rarity_color(cat_data.rarity))
 	content.add_child(rarity_label)
 
-	var close_button := Button.new()
-	close_button.text = "关闭"
+	var close_button := TextureButton.new()
+	close_button.texture_normal = load('res://assets/temp/ui/popup_close.png')
+	close_button.texture_pressed = load('res://assets/temp/ui/popup_close.png')
+	close_button.texture_hover = load('res://assets/temp/ui/popup_close.png')
+	close_button.custom_minimum_size = Vector2(64.0, 64.0)
+	close_button.size = Vector2(64.0, 64.0)
 	close_button.pressed.connect(_on_close)
-	close_button.add_theme_stylebox_override("normal", UITheme.get_button_primary())
 	content.add_child(close_button)
 
 	var level_label := Label.new()

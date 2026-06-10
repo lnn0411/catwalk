@@ -3,20 +3,25 @@ extends CharacterBody2D
 signal cat_clicked(cat_data)
 
 var cat_data
-@export var script_path: String = ""
+@export var breed: String = "orange"
 @export var move_speed: float = 50.0
 
 var rng: RandomNumberGenerator
 var timer: Timer
+var sprite_timer: Timer
 var target_position: Vector2
 var is_moving: bool = false
-var _time: float = 0.0
-var _is_walking: bool = false
-var leg_swing_offset: float = 0.0
+var _sprite: Sprite2D
+var _walk_frame: int = 0
 
 func _ready() -> void:
 	rng = RandomNumberGenerator.new()
 	rng.randomize()
+
+	_sprite = Sprite2D.new()
+	_sprite.name = "Sprite"
+	add_child(_sprite)
+	_update_sprite()
 
 	var body_shape := CollisionShape2D.new()
 	var body_circle := CircleShape2D.new()
@@ -35,24 +40,19 @@ func _ready() -> void:
 	area.add_child(click_shape)
 	area.input_event.connect(_on_input_event)
 
-	_load_visual()
-
 	timer = Timer.new()
 	timer.one_shot = true
 	add_child(timer)
 	timer.timeout.connect(_on_wander_tick)
 
+	sprite_timer = Timer.new()
+	sprite_timer.wait_time = 0.3
+	sprite_timer.one_shot = false
+	add_child(sprite_timer)
+	sprite_timer.timeout.connect(_update_sprite)
+	sprite_timer.start()
+
 	_schedule_wander()
-
-func _load_visual() -> void:
-	if script_path.is_empty():
-		return
-
-	var visual_script = load(script_path)
-	var visual_node := Node2D.new()
-	visual_node.set_script(visual_script)
-	visual_node.name = "Visual"
-	add_child(visual_node)
 
 func _schedule_wander() -> void:
 	timer.start(rng.randf_range(3.0, 6.0))
@@ -65,25 +65,29 @@ func _on_wander_tick() -> void:
 	target_position.x = clampf(target_position.x, 100.0, 1900.0)
 	target_position.y = clampf(target_position.y, 116.0, 1016.0)
 	is_moving = true
-	_is_walking = true
 	if target_position.x < position.x:
 		scale.x = -1.0
 	else:
 		scale.x = 1.0
 
-func _process(delta: float) -> void:
-	_time += delta
-	_update_leg_animation()
-	queue_redraw()
-	var visual := get_node_or_null("Visual")
-	if visual:
-		visual.queue_redraw()
+func _update_sprite() -> void:
+	if _sprite == null:
+		return
 
-func _update_leg_animation() -> void:
-	if _is_walking:
-		leg_swing_offset = sin(_time * 8.0) * 6.0
+	var animation_name := "idle"
+	if is_moving:
+		_walk_frame = (_walk_frame + 1) % 3
+		match _walk_frame:
+			1:
+				animation_name = "walk_a"
+			2:
+				animation_name = "walk_b"
+			_:
+				animation_name = "idle"
 	else:
-		leg_swing_offset = lerp(leg_swing_offset, 0.0, 0.15)
+		_walk_frame = 0
+
+	_sprite.texture = load('res://assets/temp/cats/cat_%s_%s.png' % [breed, animation_name])
 
 func _physics_process(delta: float) -> void:
 	if is_moving:
@@ -92,8 +96,8 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		if position.distance_to(target_position) < 10.0:
 			is_moving = false
-			_is_walking = false
 			velocity = Vector2.ZERO
+			_update_sprite()
 			_schedule_wander()
 
 func _on_input_event(viewport, event, shape_idx) -> void:

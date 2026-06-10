@@ -45,7 +45,7 @@ func instance_cat(cat_data):
 
 	var cat_node = packed_scene.instantiate()
 	cat_node.cat_data = cat_data
-	cat_node.script_path = CatData.get_character_script_path(cat_data.species)
+	cat_node.breed = cat_data.species
 	cat_node.position = _pick_spawn_position()
 	cat_node.modulate.a = 0.0
 	cat_container.add_child(cat_node)
