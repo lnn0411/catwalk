@@ -1,0 +1,203 @@
+extends "res://ui/UIPage.gd"
+
+const GardenBackground := preload("res://scenes/GardenBackground.gd")
+const CatSpriteScene := preload("res://scenes/CatSprite.tscn")
+const BottomNavScene := preload("res://ui/BottomNav.tscn")
+
+const DESIGN_SIZE := Vector2(1080.0, 1920.0)
+const HUD_HEIGHT := 288.0
+const GARDEN_HEIGHT := 1152.0
+const ACTION_HEIGHT := 96.0
+const HATCH_HEIGHT := 80.0
+const NAV_HEIGHT := 56.0
+const CONTENT_SCALE := 0.72
+
+var garden_layer: Node2D
+var cat_container: Node2D
+
+func _ready() -> void:
+	super()
+	_build_garden_layer()
+	_restore_read_only_cats()
+	_build_hud()
+
+func _build_garden_layer() -> void:
+	garden_layer = Node2D.new()
+	garden_layer.name = "GardenLayer"
+	garden_layer.position = Vector2(0.0, HUD_HEIGHT)
+	add_child(garden_layer)
+
+	var parallax := ParallaxBackground.new()
+	garden_layer.add_child(parallax)
+	_add_background_layer(parallax, Vector2(0.05, 0.0), GardenBackground.LAYER_FAR)
+	_add_background_layer(parallax, Vector2(0.3, 0.0), GardenBackground.LAYER_MID)
+	_add_background_layer(parallax, Vector2(0.8, 0.0), GardenBackground.LAYER_NEAR)
+
+	cat_container = Node2D.new()
+	cat_container.name = "CatContainer"
+	cat_container.position = Vector2(0.0, 384.0)
+	garden_layer.add_child(cat_container)
+
+	var camera := Camera2D.new()
+	camera.position = Vector2(780.0, 690.0)
+	camera.zoom = Vector2(CONTENT_SCALE, CONTENT_SCALE)
+	garden_layer.add_child(camera)
+	camera.make_current()
+
+func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
+	var layer := ParallaxLayer.new()
+	layer.motion_scale = motion_scale
+	parent.add_child(layer)
+
+	var background := GardenBackground.new()
+	background.layer_type = layer_type
+	layer.add_child(background)
+
+func _restore_read_only_cats() -> void:
+	if HatchEngine == null:
+		return
+	var index := 0
+	for cat_data in HatchEngine.get_cats():
+		var cat = CatSpriteScene.instantiate()
+		cat.cat_data = cat_data
+		cat.breed = cat_data.species
+		cat.position = Vector2(280.0 + float(index % 3) * 420.0, 420.0 + float(index / 3) * 180.0)
+		cat_container.add_child(cat)
+		cat.call_deferred("set_process_input", false)
+		call_deferred("_disable_cat_input", cat)
+		index += 1
+
+func _disable_cat_input(node: Node) -> void:
+	if node is Area2D:
+		node.input_pickable = false
+	for child in node.get_children():
+		_disable_cat_input(child)
+
+func _build_hud() -> void:
+	var canvas := CanvasLayer.new()
+	canvas.name = "HUD"
+	canvas.layer = 5
+	add_child(canvas)
+
+	var root := Control.new()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	canvas.add_child(root)
+
+	var top_bar := ColorRect.new()
+	top_bar.color = Palette.BG_WARM_WHITE
+	top_bar.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	top_bar.size = Vector2(DESIGN_SIZE.x, HUD_HEIGHT)
+	root.add_child(top_bar)
+
+	var top_row := HBoxContainer.new()
+	top_row.position = Vector2(32.0, 94.0)
+	top_row.size = Vector2(DESIGN_SIZE.x - 64.0, 92.0)
+	top_row.add_theme_constant_override("separation", 24)
+	root.add_child(top_row)
+
+	var steps := Label.new()
+	steps.text = "👣 --- 步"
+	steps.custom_minimum_size = Vector2(250.0, 72.0)
+	steps.add_theme_font_size_override("font_size", 28)
+	steps.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	top_row.add_child(steps)
+
+	var energy := ReadOnlyEnergyMeter.new()
+	energy.custom_minimum_size = Vector2(300.0, 48.0)
+	top_row.add_child(energy)
+
+	var currency := Label.new()
+	currency.text = "💰 ---   💎 ---   🌸 ---"
+	currency.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	currency.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	currency.add_theme_font_size_override("font_size", 24)
+	currency.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	top_row.add_child(currency)
+
+	var message := Label.new()
+	message.text = "它们走不过来了。去设置里开一扇门 →"
+	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	message.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	message.position = Vector2(0.0, HUD_HEIGHT + GARDEN_HEIGHT * 0.42)
+	message.size = Vector2(DESIGN_SIZE.x, 80.0)
+	message.add_theme_font_size_override("font_size", 24)
+	message.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	root.add_child(message)
+
+	var action_row := HBoxContainer.new()
+	action_row.position = Vector2(48.0, HUD_HEIGHT + GARDEN_HEIGHT + 14.0)
+	action_row.size = Vector2(DESIGN_SIZE.x - 96.0, ACTION_HEIGHT)
+	action_row.add_theme_constant_override("separation", 16)
+	root.add_child(action_row)
+	for title in ["喂食", "抚摸", "玩耍", "拍照"]:
+		var button := DisabledActionButton.new()
+		button.text = title
+		button.disabled = true
+		button.custom_minimum_size = Vector2(220.0, 64.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		action_row.add_child(button)
+
+	var hatch_row := HBoxContainer.new()
+	hatch_row.position = Vector2(32.0, DESIGN_SIZE.y - NAV_HEIGHT - HATCH_HEIGHT)
+	hatch_row.size = Vector2(DESIGN_SIZE.x - 64.0, HATCH_HEIGHT)
+	hatch_row.add_theme_constant_override("separation", 12)
+	root.add_child(hatch_row)
+	for i in range(4):
+		var slot := LockedSlotView.new()
+		slot.custom_minimum_size = Vector2(240.0, HATCH_HEIGHT)
+		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		hatch_row.add_child(slot)
+
+	var nav = BottomNavScene.instantiate()
+	nav.set_current_tab(0)
+	nav.tab_selected.connect(_on_bottom_nav_tab_selected)
+	root.add_child(nav)
+
+func _on_bottom_nav_tab_selected(index: int) -> void:
+	if index < 0 or index >= BottomNav.TABS.size():
+		return
+	var page := String(BottomNav.TABS[index]["page"])
+	if page != "":
+		UIManager.replace(page)
+
+class ReadOnlyEnergyMeter:
+	extends Control
+
+	func _draw() -> void:
+		var bar_rect := Rect2(0.0, 12.0, 300.0, 24.0)
+		draw_rect(bar_rect, Palette.BORDER_DEFAULT, true)
+		draw_rect(bar_rect, Palette.TEXT_SECONDARY, false, 2.0)
+		var font := ThemeDB.fallback_font
+		var text := "---/---"
+		var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20)
+		draw_string(font, Vector2((bar_rect.size.x - text_size.x) * 0.5, 31.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Palette.TEXT_SECONDARY)
+
+class DisabledActionButton:
+	extends Button
+
+	func _ready() -> void:
+		flat = true
+		add_theme_font_size_override("font_size", 24)
+		add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+
+	func _draw() -> void:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Palette.BORDER_DEFAULT
+		style.border_color = Palette.BORDER_DEFAULT
+		style.set_border_width_all(2)
+		style.set_corner_radius_all(8)
+		draw_style_box(style, Rect2(Vector2.ZERO, size))
+
+class LockedSlotView:
+	extends Control
+
+	func _draw() -> void:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Palette.BG_WARM_WHITE
+		style.border_color = Palette.BORDER_DEFAULT
+		style.set_border_width_all(2)
+		style.set_corner_radius_all(8)
+		draw_style_box(style, Rect2(Vector2.ZERO, size))
+		var font := ThemeDB.fallback_font
+		draw_string(font, Vector2(18.0, 34.0), "🔒", HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Palette.TEXT_SECONDARY)
+		draw_rect(Rect2(16.0, size.y - 20.0, size.x - 32.0, 8.0), Palette.BORDER_DEFAULT, true)

@@ -11,13 +11,13 @@ config_version=5
 [application]
 
 config/name="Catwalk Step Counter"
-run/main_scene="res://scenes/GardenScene.tscn"
+run/main_scene="res://scenes/S00_Splash.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 
 [display]
 
-window/size/viewport_width=720
-window/size/viewport_height=1280
+window/size/viewport_width=1080
+window/size/viewport_height=1920
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
@@ -53,6 +53,8 @@ config/icon="res://icon.svg"
 [autoload]
 
 Palette="*res://autoload/Palette.gd"
+UIManager="*res://ui/UIManager.gd"
+Popups="*res://ui/Popups.gd"
 StepEngine="*res://core/StepEngine.gd"
 EnergyEngine="*res://core/EnergyEngine.gd"
 HatchEngine="*res://core/HatchEngine.gd"
