@@ -204,6 +204,8 @@ func _build_debug_panel() -> void:
 	for item in [
 		["+100 steps", func() -> void: _add_mock_steps(100)],
 		["+1000 steps", func() -> void: _add_mock_steps(1000)],
+		["+5000 steps", func() -> void: _add_mock_steps(5000)],
+		["+10000 steps", func() -> void: _add_mock_steps(10000)],
 		["Reset Save", func() -> void: _reset_save()],
 		["Show/Hide stats", func() -> void: _toggle_stats()],
 	]:
