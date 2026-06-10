@@ -19,6 +19,7 @@ func set_cat_container(container) -> void:
 	_restore_cats()
 
 func _on_hatch_complete(cat_data) -> void:
+	print("[CatSpawner] hatch_complete: %s, container=%s" % [cat_data.display_name if cat_data else "null", cat_container != null])
 	instance_cat(cat_data)
 
 func instance_cat(cat_data):
@@ -47,6 +48,7 @@ func instance_cat(cat_data):
 	cat_node.cat_data = cat_data
 	cat_node.breed = cat_data.species
 	cat_node.position = _pick_spawn_position()
+	print("[CatSpawner] instance_cat: breed=%s pos=(%.0f,%.0f)" % [cat_data.species, cat_node.position.x, cat_node.position.y])
 	cat_node.modulate.a = 0.0
 	cat_container.add_child(cat_node)
 
