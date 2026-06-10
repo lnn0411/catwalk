@@ -106,17 +106,19 @@ func _build_hud() -> void:
 	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_bar)
 
-	var debug_button := TextureButton.new()
-	debug_button.texture_normal = load(UI_TEXTURE_PATH + "btn_settings.png")
-	debug_button.texture_pressed = debug_button.texture_normal
-	debug_button.texture_hover = debug_button.texture_normal
-	debug_button.stretch_mode = TextureButton.STRETCH_SCALE
-	debug_button.position = Vector2(680.0, 10.0)
-	debug_button.size = Vector2(40.0, 40.0)
-	debug_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	debug_button.z_index = 10
-	debug_button.pressed.connect(_toggle_debug_panel)
-	root.add_child(debug_button)
+	var debug_btn := Button.new()
+	debug_btn.text = "DBG"
+	debug_btn.flat = true
+	debug_btn.position = Vector2(670.0, 8.0)
+	debug_btn.size = Vector2(44.0, 36.0)
+	debug_btn.add_theme_color_override("font_color", Color.WHITE)
+	debug_btn.add_theme_font_size_override("font_size", 14)
+	var red_bg := StyleBoxFlat.new()
+	red_bg.bg_color = Color.RED
+	red_bg.set_corner_radius_all(6)
+	debug_btn.add_theme_stylebox_override("normal", red_bg)
+	debug_btn.pressed.connect(_toggle_debug_panel)
+	root.add_child(debug_btn)
 
 	var top_row := HBoxContainer.new()
 	top_row.position = Vector2(24.0, 60.0)
@@ -232,7 +234,7 @@ func _build_debug_panel() -> void:
 	add_child(_debug_layer)
 
 	_debug_panel = PanelContainer.new()
-	_debug_panel.visible = false
+	_debug_panel.visible = true
 	_debug_panel.position = Vector2(40.0, 220.0)
 	_debug_panel.size = Vector2(280.0, 240.0)
 	_debug_panel.add_theme_stylebox_override("panel", _make_box_style(Palette.BG_WARM_WHITE, Palette.BORDER_ACTIVE, 8))
