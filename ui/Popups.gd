@@ -44,8 +44,6 @@ class DialogOverlay:
 	var content := ""
 	var confirm_callback: Callable
 	var _font: Font
-	var _cancel_rect := Rect2()
-	var _confirm_rect := Rect2()
 
 	func _ready() -> void:
 		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -54,22 +52,43 @@ class DialogOverlay:
 		modulate.a = 0.0
 		var tween := create_tween()
 		tween.tween_property(self, "modulate:a", 1.0, 0.16)
+		_build_buttons()
 
-	func _gui_input(event: InputEvent) -> void:
-		if not (event is InputEventMouseButton) or not event.pressed:
-			return
-		if event.button_index != MOUSE_BUTTON_LEFT:
-			return
-		var point := event.position
+	func _build_buttons() -> void:
+		var dialog := Rect2((size - DIALOG_SIZE) * 0.5, DIALOG_SIZE)
+		var button_y := dialog.position.y + 168.0
+		var button_h := 43.0
+		var button_w := 160.0
 		
-		if _cancel_rect.has_point(point):
-			_close()
-			accept_event()
-		elif _confirm_rect.has_point(point):
+		var cancel_btn := Button.new()
+		cancel_btn.text = "取消"
+		cancel_btn.flat = true
+		cancel_btn.position = dialog.position + Vector2(61.0, 168.0)
+		cancel_btn.size = Vector2(button_w, button_h)
+		cancel_btn.add_theme_font_size_override("font_size", 16)
+		cancel_btn.pressed.connect(_close)
+		cancel_btn.z_index = 10
+		add_child(cancel_btn)
+		
+		var confirm_btn := Button.new()
+		confirm_btn.text = "确认"
+		confirm_btn.flat = true
+		confirm_btn.position = dialog.position + Vector2(dialog.size.x - 61.0 - button_w, 168.0)
+		confirm_btn.size = Vector2(button_w, button_h)
+		confirm_btn.add_theme_font_size_override("font_size", 16)
+		confirm_btn.pressed.connect(func():
 			if confirm_callback.is_valid():
 				confirm_callback.call()
-			_close()
-			accept_event()
+			_close())
+		confirm_btn.z_index = 10
+		add_child(confirm_btn)
+		
+		# Style both buttons
+		for btn in [cancel_btn, confirm_btn]:
+			var bg := StyleBoxFlat.new()
+			bg.bg_color = Palette.BG_CEMENT
+			bg.set_corner_radius_all(6)
+			btn.add_theme_stylebox_override("normal", bg)
 
 	func _draw() -> void:
 		var shade := Palette.TEXT_PRIMARY
@@ -82,27 +101,11 @@ class DialogOverlay:
 
 		var title_size := 21
 		var body_size := 16
-		var button_size := 16
 		var title_width := _font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size).x
 		draw_string(_font, Vector2(dialog.position.x + (dialog.size.x - title_width) * 0.5, dialog.position.y + 56.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, Palette.TEXT_PRIMARY)
 
 		var content_width := _font.get_string_size(content, HORIZONTAL_ALIGNMENT_LEFT, -1, body_size).x
 		draw_string(_font, Vector2(dialog.position.x + (dialog.size.x - content_width) * 0.5, dialog.position.y + 112.0), content, HORIZONTAL_ALIGNMENT_LEFT, -1, body_size, Palette.TEXT_SECONDARY)
-
-		var button_size_vec := Vector2(160.0, 43.0)
-		var button_margin_x := 61.0
-		var button_y := 168.0
-		_cancel_rect = Rect2(dialog.position + Vector2(button_margin_x, button_y), button_size_vec)
-		_confirm_rect = Rect2(dialog.position + Vector2(dialog.size.x - button_margin_x - button_size_vec.x, button_y), button_size_vec)
-		_draw_button(_cancel_rect, "取消", false, button_size)
-		_draw_button(_confirm_rect, "确认", true, button_size)
-
-	func _draw_button(rect: Rect2, text: String, active: bool, font_size: int) -> void:
-		draw_rect(rect, Palette.AMBER if active else Palette.BG_CEMENT, true)
-		draw_rect(rect, Palette.BORDER_ACTIVE if active else Palette.BORDER_DEFAULT, false, 1.0)
-		var color := Palette.TEXT_ON_AMBER if active else Palette.TEXT_PRIMARY
-		var text_size := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-		draw_string(_font, Vector2(rect.position.x + (rect.size.x - text_size.x) * 0.5, rect.position.y + 27.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 	func _close() -> void:
 		var tween := create_tween()
