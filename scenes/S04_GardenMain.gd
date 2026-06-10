@@ -195,7 +195,6 @@ func _build_hud() -> void:
 	]:
 		var button := GardenActionButton.new()
 		button.text = String(data["title"])
-		button.texture_path = UI_TEXTURE_PATH + String(data["texture"])
 		button.custom_minimum_size = Vector2(150.0, 48.0)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		action_row.add_child(button)
@@ -485,18 +484,13 @@ class EnergyMeter:
 		return result
 
 class GardenActionButton:
-	extends TextureButton
+	extends Button
 
-	var texture_path := ""
 	var text := ""
 	var _label: Label
 
 	func _ready() -> void:
-		texture_normal = load(texture_path)
-		texture_pressed = texture_normal
-		texture_hover = texture_normal
-		texture_disabled = texture_normal
-		stretch_mode = TextureButton.STRETCH_SCALE
+		flat = true
 		_label = Label.new()
 		_label.text = text
 		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -511,6 +505,10 @@ class GardenActionButton:
 		disabled = not value
 		if _label:
 			_label.add_theme_color_override("font_color", Palette.TEXT_ON_AMBER if value else Palette.TEXT_SECONDARY)
+		var bg := StyleBoxFlat.new()
+		bg.bg_color = Palette.AMBER if value else Palette.BORDER_DEFAULT
+		bg.set_corner_radius_all(6)
+		add_theme_stylebox_override("normal", bg)
 
 class DebugTextureButton:
 	extends TextureButton
