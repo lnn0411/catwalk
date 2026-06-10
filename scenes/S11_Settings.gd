@@ -1,6 +1,6 @@
 extends "res://ui/UIPage.gd"
 
-const DESIGN_SIZE := Vector2(1080.0, 1920.0)
+const DESIGN_SIZE := Vector2(720.0, 1280.0)
 
 var _back_rect: Rect2 = Rect2()
 var _toggle_rects: Array[Rect2] = []
@@ -18,12 +18,17 @@ func on_enter(_data: Dictionary = {}) -> void:
 	_load_settings()
 
 func _gui_input(event: InputEvent) -> void:
+	if _is_back_event(event):
+		UIManager.go_back()
+		accept_event()
+		return
+
 	var pos: Variant = _released_position(event)
 	if pos == null:
 		return
 	var point: Vector2 = pos
 	if _back_rect.has_point(point):
-		UIManager.pop()
+		UIManager.go_back()
 		return
 	for i in range(_toggle_rects.size()):
 		if _toggle_rects[i].has_point(point):
@@ -47,49 +52,49 @@ func _draw() -> void:
 	_draw_clear_cache()
 
 func _draw_top_bar() -> void:
-	_back_rect = Rect2(Vector2(42.0, 88.0), Vector2(128.0, 72.0))
+	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
 	_draw_button(_back_rect, "返回", Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
-	_draw_centered_text("设置", 136.0, 36, Palette.TEXT_PRIMARY)
+	_draw_centered_text("设置", 91.0, 24, Palette.TEXT_PRIMARY)
 
 func _draw_toggles() -> void:
 	_toggle_rects.clear()
 	var labels: Array[String] = ["推送通知", "音效", "音乐"]
 	var values: Array[bool] = [_push_notifications, _sound_enabled, _music_enabled]
-	var panel: Rect2 = Rect2(Vector2(72.0, 228.0), Vector2(936.0, 300.0))
-	_draw_round_rect(panel, 8.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 2.0)
+	var panel: Rect2 = Rect2(Vector2(48.0, 152.0), Vector2(624.0, 200.0))
+	_draw_round_rect(panel, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
 	for i in range(labels.size()):
-		var y: float = panel.position.y + 36.0 + float(i) * 86.0
-		_draw_text(labels[i], Vector2(panel.position.x + 36.0, y + 42.0), 28, Palette.TEXT_PRIMARY)
-		var toggle_rect: Rect2 = Rect2(Vector2(panel.position.x + panel.size.x - 158.0, y + 8.0), Vector2(104.0, 54.0))
+		var y: float = panel.position.y + 24.0 + float(i) * 57.0
+		_draw_text(labels[i], Vector2(panel.position.x + 24.0, y + 28.0), 19, Palette.TEXT_PRIMARY)
+		var toggle_rect: Rect2 = Rect2(Vector2(panel.position.x + panel.size.x - 105.0, y + 5.0), Vector2(69.0, 36.0))
 		_toggle_rects.append(toggle_rect)
 		_draw_toggle(toggle_rect, values[i])
 		if i < labels.size() - 1:
-			draw_line(Vector2(panel.position.x + 36.0, y + 80.0), Vector2(panel.position.x + panel.size.x - 36.0, y + 80.0), Palette.BORDER_DEFAULT, 1.0)
+			draw_line(Vector2(panel.position.x + 24.0, y + 53.0), Vector2(panel.position.x + panel.size.x - 24.0, y + 53.0), Palette.BORDER_DEFAULT, 1.0)
 
 func _draw_rows() -> void:
 	_row_rects.clear()
 	var rows: Array[String] = ["语言", "关于", "隐私", "协议"]
-	var panel: Rect2 = Rect2(Vector2(72.0, 584.0), Vector2(936.0, 392.0))
-	_draw_round_rect(panel, 8.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 2.0)
+	var panel: Rect2 = Rect2(Vector2(48.0, 389.0), Vector2(624.0, 261.0))
+	_draw_round_rect(panel, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
 	for i in range(rows.size()):
-		var row_rect: Rect2 = Rect2(Vector2(panel.position.x, panel.position.y + float(i) * 98.0), Vector2(panel.size.x, 98.0))
+		var row_rect: Rect2 = Rect2(Vector2(panel.position.x, panel.position.y + float(i) * 65.0), Vector2(panel.size.x, 65.0))
 		_row_rects.append(row_rect)
-		_draw_text(rows[i], row_rect.position + Vector2(36.0, 58.0), 28, Palette.TEXT_PRIMARY)
-		_draw_text(">", row_rect.position + Vector2(row_rect.size.x - 64.0, 58.0), 28, Palette.TEXT_SECONDARY)
+		_draw_text(rows[i], row_rect.position + Vector2(24.0, 39.0), 19, Palette.TEXT_PRIMARY)
+		_draw_text(">", row_rect.position + Vector2(row_rect.size.x - 43.0, 39.0), 19, Palette.TEXT_SECONDARY)
 		if i < rows.size() - 1:
-			draw_line(row_rect.position + Vector2(36.0, row_rect.size.y), row_rect.position + Vector2(row_rect.size.x - 36.0, row_rect.size.y), Palette.BORDER_DEFAULT, 1.0)
+			draw_line(row_rect.position + Vector2(24.0, row_rect.size.y), row_rect.position + Vector2(row_rect.size.x - 24.0, row_rect.size.y), Palette.BORDER_DEFAULT, 1.0)
 
 func _draw_clear_cache() -> void:
-	_clear_rect = Rect2(Vector2(72.0, 1032.0), Vector2(936.0, 98.0))
-	_draw_round_rect(_clear_rect, 8.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 2.0)
-	_draw_text("清除缓存", _clear_rect.position + Vector2(36.0, 60.0), 28, Palette.TEXT_PRIMARY)
-	_draw_text("12.5 MB>", _clear_rect.position + Vector2(_clear_rect.size.x - 176.0, 60.0), 24, Palette.TEXT_SECONDARY)
+	_clear_rect = Rect2(Vector2(48.0, 688.0), Vector2(624.0, 65.0))
+	_draw_round_rect(_clear_rect, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
+	_draw_text("清除缓存", _clear_rect.position + Vector2(24.0, 40.0), 19, Palette.TEXT_PRIMARY)
+	_draw_text("12.5 MB>", _clear_rect.position + Vector2(_clear_rect.size.x - 117.0, 40.0), 16, Palette.TEXT_SECONDARY)
 
 func _draw_toggle(rect: Rect2, enabled: bool) -> void:
 	var bg: Color = Palette.AMBER if enabled else Palette.BORDER_DEFAULT
-	_draw_round_rect(rect, 27.0, bg, bg, 0.0)
-	var knob_x: float = rect.position.x + 76.0 if enabled else rect.position.x + 28.0
-	draw_circle(Vector2(knob_x, rect.position.y + rect.size.y * 0.5), 22.0, Palette.BG_WARM_WHITE)
+	_draw_round_rect(rect, 18.0, bg, bg, 0.0)
+	var knob_x: float = rect.position.x + 51.0 if enabled else rect.position.x + 19.0
+	draw_circle(Vector2(knob_x, rect.position.y + rect.size.y * 0.5), 15.0, Palette.BG_WARM_WHITE)
 
 func _toggle_setting(index: int) -> void:
 	match index:
@@ -125,9 +130,17 @@ func _released_position(event: InputEvent) -> Variant:
 		return event.position
 	return null
 
+func _is_back_event(event: InputEvent) -> bool:
+	return event.is_action_pressed("ui_cancel") or (
+		event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and event.keycode == KEY_BACK
+	)
+
 func _draw_button(rect: Rect2, text: String, bg: Color, border: Color, text_color: Color) -> void:
-	_draw_round_rect(rect, 8.0, bg, border, 2.0)
-	_draw_centered_in_rect(text, rect, 24, text_color)
+	_draw_round_rect(rect, 5.0, bg, border, 1.0)
+	_draw_centered_in_rect(text, rect, 16, text_color)
 
 func _draw_round_rect(rect: Rect2, _radius: float, bg: Color, border: Color, border_width: float) -> void:
 	draw_rect(rect, bg, true)
@@ -145,4 +158,4 @@ func _draw_centered_text(text: String, y: float, font_size: int, color: Color) -
 func _draw_centered_in_rect(text: String, rect: Rect2, font_size: int, color: Color) -> void:
 	var font: Font = get_theme_default_font()
 	var text_size: Vector2 = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
-	draw_string(font, rect.position + Vector2((rect.size.x - text_size.x) * 0.5, (rect.size.y + text_size.y) * 0.5 - 4.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, color)
+	draw_string(font, rect.position + Vector2((rect.size.x - text_size.x) * 0.5, (rect.size.y + text_size.y) * 0.5 - 3.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, color)

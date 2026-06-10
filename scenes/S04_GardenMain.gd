@@ -27,6 +27,7 @@ var _debug_panel: PanelContainer
 var _debug_layer: CanvasLayer
 var _steps_hold_timer: Timer
 var _stats_visible := false
+var _hatch_navigating := false
 
 func _ready() -> void:
 	super()
@@ -35,6 +36,9 @@ func _ready() -> void:
 	_build_debug_panel()
 	_connect_data()
 	_refresh_all()
+
+func on_enter(_data: Dictionary = {}) -> void:
+	_hatch_navigating = false
 
 func _exit_tree() -> void:
 	if CatSpawner:
@@ -294,12 +298,17 @@ func _on_cat_count_changed(_count: int) -> void:
 	_refresh_cat_state()
 
 func _on_hatch_slot_pressed(_slot_index: int) -> void:
+	if _hatch_navigating:
+		return
+	_hatch_navigating = true
 	UIManager.push("res://scenes/S06_HatchPage.tscn")
 
 func _on_bottom_nav_tab_selected(index: int) -> void:
 	if index < 0 or index >= BottomNav.TABS.size():
 		return
 	var page := String(BottomNav.TABS[index]["page"])
+	if page == scene_file_path:
+		return
 	if page != "":
 		UIManager.replace(page)
 

@@ -1,7 +1,7 @@
 extends Node
 
-const DIALOG_SIZE := Vector2(760.0, 360.0)
-const TOAST_SIZE := Vector2(760.0, 96.0)
+const DIALOG_SIZE := Vector2(507.0, 240.0)
+const TOAST_SIZE := Vector2(507.0, 64.0)
 
 static func show_exit_confirm() -> void:
 	show_confirm("离开花园", "确定要离开花园吗？", func() -> void:
@@ -83,28 +83,31 @@ class DialogOverlay:
 
 		var dialog := Rect2((size - DIALOG_SIZE) * 0.5, DIALOG_SIZE)
 		draw_rect(dialog, Palette.BG_WARM_WHITE, true)
-		draw_rect(dialog, Palette.BORDER_DEFAULT, false, 2.0)
+		draw_rect(dialog, Palette.BORDER_DEFAULT, false, 1.0)
 
-		var title_size := 32
-		var body_size := 24
-		var button_size := 24
+		var title_size := 21
+		var body_size := 16
+		var button_size := 16
 		var title_width := _font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size).x
-		draw_string(_font, Vector2(dialog.position.x + (dialog.size.x - title_width) * 0.5, dialog.position.y + 84.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, Palette.TEXT_PRIMARY)
+		draw_string(_font, Vector2(dialog.position.x + (dialog.size.x - title_width) * 0.5, dialog.position.y + 56.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, Palette.TEXT_PRIMARY)
 
 		var content_width := _font.get_string_size(content, HORIZONTAL_ALIGNMENT_LEFT, -1, body_size).x
-		draw_string(_font, Vector2(dialog.position.x + (dialog.size.x - content_width) * 0.5, dialog.position.y + 168.0), content, HORIZONTAL_ALIGNMENT_LEFT, -1, body_size, Palette.TEXT_SECONDARY)
+		draw_string(_font, Vector2(dialog.position.x + (dialog.size.x - content_width) * 0.5, dialog.position.y + 112.0), content, HORIZONTAL_ALIGNMENT_LEFT, -1, body_size, Palette.TEXT_SECONDARY)
 
-		_cancel_rect = Rect2(dialog.position + Vector2(92.0, 252.0), Vector2(240.0, 64.0))
-		_confirm_rect = Rect2(dialog.position + Vector2(dialog.size.x - 332.0, 252.0), Vector2(240.0, 64.0))
+		var button_size_vec := Vector2(160.0, 43.0)
+		var button_margin_x := 61.0
+		var button_y := 168.0
+		_cancel_rect = Rect2(dialog.position + Vector2(button_margin_x, button_y), button_size_vec)
+		_confirm_rect = Rect2(dialog.position + Vector2(dialog.size.x - button_margin_x - button_size_vec.x, button_y), button_size_vec)
 		_draw_button(_cancel_rect, "取消", false, button_size)
 		_draw_button(_confirm_rect, "确认", true, button_size)
 
 	func _draw_button(rect: Rect2, text: String, active: bool, font_size: int) -> void:
 		draw_rect(rect, Palette.AMBER if active else Palette.BG_CEMENT, true)
-		draw_rect(rect, Palette.BORDER_ACTIVE if active else Palette.BORDER_DEFAULT, false, 2.0)
+		draw_rect(rect, Palette.BORDER_ACTIVE if active else Palette.BORDER_DEFAULT, false, 1.0)
 		var color := Palette.TEXT_ON_AMBER if active else Palette.TEXT_PRIMARY
 		var text_size := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
-		draw_string(_font, Vector2(rect.position.x + (rect.size.x - text_size.x) * 0.5, rect.position.y + 41.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+		draw_string(_font, Vector2(rect.position.x + (rect.size.x - text_size.x) * 0.5, rect.position.y + 27.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 	func _close() -> void:
 		var tween := create_tween()
@@ -135,10 +138,10 @@ class ToastOverlay:
 		tween.finished.connect(queue_free)
 
 	func _draw() -> void:
-		_panel_rect = Rect2(Vector2((size.x - TOAST_SIZE.x) * 0.5, 36.0), TOAST_SIZE)
+		_panel_rect = Rect2(Vector2((size.x - TOAST_SIZE.x) * 0.5, 24.0), TOAST_SIZE)
 		draw_rect(_panel_rect, Palette.BG_WARM_WHITE, true)
-		draw_rect(_panel_rect, Palette.BORDER_ACTIVE, false, 2.0)
-		draw_circle(_panel_rect.position + Vector2(48.0, 48.0), 18.0, Palette.AMBER)
-		draw_circle(_panel_rect.position + Vector2(48.0, 48.0), 8.0, Palette.BG_WARM_WHITE)
-		var font_size := 24
-		draw_string(_font, _panel_rect.position + Vector2(88.0, 58.0), message, HORIZONTAL_ALIGNMENT_LEFT, _panel_rect.size.x - 120.0, font_size, Palette.TEXT_PRIMARY)
+		draw_rect(_panel_rect, Palette.BORDER_ACTIVE, false, 1.0)
+		draw_circle(_panel_rect.position + Vector2(32.0, 32.0), 12.0, Palette.AMBER)
+		draw_circle(_panel_rect.position + Vector2(32.0, 32.0), 5.0, Palette.BG_WARM_WHITE)
+		var font_size := 16
+		draw_string(_font, _panel_rect.position + Vector2(59.0, 39.0), message, HORIZONTAL_ALIGNMENT_LEFT, _panel_rect.size.x - 80.0, font_size, Palette.TEXT_PRIMARY)
