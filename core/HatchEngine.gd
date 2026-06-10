@@ -42,6 +42,7 @@ func feed_energy(amount: float) -> void:
 
 		if float(slot["energy"]) >= float(slot["max_energy"]):
 			_complete_hatch(slot_id)
+			_assign_next_empty_slots()
 
 	_assign_next_empty_slots()
 
