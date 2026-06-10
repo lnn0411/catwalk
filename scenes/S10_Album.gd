@@ -26,7 +26,7 @@ func on_enter(_data: Dictionary = {}) -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if _is_back_event(event):
-		UIManager.go_back()
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 		accept_event()
 		return
 
@@ -35,7 +35,7 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	var point: Vector2 = pos
 	if _back_rect.has_point(point):
-		UIManager.go_back()
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 		return
 	for i in range(_card_rects.size()):
 		if _card_rects[i].has_point(point):

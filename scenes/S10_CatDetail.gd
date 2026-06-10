@@ -16,7 +16,7 @@ func _on_page_setup(data: Dictionary) -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if _is_back_event(event):
-		UIManager.go_back()
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 		accept_event()
 		return
 
@@ -25,7 +25,7 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	var point: Vector2 = pos
 	if _back_rect.has_point(point):
-		UIManager.pop()
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 	elif _rename_rect.has_point(point):
 		Popups.show_toast("改名功能即将开放")
 	elif _diary_rect.has_point(point):

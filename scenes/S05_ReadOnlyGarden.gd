@@ -24,7 +24,7 @@ func _ready() -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if _is_back_event(event):
-		UIManager.go_back()
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 		accept_event()
 		return
 
@@ -33,7 +33,7 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	var point: Vector2 = pos
 	if _back_rect.has_point(point):
-		UIManager.go_back()
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 func _build_garden_layer() -> void:
 	garden_layer = Node2D.new()

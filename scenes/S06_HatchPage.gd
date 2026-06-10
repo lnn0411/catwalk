@@ -35,7 +35,7 @@ func _exit_tree() -> void:
 
 func _gui_input(event: InputEvent) -> void:
 	if _is_back_event(event):
-		UIManager.go_back()
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 		accept_event()
 		return
 
@@ -44,7 +44,7 @@ func _gui_input(event: InputEvent) -> void:
 	if pos == null:
 		return
 	if _back_rect.has_point(pos):
-		UIManager.pop()
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 		return
 	if _inject_rect.has_point(pos):
 		_inject_energy()
