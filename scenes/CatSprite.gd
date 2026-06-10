@@ -4,7 +4,7 @@ signal cat_clicked(cat_data)
 
 var cat_data
 @export var script_path: String = ""
-@export var move_speed: float = 80.0
+@export var move_speed: float = 50.0
 
 var rng: RandomNumberGenerator
 var timer: Timer
@@ -55,7 +55,12 @@ func _schedule_wander() -> void:
 	timer.start(rng.randf_range(3.0, 6.0))
 
 func _on_wander_tick() -> void:
-	target_position = Vector2(rng.randf_range(100.0, 1900.0), rng.randf_range(500.0, 1400.0))
+	var wander_distance := rng.randf_range(100.0, 300.0)
+	var wander_angle := rng.randf_range(0.0, TAU)
+	var offset := Vector2(cos(wander_angle), sin(wander_angle)) * wander_distance
+	target_position = position + offset
+	target_position.x = clampf(target_position.x, 100.0, 1900.0)
+	target_position.y = clampf(target_position.y, 116.0, 1016.0)
 	is_moving = true
 	if target_position.x < position.x:
 		scale.x = -1.0
