@@ -67,7 +67,10 @@ func _load_plugin() -> void:
 func _refresh_plugin_steps() -> void:
 	if step_plugin == null or not step_plugin.has_method("getSteps"):
 		return
-	_on_plugin_steps_changed(int(step_plugin.getSteps()))
+	var raw: int = int(step_plugin.getSteps())
+	if raw < 0:
+		return  # 插件尚未拿到传感器读数（返回 -1），跳过，避免误判为设备重启
+	_on_plugin_steps_changed(raw)
 
 func _on_plugin_steps_changed(raw_steps: int) -> void:
 	_check_daily_reset()
