@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://catwalk_selfcheck_v2"]
+
+[ext_resource type="Script" path="res://tests/t3_runtime_selfcheck.gd" id="1_selfcheck"]
+
+[node name="RuntimeSelfCheck" type="Node"]
+script = ExtResource("1_selfcheck")
