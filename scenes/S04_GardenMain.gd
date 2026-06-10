@@ -252,15 +252,14 @@ func _build_debug_panel() -> void:
 		["Reset Save", func() -> void: _reset_save()],
 		["Show/Hide stats", func() -> void: _toggle_stats()],
 	]:
-		var button := DebugTextureButton.new()
-		button.label_text = String(item[0])
-		var texture_name := "btn_speedup.png" if String(item[0]) == "Reset Save" else "btn_inject.png"
-		button.texture_normal = load(UI_TEXTURE_PATH + texture_name)
-		button.texture_pressed = button.texture_normal
-		button.texture_hover = button.texture_normal
-		button.stretch_mode = TextureButton.STRETCH_SCALE
+\t\tvar button := Button.new()
+		button.text = String(item[0])
 		button.custom_minimum_size = Vector2(0.0, 37.0)
-		button.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+		button.add_theme_font_size_override("font_size", 13)
+		var bg := StyleBoxFlat.new()
+		bg.bg_color = Palette.BG_CEMENT
+		bg.set_corner_radius_all(6)
+		button.add_theme_stylebox_override("normal", bg)
 		button.pressed.connect(item[1])
 		box.add_child(button)
 
