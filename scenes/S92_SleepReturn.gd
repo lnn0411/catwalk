@@ -26,7 +26,7 @@ func _days_since_last_open() -> int:
 	var elapsed := max(Time.get_unix_time_from_system() - EnergyEngine.created_at, 0.0)
 	return int(floor(elapsed / float(24 * 60 * 60)))
 
-func _released_position(event: InputEvent):
+func _released_position(event: InputEvent) -> Variant:
 	if event is InputEventScreenTouch and not event.pressed:
 		return event.position
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
