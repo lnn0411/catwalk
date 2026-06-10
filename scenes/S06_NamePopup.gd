@@ -32,62 +32,62 @@ func _draw() -> void:
 
 func _build_ui() -> void:
 	_panel = PanelContainer.new()
-	_panel.position = Vector2(120.0, 410.0)
-	_panel.size = Vector2(840.0, 910.0)
+	_panel.position = Vector2(80.0, 273.0)
+	_panel.size = Vector2(560.0, 607.0)
 	_panel.add_theme_stylebox_override("panel", _style(Palette.BG_WARM_WHITE, Palette.BORDER_ACTIVE, 8))
 	add_child(_panel)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 22)
+	box.add_theme_constant_override("separation", 15)
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	box.offset_left = 48.0
-	box.offset_right = -48.0
-	box.offset_top = 44.0
-	box.offset_bottom = -44.0
+	box.offset_left = 32.0
+	box.offset_right = -32.0
+	box.offset_top = 29.0
+	box.offset_bottom = -29.0
 	_panel.add_child(box)
 
 	var title := Label.new()
 	title.text = "给猫咪取名"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 34)
+	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	box.add_child(title)
 
 	var image := ColorRect.new()
 	image.color = _cat_color()
-	image.custom_minimum_size = Vector2(300.0, 300.0)
+	image.custom_minimum_size = Vector2(200.0, 200.0)
 	image.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(image)
 
 	var meta := Label.new()
 	meta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	meta.add_theme_font_size_override("font_size", 24)
+	meta.add_theme_font_size_override("font_size", 16)
 	meta.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
 	meta.text = "%s / %s" % [_breed_text(), _rarity_text()]
 	box.add_child(meta)
 
 	_name_input = LineEdit.new()
 	_name_input.max_length = 16
-	_name_input.custom_minimum_size = Vector2(0.0, 70.0)
-	_name_input.add_theme_font_size_override("font_size", 28)
+	_name_input.custom_minimum_size = Vector2(0.0, 47.0)
+	_name_input.add_theme_font_size_override("font_size", 18)
 	_name_input.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_name_input.text = _random_name()
 	box.add_child(_name_input)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 18)
+	row.add_theme_constant_override("separation", 12)
 	box.add_child(row)
 
 	var random_button := Button.new()
 	random_button.text = "随机"
-	random_button.custom_minimum_size = Vector2(0.0, 68.0)
+	random_button.custom_minimum_size = Vector2(0.0, 45.0)
 	random_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	random_button.pressed.connect(func() -> void: _name_input.text = _random_name())
 	row.add_child(random_button)
 
 	var confirm_button := Button.new()
 	confirm_button.text = "确认"
-	confirm_button.custom_minimum_size = Vector2(0.0, 68.0)
+	confirm_button.custom_minimum_size = Vector2(0.0, 45.0)
 	confirm_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	confirm_button.pressed.connect(_confirm_name)
 	row.add_child(confirm_button)
