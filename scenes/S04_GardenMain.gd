@@ -244,6 +244,7 @@ func _build_debug_panel() -> void:
 		["+5000 steps", func() -> void: _add_mock_steps(5000)],
 		["+10000 steps", func() -> void: _add_mock_steps(10000)],
 		["Reset Save", func() -> void: _reset_save()],
+		["清空数据", func() -> void: _clear_cache()],
 		["Show/Hide stats", func() -> void: _toggle_stats()],
 	]:
 		var button := Button.new()
@@ -383,6 +384,17 @@ func _reset_save() -> void:
 	if CatSpawner:
 		CatSpawner.spawned_cat_ids.clear()
 	_refresh_all()
+
+func _clear_cache() -> void:
+	_reset_save()
+	# 物理删除存档文件
+	var dir = DirAccess.open("user://")
+	if dir:
+		dir.remove("save.cfg")
+	# 清理内存中的 ConfigFile
+	if SaveManager:
+		SaveManager._config.clear()
+	print("[ClearCache] 存档文件已删除，重启游戏将恢复初始状态")
 
 func _toggle_stats() -> void:
 	_stats_visible = not _stats_visible
