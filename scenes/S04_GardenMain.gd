@@ -88,7 +88,7 @@ func _build_hud() -> void:
 	var root := Control.new()
 	root.name = "HUD"
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(root)
 
 	var top_bar := TextureRect.new()
