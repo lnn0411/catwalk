@@ -25,7 +25,6 @@ var _action_buttons: Array[GardenActionButton] = []
 var _slot_views: Array[HatchSlotView] = []
 var _empty_label: Label
 var _debug_panel: PanelContainer
-var _debug_layer: CanvasLayer
 var _steps_hold_timer: Timer
 var _stats_visible := false
 var _hatch_navigating := false
@@ -228,17 +227,13 @@ func _build_hud() -> void:
 	add_child(_steps_hold_timer)
 
 func _build_debug_panel() -> void:
-	_debug_layer = CanvasLayer.new()
-	_debug_layer.name = "DebugLayer"
-	_debug_layer.layer = 6
-	add_child(_debug_layer)
-
 	_debug_panel = PanelContainer.new()
 	_debug_panel.visible = true
 	_debug_panel.position = Vector2(40.0, 220.0)
 	_debug_panel.size = Vector2(280.0, 240.0)
+	_debug_panel.z_index = 20
 	_debug_panel.add_theme_stylebox_override("panel", _make_box_style(Palette.BG_WARM_WHITE, Palette.BORDER_ACTIVE, 8))
-	_debug_layer.add_child(_debug_panel)
+	add_child(_debug_panel)
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 7)
