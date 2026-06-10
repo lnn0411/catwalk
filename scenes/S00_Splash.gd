@@ -17,10 +17,10 @@ func _ready() -> void:
 		return
 	if _is_first_time():
 		UIManager.replace("res://scenes/S01_Onboarding.tscn")
-		queue_free()
+		call_deferred("queue_free")
 	else:
 		UIManager.replace("res://scenes/S02_Loading.tscn")
-		queue_free()
+		call_deferred("queue_free")
 
 func _process(_delta: float) -> void:
 	queue_redraw()
