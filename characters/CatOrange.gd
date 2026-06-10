@@ -16,35 +16,43 @@ func _ready():
 	queue_redraw()
 
 func _draw():
-	# 身体
+	var swing = 0.0
+	var tail_sway = 0.0
+	if get_parent() and "leg_swing_offset" in get_parent():
+		swing = get_parent().leg_swing_offset
+		if get_parent()._is_walking:
+			tail_sway = sin(get_parent()._time * 3.0) * 8.0
+	var leg_color = body_color.darkened(0.15)
+	var mouth_color = Color(0.35, 0.25, 0.2)
+
+	draw_ellipse(Vector2(0, 46), 40.0, 7.0, Color(0.2, 0.15, 0.1, 0.25))
+
+	var tail_points = PackedVector2Array([
+		Vector2(48 + tail_sway * 0.2, 20),
+		Vector2(62 + tail_sway * 0.6, 8),
+		Vector2(68 + tail_sway * 1.0, -10),
+		Vector2(58 + tail_sway * 0.8, -24),
+		Vector2(46 + tail_sway * 0.4, -20)
+	])
+	draw_polyline(tail_points, body_color, 5.0, true)
+
+	draw_rect(Rect2(10, 30 - swing, 10, 16), leg_color, true)
+	draw_rect(Rect2(26, 30 - swing, 10, 16), leg_color, true)
+
 	draw_ellipse(Vector2(0, 8), 50.0, 38.0, body_color)
-	draw_arc(Vector2(0, 8), 50, 0, TAU, 32, outline_color, 1.5)
-
-	# 胸腹浅色区
-	draw_ellipse(Vector2(0, 14), 28.0, 22.0, light_color)
-
-	# 头
 	draw_circle(Vector2(0, -28), 22, body_color)
-	draw_arc(Vector2(0, -28), 22, 0, TAU, 32, outline_color, 1.5)
 
-	# 耳朵
-	var ear_l = PackedVector2Array([Vector2(-18, -42), Vector2(-10, -28), Vector2(-26, -28)])
-	var ear_r = PackedVector2Array([Vector2(18, -42), Vector2(10, -28), Vector2(26, -28)])
-	draw_polygon(ear_l, [body_color])
-	draw_polygon(ear_r, [body_color])
+	draw_colored_polygon(PackedVector2Array([Vector2(-18, -44), Vector2(-32, -62), Vector2(-6, -58)]), body_color)
+	draw_colored_polygon(PackedVector2Array([Vector2(-18, -47), Vector2(-27, -59), Vector2(-10, -56)]), Color(0.95, 0.75, 0.75))
+	draw_colored_polygon(PackedVector2Array([Vector2(18, -44), Vector2(32, -62), Vector2(6, -58)]), body_color)
+	draw_colored_polygon(PackedVector2Array([Vector2(18, -47), Vector2(27, -59), Vector2(10, -56)]), Color(0.95, 0.75, 0.75))
 
-	# 眼睛 - 扁椭圆（半眯）
-	draw_ellipse(Vector2(-9, -30), 6.0, 3.0, outline_color)
-	draw_ellipse(Vector2(9, -30), 6.0, 3.0, outline_color)
+	draw_rect(Rect2(-30, 28 + swing, 10, 18), leg_color, true)
+	draw_rect(Rect2(-14, 28 + swing, 10, 18), leg_color, true)
 
-	# 鼻子
-	draw_polygon(PackedVector2Array([Vector2(0, -24), Vector2(-3, -21), Vector2(3, -21)]),
-		[Color("#D4734A")])
+	draw_colored_polygon(PackedVector2Array([Vector2(-4, -22), Vector2(4, -22), Vector2(0, -18)]), Color(0.9, 0.6, 0.6))
+	draw_arc(Vector2(-5, -17), 5, deg_to_rad(200), deg_to_rad(270), 8, mouth_color, 1.5)
+	draw_arc(Vector2(5, -17), 5, deg_to_rad(270), deg_to_rad(340), 8, mouth_color, 1.5)
 
-	# 尾巴 - 搭在地上
-	draw_polyline(PackedVector2Array([
-		Vector2(30, 12), Vector2(46, 20), Vector2(54, 16), Vector2(48, 10)
-	]), outline_color, 4.0, true)
-	draw_polyline(PackedVector2Array([
-		Vector2(30, 12), Vector2(46, 20), Vector2(54, 16), Vector2(48, 10)
-	]), body_color, 2.5, true)
+	draw_circle(Vector2(-10, -32), 2.5, Color(1, 1, 1, 0.9))
+	draw_circle(Vector2(10, -32), 2.5, Color(1, 1, 1, 0.9))

@@ -10,6 +10,9 @@ var rng: RandomNumberGenerator
 var timer: Timer
 var target_position: Vector2
 var is_moving: bool = false
+var _time: float = 0.0
+var _is_walking: bool = false
+var leg_swing_offset: float = 0.0
 
 func _ready() -> void:
 	rng = RandomNumberGenerator.new()
@@ -62,10 +65,25 @@ func _on_wander_tick() -> void:
 	target_position.x = clampf(target_position.x, 100.0, 1900.0)
 	target_position.y = clampf(target_position.y, 116.0, 1016.0)
 	is_moving = true
+	_is_walking = true
 	if target_position.x < position.x:
 		scale.x = -1.0
 	else:
 		scale.x = 1.0
+
+func _process(delta: float) -> void:
+	_time += delta
+	_update_leg_animation()
+	queue_redraw()
+	var visual := get_node_or_null("Visual")
+	if visual:
+		visual.queue_redraw()
+
+func _update_leg_animation() -> void:
+	if _is_walking:
+		leg_swing_offset = sin(_time * 8.0) * 6.0
+	else:
+		leg_swing_offset = lerp(leg_swing_offset, 0.0, 0.15)
 
 func _physics_process(delta: float) -> void:
 	if is_moving:
@@ -74,6 +92,7 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		if position.distance_to(target_position) < 10.0:
 			is_moving = false
+			_is_walking = false
 			velocity = Vector2.ZERO
 			_schedule_wander()
 

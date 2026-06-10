@@ -16,50 +16,43 @@ func _ready():
 	queue_redraw()
 
 func _draw():
-	# 身体 - 修长 42x34
+	var swing = 0.0
+	var tail_sway = 0.0
+	if get_parent() and "leg_swing_offset" in get_parent():
+		swing = get_parent().leg_swing_offset
+		if get_parent()._is_walking:
+			tail_sway = sin(get_parent()._time * 3.0) * 8.0
+	var leg_color = body_color.darkened(0.15)
+	var mouth_color = Color(0.35, 0.25, 0.2)
+
+	draw_ellipse(Vector2(0, 44), 34.0, 6.0, Color(0.2, 0.15, 0.1, 0.25))
+
+	var tail_points = PackedVector2Array([
+		Vector2(44 + tail_sway * 0.2, 18),
+		Vector2(60 + tail_sway * 0.6, 5),
+		Vector2(68 + tail_sway * 1.0, -12),
+		Vector2(62 + tail_sway * 0.8, -28),
+		Vector2(50 + tail_sway * 0.4, -24)
+	])
+	draw_polyline(tail_points, body_color, 4.0, true)
+
+	draw_rect(Rect2(10, 30 - swing, 10, 16), leg_color, true)
+	draw_rect(Rect2(26, 30 - swing, 10, 16), leg_color, true)
+
 	draw_ellipse(Vector2(0, 8), 42.0, 34.0, body_color)
-	draw_arc(Vector2(0, 8), 42, 0, TAU, 32, outline_color, 1.5)
-
-	# 胸腹浅色区
-	draw_ellipse(Vector2(0, 14), 22.0, 20.0, light_color)
-
-	# 头
 	draw_circle(Vector2(0, -28), 20, body_color)
-	draw_arc(Vector2(0, -28), 20, 0, TAU, 32, outline_color, 1.5)
 
-	# 脸部重点色遮罩（椭圆，宽14高10，居中在脸上）
-	draw_ellipse(Vector2(0, -28), 14.0, 10.0, outline_color)
+	draw_colored_polygon(PackedVector2Array([Vector2(-14, -42), Vector2(-30, -65), Vector2(-4, -58)]), body_color)
+	draw_colored_polygon(PackedVector2Array([Vector2(-14, -45), Vector2(-25, -62), Vector2(-6, -56)]), Color(0.95, 0.75, 0.75))
+	draw_colored_polygon(PackedVector2Array([Vector2(14, -42), Vector2(30, -65), Vector2(4, -58)]), body_color)
+	draw_colored_polygon(PackedVector2Array([Vector2(14, -45), Vector2(25, -62), Vector2(6, -56)]), Color(0.95, 0.75, 0.75))
 
-	# 耳朵
-	var ear_l = PackedVector2Array([Vector2(-15, -40), Vector2(-8, -30), Vector2(-22, -30)])
-	var ear_r = PackedVector2Array([Vector2(15, -40), Vector2(8, -30), Vector2(22, -30)])
-	draw_polygon(ear_l, [body_color])
-	draw_polygon(ear_r, [body_color])
-	# 耳内侧深色
-	var ear_inner_l = PackedVector2Array([Vector2(-15, -38), Vector2(-10, -32), Vector2(-20, -32)])
-	var ear_inner_r = PackedVector2Array([Vector2(15, -38), Vector2(10, -32), Vector2(20, -32)])
-	draw_polygon(ear_inner_l, [outline_color])
-	draw_polygon(ear_inner_r, [outline_color])
+	draw_rect(Rect2(-30, 28 + swing, 10, 18), leg_color, true)
+	draw_rect(Rect2(-14, 28 + swing, 10, 18), leg_color, true)
 
-	# 眼睛 - 杏仁形 高=宽x0.6
-	draw_ellipse(Vector2(-9, -30), 5.0, 4.0, outline_color)
-	draw_ellipse(Vector2(9, -30), 5.0, 4.0, outline_color)
-	# 瞳孔 - 细长暗椭圆
-	draw_ellipse(Vector2(-9, -30), 2.0, 3.0, Color.BLACK)
-	draw_ellipse(Vector2(9, -30), 2.0, 3.0, Color.BLACK)
+	draw_colored_polygon(PackedVector2Array([Vector2(-4, -22), Vector2(4, -22), Vector2(0, -18)]), Color(0.9, 0.6, 0.6))
+	draw_arc(Vector2(-5, -17), 5, deg_to_rad(200), deg_to_rad(270), 8, mouth_color, 1.5)
+	draw_arc(Vector2(5, -17), 5, deg_to_rad(270), deg_to_rad(340), 8, mouth_color, 1.5)
 
-	# 鼻子
-	draw_polygon(PackedVector2Array([Vector2(0, -22), Vector2(-3, -19), Vector2(3, -19)]),
-		[Color("#D4734A")])
-
-	# 前爪 - CAT_SIAM_POINT
-	draw_ellipse(Vector2(-20, 22), 8.0, 6.0, outline_color)
-	draw_ellipse(Vector2(20, 22), 8.0, 6.0, outline_color)
-
-	# 尾巴 - 高翘上扬
-	draw_polyline(PackedVector2Array([
-		Vector2(28, 8), Vector2(44, -8), Vector2(52, -18), Vector2(46, -24)
-	]), outline_color, 4.0, true)
-	draw_polyline(PackedVector2Array([
-		Vector2(28, 8), Vector2(44, -8), Vector2(52, -18), Vector2(46, -24)
-	]), body_color, 2.5, true)
+	draw_circle(Vector2(-10, -32), 2.5, Color(1, 1, 1, 0.9))
+	draw_circle(Vector2(10, -32), 2.5, Color(1, 1, 1, 0.9))
