@@ -13,6 +13,7 @@ func _ready():
 	collision.position = Vector2(0, 4)
 	static_body.add_child(collision)
 	add_child(static_body)
+	queue_redraw()
 
 func _draw():
 	# 身体 - 修长 42x34

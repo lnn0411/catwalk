@@ -66,7 +66,7 @@ func instance_cat(cat_data):
 func _pick_spawn_position() -> Vector2:
 	var position := Vector2.ZERO
 	for i in range(10):
-		position = Vector2(rng.randf_range(100.0, 1900.0), rng.randf_range(500.0, 1400.0))
+		position = Vector2(rng.randf_range(100.0, 1900.0), rng.randf_range(116.0, 1016.0))
 		if not _is_position_occupied(position):
 			return position
 	return position
