@@ -4,7 +4,7 @@ var _settings_rect := Rect2()
 var _later_rect := Rect2()
 
 func _gui_input(event: InputEvent) -> void:
-	var pos = _released_position(event)
+	var pos: Variant = _released_position(event)
 	if pos == null:
 		return
 	if _settings_rect.has_point(pos):
@@ -31,7 +31,7 @@ func _open_settings() -> void:
 		if step_counter.has_method("open_app_settings"):
 			step_counter.call("open_app_settings")
 
-func _released_position(event: InputEvent):
+func _released_position(event: InputEvent) -> Variant:
 	if event is InputEventScreenTouch and not event.pressed:
 		return event.position
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:

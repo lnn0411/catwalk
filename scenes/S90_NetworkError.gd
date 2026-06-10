@@ -3,7 +3,7 @@ extends "res://ui/UIPage.gd"
 var _retry_rect := Rect2()
 
 func _gui_input(event: InputEvent) -> void:
-	var pos = _released_position(event)
+	var pos: Variant = _released_position(event)
 	if pos != null and _retry_rect.has_point(pos):
 		UIManager.replace("res://scenes/S02_Loading.tscn")
 
@@ -15,7 +15,7 @@ func _draw() -> void:
 	_retry_rect = Rect2(Vector2((screen.x - 480.0) * 0.5, 980.0), Vector2(480.0, 70.0))
 	_draw_button(_retry_rect, "重试")
 
-func _released_position(event: InputEvent):
+func _released_position(event: InputEvent) -> Variant:
 	if event is InputEventScreenTouch and not event.pressed:
 		return event.position
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:

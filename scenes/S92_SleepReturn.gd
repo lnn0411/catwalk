@@ -7,7 +7,7 @@ func _on_page_setup(data: Dictionary) -> void:
 	_days = int(data.get("days", _days_since_last_open()))
 
 func _gui_input(event: InputEvent) -> void:
-	var pos = _released_position(event)
+	var pos: Variant = _released_position(event)
 	if pos != null and _continue_rect.has_point(pos):
 		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
