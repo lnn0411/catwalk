@@ -17,6 +17,7 @@ const LEGENDARY_PITY := 120
 var epic_pity_count: int = 0
 var legendary_pity_count: int = 0
 var rng := RandomNumberGenerator.new()
+var _next_fill_slot: int = 0
 
 func _ready() -> void:
 	rng.randomize()
@@ -190,10 +191,12 @@ func _assign_next_empty_slots() -> void:
 			_emit_slot_progress(i)
 
 func _get_active_filling_slot() -> int:
-	# 串行填充：始终优先填最低索引的 incubating 槽（GDD §2.2）
-	for i in range(SLOT_COUNT):
+	# 轮询填充：从 _next_fill_slot 开始找下一个 incubating 槽，避免 slot 0 饥饿
+	for offset in range(SLOT_COUNT):
+		var i: int = (_next_fill_slot + offset) % SLOT_COUNT
 		var slot: Dictionary = slots[i]
 		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "incubating":
+			_next_fill_slot = (i + 1) % SLOT_COUNT
 			return i
 	return -1
 
