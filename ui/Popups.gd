@@ -56,17 +56,12 @@ class DialogOverlay:
 		tween.tween_property(self, "modulate:a", 1.0, 0.16)
 
 	func _gui_input(event: InputEvent) -> void:
-		var pressed := false
-		var point := Vector2.ZERO
-		if event is InputEventScreenTouch and event.pressed:
-			pressed = true
-			point = event.position
-		elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			pressed = true
-			point = event.position
-		if not pressed:
+		if not (event is InputEventMouseButton) or not event.pressed:
 			return
-
+		if event.button_index != MOUSE_BUTTON_LEFT:
+			return
+		var point := event.position
+		
 		if _cancel_rect.has_point(point):
 			_close()
 			accept_event()
