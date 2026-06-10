@@ -106,6 +106,18 @@ func _build_hud() -> void:
 	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_bar)
 
+	var debug_button := TextureButton.new()
+	debug_button.texture_normal = load(UI_TEXTURE_PATH + "btn_settings.png")
+	debug_button.texture_pressed = debug_button.texture_normal
+	debug_button.texture_hover = debug_button.texture_normal
+	debug_button.stretch_mode = TextureButton.STRETCH_SCALE
+	debug_button.position = Vector2(680.0, 10.0)
+	debug_button.size = Vector2(40.0, 40.0)
+	debug_button.mouse_filter = Control.MOUSE_FILTER_STOP
+	debug_button.z_index = 10
+	debug_button.pressed.connect(_toggle_debug_panel)
+	root.add_child(debug_button)
+
 	var top_row := HBoxContainer.new()
 	top_row.position = Vector2(24.0, 60.0)
 	top_row.size = Vector2(656.0, 60.0)
