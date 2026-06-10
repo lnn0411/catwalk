@@ -29,7 +29,7 @@ func _gui_input(event: InputEvent) -> void:
 	if _allow_rect.has_point(pos):
 		_on_allow_pressed()
 	elif _later_rect.has_point(pos):
-		UIManager.replace("res://scenes/S05_ReadOnlyGarden.tscn")
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 func _draw() -> void:
 	var screen := get_viewport_rect().size
@@ -44,7 +44,8 @@ func _on_allow_pressed() -> void:
 	_requesting = true
 	var step_counter := Engine.get_singleton("StepCounter")
 	if step_counter == null:
-		_on_permission_result(false)
+		# Editor / non-Android → skip permission, go to garden
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 		return
 	if step_counter.has_signal("permission_result") and not step_counter.permission_result.is_connected(_on_permission_result):
 		step_counter.permission_result.connect(_on_permission_result, CONNECT_ONE_SHOT)
