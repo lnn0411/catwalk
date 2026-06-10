@@ -14,6 +14,9 @@ var _start_rect := Rect2()
 func _ready() -> void:
 	super._ready()
 
+func handle_back() -> bool:
+	return true
+
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed:

@@ -10,6 +10,9 @@ var _requesting := false
 func _ready() -> void:
 	super._ready()
 
+func handle_back() -> bool:
+	return true
+
 func _gui_input(event: InputEvent) -> void:
 	if _requesting:
 		return

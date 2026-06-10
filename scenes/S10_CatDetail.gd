@@ -2,7 +2,7 @@ extends "res://ui/UIPage.gd"
 
 const CatData := preload("res://core/CatData.gd")
 
-const DESIGN_SIZE := Vector2(1080.0, 1920.0)
+const DESIGN_SIZE := Vector2(720.0, 1280.0)
 
 var _cat = null
 var _back_rect: Rect2 = Rect2()
@@ -15,6 +15,11 @@ func _on_page_setup(data: Dictionary) -> void:
 	queue_redraw()
 
 func _gui_input(event: InputEvent) -> void:
+	if _is_back_event(event):
+		UIManager.go_back()
+		accept_event()
+		return
+
 	var pos: Variant = _released_position(event)
 	if pos == null:
 		return
@@ -38,51 +43,51 @@ func _draw() -> void:
 	_draw_diary()
 
 func _draw_top_bar() -> void:
-	_back_rect = Rect2(Vector2(42.0, 88.0), Vector2(128.0, 72.0))
+	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
 	_draw_button(_back_rect, "返回", Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
-	_draw_centered_text("猫咪详情", 136.0, 36, Palette.TEXT_PRIMARY)
+	_draw_centered_text("猫咪详情", 91.0, 24, Palette.TEXT_PRIMARY)
 
 func _draw_cat_panel() -> void:
-	var image_rect: Rect2 = Rect2(Vector2(120.0, 218.0), Vector2(840.0, 400.0))
-	_draw_round_rect(image_rect, 8.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 2.0)
-	draw_circle(image_rect.position + image_rect.size * 0.5, 150.0, Color(_rarity_color(), 0.22))
-	_draw_cat_shape(image_rect.position + image_rect.size * 0.5 + Vector2(0.0, 22.0), _cat_color(), 1.1)
+	var image_rect: Rect2 = Rect2(Vector2(80.0, 145.0), Vector2(560.0, 267.0))
+	_draw_round_rect(image_rect, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
+	draw_circle(image_rect.position + image_rect.size * 0.5, 100.0, Color(_rarity_color(), 0.22))
+	_draw_cat_shape(image_rect.position + image_rect.size * 0.5 + Vector2(0.0, 15.0), _cat_color(), 0.73)
 
-	_draw_centered_text("%s · %s" % [_breed_label(), _rarity_label()], 690.0, 30, _rarity_color())
-	_draw_centered_text(_cat_name(), 746.0, 42, Palette.TEXT_PRIMARY)
+	_draw_centered_text("%s · %s" % [_breed_label(), _rarity_label()], 460.0, 20, _rarity_color())
+	_draw_centered_text(_cat_name(), 497.0, 28, Palette.TEXT_PRIMARY)
 
 func _draw_stats() -> void:
-	var level_panel: Rect2 = Rect2(Vector2(96.0, 820.0), Vector2(888.0, 176.0))
-	_draw_round_rect(level_panel, 8.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 2.0)
-	_draw_text("等级 Lv.%d" % _cat_level(), level_panel.position + Vector2(36.0, 56.0), 28, Palette.TEXT_PRIMARY)
+	var level_panel: Rect2 = Rect2(Vector2(64.0, 547.0), Vector2(592.0, 117.0))
+	_draw_round_rect(level_panel, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
+	_draw_text("等级 Lv.%d" % _cat_level(), level_panel.position + Vector2(24.0, 37.0), 19, Palette.TEXT_PRIMARY)
 	var ratio: float = clampf(float(_cat_exp() % 100) / 100.0, 0.0, 1.0)
-	var bar: Rect2 = Rect2(level_panel.position + Vector2(36.0, 94.0), Vector2(816.0, 22.0))
-	_draw_round_rect(bar, 8.0, Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, 1.0)
-	_draw_round_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), 8.0, Palette.AMBER, Palette.AMBER, 0.0)
-	_draw_text("%d / 100" % (_cat_exp() % 100), level_panel.position + Vector2(36.0, 148.0), 20, Palette.TEXT_SECONDARY)
+	var bar: Rect2 = Rect2(level_panel.position + Vector2(24.0, 63.0), Vector2(544.0, 15.0))
+	_draw_round_rect(bar, 5.0, Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, 1.0)
+	_draw_round_rect(Rect2(bar.position, Vector2(bar.size.x * ratio, bar.size.y)), 5.0, Palette.AMBER, Palette.AMBER, 0.0)
+	_draw_text("%d / 100" % (_cat_exp() % 100), level_panel.position + Vector2(24.0, 99.0), 13, Palette.TEXT_SECONDARY)
 
-	var affection_panel: Rect2 = Rect2(Vector2(96.0, 1028.0), Vector2(888.0, 176.0))
-	_draw_round_rect(affection_panel, 8.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 2.0)
-	_draw_text("亲密度", affection_panel.position + Vector2(36.0, 58.0), 28, Palette.TEXT_PRIMARY)
-	_draw_text(_heart_text(), affection_panel.position + Vector2(36.0, 116.0), 32, Palette.BRICK_RED)
-	_draw_text("孵化日期  %s" % _hatch_date(), Vector2(132.0, 1262.0), 24, Palette.TEXT_SECONDARY)
+	var affection_panel: Rect2 = Rect2(Vector2(64.0, 686.0), Vector2(592.0, 117.0))
+	_draw_round_rect(affection_panel, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
+	_draw_text("亲密度", affection_panel.position + Vector2(24.0, 39.0), 19, Palette.TEXT_PRIMARY)
+	_draw_text(_heart_text(), affection_panel.position + Vector2(24.0, 77.0), 21, Palette.BRICK_RED)
+	_draw_text("孵化日期  %s" % _hatch_date(), Vector2(88.0, 842.0), 16, Palette.TEXT_SECONDARY)
 
 func _draw_buttons() -> void:
-	_rename_rect = Rect2(Vector2(96.0, 1336.0), Vector2(272.0, 78.0))
-	_diary_rect = Rect2(Vector2(404.0, 1336.0), Vector2(272.0, 78.0))
-	_release_rect = Rect2(Vector2(712.0, 1336.0), Vector2(272.0, 78.0))
+	_rename_rect = Rect2(Vector2(64.0, 891.0), Vector2(181.0, 52.0))
+	_diary_rect = Rect2(Vector2(269.0, 891.0), Vector2(181.0, 52.0))
+	_release_rect = Rect2(Vector2(475.0, 891.0), Vector2(181.0, 52.0))
 	_draw_button(_rename_rect, "改名", Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
 	_draw_button(_diary_rect, "日记", Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
 	_draw_button(_release_rect, "让它出来", Palette.AMBER, Palette.AMBER, Palette.TEXT_ON_AMBER)
 
 func _draw_diary() -> void:
-	var rect: Rect2 = Rect2(Vector2(96.0, 1472.0), Vector2(888.0, 318.0))
-	_draw_round_rect(rect, 8.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 2.0)
-	_draw_text("日记", rect.position + Vector2(36.0, 58.0), 30, Palette.TEXT_PRIMARY)
-	_draw_text("今天还没有新的记录", rect.position + Vector2(36.0, 116.0), 24, Palette.TEXT_SECONDARY)
-	_draw_text("锁定 · 一起散步后解锁更多故事", rect.position + Vector2(36.0, 184.0), 24, Palette.TEXT_SECONDARY)
-	draw_line(rect.position + Vector2(36.0, 232.0), rect.position + Vector2(rect.size.x - 36.0, 232.0), Palette.BORDER_DEFAULT, 2.0)
-	_draw_text("锁定 · 达到 Lv.3 解锁", rect.position + Vector2(36.0, 282.0), 22, Palette.TEXT_SECONDARY)
+	var rect: Rect2 = Rect2(Vector2(64.0, 982.0), Vector2(592.0, 212.0))
+	_draw_round_rect(rect, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
+	_draw_text("日记", rect.position + Vector2(24.0, 39.0), 20, Palette.TEXT_PRIMARY)
+	_draw_text("今天还没有新的记录", rect.position + Vector2(24.0, 77.0), 16, Palette.TEXT_SECONDARY)
+	_draw_text("锁定 · 一起散步后解锁更多故事", rect.position + Vector2(24.0, 123.0), 16, Palette.TEXT_SECONDARY)
+	draw_line(rect.position + Vector2(24.0, 155.0), rect.position + Vector2(rect.size.x - 24.0, 155.0), Palette.BORDER_DEFAULT, 1.0)
+	_draw_text("锁定 · 达到 Lv.3 解锁", rect.position + Vector2(24.0, 188.0), 15, Palette.TEXT_SECONDARY)
 
 func _cat_name() -> String:
 	if _cat == null:
@@ -175,9 +180,17 @@ func _released_position(event: InputEvent) -> Variant:
 		return event.position
 	return null
 
+func _is_back_event(event: InputEvent) -> bool:
+	return event.is_action_pressed("ui_cancel") or (
+		event is InputEventKey
+		and event.pressed
+		and not event.echo
+		and event.keycode == KEY_BACK
+	)
+
 func _draw_button(rect: Rect2, text: String, bg: Color, border: Color, text_color: Color) -> void:
-	_draw_round_rect(rect, 8.0, bg, border, 2.0)
-	_draw_centered_in_rect(text, rect, 24, text_color)
+	_draw_round_rect(rect, 5.0, bg, border, 1.0)
+	_draw_centered_in_rect(text, rect, 16, text_color)
 
 func _draw_round_rect(rect: Rect2, _radius: float, bg: Color, border: Color, border_width: float) -> void:
 	draw_rect(rect, bg, true)
@@ -195,4 +208,4 @@ func _draw_centered_text(text: String, y: float, font_size: int, color: Color) -
 func _draw_centered_in_rect(text: String, rect: Rect2, font_size: int, color: Color) -> void:
 	var font: Font = get_theme_default_font()
 	var text_size: Vector2 = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
-	draw_string(font, rect.position + Vector2((rect.size.x - text_size.x) * 0.5, (rect.size.y + text_size.y) * 0.5 - 4.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, color)
+	draw_string(font, rect.position + Vector2((rect.size.x - text_size.x) * 0.5, (rect.size.y + text_size.y) * 0.5 - 3.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, color)
