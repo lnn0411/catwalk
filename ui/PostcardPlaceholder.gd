@@ -43,7 +43,7 @@ func _draw_mini_cat(pos: Vector2):
 	var outline_color = Color("#A05A28")
 
 	# 身体（小椭圆）
-	draw_ellipse(pos + Vector2(0, 14), Vector2(20, 16), cat_color)
+	draw_ellipse(pos + Vector2(0, 14), 20.0, 16.0, cat_color)
 	# 头（小圆）
 	draw_circle(pos + Vector2(0, -8), 10, cat_color)
 	# 耳朵
@@ -52,8 +52,8 @@ func _draw_mini_cat(pos: Vector2):
 	draw_polygon(ear_l, [cat_color])
 	draw_polygon(ear_r, [cat_color])
 	# 眼睛
-	draw_ellipse(pos + Vector2(-4, -10), Vector2(3, 2), outline_color)
-	draw_ellipse(pos + Vector2(4, -10), Vector2(3, 2), outline_color)
+	draw_ellipse(pos + Vector2(-4, -10), 3.0, 2.0, outline_color)
+	draw_ellipse(pos + Vector2(4, -10), 3.0, 2.0, outline_color)
 	# 尾巴（后摆）
 	draw_polyline(PackedVector2Array([
 		pos + Vector2(16, 12), pos + Vector2(28, 22), pos + Vector2(36, 18)
