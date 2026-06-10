@@ -6,6 +6,8 @@ var outline_color = Palette.CAT_SIAM_POINT
 
 func _ready():
 	var static_body = StaticBody2D.new()
+	static_body.collision_layer = 0
+	static_body.collision_mask = 0
 	var collision = CollisionShape2D.new()
 	var shape = RectangleShape2D.new()
 	shape.size = Vector2(80, 80)
