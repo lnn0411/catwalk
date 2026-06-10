@@ -18,16 +18,17 @@ func _build_parallax_background() -> void:
 	var parallax := ParallaxBackground.new()
 	add_child(parallax)
 
-	_add_background_layer(parallax, Vector2(0.05, 0.0))
-	_add_background_layer(parallax, Vector2(0.3, 0.0))
-	_add_background_layer(parallax, Vector2(0.8, 0.0))
+	_add_background_layer(parallax, Vector2(0.05, 0.0), GardenBackground.LAYER_FAR)
+	_add_background_layer(parallax, Vector2(0.3, 0.0), GardenBackground.LAYER_MID)
+	_add_background_layer(parallax, Vector2(0.8, 0.0), GardenBackground.LAYER_NEAR)
 
-func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2) -> void:
+func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
 	layer.motion_scale = motion_scale
 	parent.add_child(layer)
 
 	var background := GardenBackground.new()
+	background.layer_type = layer_type
 	background.scale = Vector2(1.0, 1.0)
 	layer.add_child(background)
 
