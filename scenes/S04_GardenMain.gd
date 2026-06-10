@@ -252,7 +252,7 @@ func _build_debug_panel() -> void:
 		["Reset Save", func() -> void: _reset_save()],
 		["Show/Hide stats", func() -> void: _toggle_stats()],
 	]:
-\t\tvar button := Button.new()
+		var button := Button.new()
 		button.text = String(item[0])
 		button.custom_minimum_size = Vector2(0.0, 37.0)
 		button.add_theme_font_size_override("font_size", 13)
