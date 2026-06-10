@@ -374,6 +374,12 @@ func _add_mock_steps(amount: int) -> void:
 func _reset_save() -> void:
 	if SaveManager:
 		SaveManager.reset_all()
+	# 清除画面上的猫
+	if cat_container:
+		for child in cat_container.get_children():
+			child.queue_free()
+	if CatSpawner:
+		CatSpawner.spawned_cat_ids.clear()
 	_refresh_all()
 
 func _toggle_stats() -> void:
