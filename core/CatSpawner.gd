@@ -16,8 +16,10 @@ func _ready() -> void:
 
 func set_cat_container(container) -> void:
 	print("[CatSpawner] set_cat_container: %s" % [container != null])
+	spawned_cat_ids.clear()
 	cat_container = container
-	_restore_cats()
+	if container != null:
+		_restore_cats()
 
 func _on_hatch_complete(cat_data) -> void:
 	print("[CatSpawner] hatch_complete: %s, container=%s" % [cat_data.display_name if cat_data else "null", cat_container != null])

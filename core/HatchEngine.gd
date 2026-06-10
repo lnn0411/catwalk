@@ -12,6 +12,7 @@ var slots: Array = []
 var cats: Array = []
 var hatched_count: int = 0
 var rng := RandomNumberGenerator.new()
+var _next_fill_slot: int = 0
 
 func _ready() -> void:
 	rng.randomize()
@@ -147,9 +148,11 @@ func _assign_next_empty_slots() -> void:
 			_emit_slot_progress(i)
 
 func _get_active_filling_slot() -> int:
-	for i in range(SLOT_COUNT):
+	for offset in range(SLOT_COUNT):
+		var i: int = (_next_fill_slot + offset) % SLOT_COUNT
 		var slot: Dictionary = slots[i]
 		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "filling":
+			_next_fill_slot = (i + 1) % SLOT_COUNT
 			return i
 	return -1
 
