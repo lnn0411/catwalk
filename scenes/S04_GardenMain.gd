@@ -5,7 +5,7 @@ const BottomNavScene := preload("res://ui/BottomNav.tscn")
 const BottomNav := preload("res://ui/BottomNav.gd")
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
-const HUD_HEIGHT := 180.0
+const HUD_HEIGHT := 130.0  # 顶部HUD灰条高度（内容y=60~120；此值=灰条底边，真机可微调120~140）
 const GARDEN_HEIGHT := 760.0
 const ACTION_HEIGHT := 64.0
 const HATCH_HEIGHT := 56.0
@@ -530,8 +530,12 @@ class EnergyMeter:
 		_label = Label.new()
 		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		_label.add_theme_font_size_override("font_size", 14)
-		_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+		_label.add_theme_font_size_override("font_size", 15)
+		# 文字压在能量条上（左半棕橙AMBER/右半浅米），用白字+深色描边
+		# 保证在两种底色上都清晰可读
+		_label.add_theme_color_override("font_color", Color.WHITE)
+		_label.add_theme_color_override("font_outline_color", Palette.TEXT_PRIMARY)
+		_label.add_theme_constant_override("outline_size", 4)
 		_label.size = Vector2(200.0, 36.0)
 		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_label)
