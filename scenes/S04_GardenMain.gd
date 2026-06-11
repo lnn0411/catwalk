@@ -470,7 +470,7 @@ func _is_in_garden(pos: Vector2) -> bool:
 func _clamp_camera_to_world() -> void:
 	_camera.position = Vector2(
 		clampf(_camera.position.x, 240.0, 1365.0 - 240.0),
-		clampf(_camera.position.y, 427.0, 1024.0 - 427.0)
+		clampf(_camera.position.y, 300.0, 1000.0)
 	)
 
 func _format_int(value: int) -> String:
