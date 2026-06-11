@@ -17,7 +17,13 @@ const LEGENDARY_PITY := 120
 var epic_pity_count: int = 0
 var legendary_pity_count: int = 0
 var rng := RandomNumberGenerator.new()
-var _next_fill_slot: int = 0
+
+# 看广告加速（GDD v2.14 §3.7/§12.2）：每次补 3000 能量（≈30分钟步行），每日 3 次。
+# v1.0 纯客户端计数器，跨天按本地日期重置。
+const AD_SPEEDUP_ENERGY := 3000.0
+const AD_SPEEDUP_DAILY_LIMIT := 3
+var ad_speedup_count: int = 0      # 今日已用次数
+var ad_speedup_date: String = ""   # 上次使用日期（跨天重置）
 
 func _ready() -> void:
 	rng.randomize()
@@ -55,6 +61,56 @@ func feed_energy(amount: float) -> void:
 
 	_assign_next_empty_slots()
 
+# 是否存在正在填充的蛋（最低索引的 incubating 槽）。供注入/加速按钮判断。
+func has_filling_egg() -> bool:
+	return _get_active_filling_slot() != -1
+
+# 定向给"当前正在填充的蛋"喂能量（GDD §S06：注入当前蛋）。
+# 封顶到该蛋孵化所需为止，绝不溢出到其他蛋；满则置 ready。
+# 返回实际喂入的能量，未用完的部分由调用方决定如何处理（不会自动流向下一个蛋）。
+func feed_current_egg(amount: float) -> float:
+	if amount <= 0.0:
+		return 0.0
+	var slot_id: int = _get_active_filling_slot()
+	if slot_id == -1:
+		return 0.0
+	var slot: Dictionary = slots[slot_id]
+	var need: float = float(slot["max_energy"]) - float(slot["energy"])
+	var added: float = min(amount, max(need, 0.0))
+	if added <= 0.0:
+		return 0.0
+	slot["energy"] = float(slot["energy"]) + added
+	slots[slot_id] = slot
+	_emit_slot_progress(slot_id)
+	if float(slot["energy"]) >= float(slot["max_energy"]):
+		slot["status"] = "ready"
+		slots[slot_id] = slot
+		_emit_slot_progress(slot_id)
+		_assign_next_empty_slots()
+	return added
+
+# ── 看广告加速：每日次数计数（纯客户端，跨天本地日期重置）──
+func _ad_today_key() -> String:
+	var date: Dictionary = Time.get_date_dict_from_system()
+	return "%04d-%02d-%02d" % [int(date["year"]), int(date["month"]), int(date["day"])]
+
+func _check_ad_daily_reset() -> void:
+	var today: String = _ad_today_key()
+	if ad_speedup_date != today:
+		ad_speedup_date = today
+		ad_speedup_count = 0
+
+func ad_speedup_remaining() -> int:
+	_check_ad_daily_reset()
+	return max(AD_SPEEDUP_DAILY_LIMIT - ad_speedup_count, 0)
+
+func can_ad_speedup() -> bool:
+	return ad_speedup_remaining() > 0
+
+func consume_ad_speedup() -> void:
+	_check_ad_daily_reset()
+	ad_speedup_count += 1
+
 # 玩家点击 ready 蛋时调用：完成孵化、生成猫、发出 hatch_complete（触发演出）。
 # 返回孵出的 CatData；非 ready 槽返回 null。
 func collect_ready_slot(slot_id: int):
@@ -78,6 +134,8 @@ func apply_save(data: Dictionary) -> void:
 	hatched_count = max(int(data.get("hatched_count", cats.size())), cats.size())
 	epic_pity_count = max(int(data.get("epic_pity_count", 0)), 0)
 	legendary_pity_count = max(int(data.get("legendary_pity_count", 0)), 0)
+	ad_speedup_count = max(int(data.get("ad_speedup_count", 0)), 0)
+	ad_speedup_date = String(data.get("ad_speedup_date", ""))
 	_ensure_slots()
 	_update_unlocks()
 	_assign_next_empty_slots()
@@ -99,6 +157,8 @@ func get_save_data() -> Dictionary:
 		"hatched_count": hatched_count,
 		"epic_pity_count": epic_pity_count,
 		"legendary_pity_count": legendary_pity_count,
+		"ad_speedup_count": ad_speedup_count,
+		"ad_speedup_date": ad_speedup_date,
 	}
 
 func get_unlocked_species() -> Array:
@@ -191,12 +251,10 @@ func _assign_next_empty_slots() -> void:
 			_emit_slot_progress(i)
 
 func _get_active_filling_slot() -> int:
-	# 轮询填充：从 _next_fill_slot 开始找下一个 incubating 槽，避免 slot 0 饥饿
-	for offset in range(SLOT_COUNT):
-		var i: int = (_next_fill_slot + offset) % SLOT_COUNT
+	# 串行填充：始终优先填最低索引的 incubating 槽（GDD §2.2）
+	for i in range(SLOT_COUNT):
 		var slot: Dictionary = slots[i]
 		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "incubating":
-			_next_fill_slot = (i + 1) % SLOT_COUNT
 			return i
 	return -1
 

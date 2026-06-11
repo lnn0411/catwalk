@@ -106,6 +106,8 @@ func _read_hatch() -> Dictionary:
 		"hatched_count": int(_config.get_value("hatch", "hatched_count", cat_count)),
 		"epic_pity_count": int(_config.get_value("hatch", "epic_pity_count", 0)),
 		"legendary_pity_count": int(_config.get_value("hatch", "legendary_pity_count", 0)),
+		"ad_speedup_count": int(_config.get_value("hatch", "ad_speedup_count", 0)),
+		"ad_speedup_date": String(_config.get_value("hatch", "ad_speedup_date", "")),
 	}
 
 func _write_hatch() -> void:
@@ -116,6 +118,8 @@ func _write_hatch() -> void:
 	_config.set_value("hatch", "hatched_count", int(data.get("hatched_count", cats.size())))
 	_config.set_value("hatch", "epic_pity_count", int(data.get("epic_pity_count", 0)))
 	_config.set_value("hatch", "legendary_pity_count", int(data.get("legendary_pity_count", 0)))
+	_config.set_value("hatch", "ad_speedup_count", int(data.get("ad_speedup_count", 0)))
+	_config.set_value("hatch", "ad_speedup_date", String(data.get("ad_speedup_date", "")))
 	_config.set_value("hatch", "cat_count", cats.size())
 	for i in range(cats.size()):
 		_write_cat("cat_%d" % i, cats[i])

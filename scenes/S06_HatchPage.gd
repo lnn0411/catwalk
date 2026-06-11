@@ -135,7 +135,16 @@ func _draw_slot(rect: Rect2, index: int, slot: Dictionary) -> void:
 
 func _draw_bottom_button() -> void:
 	_ad_rect = Rect2(Vector2(120.0, DESIGN_SIZE.y - 167.0), Vector2(480.0, 55.0))
-	_draw_button(_ad_rect, "看广告加速", Palette.BG_CEMENT, Palette.BORDER_ACTIVE, Palette.TEXT_PRIMARY)
+	var remaining: int = HatchEngine.ad_speedup_remaining() if HatchEngine else 0
+	var limit: int = HatchEngine.AD_SPEEDUP_DAILY_LIMIT if HatchEngine else 3
+	# 按钮文案保持简洁「看广告加速 X/Y」；GDD v2.14 的「补充3000能量（≈30分钟步行）」
+	# 说明文案放在点击提示/旁注，不挤在按钮上。
+	var label: String = "看广告加速 %d/%d" % [remaining, limit]
+	if remaining <= 0:
+		# 用完置灰（仍可点，点了提示"今日已用完"）
+		_draw_button(_ad_rect, label, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_SECONDARY)
+	else:
+		_draw_button(_ad_rect, label, Palette.BG_CEMENT, Palette.BORDER_ACTIVE, Palette.TEXT_PRIMARY)
 
 func _slot_status(slot: Dictionary) -> String:
 	var status := String(slot.get("status", "empty"))
@@ -166,19 +175,52 @@ func _on_slot_pressed(index: int) -> void:
 func _inject_energy() -> void:
 	if HatchEngine == null or EnergyEngine == null:
 		return
-	var amount: float = max(EnergyEngine.reserve_tank, 0.0)
-	if amount <= 0.0:
+	var reserve: float = max(EnergyEngine.reserve_tank, 0.0)
+	if reserve <= 0.0:
+		if Popups:
+			Popups.show_toast("暂无备用能量")
 		return
-	EnergyEngine.reserve_tank = 0.0
-	HatchEngine.feed_energy(amount)
+	if not HatchEngine.has_filling_egg():
+		if Popups:
+			Popups.show_toast("当前没有正在孵化的蛋")
+		return
+	# GDD §S06：点「注入」→ 确认弹窗 → 确认 → 备用槽减少、当前蛋进度增加
+	if Popups:
+		Popups.show_confirm("注入备用能量", "将备用能量注入当前孵化的蛋？", _do_inject)
+	else:
+		_do_inject()
+
+func _do_inject() -> void:
+	if HatchEngine == null or EnergyEngine == null:
+		return
+	var reserve: float = max(EnergyEngine.reserve_tank, 0.0)
+	if reserve <= 0.0:
+		return
+	# 只喂当前蛋、封顶不溢出；只扣实际用掉的，剩余留在备用槽
+	var used: float = HatchEngine.feed_current_egg(reserve)
+	EnergyEngine.reserve_tank = max(reserve - used, 0.0)
 	EnergyEngine.energy_changed.emit(EnergyEngine.energy_pool, EnergyEngine.MAX_ENERGY_POOL, EnergyEngine.reserve_tank)
 	if SaveManager:
 		SaveManager.save_all()
 	_refresh_slots()
 
 func _speed_up() -> void:
-	if HatchEngine:
-		HatchEngine.feed_energy(1000.0)
+	if HatchEngine == null:
+		return
+	if not HatchEngine.has_filling_egg():
+		if Popups:
+			Popups.show_toast("当前没有正在孵化的蛋")
+		return
+	if not HatchEngine.can_ad_speedup():
+		if Popups:
+			Popups.show_toast("今日加速次数已用完")
+		return
+	HatchEngine.consume_ad_speedup()
+	# 补充 3000 能量（≈30分钟步行），只进当前蛋；满了的剩余退回主池，不溢出别的蛋
+	var used: float = HatchEngine.feed_current_egg(HatchEngine.AD_SPEEDUP_ENERGY)
+	var leftover: float = HatchEngine.AD_SPEEDUP_ENERGY - used
+	if leftover > 0.0 and EnergyEngine:
+		EnergyEngine.add_pool_with_overflow(leftover)
 	if SaveManager:
 		SaveManager.save_all()
 	_refresh_slots()

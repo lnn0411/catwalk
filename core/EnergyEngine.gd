@@ -68,6 +68,21 @@ func process_steps(delta_steps: int) -> float:
 	_emit_energy_changed()
 	return produced
 
+# 把一笔能量加进主池，溢出部分进备用槽（分配规则与 process_steps 一致）。
+# 用于退回未用完的能量（如加速补能后当前蛋已满的剩余），不计入 total_energy_produced。
+func add_pool_with_overflow(amount: float) -> void:
+	var remaining: float = max(amount, 0.0)
+	if remaining <= 0.0:
+		return
+	var pool_space: float = max(MAX_ENERGY_POOL - energy_pool, 0.0)
+	var to_pool: float = min(remaining, pool_space)
+	energy_pool += to_pool
+	remaining -= to_pool
+	if remaining > 0.0:
+		var reserve_space: float = max(MAX_RESERVE_TANK - reserve_tank, 0.0)
+		reserve_tank += min(remaining, reserve_space)
+	_emit_energy_changed()
+
 func newbie_protection_remaining_days() -> int:
 	var elapsed: float = max(Time.get_unix_time_from_system() - created_at, 0.0)
 	var remaining_seconds: float = max(float(NEW_PLAYER_DAYS * 24 * 60 * 60) - elapsed, 0.0)
