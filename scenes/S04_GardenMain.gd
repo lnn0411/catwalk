@@ -10,7 +10,10 @@ const GARDEN_HEIGHT := 760.0
 const ACTION_HEIGHT := 64.0
 const HATCH_HEIGHT := 56.0
 const NAV_HEIGHT := 56.0
-const CONTENT_SCALE := 0.48
+const CONTENT_SCALE := 0.48  # 仅作相机缩放兜底；实际缩放按真实视口在 _setup_camera 里算
+# 花园世界尺寸（与 GardenBackground 美术绘制范围一致；改美术需同步这两个值，真机核对）
+const WORLD_WIDTH := 2048.0
+const WORLD_HEIGHT := 1536.0
 const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 
 # 互动子状态（喂食/抚摸/玩耍/拍照），对应测试 C6-C9
@@ -21,6 +24,7 @@ var cat_container: Node2D
 var _camera: Camera2D
 var _dragging := false
 var _drag_start := Vector2.ZERO
+var _cam_zoom: float = CONTENT_SCALE  # 运行时按真实视口尺寸重算
 var _steps_label: Label
 var _energy_bar: EnergyMeter
 var _hatch_row: HBoxContainer
@@ -69,10 +73,9 @@ func _build_garden_layer() -> void:
 	garden_layer.add_child(cat_container)
 
 	_camera = Camera2D.new()
-	_camera.position = Vector2(520.0, 530.0)
-	_camera.zoom = Vector2(CONTENT_SCALE, CONTENT_SCALE)
 	garden_layer.add_child(_camera)
 	_camera.make_current()
+	_setup_camera()
 
 	if CatSpawner:
 		CatSpawner.set_cat_container(cat_container)
@@ -249,7 +252,7 @@ func _build_hud() -> void:
 
 func _build_debug_panel() -> void:
 	_debug_panel = PanelContainer.new()
-	_debug_panel.visible = false
+	_debug_panel.visible = OS.is_debug_build()
 	_debug_panel.position = Vector2(40.0, 220.0)
 	_debug_panel.size = Vector2(280.0, 240.0)
 	_debug_panel.z_index = 20
@@ -446,39 +449,57 @@ func _toggle_stats() -> void:
 		]
 		Popups.show_info(text if _stats_visible else "stats hidden")
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed and _is_in_garden(get_global_mouse_position()):
+		if event.pressed and _is_in_garden(event.position):
 			_dragging = true
 			_drag_start = get_global_mouse_position()
 		else:
 			_dragging = false
-	elif event is InputEventScreenTouch:
-		if event.pressed and _is_in_garden(event.position):
-			_dragging = true
-			_drag_start = event.position
-		else:
-			_dragging = false
-	elif event is InputEventScreenDrag and _dragging and _camera:
-		_camera.position -= event.relative / CONTENT_SCALE
-		_clamp_camera_to_world()
 	elif event is InputEventMouseMotion and _dragging and _camera:
+		# 防卡死：若 _dragging 残留为 true 但左键并未真正按住（例如点猫开弹窗后
+		# 松开事件被弹窗遮罩吃掉，桌面悬停移动会误触发平移），此处自动归正。
 		if not (event.button_mask & MOUSE_BUTTON_MASK_LEFT):
 			_dragging = false
 		else:
 			var drag_delta := get_global_mouse_position() - _drag_start
-			_camera.position -= drag_delta / CONTENT_SCALE
+			# 横版花园：只左右滚动（竖直锁定）
+			_camera.position.x -= drag_delta.x / _cam_zoom
 			_clamp_camera_to_world()
 			_drag_start = get_global_mouse_position()
 
 func _is_in_garden(pos: Vector2) -> bool:
 	return pos.y >= HUD_HEIGHT and pos.y <= HUD_HEIGHT + GARDEN_HEIGHT
 
+# 横版花园相机：按真实视口尺寸算缩放，让世界高度恰好填满可视高度（消除上下黑边）；
+# 世界比屏幕宽 → 只支持左右滚动，竖直居中锁定。aspect=expand 下视口尺寸随设备变化，
+# 故用 get_viewport_rect() 取真实尺寸，不写死。
+func _setup_camera() -> void:
+	if _camera == null:
+		return
+	var view: Vector2 = get_viewport_rect().size
+	if view.y > 0.0 and WORLD_HEIGHT > 0.0:
+		_cam_zoom = view.y / WORLD_HEIGHT
+	else:
+		_cam_zoom = CONTENT_SCALE
+	_camera.zoom = Vector2(_cam_zoom, _cam_zoom)
+	_camera.position = Vector2(WORLD_WIDTH * 0.5, WORLD_HEIGHT * 0.5)
+	_clamp_camera_to_world()
+
 func _clamp_camera_to_world() -> void:
-	_camera.position = Vector2(
-		clampf(_camera.position.x, 240.0, 1365.0 - 240.0),
-		clampf(_camera.position.y, 300.0, 900.0)
-	)
+	if _camera == null:
+		return
+	var view: Vector2 = get_viewport_rect().size
+	var half_w: float = (view.x * 0.5) / max(_cam_zoom, 0.0001)
+	var min_x: float = half_w
+	var max_x: float = WORLD_WIDTH - half_w
+	if min_x > max_x:
+		# 世界比可视区还窄（理论上不会，保险）→ 水平居中
+		_camera.position.x = WORLD_WIDTH * 0.5
+	else:
+		_camera.position.x = clampf(_camera.position.x, min_x, max_x)
+	# 竖直锁定居中（横版不上下滚动，世界高度已填满可视区）
+	_camera.position.y = WORLD_HEIGHT * 0.5
 
 func _format_int(value: int) -> String:
 	var raw: String = str(value)
