@@ -446,16 +446,23 @@ func _toggle_stats() -> void:
 		]
 		Popups.show_info(text if _stats_visible else "stats hidden")
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
-		if event.pressed and _is_in_garden(event.position):
+		if event.pressed and _is_in_garden(get_global_mouse_position()):
 			_dragging = true
 			_drag_start = get_global_mouse_position()
 		else:
 			_dragging = false
+	elif event is InputEventScreenTouch:
+		if event.pressed and _is_in_garden(event.position):
+			_dragging = true
+			_drag_start = event.position
+		else:
+			_dragging = false
+	elif event is InputEventScreenDrag and _dragging and _camera:
+		_camera.position -= event.relative / CONTENT_SCALE
+		_clamp_camera_to_world()
 	elif event is InputEventMouseMotion and _dragging and _camera:
-		# 防卡死：若 _dragging 残留为 true 但左键并未真正按住（例如点猫开弹窗后
-		# 松开事件被弹窗遮罩吃掉，桌面悬停移动会误触发平移），此处自动归正。
 		if not (event.button_mask & MOUSE_BUTTON_MASK_LEFT):
 			_dragging = false
 		else:
@@ -470,7 +477,7 @@ func _is_in_garden(pos: Vector2) -> bool:
 func _clamp_camera_to_world() -> void:
 	_camera.position = Vector2(
 		clampf(_camera.position.x, 240.0, 1365.0 - 240.0),
-		clampf(_camera.position.y, 300.0, 715.0)
+		clampf(_camera.position.y, 300.0, 900.0)
 	)
 
 func _format_int(value: int) -> String:

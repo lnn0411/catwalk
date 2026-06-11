@@ -16,8 +16,8 @@ func _draw():
 			_draw_ground_and_plants()
 
 func _draw_sky_and_clouds() -> void:
-	for i in range(32):
-		var t := float(i) / 31.0
+	for i in range(40):
+		var t := float(i) / 39.0
 		var color := Color("#FFE9C9").lerp(Color("#F7CFA8"), t)
 		draw_rect(Rect2(0, i * 64, 2048, 68), color)
 
@@ -42,12 +42,12 @@ func _draw_buildings() -> void:
 	_draw_mid_bush(Vector2(1900, 650), 1.1)
 
 func _draw_ground_and_plants() -> void:
-	for i in range(26):
-		var t := float(i) / 25.0
+	for i in range(34):
+		var t := float(i) / 33.0
 		var color := Color("#B9D38B").lerp(Color("#7FA35E"), t)
 		draw_rect(Rect2(0, 384 + i * 64, 2048, 70), color)
 
-	draw_rect(Rect2(0, 980, 2048, 1068), Color("#8EB768"))
+	draw_rect(Rect2(0, 980, 2048, 1580), Color("#8EB768"))
 	_draw_path()
 	_draw_grass_texture()
 	_draw_tree(Vector2(185, 890), 1.15, false)
