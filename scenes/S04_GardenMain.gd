@@ -249,7 +249,7 @@ func _build_hud() -> void:
 
 func _build_debug_panel() -> void:
 	_debug_panel = PanelContainer.new()
-	_debug_panel.visible = OS.is_debug_build()
+	_debug_panel.visible = false
 	_debug_panel.position = Vector2(40.0, 220.0)
 	_debug_panel.size = Vector2(280.0, 240.0)
 	_debug_panel.z_index = 20
