@@ -36,6 +36,13 @@ var _interact_reset_timer: Timer
 
 func _ready() -> void:
 	super()
+	# 花园页根节点放行鼠标/触摸事件：UIPage 默认 STOP 会吃掉全屏事件，
+	# 导致屏幕拖动(_unhandled_input)收不到。改 IGNORE 让空白区事件穿透；
+	# HUD 上的按钮/底部导航是子控件，会优先命中，不受影响。
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# 开启 2D 物理拾取：CatSprite 用 Area2D.input_event 收点击，
+	# 不开这个开关 input_event 永远不触发（点猫弹窗失效的根因）。
+	get_viewport().physics_object_picking = true
 	_build_garden_layer()
 	_build_hud()
 	_build_debug_panel()
@@ -92,7 +99,9 @@ func _build_hud() -> void:
 	var root := Control.new()
 	root.name = "HUD"
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	root.mouse_filter = Control.MOUSE_FILTER_STOP
+	# 全屏 HUD 容器放行：只让真正的按钮/导航(子控件)拦截点击，
+	# 空白区域事件穿透到花园(拖动 + 点猫拾取)。
+	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
 	var top_bar := TextureRect.new()
@@ -445,10 +454,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		else:
 			_dragging = false
 	elif event is InputEventMouseMotion and _dragging and _camera:
-		var drag_delta := get_global_mouse_position() - _drag_start
-		_camera.position -= drag_delta / CONTENT_SCALE
-		_clamp_camera_to_world()
-		_drag_start = get_global_mouse_position()
+		# 防卡死：若 _dragging 残留为 true 但左键并未真正按住（例如点猫开弹窗后
+		# 松开事件被弹窗遮罩吃掉，桌面悬停移动会误触发平移），此处自动归正。
+		if not (event.button_mask & MOUSE_BUTTON_MASK_LEFT):
+			_dragging = false
+		else:
+			var drag_delta := get_global_mouse_position() - _drag_start
+			_camera.position -= drag_delta / CONTENT_SCALE
+			_clamp_camera_to_world()
+			_drag_start = get_global_mouse_position()
 
 func _is_in_garden(pos: Vector2) -> bool:
 	return pos.y >= HUD_HEIGHT and pos.y <= HUD_HEIGHT + GARDEN_HEIGHT
