@@ -30,9 +30,10 @@ func set_cat_container(container) -> void:
 
 func _on_hatch_complete(cat_data) -> void:
 	print("[CatSpawner] hatch_complete: %s, container=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_container != null, cat_container.get_instance_id() if cat_container else -1])
-	instance_cat(cat_data)
+	# 新孵化的猫走入场模式：从镜头边缘走进花园（不凭空出现）
+	instance_cat(cat_data, true)
 
-func instance_cat(cat_data):
+func instance_cat(cat_data, entrance: bool = false):
 	if cat_data == null:
 		return null
 
@@ -58,7 +59,9 @@ func instance_cat(cat_data):
 	cat_node.cat_data = cat_data
 	cat_node.breed = cat_data.species
 	cat_node.position = _pick_spawn_position()
-	print("[CatSpawner] instance_cat: breed=%s pos=(%.0f,%.0f)" % [cat_data.species, cat_node.position.x, cat_node.position.y])
+	if entrance:
+		_setup_entrance(cat_node)
+	print("[CatSpawner] instance_cat: breed=%s pos=(%.0f,%.0f) entrance=%s" % [cat_data.species, cat_node.position.x, cat_node.position.y, entrance])
 	cat_node.modulate.a = 0.0
 	cat_container.add_child(cat_node)
 
@@ -75,6 +78,34 @@ func instance_cat(cat_data):
 	_emit_cat_count()
 	return cat_node
 
+# 当前镜头可视范围（cat_container 本地坐标）。无相机/容器时返回零 Rect。
+func _camera_view_rect() -> Rect2:
+	var cam := get_viewport().get_camera_2d()
+	if cam == null or cat_container == null or not is_instance_valid(cat_container):
+		return Rect2()
+	var vp := get_viewport().get_visible_rect().size
+	var center_local: Vector2 = cat_container.to_local(cam.get_screen_center_position())
+	var half := Vector2(
+		vp.x * 0.5 / maxf(cam.zoom.x, 0.0001),
+		vp.y * 0.5 / maxf(cam.zoom.y, 0.0001)
+	)
+	return Rect2(center_local - half, half * 2.0)
+
+# 入场模式：起点在镜头左/右边缘外一个身位，目标=镜头内出生点，走进来。
+# 让"新猫出现"成为一段可见的入场，而不是凭空冒出（解决"呆"+覆盖同步间隙感知）。
+func _setup_entrance(cat_node) -> void:
+	var view := _camera_view_rect()
+	if view.size == Vector2.ZERO:
+		return  # 拿不到相机 → 保持普通出生
+	var target: Vector2 = cat_node.position  # _pick_spawn_position 已选好镜头内目标
+	var from_left: bool = rng.randf() < 0.5
+	var start_x: float = (view.position.x - 90.0) if from_left else (view.end.x + 90.0)
+	var start_y: float = clampf(target.y + rng.randf_range(-50.0, 50.0), 116.0, 1016.0)
+	cat_node.position = Vector2(start_x, start_y)
+	cat_node.target_position = target
+	cat_node.is_moving = true
+	cat_node.scale.x = 1.0 if target.x > start_x else -1.0
+
 func _pick_spawn_position() -> Vector2:
 	# wander 同款世界限界（出生点不能超出猫的活动范围）
 	var min_x := 100.0
@@ -83,17 +114,14 @@ func _pick_spawn_position() -> Vector2:
 	var max_y := 1016.0
 	# 新猫出生在【当前镜头可视范围】内——新手孵出首猫回花园必须立刻看到它，
 	# 出生在屏幕外会被当成 BUG。拿不到相机/容器时退回全图随机。
-	var cam := get_viewport().get_camera_2d()
-	if cam != null and cat_container != null and is_instance_valid(cat_container):
-		var vp := get_viewport().get_visible_rect().size
-		var center_local: Vector2 = cat_container.to_local(cam.get_screen_center_position())
-		var half_w: float = vp.x * 0.5 / maxf(cam.zoom.x, 0.0001)
-		var half_h: float = vp.y * 0.5 / maxf(cam.zoom.y, 0.0001)
+	var view := _camera_view_rect()
+	if view.size != Vector2.ZERO:
 		# 收 15% 边距：避免出生在屏幕边缘只露半个身位
-		min_x = maxf(min_x, center_local.x - half_w * 0.85)
-		max_x = minf(max_x, center_local.x + half_w * 0.85)
-		min_y = maxf(min_y, center_local.y - half_h * 0.85)
-		max_y = minf(max_y, center_local.y + half_h * 0.85)
+		var inset := view.grow_individual(-view.size.x * 0.15, -view.size.y * 0.15, -view.size.x * 0.15, -view.size.y * 0.15)
+		min_x = maxf(min_x, inset.position.x)
+		max_x = minf(max_x, inset.end.x)
+		min_y = maxf(min_y, inset.position.y)
+		max_y = minf(max_y, inset.end.y)
 		# 可视区与活动范围无交集（异常情况）→ 退回全图
 		if min_x >= max_x:
 			min_x = 100.0
