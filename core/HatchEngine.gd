@@ -17,6 +17,7 @@ const LEGENDARY_PITY := 120
 var epic_pity_count: int = 0
 var legendary_pity_count: int = 0
 var rng := RandomNumberGenerator.new()
+var _fill_timer: Timer  # 填蛋定时兜底（步数静止时池能量也能流进蛋）
 
 # 看广告加速（GDD v2.14 §3.7/§12.2）：每次补 3000 能量（≈30分钟步行），每日 3 次。
 # v1.0 纯客户端计数器，跨天按本地日期重置。
@@ -32,6 +33,15 @@ func _ready() -> void:
 	_assign_next_empty_slots()
 	if StepEngine and not StepEngine.steps_updated.is_connected(_on_steps_updated):
 		StepEngine.steps_updated.connect(_on_steps_updated)
+	# 填蛋定时兜底：_fill_slots_from_pool 原本只挂在步数信号上，
+	# 步数不变时（坐着不动/计步器无新数据）池里的能量永远流不进蛋。
+	# Timer 每 0.2s 兜底一次；函数自带早退守卫（无蛋/池不足即 break），开销可忽略。
+	_fill_timer = Timer.new()
+	_fill_timer.wait_time = 0.2
+	_fill_timer.one_shot = false
+	_fill_timer.timeout.connect(_fill_slots_from_pool)
+	add_child(_fill_timer)
+	_fill_timer.start()
 	_emit_all_progress()
 
 func feed_energy(amount: float) -> void:
@@ -175,7 +185,9 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 		return
 	# 步数 → 能量，存进 pool/reserve（process_steps 内部已完成）
 	var produced: float = EnergyEngine.process_steps(delta)
-	# 孵化从主池扣能量（不再用 produced 重复喂蛋）
+	# 孵化从主池扣能量（不再用 produced 重复喂蛋）。
+	# 此处保留同帧填蛋（走路时即时响应）；_fill_timer 每 0.2s 兜底
+	# 覆盖步数静止的场景。函数幂等，双触发无害。
 	_fill_slots_from_pool()
 	if produced > 0.0 and SaveManager:
 		SaveManager.save_all()
@@ -185,6 +197,11 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 func _fill_slots_from_pool() -> void:
 	if EnergyEngine == null:
 		return
+	# 渐进灌注（设计决策 2026-06-12）：池里有多少灌多少，蛋随走路实时增长，
+	# GDD §8.2 蛋壳 4 阶段渐进视觉得以生效。
+	# 连带语义：有蛋在孵时主池常态趋近 0（能量都在蛋里干活）；
+	# 蛋全 ready/无蛋可孵时能量才积在池里 → 池满溢出 → 备用槽充能。
+	# 备用槽机制不变：只接池溢出、只手动注入。
 	while true:
 		var slot_id: int = _get_active_filling_slot()
 		if slot_id == -1:
@@ -193,10 +210,14 @@ func _fill_slots_from_pool() -> void:
 		var need: float = float(slot["max_energy"]) - float(slot["energy"])
 		if need <= 0.0:
 			break
-		if EnergyEngine.energy_pool < need:
+		var available: float = EnergyEngine.energy_pool
+		if available <= 0.0:
 			break
-		EnergyEngine.spend_pool(need)
-		feed_energy(need)
+		var amount: float = minf(available, need)
+		EnergyEngine.spend_pool(amount)
+		feed_energy(amount)
+		if amount < need:
+			break  # 池已抽干、蛋未满 → 等下一轮产出/Timer
 
 func _ensure_slots() -> void:
 	while slots.size() < SLOT_COUNT:
