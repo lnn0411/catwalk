@@ -21,7 +21,8 @@ static func show_confirm(title: String, content: String, on_confirm: Callable) -
 		elif child is CanvasLayer:
 			for sub in child.get_children():
 				if sub is DialogOverlay:
-					sub.queue_free()
+					child.queue_free()  # 连壳一起清，避免空 CanvasLayer 残留
+					break
 	var overlay := DialogOverlay.new()
 	overlay.title = title
 	overlay.content = content
@@ -38,7 +39,13 @@ static func show_toast(message: String) -> void:
 		return
 	var toast := ToastOverlay.new()
 	toast.message = message
-	root.add_child(toast)
+	# Wrap in CanvasLayer(layer=100) to render above UIManager (layer=10)
+	# —— 与 show_confirm 同款包法；不要在 ToastOverlay._ready 里 reparent
+	#    （add_child 流程中 remove_child 会报 "Parent node is busy"）
+	var canvas := CanvasLayer.new()
+	canvas.layer = 100
+	canvas.add_child(toast)
+	root.add_child(canvas)
 
 static func show_info(message: String) -> void:
 	show_confirm("提示", message, Callable())
@@ -122,7 +129,14 @@ class DialogOverlay:
 	func _close() -> void:
 		var tween := create_tween()
 		tween.tween_property(self, "modulate:a", 0.0, 0.14)
-		tween.finished.connect(queue_free)
+		tween.finished.connect(func() -> void:
+			# 连同包裹的 CanvasLayer 一起销毁，避免空壳残留在 root
+			var p := get_parent()
+			if p is CanvasLayer:
+				p.queue_free()
+			else:
+				queue_free()
+		)
 
 class ToastOverlay:
 	extends Control
@@ -145,7 +159,15 @@ class ToastOverlay:
 		tween.tween_interval(3.0)
 		tween.tween_property(self, "modulate:a", 0.0, 0.25)
 		tween.parallel().tween_property(self, "position:y", -TOAST_SIZE.y, 0.25)
-		tween.finished.connect(queue_free)
+		tween.finished.connect(_dismiss)
+
+	func _dismiss() -> void:
+		# 连同包裹的 CanvasLayer 一起销毁，避免空壳残留在 root
+		var p := get_parent()
+		if p is CanvasLayer:
+			p.queue_free()
+		else:
+			queue_free()
 
 	func _draw() -> void:
 		_panel_rect = Rect2(Vector2((size.x - TOAST_SIZE.x) * 0.5, 24.0), TOAST_SIZE)

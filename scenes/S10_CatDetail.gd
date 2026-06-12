@@ -28,10 +28,13 @@ func _gui_input(event: InputEvent) -> void:
 		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 	elif _rename_rect.has_point(point):
 		Popups.show_toast("改名功能即将开放")
+		accept_event()
 	elif _diary_rect.has_point(point):
 		Popups.show_toast("日记还在整理中")
+		accept_event()
 	elif _release_rect.has_point(point):
 		Popups.show_toast("%s正在花园里散步" % _cat_name())
+		accept_event()
 
 func _draw() -> void:
 	var screen: Vector2 = get_viewport_rect().size
