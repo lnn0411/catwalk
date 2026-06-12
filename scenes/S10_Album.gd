@@ -21,6 +21,10 @@ static var _seen_ids := {}
 var _new_ids := {}
 var _anim_time := 0.0
 
+# —— Tab 切换（修复：原 Tab 高亮硬编码 i==0，且无点击处理，明信片/成就点了无响应）——
+var _active_tab := 0
+var _tab_rects: Array[Rect2] = []
+
 func _ready() -> void:
 	super._ready()
 	_build_texture_layers()
@@ -61,6 +65,19 @@ func _gui_input(event: InputEvent) -> void:
 	var point: Vector2 = pos
 	if _back_rect.has_point(point):
 		UIManager.replace("res://scenes/S04_GardenMain.tscn")
+		return
+	# Tab 切换
+	for i in range(_tab_rects.size()):
+		if _tab_rects[i].has_point(point):
+			if _active_tab != i:
+				_active_tab = i
+				var j := get_node_or_null("/root/Juice")
+				if j: j.tap()
+				queue_redraw()
+			accept_event()
+			return
+	# 猫卡片仅在猫咪 Tab 下可点
+	if _active_tab != 0:
 		return
 	for i in range(_card_rects.size()):
 		if _card_rects[i].has_point(point):
@@ -106,14 +123,26 @@ func _draw_tabs() -> void:
 	var labels: Array[String] = ["猫咪", "明信片", "成就"]
 	var tab_width: float = 192.0
 	var start_x: float = (DESIGN_SIZE.x - tab_width * 3.0) * 0.5
+	_tab_rects.clear()
 	for i in range(labels.size()):
 		var rect: Rect2 = Rect2(Vector2(start_x + tab_width * float(i), TAB_TOP), Vector2(tab_width, 48.0))
-		var active: bool = i == 0
+		_tab_rects.append(rect)
+		var active: bool = i == _active_tab
 		_draw_round_rect(rect, 5.0, Palette.AMBER if active else Palette.BG_CEMENT, Palette.BORDER_ACTIVE if active else Palette.BORDER_DEFAULT, 1.0)
 		_draw_centered_in_rect(labels[i], rect, 17, Palette.TEXT_ON_AMBER if active else Palette.TEXT_SECONDARY)
 
 func _draw_content() -> void:
 	_card_rects.clear()
+	# 明信片 / 成就 Tab：占位空状态（数据系统在 P1，文案走世界观语言）
+	if _active_tab != 0:
+		_sync_card_textures(0)  # 藏掉猫卡底图
+		var tip := ""
+		if _active_tab == 1:
+			tip = "等猫咪出门逛过，这里会有它带回的风景。"
+		else:
+			tip = "走得足够多，故事自然会发生。"
+		_draw_centered_in_rect(tip, Rect2(Vector2(64.0, 507.0), Vector2(592.0, 64.0)), 19, Palette.TEXT_SECONDARY)
+		return
 	_sync_card_textures(_cats.size())
 	if _cats.is_empty():
 		_draw_centered_in_rect("还没有猫咪。多走几步，第一只就来了", Rect2(Vector2(64.0, 507.0), Vector2(592.0, 64.0)), 19, Palette.TEXT_SECONDARY)
