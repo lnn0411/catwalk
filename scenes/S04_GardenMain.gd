@@ -62,10 +62,21 @@ func on_enter(_data: Dictionary = {}) -> void:
 		CatSpawner.set_cat_container(cat_container)
 	# 「让它出来」：镜头聚焦到指定猫。
 	# 只动 x——横版相机竖直方向是锁定居中的，整体赋值 position 会破坏锁定（黑边回归）。
-	var focus_pos: Variant = _data.get("focus_cat_position", null)
-	if focus_pos is Vector2 and _camera != null:
-		_camera.position.x = (focus_pos as Vector2).x
-		_clamp_camera_to_world()
+	# 「让它出来」：镜头聚焦到指定猫。
+	# 位置必须在【这里】查——上面的容器重申刚把所有猫 restore 到场上；
+	# 在图鉴页预查位置必然失败（花园销毁时登记表已清空）。
+	var focus_cat: Variant = _data.get("focus_cat", null)
+	if focus_cat != null and CatSpawner and _camera != null:
+		var cat_pos: Vector2 = CatSpawner.get_cat_world_position(focus_cat)
+		if cat_pos != Vector2.ZERO:
+			# 只动 x——横版相机竖直方向锁定居中，整体赋值会破坏锁定（黑边回归）
+			_camera.position.x = cat_pos.x
+			_clamp_camera_to_world()
+			# 镜头到位后让目标猫"打个招呼"（弹跳+♥）——画面里可能有多只猫，
+			# 没有这一下玩家不知道哪只是它
+			var cat_node = CatSpawner.get_cat_node(focus_cat)
+			if cat_node != null and cat_node.has_method("_play_click_feedback"):
+				cat_node.call_deferred("_play_click_feedback")
 
 func _exit_tree() -> void:
 	if CatSpawner:
