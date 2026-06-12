@@ -634,7 +634,7 @@ class GardenActionButton:
 			_label.add_theme_color_override("font_color", Palette.TEXT_ON_AMBER if value else Palette.TEXT_SECONDARY)
 		# 立体胶囊：琥珀底 + 深色底边（厚度感）+ 柔影；按下时下沉（去影去底边）
 		var bg := StyleBoxFlat.new()
-	\tbg.bg_color = Palette.AMBER
+		bg.bg_color = Palette.AMBER
 		bg.set_corner_radius_all(24)
 		bg.border_width_bottom = 3
 		bg.border_color = Palette.AMBER.darkened(0.25)
