@@ -143,7 +143,7 @@ class NavTab:
 		var suffix := "_active" if active else ""
 		_icon.texture = load(BottomNav.UI_TEXTURE_PATH + "nav_%s%s.png" % [icon_name, suffix])
 		_label.text = String(BottomNav.TABS[index]["label"])
-		_label.add_theme_color_override("font_color", Palette.AMBER if active else Palette.TEXT_SECONDARY)
+		_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY if active else Color("#6B6B6B"))
 		_active_bar.visible = active
 
 	func _gui_input(event: InputEvent) -> void:
