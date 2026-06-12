@@ -247,11 +247,12 @@ func _build_hud() -> void:
 	_empty_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
 	root.add_child(_empty_label)
 
-	var action_row := HBoxContainer.new()
-	action_row.position = Vector2(48.0, 948.0)
-	action_row.size = Vector2(624.0, ACTION_HEIGHT)
-	action_row.add_theme_constant_override("separation", 11)
-	root.add_child(action_row)
+	# 互动按钮：右竖排（不挡花园视线）
+	var action_col := VBoxContainer.new()
+	action_col.position = Vector2(620.0, 380.0)
+	action_col.size = Vector2(80.0, 320.0)
+	action_col.add_theme_constant_override("separation", 8)
+	root.add_child(action_col)
 	var action_data := [
 		{"title": "喂食", "texture": "btn_feed.png", "state": SubState.INTERACT_FEED},
 		{"title": "抚摸", "texture": "btn_pet.png", "state": SubState.INTERACT_PET},
@@ -261,10 +262,10 @@ func _build_hud() -> void:
 	for data in action_data:
 		var button := GardenActionButton.new()
 		button.text = String(data["title"])
-		button.custom_minimum_size = Vector2(150.0, 48.0)
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.custom_minimum_size = Vector2(78.0, 38.0)
+		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.pressed.connect(_on_action_pressed.bind(int(data["state"])))
-		action_row.add_child(button)
+		action_col.add_child(button)
 		_action_buttons.append(button)
 
 	_hatch_row = HBoxContainer.new()
