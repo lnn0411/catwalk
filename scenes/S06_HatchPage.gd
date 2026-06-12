@@ -20,6 +20,17 @@ func _ready() -> void:
 	_refresh_slots()
 	if HatchEngine:
 		_last_cat_count = HatchEngine.get_cats().size()
+	set_process(true)  # ready 蛋震动/光晕需要持续重绘
+
+var _anim_time := 0.0
+
+func _process(delta: float) -> void:
+	_anim_time += delta
+	# 仅当存在 ready 槽时才每帧重绘（省电；无 ready 时静止）
+	for s in _slots:
+		if String(Dictionary(s).get("status", "")) == "ready":
+			queue_redraw()
+			return
 
 func on_enter(_data: Dictionary = {}) -> void:
 	_refresh_slots()
@@ -122,14 +133,22 @@ func _draw_slot(rect: Rect2, index: int, slot: Dictionary) -> void:
 	elif status == "empty":
 		_draw_centered_in_rect("空槽", rect, 16, Palette.TEXT_SECONDARY)
 	else:
-		draw_ellipse(center + Vector2(0.0, -11.0), 44.0, 57.0, egg_color)
+		var egg_center := center + Vector2(0.0, -11.0)
+		if status == "ready":
+			# ready 态：蛋震动 + 金色呼吸光晕（GDD：蛋震动+发光，等待玩家操作）
+			var shake := Vector2(sin(_anim_time * 30.0) * 3.0, cos(_anim_time * 26.0) * 2.0)
+			egg_center += shake
+			var pulse := (sin(_anim_time * 4.0) + 1.0) * 0.5
+			draw_circle(egg_center, 70.0 + pulse * 12.0, Color(Palette.AMBER, 0.10 + pulse * 0.12))
+			draw_circle(egg_center, 56.0 + pulse * 8.0, Color(Palette.AMBER, 0.16 + pulse * 0.12))
+		draw_ellipse(egg_center, 44.0, 57.0, egg_color)
 		_draw_centered_in_rect("蛋 %d" % (index + 1), Rect2(rect.position + Vector2(0.0, 12.0), Vector2(rect.size.x, 33.0)), 15, Palette.TEXT_PRIMARY)
 		var progress: float = _slot_progress(slot)
 		var bar := Rect2(rect.position + Vector2(24.0, rect.size.y - 32.0), Vector2(rect.size.x - 48.0, 9.0))
 		_draw_round_rect(bar, 5.0, Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, 0.0)
 		_draw_round_rect(Rect2(bar.position, Vector2(bar.size.x * progress, bar.size.y)), 5.0, Palette.AMBER, Palette.AMBER, 0.0)
 		if status == "ready":
-			_draw_centered_in_rect("可领取", Rect2(rect.position + Vector2(0.0, rect.size.y - 59.0), Vector2(rect.size.x, 21.0)), 15, Palette.AMBER)
+			_draw_centered_in_rect("点击孵化", Rect2(rect.position + Vector2(0.0, rect.size.y - 59.0), Vector2(rect.size.x, 21.0)), 15, Palette.AMBER)
 		else:
 			_draw_centered_in_rect("%d%%" % int(progress * 100.0), Rect2(rect.position + Vector2(0.0, rect.size.y - 59.0), Vector2(rect.size.x, 21.0)), 13, Palette.TEXT_SECONDARY)
 
@@ -166,6 +185,9 @@ func _on_slot_pressed(index: int) -> void:
 	if HatchEngine == null:
 		return
 	if _slot_status(Dictionary(_slots[index])) == "ready":
+		# 触觉：确认点到蛋（Juice 未注册时安全跳过）
+		var j := get_node_or_null("/root/Juice")
+		if j: j.hit()
 		# 完成孵化 → 发出 hatch_complete → _on_hatch_complete 推送 S08 演出
 		HatchEngine.collect_ready_slot(index)
 		if SaveManager:

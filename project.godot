@@ -53,6 +53,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 Palette="*res://autoload/Palette.gd"
+Juice="*res://autoload/Juice.gd"
 UIManager="*res://ui/UIManager.gd"
 Popups="*res://ui/Popups.gd"
 StepEngine="*res://core/StepEngine.gd"
