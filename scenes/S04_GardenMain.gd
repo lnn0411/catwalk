@@ -55,10 +55,20 @@ func _ready() -> void:
 
 func on_enter(_data: Dictionary = {}) -> void:
 	_hatch_navigating = false
+	# 兜底：pop_to_root 回到本页只走 on_enter（不重跑 _ready）。
+	# 若容器归属曾被抹掉（历史毒化/异常路径），这里重申并补生成漏掉的猫。
+	# set_cat_container 已幂等，已在场的猫不会重复生成。
+	if CatSpawner and cat_container != null and CatSpawner.cat_container != cat_container:
+		CatSpawner.set_cat_container(cat_container)
 
 func _exit_tree() -> void:
 	if CatSpawner:
-		CatSpawner.set_cat_container(null)
+		# 根因修复：queue_free 是延迟的，老页面 _exit_tree 可能在
+		# 新页面 _ready 之后执行。无条件置 null 会把新页面刚设好的
+		# 容器抹掉 → 后续 hatch_complete 全部丢弃 → "猫不马上出来"。
+		# 仅当容器仍指向本页时才清空。
+		if CatSpawner.cat_container == cat_container:
+			CatSpawner.set_cat_container(null)
 
 func _build_garden_layer() -> void:
 	garden_layer = Node2D.new()

@@ -19,6 +19,13 @@ func set_cat_container(container) -> void:
 	spawned_cat_ids.clear()
 	cat_container = container
 	if container != null:
+		# 幂等保护：容器里已存在的猫先登记，重复调用不会生成重复猫。
+		# （页面生命周期下同一容器可能被多次 set，必须可安全重入）
+		for child in container.get_children():
+			if "cat_data" in child and child.cat_data != null:
+				var cid := _get_cat_id(child.cat_data)
+				if cid != "":
+					spawned_cat_ids[cid] = child
 		_restore_cats()
 
 func _on_hatch_complete(cat_data) -> void:
@@ -69,9 +76,34 @@ func instance_cat(cat_data):
 	return cat_node
 
 func _pick_spawn_position() -> Vector2:
+	# wander 同款世界限界（出生点不能超出猫的活动范围）
+	var min_x := 100.0
+	var max_x := 1900.0
+	var min_y := 116.0
+	var max_y := 1016.0
+	# 新猫出生在【当前镜头可视范围】内——新手孵出首猫回花园必须立刻看到它，
+	# 出生在屏幕外会被当成 BUG。拿不到相机/容器时退回全图随机。
+	var cam := get_viewport().get_camera_2d()
+	if cam != null and cat_container != null and is_instance_valid(cat_container):
+		var vp := get_viewport().get_visible_rect().size
+		var center_local: Vector2 = cat_container.to_local(cam.get_screen_center_position())
+		var half_w: float = vp.x * 0.5 / maxf(cam.zoom.x, 0.0001)
+		var half_h: float = vp.y * 0.5 / maxf(cam.zoom.y, 0.0001)
+		# 收 15% 边距：避免出生在屏幕边缘只露半个身位
+		min_x = maxf(min_x, center_local.x - half_w * 0.85)
+		max_x = minf(max_x, center_local.x + half_w * 0.85)
+		min_y = maxf(min_y, center_local.y - half_h * 0.85)
+		max_y = minf(max_y, center_local.y + half_h * 0.85)
+		# 可视区与活动范围无交集（异常情况）→ 退回全图
+		if min_x >= max_x:
+			min_x = 100.0
+			max_x = 1900.0
+		if min_y >= max_y:
+			min_y = 116.0
+			max_y = 1016.0
 	var position := Vector2.ZERO
 	for i in range(10):
-		position = Vector2(rng.randf_range(100.0, 1900.0), rng.randf_range(116.0, 1016.0))
+		position = Vector2(rng.randf_range(min_x, max_x), rng.randf_range(min_y, max_y))
 		if not _is_position_occupied(position):
 			return position
 	return position
