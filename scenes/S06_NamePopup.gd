@@ -25,6 +25,11 @@ func _ready() -> void:
 	_rng.randomize()
 	_build_ui()
 	_apply_cat()
+	# M5：弹窗从底部滑入（300ms ease-out，GDD §3.8 同款节奏）
+	var final_y := _panel.position.y
+	_panel.position.y = get_viewport_rect().size.y
+	var t := create_tween()
+	t.tween_property(_panel, "position:y", final_y, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 
 func _on_page_setup(data: Dictionary) -> void:
 	_cat = data.get("cat", null)
@@ -58,6 +63,14 @@ func _build_ui() -> void:
 	title.add_theme_font_size_override("font_size", 22)
 	title.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	box.add_child(title)
+
+	# M5：仪式感副标题
+	var subtitle := Label.new()
+	subtitle.text = "给它起个名字吧——它会记住的"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_font_size_override("font_size", 14)
+	subtitle.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	box.add_child(subtitle)
 
 	var image := ColorRect.new()
 	image.color = _cat_color()
@@ -120,6 +133,14 @@ func _confirm_name() -> void:
 	_cat.display_name = value
 	if SaveManager:
 		SaveManager.save_all()
+	# M5：确认瞬间——触觉 + 面板弹一下（"这是我的猫了"的时刻），再继续
+	var j := get_node_or_null("/root/Juice")
+	if j: j.hit()
+	_panel.pivot_offset = _panel.size * 0.5
+	var t := create_tween()
+	t.tween_property(_panel, "scale", Vector2(1.06, 1.06), 0.12).set_ease(Tween.EASE_OUT)
+	t.tween_property(_panel, "scale", Vector2.ONE, 0.12).set_ease(Tween.EASE_IN)
+	await t.finished
 	if _hatch_show != null and is_instance_valid(_hatch_show) and _hatch_show.has_method("resume_after_name_popup"):
 		_hatch_show.call_deferred("resume_after_name_popup")
 	UIManager.close_overlay()

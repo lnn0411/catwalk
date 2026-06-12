@@ -16,13 +16,38 @@ var _card_rects: Array[Rect2] = []
 var _card_textures: Array[TextureRect] = []
 var _cats: Array = []
 
+# —— M7：NEW 角标（本次会话内新见到的猫；static 跨页面实例存活）——
+static var _seen_ids := {}
+var _new_ids := {}
+var _anim_time := 0.0
+
 func _ready() -> void:
 	super._ready()
 	_build_texture_layers()
 	_refresh_cats()
+	set_process(true)
+
+func _process(delta: float) -> void:
+	_anim_time += delta
+	# 仅当有 epic+ 卡片（流光边框）或 NEW 角标（呼吸）时才每帧重绘
+	if not _new_ids.is_empty():
+		queue_redraw()
+		return
+	for c in _cats:
+		var r := String(c.rarity)
+		if r == CatData.RARITY_EPIC or r == CatData.RARITY_LEGENDARY:
+			queue_redraw()
+			return
 
 func on_enter(_data: Dictionary = {}) -> void:
 	_refresh_cats()
+	# 计算本次进入时的"新猫"，随后标记为已见（NEW 只在首次看到的这次展示）
+	_new_ids.clear()
+	for c in _cats:
+		var cid := String(c.id)
+		if not _seen_ids.has(cid):
+			_new_ids[cid] = true
+			_seen_ids[cid] = true
 
 func _gui_input(event: InputEvent) -> void:
 	if _is_back_event(event):
@@ -106,6 +131,16 @@ func _draw_content() -> void:
 		_draw_cat_card(rect, _cats[i])
 
 func _draw_cat_card(rect: Rect2, cat) -> void:
+	# M7：epic/legendary 卡片流光边框
+	var rarity := String(cat.rarity)
+	if rarity == CatData.RARITY_LEGENDARY:
+		var hue := fmod(_anim_time * 0.25, 1.0)
+		var glow := Color.from_hsv(hue, 0.40, 1.0, 0.85)
+		_draw_round_rect(rect.grow(2.0), 7.0, Color(0, 0, 0, 0), glow, 2.5)
+	elif rarity == CatData.RARITY_EPIC:
+		var pulse := (sin(_anim_time * 3.0) + 1.0) * 0.5
+		_draw_round_rect(rect.grow(2.0), 7.0, Color(0, 0, 0, 0), Color(Palette.RARITY_EPIC, 0.45 + pulse * 0.45), 2.0)
+
 	var swatch_rect: Rect2 = Rect2(rect.position + Vector2(13.0, 16.0), Vector2(59.0, 59.0))
 	_draw_round_rect(swatch_rect, 5.0, _cat_color(cat), _rarity_color(cat), 1.0)
 	_draw_cat_icon(swatch_rect.position + swatch_rect.size * 0.5, _cat_color(cat), 0.42)
@@ -114,6 +149,13 @@ func _draw_cat_card(rect: Rect2, cat) -> void:
 	_draw_text(_breed_label(cat), Vector2(text_x, rect.position.y + 30.0), 17, Palette.TEXT_PRIMARY)
 	_draw_text("%s  Lv.%d" % [_rarity_label(cat), _cat_level(cat)], Vector2(text_x, rect.position.y + 56.0), 14, _rarity_color(cat))
 	_draw_text("亲密 %d" % _cat_friendship(cat), Vector2(text_x, rect.position.y + 80.0), 13, Palette.TEXT_SECONDARY)
+
+	# M7：NEW 角标（呼吸闪烁，右上角）
+	if _new_ids.has(String(cat.id)):
+		var blink := 0.7 + (sin(_anim_time * 4.0) + 1.0) * 0.15
+		var badge := Rect2(rect.position + Vector2(rect.size.x - 56.0, 8.0), Vector2(46.0, 22.0))
+		_draw_round_rect(badge, 5.0, Color(Palette.AMBER, blink), Color(Palette.AMBER, blink), 0.0)
+		_draw_centered_in_rect("NEW", badge, 12, Palette.TEXT_ON_AMBER)
 
 func _sync_card_textures(count: int) -> void:
 	while _card_textures.size() < count:

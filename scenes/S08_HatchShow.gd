@@ -30,6 +30,10 @@ var _crack_vibrated := false     # 蛋裂震动只触发一次
 var _reveal_vibrated := false    # 揭晓震动只触发一次
 var _leg_hold := 0.0             # legendary 揭晓前的"憋"时长（秒）
 var _star_seeds: Array = []      # rare 星光粒子的随机相位（确定性）
+# —— M6 演出 P1 ——
+var _gold_seeds: Array = []      # 金色汇聚粒子的起始方位/速度相位
+var _shards: Array = []          # 蛋壳碎片 [{pos, vel, rot, rot_speed}]
+var _shard_time := 0.0           # 碎片已飞行时长
 
 func _ready() -> void:
 	super._ready()
@@ -39,6 +43,14 @@ func _ready() -> void:
 	rng.seed = 20260612
 	for i in range(10):
 		_star_seeds.append(rng.randf_range(0.0, TAU))
+	# M6：金色汇聚粒子（16颗，从屏幕四周向蛋汇聚）
+	for i in range(16):
+		_gold_seeds.append({
+			"angle": rng.randf_range(0.0, TAU),
+			"dist": rng.randf_range(420.0, 640.0),
+			"speed": rng.randf_range(0.55, 1.0),
+			"phase": rng.randf_range(0.0, 1.0),
+		})
 
 func _on_page_setup(data: Dictionary) -> void:
 	_cat = data.get("cat", null)
@@ -53,6 +65,15 @@ func _process(delta: float) -> void:
 	_elapsed += delta
 	if _flash_alpha > 0.0:
 		_flash_alpha = maxf(_flash_alpha - delta * 4.0, 0.0)  # 250ms 内衰减完
+	# M6：碎片物理（飞出 + 重力下落，0.9s 后清空）
+	if not _shards.is_empty():
+		_shard_time += delta
+		for s in _shards:
+			s["vel"] = Vector2(s["vel"]) + Vector2(0.0, 900.0) * delta
+			s["pos"] = Vector2(s["pos"]) + Vector2(s["vel"]) * delta
+			s["rot"] = float(s["rot"]) + float(s["rot_speed"]) * delta
+		if _shard_time > 0.9:
+			_shards.clear()
 	_update_phase()
 	queue_redraw()
 
@@ -73,9 +94,37 @@ func _draw() -> void:
 		4:
 			var zoom: float = clamp(1.0 - (_elapsed - _phase4_start()) / 1.5 * 0.35, 0.65, 1.0)
 			_draw_reveal(center, zoom)
+	# M6：蛋壳碎片（盖在场景上、白闪之下）
+	if not _shards.is_empty():
+		var shard_alpha: float = clampf(1.0 - _shard_time / 0.9, 0.0, 1.0)
+		for s in _shards:
+			_draw_shard(Vector2(s["pos"]), float(s["rot"]), Color(_cat_color_light(), shard_alpha))
 	# 全屏白闪盖在最上层
 	if _flash_alpha > 0.0:
 		draw_rect(Rect2(Vector2.ZERO, screen), Color(1.0, 1.0, 1.0, _flash_alpha))
+
+# M6：白闪瞬间从蛋位置弹出 6 片蛋壳碎片
+func _spawn_shards() -> void:
+	var center := get_viewport_rect().size * 0.5 + Vector2(0.0, -80.0)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 20260613
+	_shards.clear()
+	_shard_time = 0.0
+	for i in range(6):
+		var ang := -PI * 0.5 + rng.randf_range(-1.3, 1.3)  # 大体向上扇形
+		var speed := rng.randf_range(420.0, 720.0)
+		_shards.append({
+			"pos": center + Vector2(rng.randf_range(-60.0, 60.0), rng.randf_range(-80.0, 40.0)),
+			"vel": Vector2(cos(ang), sin(ang)) * speed,
+			"rot": rng.randf_range(0.0, TAU),
+			"rot_speed": rng.randf_range(-9.0, 9.0),
+		})
+
+func _draw_shard(pos: Vector2, rot: float, color: Color) -> void:
+	var pts := PackedVector2Array()
+	for base in [Vector2(0.0, -22.0), Vector2(18.0, 12.0), Vector2(-16.0, 14.0)]:
+		pts.append(pos + base.rotated(rot))
+	draw_polygon(pts, PackedColorArray([color, color, color]))
 
 func _update_phase() -> void:
 	var skip_phase_2 := _is_first_orange()
@@ -93,6 +142,7 @@ func _update_phase() -> void:
 	if new_phase != _prev_phase:
 		if new_phase == 2 or (skip_phase_2 and new_phase == 3):
 			_flash_alpha = 1.0           # 全屏白闪
+			_spawn_shards()              # M6：蛋壳碎片弹飞
 		if new_phase == 3:
 			_on_reveal_moment()          # 揭晓瞬间：震动
 		_prev_phase = new_phase
@@ -150,6 +200,15 @@ func _is_first_orange() -> bool:
 # ============ Phase 1：蛋震动 + 裂纹加深 ============
 func _draw_cracking_egg(center: Vector2) -> void:
 	var crack: float = clamp(_elapsed / 3.0, 0.0, 1.0)
+	# M6：金色粒子从四周向蛋汇聚（0.5s 后开始，对应 GDD 金色光芒汇聚）
+	if _elapsed > 0.5:
+		var egg_target := center + Vector2(0.0, -80.0)
+		for g in _gold_seeds:
+			var travel := fmod((_elapsed - 0.5) * float(g["speed"]) * 0.55 + float(g["phase"]), 1.0)
+			var dist: float = float(g["dist"]) * (1.0 - travel)
+			var pos: Vector2 = egg_target + Vector2(cos(float(g["angle"])), sin(float(g["angle"]))) * dist
+			var p_alpha: float = clampf(travel * 1.6, 0.0, 0.85)
+			draw_circle(pos, 3.0 + travel * 2.5, Color(Palette.AMBER, p_alpha))
 	# 蛋震动：裂纹越深抖越狠（0→1 时振幅 0→6px，频率约 40Hz）
 	var shake_amp := crack * 6.0
 	var shake := Vector2(

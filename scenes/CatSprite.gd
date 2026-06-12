@@ -1,5 +1,17 @@
 extends CharacterBody2D
 
+# ============================================================
+# CatSprite —— M4 猫咪活化版
+# ------------------------------------------------------------
+# 在原版基础上新增（逻辑/信号/贴图加载方式不变）：
+#   ① 走路摆动：移动时轻微左右摇 + 颠步起伏
+#   ② idle 呼吸：站立时身体缓慢起伏（scale.y 1.0~1.03）
+#   ③ 点击反馈：被点瞬间跳一下 + 头顶冒 ♥ 飘起 + 轻震（Juice.tap）
+#   ④ 随机小动作：wander 时 25% 概率原地转身（不移动）
+# 实现要点：所有动画做在子节点 _sprite 上——根节点的 scale.x
+# 被用于左右翻面（±1），动根节点会和翻面打架。
+# ============================================================
+
 signal cat_clicked(cat_data)
 
 var cat_data
@@ -13,6 +25,10 @@ var target_position: Vector2
 var is_moving: bool = false
 var _sprite: Sprite2D
 var _walk_frame: int = 0
+
+# —— M4 动画状态 ——
+var _anim_time := 0.0
+var _bounce_tween: Tween   # 点击弹跳，防重复叠加
 
 func _ready() -> void:
 	rng = RandomNumberGenerator.new()
@@ -52,12 +68,38 @@ func _ready() -> void:
 	sprite_timer.timeout.connect(_update_sprite)
 	sprite_timer.start()
 
+	# 呼吸相位随机偏移：多只猫不同步呼吸，避免"军训感"
+	_anim_time = rng.randf_range(0.0, TAU)
+	set_process(true)
+
 	_schedule_wander()
+
+# ============ M4：每帧动画（全部作用于 _sprite 子节点）============
+func _process(delta: float) -> void:
+	_anim_time += delta
+	if _sprite == null:
+		return
+	if is_moving:
+		# 走路：左右轻摇 + 颠步起伏（频率与步频感匹配）
+		_sprite.rotation = sin(_anim_time * 9.0) * 0.06
+		_sprite.position.y = -absf(sin(_anim_time * 9.0)) * 3.0
+		_sprite.scale = Vector2.ONE
+	else:
+		# idle：缓慢呼吸（y 轴 1.0~1.03），轻微到"感觉活着"即可
+		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
+		_sprite.position.y = lerpf(_sprite.position.y, 0.0, delta * 8.0)
+		var breath := 1.0 + (sin(_anim_time * 1.6) + 1.0) * 0.5 * 0.03
+		_sprite.scale = Vector2(1.0, breath)
 
 func _schedule_wander() -> void:
 	timer.start(rng.randf_range(3.0, 6.0))
 
 func _on_wander_tick() -> void:
+	# M4：25% 概率不移动，只原地转个身（小动作，添生气）
+	if rng.randf() < 0.25:
+		scale.x = -scale.x
+		_schedule_wander()
+		return
 	var wander_distance := rng.randf_range(100.0, 300.0)
 	var wander_angle := rng.randf_range(0.0, TAU)
 	var offset := Vector2(cos(wander_angle), sin(wander_angle)) * wander_distance
@@ -102,4 +144,31 @@ func _physics_process(delta: float) -> void:
 
 func _on_input_event(viewport, event, shape_idx) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_play_click_feedback()
 		cat_clicked.emit(cat_data)
+
+# ============ M4：点击反馈（弹跳 + ♥ 飘起 + 轻震）============
+func _play_click_feedback() -> void:
+	# 轻震（Juice 未注册时安全跳过）
+	var j := get_node_or_null("/root/Juice")
+	if j: j.tap()
+	# 弹跳：_sprite 快速上跳回落（不动物理体，纯视觉）
+	if _bounce_tween and _bounce_tween.is_valid():
+		_bounce_tween.kill()
+	_bounce_tween = create_tween()
+	_bounce_tween.tween_property(_sprite, "position:y", -18.0, 0.10).set_ease(Tween.EASE_OUT)
+	_bounce_tween.tween_property(_sprite, "position:y", 0.0, 0.16).set_ease(Tween.EASE_IN)
+	# ♥ 从头顶飘起渐隐
+	var heart := Label.new()
+	heart.text = "♥"
+	heart.add_theme_font_size_override("font_size", 30)
+	heart.add_theme_color_override("font_color", Color("#D98E8E"))
+	heart.position = Vector2(-12.0, -86.0)
+	# 抵消根节点翻面，保证 ♥ 永远正向
+	heart.scale = Vector2(signf(scale.x), 1.0)
+	add_child(heart)
+	var ht := create_tween()
+	ht.set_parallel(true)
+	ht.tween_property(heart, "position:y", heart.position.y - 44.0, 0.7).set_ease(Tween.EASE_OUT)
+	ht.tween_property(heart, "modulate:a", 0.0, 0.7).set_ease(Tween.EASE_IN)
+	ht.chain().tween_callback(heart.queue_free)
