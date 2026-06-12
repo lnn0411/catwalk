@@ -15,7 +15,7 @@ func _ready() -> void:
 		HatchEngine.hatch_complete.connect(_on_hatch_complete)
 
 func set_cat_container(container) -> void:
-	print("[CatSpawner] set_cat_container: %s" % [container != null])
+	print("[CatSpawner] set_cat_container: %s id=%s" % [container != null, container.get_instance_id() if container else -1])
 	spawned_cat_ids.clear()
 	cat_container = container
 	if container != null:
@@ -29,7 +29,7 @@ func set_cat_container(container) -> void:
 		_restore_cats()
 
 func _on_hatch_complete(cat_data) -> void:
-	print("[CatSpawner] hatch_complete: %s, container=%s" % [cat_data.display_name if cat_data else "null", cat_container != null])
+	print("[CatSpawner] hatch_complete: %s, container=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_container != null, cat_container.get_instance_id() if cat_container else -1])
 	instance_cat(cat_data)
 
 func instance_cat(cat_data):

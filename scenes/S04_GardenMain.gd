@@ -55,10 +55,10 @@ func _ready() -> void:
 
 func on_enter(_data: Dictionary = {}) -> void:
 	_hatch_navigating = false
-	# 兜底：pop_to_root 回到本页只走 on_enter（不重跑 _ready）。
-	# 若容器归属曾被抹掉（历史毒化/异常路径），这里重申并补生成漏掉的猫。
-	# set_cat_container 已幂等，已在场的猫不会重复生成。
-	if CatSpawner and cat_container != null and CatSpawner.cat_container != cat_container:
+	# 无条件重申容器归属（set_cat_container 已幂等：在场的猫先登记不会重复，
+	# 漏生成/生成进旧容器的猫会补到当前容器）。
+	# 实测：孵化后猫可能生成进中间态的旧容器，有条件判断会漏触发——改为每次回页必重申。
+	if CatSpawner and cat_container != null and is_instance_valid(cat_container):
 		CatSpawner.set_cat_container(cat_container)
 
 func _exit_tree() -> void:
