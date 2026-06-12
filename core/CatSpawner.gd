@@ -118,7 +118,10 @@ func _setup_entrance(cat_node) -> void:
 	cat_node.position = Vector2(start_x, start_y)
 	cat_node.target_position = target
 	cat_node.is_moving = true
-	cat_node.scale.x = 1.0 if target.x > start_x else -1.0
+	# 朝向走 face_direction（翻 sprite），不能设根节点负 scale——
+	# CharacterBody2D 负缩放会导致物理变换异常（猫移动中漂移/消失）
+	if cat_node.has_method("face_direction"):
+		cat_node.face_direction(target.x - start_x)
 
 func _pick_spawn_position(in_view: bool = true) -> Vector2:
 	# wander 同款世界限界（出生点不能超出猫的活动范围）

@@ -29,6 +29,19 @@ var _walk_frame: int = 0
 # —— M4 动画状态 ——
 var _anim_time := 0.0
 var _bounce_tween: Tween   # 点击弹跳，防重复叠加
+# 朝向（修复：CharacterBody2D 不支持负 scale——物理服务器会正交规范化变换，
+# move_and_slide 时视觉与物理不一致，移动中位置漂移/瞬移="走着走着消失"。
+# 翻面一律走 _sprite.flip_h，根节点 scale 永远保持 (1,1)）
+var _facing_left := false
+
+# 公有：按水平方向设置朝向（CatSpawner 入场时会在 add_child 前调用，
+# 此时 _sprite 尚未创建，先存状态、_ready 时应用）
+func face_direction(dx: float) -> void:
+	if absf(dx) < 0.001:
+		return
+	_facing_left = dx < 0.0
+	if _sprite != null:
+		_sprite.flip_h = _facing_left
 
 func _ready() -> void:
 	rng = RandomNumberGenerator.new()
@@ -37,6 +50,7 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.name = "Sprite"
 	add_child(_sprite)
+	_sprite.flip_h = _facing_left  # 应用 add_child 前（入场）设置的朝向
 	_update_sprite()
 
 	var body_shape := CollisionShape2D.new()
@@ -97,7 +111,7 @@ func _schedule_wander() -> void:
 func _on_wander_tick() -> void:
 	# M4：25% 概率不移动，只原地转个身（小动作，添生气）
 	if rng.randf() < 0.25:
-		scale.x = -scale.x
+		face_direction(1.0 if _facing_left else -1.0)  # 原地转身=翻面取反
 		_schedule_wander()
 		return
 	var wander_distance := rng.randf_range(100.0, 300.0)
@@ -107,10 +121,7 @@ func _on_wander_tick() -> void:
 	target_position.x = clampf(target_position.x, 100.0, 1900.0)
 	target_position.y = clampf(target_position.y, 116.0, 1016.0)
 	is_moving = true
-	if target_position.x < position.x:
-		scale.x = -1.0
-	else:
-		scale.x = 1.0
+	face_direction(target_position.x - position.x)
 
 func _update_sprite() -> void:
 	if _sprite == null:
@@ -141,6 +152,11 @@ func _physics_process(delta: float) -> void:
 			velocity = Vector2.ZERO
 			_update_sprite()
 			_schedule_wander()
+	# 自愈保险：任何原因出界都拉回活动范围（仅出界时写，避免每帧赋值）
+	var cx := clampf(position.x, 100.0, 1900.0)
+	var cy := clampf(position.y, 116.0, 1016.0)
+	if cx != position.x or cy != position.y:
+		position = Vector2(cx, cy)
 
 func _on_input_event(viewport, event, shape_idx) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -164,8 +180,6 @@ func _play_click_feedback() -> void:
 	heart.add_theme_font_size_override("font_size", 30)
 	heart.add_theme_color_override("font_color", Color("#D98E8E"))
 	heart.position = Vector2(-12.0, -86.0)
-	# 抵消根节点翻面，保证 ♥ 永远正向
-	heart.scale = Vector2(signf(scale.x), 1.0)
 	add_child(heart)
 	var ht := create_tween()
 	ht.set_parallel(true)
