@@ -151,13 +151,13 @@ func _build_hud() -> void:
 
 	var top_bar := Panel.new()
 	var top_style := StyleBoxFlat.new()
-	top_style.bg_color = Color(1, 1, 1, 0)  # 透明，裸奔纸纹理
-	top_style.set_corner_radius_all(18)
-	top_style.border_width_bottom = 2
-	top_style.border_color = Color(Palette.AMBER, 0.35)
-	top_style.shadow_color = Color(0.35, 0.25, 0.12, 0.18)
+	top_style.bg_color = Color(Palette.BG_CEMENT, 0.94)
+	top_style.set_corner_radius_all(20)
+	top_style.border_width_bottom = 1
+	top_style.border_color = Palette.BORDER_DEFAULT
+	top_style.shadow_color = Palette.UI_SHADOW
 	top_style.shadow_size = 8
-	top_style.shadow_offset = Vector2(0.0, 3.0)
+	top_style.shadow_offset = Vector2(0.0, 2.0)
 	top_bar.add_theme_stylebox_override("panel", top_style)
 	top_bar.anchor_left = 0.0
 	top_bar.anchor_right = 1.0
@@ -262,7 +262,7 @@ func _build_hud() -> void:
 	for data in action_data:
 		var button := GardenActionButton.new()
 		button.text = String(data["title"])
-		button.custom_minimum_size = Vector2(78.0, 38.0)
+		button.custom_minimum_size = Vector2(78.0, 48.0)
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.pressed.connect(_on_action_pressed.bind(int(data["state"])))
 		action_col.add_child(button)
@@ -634,15 +634,15 @@ class GardenActionButton:
 			_label.add_theme_color_override("font_color", Palette.TEXT_ON_AMBER if value else Palette.TEXT_SECONDARY)
 		# 立体胶囊：琥珀底 + 深色底边（厚度感）+ 柔影；按下时下沉（去影去底边）
 		var bg := StyleBoxFlat.new()
-		bg.bg_color = Palette.AMBER
-		bg.set_corner_radius_all(14)
+	\tbg.bg_color = Palette.AMBER
+		bg.set_corner_radius_all(24)
 		bg.border_width_bottom = 3
 		bg.border_color = Palette.AMBER.darkened(0.25)
-		bg.shadow_color = Color(0.35, 0.25, 0.12, 0.20)
+		bg.shadow_color = Palette.UI_SHADOW
 		bg.shadow_size = 5
 		bg.shadow_offset = Vector2(0.0, 2.0)
 		var pressed_style: StyleBoxFlat = bg.duplicate()
-		pressed_style.bg_color = Palette.AMBER.darkened(0.12)
+		pressed_style.bg_color = Palette.UI_PRESSED_AMBER
 		pressed_style.shadow_size = 0
 		pressed_style.border_width_bottom = 0
 		var dis := StyleBoxFlat.new()
@@ -739,7 +739,7 @@ class HatchSlotView:
 			detail = "等待能量填充"
 
 		var fs := StyleBoxFlat.new()
-		fs.set_corner_radius_all(12)
+		fs.set_corner_radius_all(24)
 		if not unlocked:
 			fs.bg_color = Color(Palette.CITY_GRAY, 0.30)
 			fs.border_color = Color(Palette.BORDER_DEFAULT, 0.6)

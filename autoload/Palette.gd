@@ -45,6 +45,11 @@ const TEXT_ON_AMBER    = Color("#FAF6F0")
 const BORDER_DEFAULT   = Color("#C8BFB0")
 const BORDER_ACTIVE    = Color("#C4894A")
 
+# --- 阴影（暖棕层级）---
+const UI_SHADOW        = Color("#2C292614")  # 8%  低层 卡片
+const UI_SHADOW_MID    = Color("#2C29261F")  # 12% 中层 浮层/抽屉
+const UI_PRESSED_AMBER = Color("#B77A3E")    # 主按钮按下态
+
 # --- 稀有度光效 ---
 const RARITY_RARE      = Color("#9BB8D4")
 const RARITY_EPIC      = Color("#8E6FA8")

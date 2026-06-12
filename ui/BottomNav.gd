@@ -55,12 +55,12 @@ func _build_tabs() -> void:
 
 	var bg := Panel.new()
 	var bg_style := StyleBoxFlat.new()
-	bg_style.bg_color = Color("#4A3A2CF2")
-	bg_style.corner_radius_top_left = 20
-	bg_style.corner_radius_top_right = 20
+	bg_style.bg_color = Color(Palette.BG_CEMENT, 0.97)
+	bg_style.corner_radius_top_left = 24
+	bg_style.corner_radius_top_right = 24
 	bg_style.border_width_top = 1
-	bg_style.border_color = Color(Palette.AMBER, 0.35)
-	bg_style.shadow_color = Color(0.25, 0.18, 0.08, 0.20)
+	bg_style.border_color = Palette.BORDER_DEFAULT
+	bg_style.shadow_color = Palette.UI_SHADOW
 	bg_style.shadow_size = 10
 	bg_style.shadow_offset = Vector2(0.0, -3.0)
 	bg.add_theme_stylebox_override("panel", bg_style)
