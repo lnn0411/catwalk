@@ -33,7 +33,7 @@ func _on_hatch_complete(cat_data) -> void:
 	# 新孵化的猫走入场模式：从镜头边缘走进花园（不凭空出现）
 	instance_cat(cat_data, true)
 
-func instance_cat(cat_data, entrance: bool = false):
+func instance_cat(cat_data, entrance: bool = false, in_view: bool = true):
 	if cat_data == null:
 		return null
 
@@ -58,7 +58,7 @@ func instance_cat(cat_data, entrance: bool = false):
 	var cat_node = packed_scene.instantiate()
 	cat_node.cat_data = cat_data
 	cat_node.breed = cat_data.species
-	cat_node.position = _pick_spawn_position()
+	cat_node.position = _pick_spawn_position(in_view)
 	if entrance:
 		_setup_entrance(cat_node)
 	print("[CatSpawner] instance_cat: breed=%s pos=(%.0f,%.0f) entrance=%s" % [cat_data.species, cat_node.position.x, cat_node.position.y, entrance])
@@ -106,29 +106,31 @@ func _setup_entrance(cat_node) -> void:
 	cat_node.is_moving = true
 	cat_node.scale.x = 1.0 if target.x > start_x else -1.0
 
-func _pick_spawn_position() -> Vector2:
+func _pick_spawn_position(in_view: bool = true) -> Vector2:
 	# wander 同款世界限界（出生点不能超出猫的活动范围）
 	var min_x := 100.0
 	var max_x := 1900.0
 	var min_y := 116.0
 	var max_y := 1016.0
-	# 新猫出生在【当前镜头可视范围】内——新手孵出首猫回花园必须立刻看到它，
-	# 出生在屏幕外会被当成 BUG。拿不到相机/容器时退回全图随机。
-	var view := _camera_view_rect()
-	if view.size != Vector2.ZERO:
-		# 收 15% 边距：避免出生在屏幕边缘只露半个身位
-		var inset := view.grow_individual(-view.size.x * 0.15, -view.size.y * 0.15, -view.size.x * 0.15, -view.size.y * 0.15)
-		min_x = maxf(min_x, inset.position.x)
-		max_x = minf(max_x, inset.end.x)
-		min_y = maxf(min_y, inset.position.y)
-		max_y = minf(max_y, inset.end.y)
-		# 可视区与活动范围无交集（异常情况）→ 退回全图
-		if min_x >= max_x:
-			min_x = 100.0
-			max_x = 1900.0
-		if min_y >= max_y:
-			min_y = 116.0
-			max_y = 1016.0
+	# in_view=true：出生在【当前镜头可视范围】内（新孵化猫的入场目标/保底首只）。
+	# in_view=false：全花园随机散布（重启恢复的猫——它们一直住在这里，
+	# 不该全挤在首屏，玩家拖动镜头逐渐发现才自然）。
+	if in_view:
+		var view := _camera_view_rect()
+		if view.size != Vector2.ZERO:
+			# 收 15% 边距：避免出生在屏幕边缘只露半个身位
+			var inset := view.grow_individual(-view.size.x * 0.15, -view.size.y * 0.15, -view.size.x * 0.15, -view.size.y * 0.15)
+			min_x = maxf(min_x, inset.position.x)
+			max_x = minf(max_x, inset.end.x)
+			min_y = maxf(min_y, inset.position.y)
+			max_y = minf(max_y, inset.end.y)
+			# 可视区与活动范围无交集（异常情况）→ 退回全图
+			if min_x >= max_x:
+				min_x = 100.0
+				max_x = 1900.0
+			if min_y >= max_y:
+				min_y = 116.0
+				max_y = 1016.0
 	var position := Vector2.ZERO
 	for i in range(10):
 		position = Vector2(rng.randf_range(min_x, max_x), rng.randf_range(min_y, max_y))
@@ -163,8 +165,14 @@ func _restore_cats() -> void:
 	if HatchEngine == null:
 		return
 
+	# 恢复的猫散布全花园（它们一直住在这里）；仅第一只保底出生在镜头内，
+	# 避免"只有一只猫的新手重启后首屏空空"被误认为 BUG。
+	var first := true
 	for cat_data in HatchEngine.get_cats():
-		instance_cat(cat_data)
+		var was_new: bool = not spawned_cat_ids.has(_get_cat_id(cat_data))
+		instance_cat(cat_data, false, first)
+		if was_new:
+			first = false
 
 func _emit_cat_count() -> void:
 	if HatchEngine:
