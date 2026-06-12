@@ -151,7 +151,7 @@ func _build_hud() -> void:
 
 	var top_bar := Panel.new()
 	var top_style := StyleBoxFlat.new()
-	top_style.bg_color = Color(Palette.BG_WARM_WHITE, 0.86)
+	top_style.bg_color = Color(1, 1, 1, 0)  # 透明，裸奔纸纹理
 	top_style.set_corner_radius_all(18)
 	top_style.border_width_bottom = 2
 	top_style.border_color = Color(Palette.AMBER, 0.35)
