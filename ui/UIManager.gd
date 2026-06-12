@@ -207,9 +207,9 @@ func get_stack_depth() -> int:
 
 # 清掉栈顶所有页面，回到根页面（通常是 S04 花园）。
 # 用于孵化演出结束后直接回花园（GDD §6.1 phase4「转场S04」）。
-func pop_to_root(instant: bool = false) -> void:
+func pop_to_root(data: Dictionary = {}, instant: bool = false) -> void:
 	if _transitioning:
-		_enqueue(func() -> void: pop_to_root(instant))
+		_enqueue(func() -> void: pop_to_root(data, instant))
 		return
 	while stack.size() > 1:
 		var page: UIPage = stack.pop_back()
@@ -220,7 +220,8 @@ func pop_to_root(instant: bool = false) -> void:
 	if root_page != null:
 		root_page.visible = true
 		root_page.position = Vector2.ZERO
-		root_page.on_enter(root_page.page_data)
+		# data 非空则透传给 on_enter（如「让它出来」的镜头聚焦），否则维持原行为
+		root_page.on_enter(data if not data.is_empty() else root_page.page_data)
 	page_changed.emit(_current_page_name())
 
 func go_back() -> void:

@@ -174,6 +174,24 @@ func _is_position_occupied(pos: Vector2) -> bool:
 			return true
 	return false
 
+# 查询某只猫的位置（返回【相机同坐标系=garden_layer 坐标】，猫不在场返回 Vector2.ZERO）。
+# 注意：不要用 to_global()——那是含页面/CanvasLayer 偏移的全局坐标，
+# 直接赋给 _camera.position 会错位。容器是 garden_layer 直接子节点且无旋转缩放，
+# 猫局部坐标 + 容器偏移 即相机坐标系。
+func get_cat_world_position(cat_data) -> Vector2:
+	if cat_data == null:
+		return Vector2.ZERO
+	var cat_id := _get_cat_id(cat_data)
+	if cat_id == "" or not spawned_cat_ids.has(cat_id):
+		return Vector2.ZERO
+	var node = spawned_cat_ids[cat_id]
+	if not is_instance_valid(node) or node.is_queued_for_deletion():
+		spawned_cat_ids.erase(cat_id)
+		return Vector2.ZERO
+	if cat_container and is_instance_valid(cat_container):
+		return node.position + cat_container.position
+	return Vector2.ZERO
+
 func _on_cat_clicked(cat_data) -> void:
 	if not ResourceLoader.exists("res://scenes/CatInfoPopup.tscn"):
 		return

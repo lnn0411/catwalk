@@ -60,6 +60,12 @@ func on_enter(_data: Dictionary = {}) -> void:
 	# 实测：孵化后猫可能生成进中间态的旧容器，有条件判断会漏触发——改为每次回页必重申。
 	if CatSpawner and cat_container != null and is_instance_valid(cat_container):
 		CatSpawner.set_cat_container(cat_container)
+	# 「让它出来」：镜头聚焦到指定猫。
+	# 只动 x——横版相机竖直方向是锁定居中的，整体赋值 position 会破坏锁定（黑边回归）。
+	var focus_pos: Variant = _data.get("focus_cat_position", null)
+	if focus_pos is Vector2 and _camera != null:
+		_camera.position.x = (focus_pos as Vector2).x
+		_clamp_camera_to_world()
 
 func _exit_tree() -> void:
 	if CatSpawner:

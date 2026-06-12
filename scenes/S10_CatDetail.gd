@@ -33,8 +33,19 @@ func _gui_input(event: InputEvent) -> void:
 		Popups.show_toast("日记还在整理中")
 		accept_event()
 	elif _release_rect.has_point(point):
-		Popups.show_toast("%s正在花园里散步" % _cat_name())
 		accept_event()
+		if _cat == null:
+			Popups.show_toast("暂时找不到它")
+			return
+		var cat_pos: Vector2 = CatSpawner.get_cat_world_position(_cat) if CatSpawner else Vector2.ZERO
+		if cat_pos == Vector2.ZERO:
+			Popups.show_toast("%s正在花园里散步" % _cat_name())
+			return
+		# 回花园并把镜头聚到这只猫。
+		# 用 replace 而非 pop_to_root：图鉴是 BottomNav replace 进来的，
+		# 栈底是 Album 不是花园，pop_to_root 根本到不了 S04。
+		# replace 与本页"返回"按钮同款路径，且原生支持 data 透传。
+		UIManager.replace("res://scenes/S04_GardenMain.tscn", {"focus_cat_position": cat_pos})
 
 func _draw() -> void:
 	var screen: Vector2 = get_viewport_rect().size
