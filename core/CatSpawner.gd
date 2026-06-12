@@ -22,11 +22,18 @@ func set_cat_container(container) -> void:
 		# 幂等保护：容器里已存在的猫先登记，重复调用不会生成重复猫。
 		# （页面生命周期下同一容器可能被多次 set，必须可安全重入）
 		for child in container.get_children():
+			# 跳过"将死"节点（queue_free 延迟到帧末，此刻它还是子节点）——
+			# 登记它会在节点死亡后留下死引用，导致该猫永久无法再生成。
+			if child.is_queued_for_deletion():
+				continue
 			if "cat_data" in child and child.cat_data != null:
 				var cid := _get_cat_id(child.cat_data)
 				if cid != "":
 					spawned_cat_ids[cid] = child
+					child.modulate.a = 1.0  # 在场的猫绝不允许隐形
 		_restore_cats()
+		if HatchEngine:
+			print("[CatSpawner] 同步完成: 引擎猫数=%d 场上猫数=%d" % [HatchEngine.get_cats().size(), spawned_cat_ids.size()])
 
 func _on_hatch_complete(cat_data) -> void:
 	print("[CatSpawner] hatch_complete: %s, container=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_container != null, cat_container.get_instance_id() if cat_container else -1])
@@ -39,8 +46,15 @@ func instance_cat(cat_data, entrance: bool = false, in_view: bool = true):
 
 	var cat_id := _get_cat_id(cat_data)
 	if cat_id != "" and spawned_cat_ids.has(cat_id):
-		_emit_cat_count()
-		return spawned_cat_ids[cat_id]
+		var existing = spawned_cat_ids[cat_id]
+		# 关键修复：登记表可能残留"死引用"（节点已随旧容器/Reset 被 free，
+		# 但 key 还占着位）→ 该猫永远不会再生成 → 拖遍世界也找不到。
+		# 命中时必须校验引用有效性：活的直接复用；死的清掉、继续往下重新生成。
+		if is_instance_valid(existing) and not existing.is_queued_for_deletion():
+			existing.modulate.a = 1.0  # 顺手兜底：在场的猫绝不允许隐形
+			_emit_cat_count()
+			return existing
+		spawned_cat_ids.erase(cat_id)
 
 	if cat_container == null:
 		_emit_cat_count()
@@ -132,6 +146,16 @@ func _pick_spawn_position(in_view: bool = true) -> Vector2:
 				min_y = 116.0
 				max_y = 1016.0
 	var position := Vector2.ZERO
+	if not in_view:
+		# 刻意避开镜头区：恢复的猫要"拖动才发现"，不赌随机概率。
+		# （可视区约占世界一半，纯随机时猫少容易恰好全落在首屏）
+		var view := _camera_view_rect()
+		if view.size != Vector2.ZERO:
+			for i in range(12):
+				position = Vector2(rng.randf_range(min_x, max_x), rng.randf_range(min_y, max_y))
+				if not view.has_point(position) and not _is_position_occupied(position):
+					return position
+			# 12 次都没找到镜头外空位（异常）→ 落回普通随机
 	for i in range(10):
 		position = Vector2(rng.randf_range(min_x, max_x), rng.randf_range(min_y, max_y))
 		if not _is_position_occupied(position):
