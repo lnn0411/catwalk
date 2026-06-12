@@ -134,17 +134,25 @@ func _build_hud() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
-	var top_bar := TextureRect.new()
-	top_bar.texture = load(UI_TEXTURE_PATH + "hud_top_bg.png")
-	top_bar.stretch_mode = TextureRect.STRETCH_SCALE
+	# 顶栏：临时贴图 → 程序绘制悬浮卡（暖白圆角+柔影），不再依赖 hud_top_bg.png
+	var top_bar := Panel.new()
+	var top_style := StyleBoxFlat.new()
+	top_style.bg_color = Color(Palette.BG_WARM_WHITE, 0.93)
+	top_style.set_corner_radius_all(18)
+	top_style.border_width_bottom = 2
+	top_style.border_color = Color(Palette.AMBER, 0.35)
+	top_style.shadow_color = Color(0.35, 0.25, 0.12, 0.18)
+	top_style.shadow_size = 8
+	top_style.shadow_offset = Vector2(0.0, 3.0)
+	top_bar.add_theme_stylebox_override("panel", top_style)
 	top_bar.anchor_left = 0.0
 	top_bar.anchor_right = 1.0
 	top_bar.anchor_top = 0.0
 	top_bar.anchor_bottom = 0.0
-	top_bar.offset_left = 0.0
-	top_bar.offset_right = 0.0
-	top_bar.offset_top = 0.0
-	top_bar.offset_bottom = HUD_HEIGHT
+	top_bar.offset_left = 10.0
+	top_bar.offset_right = -10.0
+	top_bar.offset_top = 8.0
+	top_bar.offset_bottom = HUD_HEIGHT - 2.0
 	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_bar)
 
@@ -591,7 +599,10 @@ class GardenActionButton:
 	var _label: Label
 
 	func _ready() -> void:
-		flat = true
+		# 修复：flat=true 会让 Godot 忽略 StyleBox 覆盖——按钮此前没有底色，
+		# 四个白字直接飘在草地上。flat 必须为 false 样式才生效。
+		flat = false
+		focus_mode = Control.FOCUS_NONE
 		_label = Label.new()
 		_label.text = self.text
 		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -606,10 +617,26 @@ class GardenActionButton:
 		disabled = not value
 		if _label:
 			_label.add_theme_color_override("font_color", Palette.TEXT_ON_AMBER if value else Palette.TEXT_SECONDARY)
+		# 立体胶囊：琥珀底 + 深色底边（厚度感）+ 柔影；按下时下沉（去影去底边）
 		var bg := StyleBoxFlat.new()
-		bg.bg_color = Palette.AMBER if value else Palette.BORDER_DEFAULT
-		bg.set_corner_radius_all(6)
-		add_theme_stylebox_override("normal", bg)
+		bg.bg_color = Palette.AMBER
+		bg.set_corner_radius_all(14)
+		bg.border_width_bottom = 3
+		bg.border_color = Palette.AMBER.darkened(0.25)
+		bg.shadow_color = Color(0.35, 0.25, 0.12, 0.20)
+		bg.shadow_size = 5
+		bg.shadow_offset = Vector2(0.0, 2.0)
+		var pressed_style: StyleBoxFlat = bg.duplicate()
+		pressed_style.bg_color = Palette.AMBER.darkened(0.12)
+		pressed_style.shadow_size = 0
+		pressed_style.border_width_bottom = 0
+		var dis := StyleBoxFlat.new()
+		dis.bg_color = Color(Palette.BORDER_DEFAULT, 0.75)
+		dis.set_corner_radius_all(14)
+		add_theme_stylebox_override("normal", bg if value else dis)
+		add_theme_stylebox_override("hover", bg if value else dis)
+		add_theme_stylebox_override("pressed", pressed_style if value else dis)
+		add_theme_stylebox_override("disabled", dis)
 
 class DebugTextureButton:
 	extends TextureButton
@@ -634,15 +661,14 @@ class HatchSlotView:
 
 	var slot_index := 0
 	var slot_data: Dictionary = {}
-	var _frame: TextureRect
+	var _frame: Panel
 	var _icon_label: Label
 	var _detail_label: Label
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
-		_frame = TextureRect.new()
-		_frame.texture = load(UI_TEXTURE_PATH + "slot_frame_empty.png")
-		_frame.stretch_mode = TextureRect.STRETCH_SCALE
+		# 槽位底框：临时贴图 → 程序绘制（按状态换样式），不再依赖 slot_frame_*.png
+		_frame = Panel.new()
 		_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_frame)
@@ -697,14 +723,25 @@ class HatchSlotView:
 			icon = "🥚"
 			detail = "等待能量填充"
 
-		var frame_name := "slot_frame_empty.png"
-		if unlocked and status == "ready":
-			frame_name = "slot_frame_ready.png"
-		elif unlocked and status == "incubating" and progress >= 1.0:
-			frame_name = "slot_frame_ready.png"
-		elif unlocked and status == "incubating":
-			frame_name = "slot_frame_filling.png"
-		_frame.texture = load(UI_TEXTURE_PATH + frame_name)
+		var fs := StyleBoxFlat.new()
+		fs.set_corner_radius_all(12)
+		if not unlocked:
+			fs.bg_color = Color(Palette.CITY_GRAY, 0.30)
+			fs.border_color = Color(Palette.BORDER_DEFAULT, 0.6)
+			fs.set_border_width_all(1)
+		elif status == "ready" or (status == "incubating" and progress >= 1.0):
+			fs.bg_color = Color(Palette.AMBER, 0.22)
+			fs.border_color = Palette.AMBER
+			fs.set_border_width_all(2)
+		elif status == "incubating":
+			fs.bg_color = Color(Palette.BG_WARM_WHITE, 0.90)
+			fs.border_color = Color(Palette.AMBER, 0.55)
+			fs.set_border_width_all(1)
+		else:
+			fs.bg_color = Color(Palette.BG_WARM_WHITE, 0.75)
+			fs.border_color = Color(Palette.BORDER_DEFAULT, 0.8)
+			fs.set_border_width_all(1)
+		_frame.add_theme_stylebox_override("panel", fs)
 		_icon_label.text = icon
 		_icon_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY if unlocked else Palette.TEXT_SECONDARY)
 		_detail_label.text = detail

@@ -45,9 +45,19 @@ func _build_tabs() -> void:
 		child.queue_free()
 	_buttons.clear()
 
-	var bg := TextureRect.new()
-	bg.texture = load(UI_TEXTURE_PATH + "nav_bg.png")
-	bg.stretch_mode = TextureRect.STRETCH_SCALE
+	# 导航底：临时贴图 → 程序绘制圆角浮岛（深暖棕配色不变——Tab 文字/图标
+	# 是按深底配的，只升级质感不动配色），不再依赖 nav_bg.png
+	var bg := Panel.new()
+	var bg_style := StyleBoxFlat.new()
+	bg_style.bg_color = Color("#4A3A2CF2")
+	bg_style.corner_radius_top_left = 20
+	bg_style.corner_radius_top_right = 20
+	bg_style.border_width_top = 1
+	bg_style.border_color = Color(Palette.AMBER, 0.35)
+	bg_style.shadow_color = Color(0.25, 0.18, 0.08, 0.20)
+	bg_style.shadow_size = 10
+	bg_style.shadow_offset = Vector2(0.0, -3.0)
+	bg.add_theme_stylebox_override("panel", bg_style)
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(bg)
