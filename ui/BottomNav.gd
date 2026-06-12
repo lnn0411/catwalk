@@ -45,8 +45,14 @@ func _build_tabs() -> void:
 		child.queue_free()
 	_buttons.clear()
 
-	# 导航底：临时贴图 → 程序绘制圆角浮岛（深暖棕配色不变——Tab 文字/图标
-	# 是按深底配的，只升级质感不动配色），不再依赖 nav_bg.png
+	# 导航底：程序绘制圆角浮岛 + 纸纹理底（深暖棕配色不变）
+	var nav_paper := TextureRect.new()
+	nav_paper.texture = load("res://assets/temp/ui/paper_texture.png")
+	nav_paper.stretch_mode = TextureRect.STRETCH_TILE
+	nav_paper.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	nav_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(nav_paper)
+
 	var bg := Panel.new()
 	var bg_style := StyleBoxFlat.new()
 	bg_style.bg_color = Color("#4A3A2CF2")

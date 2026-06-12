@@ -134,10 +134,24 @@ func _build_hud() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
-	# 顶栏：临时贴图 → 程序绘制悬浮卡（暖白圆角+柔影），不再依赖 hud_top_bg.png
+	# 顶栏：程序绘制悬浮卡（暖白圆角+柔影），底垫纸纹理模拟手绘纸张感
+	var top_paper := TextureRect.new()
+	top_paper.texture = load("res://assets/temp/ui/paper_texture.png")
+	top_paper.stretch_mode = TextureRect.STRETCH_TILE
+	top_paper.anchor_left = 0.0
+	top_paper.anchor_right = 1.0
+	top_paper.anchor_top = 0.0
+	top_paper.anchor_bottom = 0.0
+	top_paper.offset_left = 10.0
+	top_paper.offset_right = -10.0
+	top_paper.offset_top = 8.0
+	top_paper.offset_bottom = HUD_HEIGHT - 2.0
+	top_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(top_paper)
+
 	var top_bar := Panel.new()
 	var top_style := StyleBoxFlat.new()
-	top_style.bg_color = Color(Palette.BG_WARM_WHITE, 0.93)
+	top_style.bg_color = Color(Palette.BG_WARM_WHITE, 0.86)
 	top_style.set_corner_radius_all(18)
 	top_style.border_width_bottom = 2
 	top_style.border_color = Color(Palette.AMBER, 0.35)
