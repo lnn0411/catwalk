@@ -216,6 +216,7 @@ func _fill_slots_from_pool() -> void:
 		var amount: float = minf(available, need)
 		EnergyEngine.spend_pool(amount)
 		feed_energy(amount)
+		EventBus.emit_progressive_energy_routed(slot_id, amount)
 		if amount < need:
 			break  # 池已抽干、蛋未满 → 等下一轮产出/Timer
 
