@@ -1,43 +1,43 @@
 {
   "postcards": [
     { "id": "pc_001", "location_type": "convenience_store", "location_name": "便利店", "breed": 0, "breed_name": "orange", "text": "发现了一根会转的橙色食物，决定守候它直到它停下来。" },
-    { "id": "pc_002", "location_type": "convenience_store", "location_name": "便利店", "breed": 1, "breed_name": "british_shorthair", "text": "那个机器里的东西，一直在转。我观察了很久，决定不必理解它。" },
+    { "id": "pc_002", "location_type": "convenience_store", "location_name": "便利店", "breed": 1, "breed_name": "british", "text": "那个机器里的东西，一直在转。我观察了很久，决定不必理解它。" },
     { "id": "pc_003", "location_type": "convenience_store", "location_name": "便利店", "breed": 2, "breed_name": "siamese", "text": "喵！那边有根热狗喵！它一直在转喵！我盯了好久它也没停喵！" },
 
     { "id": "pc_004", "location_type": "park_bench", "location_name": "公园长椅", "breed": 0, "breed_name": "orange", "text": "嗯……这把椅子晒太阳角度刚刚好。我在这里等你，等了很久。" },
-    { "id": "pc_005", "location_type": "park_bench", "location_name": "公园长椅", "breed": 1, "breed_name": "british_shorthair", "text": "这是我的椅子了，请绕道。" },
+    { "id": "pc_005", "location_type": "park_bench", "location_name": "公园长椅", "breed": 1, "breed_name": "british", "text": "这是我的椅子了，请绕道。" },
     { "id": "pc_006", "location_type": "park_bench", "location_name": "公园长椅", "breed": 2, "breed_name": "siamese", "text": "有人来坐了又走了！来了又走了喵！为什么不和我说话喵？！" },
 
     { "id": "pc_007", "location_type": "subway_station", "location_name": "地铁站", "breed": 0, "breed_name": "orange", "text": "很多脚。嗯……都很急。我慢慢走，没关系的。" },
-    { "id": "pc_008", "location_type": "subway_station", "location_name": "地铁站", "breed": 1, "breed_name": "british_shorthair", "text": "他们都很急，而我不是。差距，就是这样体现的。" },
+    { "id": "pc_008", "location_type": "subway_station", "location_name": "地铁站", "breed": 1, "breed_name": "british", "text": "他们都很急，而我不是。差距，就是这样体现的。" },
     { "id": "pc_009", "location_type": "subway_station", "location_name": "地铁站", "breed": 2, "breed_name": "siamese", "text": "那个会发声的门喵！它开了！关了！又开了喵！太神奇了喵！" },
 
     { "id": "pc_010", "location_type": "bookstore", "location_name": "书店", "breed": 0, "breed_name": "orange", "text": "纸的味道，比外面的风更温柔。我在这里睡了一会儿。" },
-    { "id": "pc_011", "location_type": "bookstore", "location_name": "书店", "breed": 1, "breed_name": "british_shorthair", "text": "纸的味道比猫薄荷更令我迷醉。这些人类把自己的思维都装进了这里。" },
+    { "id": "pc_011", "location_type": "bookstore", "location_name": "书店", "breed": 1, "breed_name": "british", "text": "纸的味道比猫薄荷更令我迷醉。这些人类把自己的思维都装进了这里。" },
     { "id": "pc_012", "location_type": "bookstore", "location_name": "书店", "breed": 2, "breed_name": "siamese", "text": "好多纸！好多字！有一本上面有猫的图喵！我坐在那本上面了喵！" },
 
     { "id": "pc_013", "location_type": "cafe", "location_name": "咖啡馆", "breed": 0, "breed_name": "orange", "text": "有人把一杯热的东西放到我旁边，嗯……暖暖的，像你的手。" },
-    { "id": "pc_014", "location_type": "cafe", "location_name": "咖啡馆", "breed": 1, "breed_name": "british_shorthair", "text": "拿铁的热度和某人手心的温度，没什么区别。" },
+    { "id": "pc_014", "location_type": "cafe", "location_name": "咖啡馆", "breed": 1, "breed_name": "british", "text": "拿铁的热度和某人手心的温度，没什么区别。" },
     { "id": "pc_015", "location_type": "cafe", "location_name": "咖啡馆", "breed": 2, "breed_name": "siamese", "text": "那个白色泡泡好神奇喵！我用爪子戳了一下喵！咖啡师看了我一眼喵！" },
 
     { "id": "pc_016", "location_type": "hospital_corridor", "location_name": "医院走廊", "breed": 0, "breed_name": "orange", "text": "来这里的人，眼睛里有什么东西……嗯。我坐在他们旁边，希望有帮助。" },
-    { "id": "pc_017", "location_type": "hospital_corridor", "location_name": "医院走廊", "breed": 1, "breed_name": "british_shorthair", "text": "不知道为什么，来这里的人类，都特别需要被看见。" },
+    { "id": "pc_017", "location_type": "hospital_corridor", "location_name": "医院走廊", "breed": 1, "breed_name": "british", "text": "不知道为什么，来这里的人类，都特别需要被看见。" },
     { "id": "pc_018", "location_type": "hospital_corridor", "location_name": "医院走廊", "breed": 2, "breed_name": "siamese", "text": "这里好安静喵。有个老爷爷摸了我很久喵。我没有跑开喵。" },
 
     { "id": "pc_019", "location_type": "overpass", "location_name": "天桥", "breed": 0, "breed_name": "orange", "text": "从上面看，城市变小了。你也在某个地方，只是我还没找到你。" },
-    { "id": "pc_020", "location_type": "overpass", "location_name": "天桥", "breed": 1, "breed_name": "british_shorthair", "text": "城市从这个高度看，很有条不紊。我欣赏这种秩序感。" },
+    { "id": "pc_020", "location_type": "overpass", "location_name": "天桥", "breed": 1, "breed_name": "british", "text": "城市从这个高度看，很有条不紊。我欣赏这种秩序感。" },
     { "id": "pc_021", "location_type": "overpass", "location_name": "天桥", "breed": 2, "breed_name": "siamese", "text": "可以看到好远好远喵！那边有只鸽子喵！我能看见它但它看不见我喵！" },
 
     { "id": "pc_022", "location_type": "night_market", "location_name": "夜市", "breed": 0, "breed_name": "orange", "text": "好多吃的……嗯……我就看看。（尾巴抖了一下）" },
-    { "id": "pc_023", "location_type": "night_market", "location_name": "夜市", "breed": 1, "breed_name": "british_shorthair", "text": "这种混乱有一种我无法认同但也无法完全忽视的活力。" },
+    { "id": "pc_023", "location_type": "night_market", "location_name": "夜市", "breed": 1, "breed_name": "british", "text": "这种混乱有一种我无法认同但也无法完全忽视的活力。" },
     { "id": "pc_024", "location_type": "night_market", "location_name": "夜市", "breed": 2, "breed_name": "siamese", "text": "烤串！臭豆腐！糖葫芦！全都有喵！我都想要喵！" },
 
     { "id": "pc_025", "location_type": "playground", "location_name": "儿童游乐场", "breed": 0, "breed_name": "orange", "text": "小的人类比大的人类更直接。有一个直接摸了我，我没有躲。" },
-    { "id": "pc_026", "location_type": "playground", "location_name": "儿童游乐场", "breed": 1, "breed_name": "british_shorthair", "text": "小孩子的眼睛是诚实的。不过……我维持了一定距离。" },
+    { "id": "pc_026", "location_type": "playground", "location_name": "儿童游乐场", "breed": 1, "breed_name": "british", "text": "小孩子的眼睛是诚实的。不过……我维持了一定距离。" },
     { "id": "pc_027", "location_type": "playground", "location_name": "儿童游乐场", "breed": 2, "breed_name": "siamese", "text": "他们跑来跑去喵！我也跑了喵！我们一起跑了好久喵！太开心了喵！" },
 
     { "id": "pc_028", "location_type": "rainy_day", "location_name": "雨天·任意地点", "breed": 0, "breed_name": "orange", "text": "你没有告诉我今天会下雨。嗯……我在屋檐下等。你知道的，我总会等的。" },
-    { "id": "pc_029", "location_type": "rainy_day", "location_name": "雨天·任意地点", "breed": 1, "breed_name": "british_shorthair", "text": "雨天不适合出门。但我出门了。这是我自己的决定。" },
+    { "id": "pc_029", "location_type": "rainy_day", "location_name": "雨天·任意地点", "breed": 1, "breed_name": "british", "text": "雨天不适合出门。但我出门了。这是我自己的决定。" },
     { "id": "pc_030", "location_type": "rainy_day", "location_name": "雨天·任意地点", "breed": 2, "breed_name": "siamese", "text": "下雨了喵！我的毛毛湿了喵！但我还是看到了一只蜗牛喵！值得喵！" }
   ]
 }
