@@ -195,14 +195,17 @@ func _t_hatch_engine() -> void:
 	_ok("非ready槽 collect=null", H.collect_ready_slot(0) == null)
 	_eq("非ready collect 不产猫", H.get_cats().size(), 0)
 
-	# C5 轮询填充：collect slot0 后 _next_fill_slot=1，下一轮轮到 slot1
+	# C5 串行填充验证：collect slot0 后 slot0 被重新分配，能量继续灌回 slot0
 	SaveManager.reset_all()
 	H.feed_energy(4250.0)
-	H.collect_ready_slot(0)                       # 产1猫，slot1解锁，slot0/1都incubating，_next_fill_slot=1
-	H.feed_energy(4250.0)                          # 轮询从 slot1 开始
-	var s = H.get_slots()
-	_eq("轮询: collect slot0 后轮到 slot1=ready", String(s[1].get("status","")), "ready")
-	_near("轮询: slot1 满 4250", float(s[1].get("energy",0)), 4250.0)
+	H.collect_ready_slot(0)                       # 产1猫，slot0变empty→_assign_next_empty_slots重新孵化slot0
+	var s0 = H.get_slots()
+	_eq("串行: collect后slot0重新孵化", String(s0[0].get("status","")), "incubating")
+	_near("串行: slot0蛋成本4250", float(s0[0].get("max_energy",0)), 4250.0)
+	H.feed_energy(4250.0)                          # 低索引优先，灌回slot0
+	s0 = H.get_slots()
+	_eq("串行: 再灌4250 slot0=ready", String(s0[0].get("status","")), "ready")
+	_near("串行: slot0满4250", float(s0[0].get("energy",0)), 4250.0)
 
 	# C6 槽位按孵化数解锁
 	SaveManager.reset_all()
