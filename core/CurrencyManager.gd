@@ -13,8 +13,10 @@ func _ready() -> void:
 	pass
 
 # ---- 金币 ----
+# source: 扩展预留，用于标注来源（埋点/审计），当前未消费。
 func add_gold(amount: int, source: String = "") -> void:
 	if amount < 0:
+		push_warning("CurrencyManager.add_gold: 负数 amount=%d，已拒绝" % amount)
 		return
 	gold_coins = max(gold_coins + amount, 0)
 	_after_change()
@@ -31,8 +33,10 @@ func get_gold() -> int:
 	return gold_coins
 
 # ---- 钻石 ----
+# source: 扩展预留，用于标注来源（埋点/审计），当前未消费。
 func add_diamonds(amount: int, source: String = "") -> void:
 	if amount < 0:
+		push_warning("CurrencyManager.add_diamonds: 负数 amount=%d，已拒绝" % amount)
 		return
 	diamonds = max(diamonds + amount, 0)
 	_after_change()
@@ -49,8 +53,10 @@ func get_diamonds() -> int:
 	return diamonds
 
 # ---- 花瓣 ----
+# source: 扩展预留，用于标注来源（埋点/审计），当前未消费。
 func add_petals(amount: int, source: String = "") -> void:
 	if amount < 0:
+		push_warning("CurrencyManager.add_petals: 负数 amount=%d，已拒绝" % amount)
 		return
 	flower_petals = max(flower_petals + amount, 0)
 	_after_change()

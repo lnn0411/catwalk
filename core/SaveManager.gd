@@ -14,6 +14,7 @@ func save_all() -> void:
 	_write_steps()
 	_write_energy()
 	_write_hatch()
+	_write_currency()
 	_config.save(SAVE_PATH)
 
 func load_and_apply() -> void:
@@ -26,6 +27,7 @@ func load_and_apply() -> void:
 	StepEngine.apply_save(_read_steps())
 	EnergyEngine.apply_save(_read_energy())
 	HatchEngine.apply_save(_read_hatch())
+	CurrencyManager.apply_save(_read_currency())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
 	# 避免冷启动时"应用关闭期间累积的步数"在首帧丢失。
@@ -39,6 +41,7 @@ func reset_all() -> void:
 	StepEngine.apply_save({})
 	EnergyEngine.apply_save({})
 	HatchEngine.apply_save({})
+	CurrencyManager.apply_save({})
 	_is_applying = false
 	save_all()
 
@@ -47,6 +50,8 @@ func _connect_auto_save() -> void:
 		EnergyEngine.energy_changed.connect(_on_auto_save)
 	if HatchEngine and not HatchEngine.hatch_complete.is_connected(_on_hatch_complete_auto_save):
 		HatchEngine.hatch_complete.connect(_on_hatch_complete_auto_save)
+	if EventBus and not EventBus.currency_changed.is_connected(_on_currency_changed_auto_save):
+		EventBus.currency_changed.connect(_on_currency_changed_auto_save)
 
 func _on_auto_save(_current = null, _pool_max = null, _backup = null) -> void:
 	if _is_applying:
@@ -54,6 +59,11 @@ func _on_auto_save(_current = null, _pool_max = null, _backup = null) -> void:
 	save_all()
 
 func _on_hatch_complete_auto_save(_cat_data) -> void:
+	if _is_applying:
+		return
+	save_all()
+
+func _on_currency_changed_auto_save(_gold = null, _diamonds = null, _petals = null) -> void:
 	if _is_applying:
 		return
 	save_all()
@@ -93,6 +103,19 @@ func _write_energy() -> void:
 	_config.set_value("energy", "today_steps_processed", int(data.get("today_steps_processed", 0)))
 	_config.set_value("energy", "created_at", float(data.get("created_at", Time.get_unix_time_from_system())))
 	_config.set_value("energy", "last_energy_date", String(data.get("last_energy_date", "")))
+
+func _read_currency() -> Dictionary:
+	return {
+		"gold_coins": int(_config.get_value("currency", "gold_coins", 0)),
+		"diamonds": int(_config.get_value("currency", "diamonds", 0)),
+		"flower_petals": int(_config.get_value("currency", "flower_petals", 0)),
+	}
+
+func _write_currency() -> void:
+	var data := CurrencyManager.get_save_data()
+	_config.set_value("currency", "gold_coins", int(data.get("gold_coins", 0)))
+	_config.set_value("currency", "diamonds", int(data.get("diamonds", 0)))
+	_config.set_value("currency", "flower_petals", int(data.get("flower_petals", 0)))
 
 func _read_hatch() -> Dictionary:
 	var cat_count := int(_config.get_value("hatch", "cat_count", 0))
