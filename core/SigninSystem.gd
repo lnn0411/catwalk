@@ -12,12 +12,31 @@ static func _today() -> String:
 	return Time.get_date_string_from_system()
 
 static func _to_days(date_str: String) -> int:
-	var unix: int = int(Time.get_unix_time_from_datetime_string(date_str))
-	return int(unix / 86400)
+	var parts := date_str.split("-", false)
+	var year: int = int(parts[0])
+	var month: int = int(parts[1])
+	var day: int = int(parts[2])
+	return year * 365 + month * 30 + day
 
 static func _shift_date(date_str: String, days: int) -> String:
-	var unix: int = int(Time.get_unix_time_from_datetime_string(date_str)) + days * 86400
-	return Time.get_date_string_from_datetime_string(Time.get_datetime_string_from_unix_time(unix), false)
+	var parts := date_str.split("-", false)
+	var year: int = int(parts[0])
+	var month: int = int(parts[1])
+	var day: int = int(parts[2])
+	day += int(days)
+	while day > 30:
+		day -= 30
+		month += 1
+	while month > 12:
+		month -= 12
+		year += 1
+	while day <= 0:
+		month -= 1
+		if month <= 0:
+			month = 12
+			year -= 1
+		day += 30
+	return "%04d-%02d-%02d" % [year, month, day]
 
 static func _load() -> ConfigFile:
 	var cfg: ConfigFile = ConfigFile.new()
@@ -27,24 +46,16 @@ static func _load() -> ConfigFile:
 static func _save(cfg: ConfigFile) -> void:
 	cfg.save(SAVE_PATH)
 
-static func _reward_for(day: int) -> Dictionary:
+static func _reward_for(day: int) -> String:
 	match day:
-		1:
-			return {"type": "gold", "amount": 100}
-		2:
-			return {"type": "diamonds", "amount": 20}
-		3:
-			return {"type": "gold", "amount": 150}
-		4:
-			return {"type": "diamonds", "amount": 30}
-		5:
-			return {"type": "gold", "amount": 200}
-		6:
-			return {"type": "diamonds", "amount": 40}
-		7:
-			return {"type": "chest", "currency": "gold", "amount": randi_range(200, 500)}
-		_:
-			return {"type": "gold", "amount": 100}
+		1: return "金币100"
+		2: return "金币200"
+		3: return "金币150"
+		4: return "金币200"
+		5: return "金币100"
+		6: return "金币150"
+		7: return "宝箱"
+		_: return "金币100"
 
 static func signin() -> Dictionary:
 	var cfg: ConfigFile = _load()
@@ -69,15 +80,13 @@ static func signin() -> Dictionary:
 			else:
 				day += 1
 			streak += 1
-		elif gap == 2:
-			day = max(day - 1, 1)
+		elif gap >= 2:
+			day = max(1, day - gap)
 			streak = 1
-		else:
-			day = 1
-			streak = 1
-			makeup_used = 0
+			if gap >= 3:
+				makeup_used = 0
 
-	var reward: Dictionary = _reward_for(day)
+	var reward: String = _reward_for(day)
 	cfg.set_value("state", "last_date", today)
 	cfg.set_value("state", "day", day)
 	cfg.set_value("state", "streak", streak)
