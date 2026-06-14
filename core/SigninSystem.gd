@@ -12,11 +12,10 @@ static func _today() -> String:
 	return Time.get_date_string_from_system()
 
 static func _to_days(date_str: String) -> int:
-	var parts := date_str.split("-", false)
-	var year: int = int(parts[0])
-	var month: int = int(parts[1])
-	var day: int = int(parts[2])
-	return year * 365 + month * 30 + day
+	var dt := Time.get_datetime_dict_from_datetime_string(date_str + "T12:00:00", false)
+	if dt.is_empty():
+		return 0
+	return int(Time.get_unix_time_from_datetime_dict(dt) / 86400)
 
 static func _shift_date(date_str: String, days: int) -> String:
 	var parts := date_str.split("-", false)

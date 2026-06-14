@@ -44,6 +44,10 @@ static func is_slot_available(slot_index: int) -> bool:
 	return false
 
 # ---- 派遣 ----
+static func on_hatch() -> void:
+	_hatched_count += 1
+	_save()
+
 static func dispatch(cat_id: String, duration_hours: int) -> bool:
 	if not VALID_DURATIONS.has(duration_hours):
 		return false
@@ -69,6 +73,16 @@ static func is_returned(cat_id: String) -> bool:
 		return false
 	var return_time := float(_explorers[cat_id].get("return_time", 0.0))
 	return Time.get_unix_time_from_system() >= return_time
+
+static func collect(cat_id: String) -> Dictionary:
+	if not _explorers.has(cat_id):
+		return {}
+	if not is_returned(cat_id):
+		return {}
+	var entry := _explorers[cat_id].duplicate()
+	_explorers.erase(cat_id)
+	_save()
+	return entry
 
 # ---- 奖励 ----
 static func _roll_reward_type(cat_id: String) -> String:

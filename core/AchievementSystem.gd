@@ -167,8 +167,9 @@ func apply_save(data: Dictionary) -> void:
 	_cat_streak_checked_today = String(data.get("cat_streak_checked_today", ""))
 	_midnight_accessed = bool(data.get("midnight_accessed", false))
 
+	# 加载时仅恢复解锁状态，不重新发奖（防止schema迁移/存档兼容性导致重复发奖）
 	for def_dict in ACHIEVEMENTS:
-		_check_def(def_dict)
+		_check_def(def_dict, true)
 
 
 func reset_all() -> void:
@@ -249,6 +250,8 @@ func _on_friendship_changed(_cat_id: String, friendship: int) -> void:
 
 
 func _on_cat_interacted(cat_id: String, _interaction_type: String) -> void:
+	# D2: record daily interaction for friend_streak achievement
+	_record_daily_interaction(cat_id, 1)
 	# Bridge to friendship check via InteractionSystem
 	if InteractionSystem:
 		var affection: int = InteractionSystem.get_affection(cat_id)
@@ -264,7 +267,7 @@ func _check_step_achievements() -> void:
 			_check_def(def_dict)
 
 
-func _check_def(def_dict: Dictionary) -> void:
+func _check_def(def_dict: Dictionary, skip_reward := false) -> void:
 	var id: String = String(def_dict.get("id", ""))
 	if id == "" or _unlocked.get(id, false):
 		return
@@ -294,14 +297,17 @@ func _check_def(def_dict: Dictionary) -> void:
 					met = true
 					break
 	if met:
-		_try_unlock(id)
+		_try_unlock(id, skip_reward)
 
 
-func _try_unlock(id: String) -> void:
+func _try_unlock(id: String, skip_reward := false) -> void:
 	if _unlocked.get(id, false):
 		return
 	_unlocked[id] = true
 	_progress[id] = 1.0
+
+	if skip_reward:
+		return
 
 	var def_dict := _find_def(id)
 	if def_dict.is_empty():
@@ -388,3 +394,28 @@ func _find_def(id: String) -> Dictionary:
 func _today_key() -> String:
 	var date: Dictionary = Time.get_date_dict_from_system()
 	return "%04d-%02d-%02d" % [int(date["year"]), int(date["month"]), int(date["day"])]
+
+# ── Test helpers ──
+func check(id: String) -> void:
+	var def_dict := _find_def(id)
+	if not def_dict.is_empty():
+		_check_def(def_dict)
+
+func _override_total_steps(n: int) -> void:
+	_total_steps = n
+
+func _override_hatched_count(n: int) -> void:
+	_hatched_count = n
+
+func _override_cat_level(_cat_id: String, level: int) -> void:
+	_max_level = max(_max_level, level)
+
+func _override_affection(_cat_id: String, val: int) -> void:
+	_max_affection = max(_max_affection, val)
+
+func _unlock_breed(name: String) -> void:
+	_register_breed_collected(name)
+
+func get_reward(id: String) -> Dictionary:
+	var def_dict := _find_def(id)
+	return def_dict.get("reward", {})

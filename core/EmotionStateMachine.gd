@@ -78,10 +78,13 @@ static func _prune(cat_id: String) -> void:
 	_history[cat_id] = kept
 
 
-static func _interaction_count(cat_id: String) -> int:
+static func _unique_type_count(cat_id: String) -> int:
 	if not _history.has(cat_id):
 		return 0
-	return _history[cat_id].size()
+	var seen := {}
+	for h in _history[cat_id]:
+		seen[h["type"]] = true
+	return seen.size()
 
 
 static func reset_all() -> void:
@@ -116,7 +119,7 @@ static func record_interaction(cat_id: String, type: String) -> void:
 	_ensure(cat_id)
 	_history[cat_id].append({"time": _now(), "type": type})
 	_prune(cat_id)
-	if _interaction_count(cat_id) >= ANNOYED_THRESHOLD:
+	if _unique_type_count(cat_id) >= ANNOYED_THRESHOLD:
 		_set_emotion(cat_id, "annoyed")
 	else:
 		_set_emotion(cat_id, "happy")
@@ -146,6 +149,13 @@ static func trigger_curious(cat_id: String, reason: String) -> void:
 static func set_schedule_override(state: String) -> void:
 	_ensure_loaded()
 	_schedule_override = state
+	for cat_id in _emotions:
+		if _emotions[cat_id] == "idle" and state == "sleep":
+			_emotions[cat_id] = "sleepy"
+			_starts[cat_id] = _now()
+		elif _emotions[cat_id] == "sleepy" and state != "sleep":
+			_emotions[cat_id] = "idle"
+			_starts[cat_id] = _now()
 	_save()
 
 
