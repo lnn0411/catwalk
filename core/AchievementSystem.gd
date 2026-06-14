@@ -46,6 +46,7 @@ var _total_steps: int = 0
 # A6: daily step streak
 var _step_streak: int = 0
 var _step_streak_checked_today: String = ""
+var _daily_step_accumulator: int = 0
 
 # D2: per-cat daily interaction streak
 var _cat_streak: Dictionary = {}
@@ -67,6 +68,8 @@ func _ready() -> void:
 		EventBus.level_up.connect(_on_level_up)
 	if EventBus and not EventBus.postcard_obtained.is_connected(_on_postcard_obtained):
 		EventBus.postcard_obtained.connect(_on_postcard_obtained)
+	if EventBus and not EventBus.cat_interacted.is_connected(_on_cat_interacted):
+		EventBus.cat_interacted.connect(_on_cat_interacted)
 
 	var now := Time.get_datetime_dict_from_system()
 	_check_midnight_access(int(now.get("hour", 0)), int(now.get("minute", 0)))
@@ -135,6 +138,7 @@ func get_save_data() -> Dictionary:
 		"max_affection": _max_affection,
 		"total_steps": _total_steps,
 		"step_streak": _step_streak,
+		"daily_step_accumulator": _daily_step_accumulator,
 		"step_streak_checked_today": _step_streak_checked_today,
 		"cat_streak": _cat_streak.duplicate(),
 		"cat_streak_checked_today": _cat_streak_checked_today,
@@ -155,6 +159,7 @@ func apply_save(data: Dictionary) -> void:
 	_max_affection = max(int(data.get("max_affection", 0)), 0)
 	_total_steps = max(int(data.get("total_steps", 0)), 0)
 	_step_streak = max(int(data.get("step_streak", 0)), 0)
+	_daily_step_accumulator = max(int(data.get("daily_step_accumulator", 0)), 0)
 	_step_streak_checked_today = String(data.get("step_streak_checked_today", ""))
 	_cat_streak = {}
 	for k in Dictionary(data.get("cat_streak", {})):
@@ -176,6 +181,7 @@ func reset_all() -> void:
 	_max_affection = 0
 	_total_steps = 0
 	_step_streak = 0
+	_daily_step_accumulator = 0
 	_step_streak_checked_today = ""
 	_cat_streak = {}
 	_cat_streak_checked_today = ""
@@ -184,16 +190,23 @@ func reset_all() -> void:
 
 # ── Signal handlers ──
 
-func _on_steps_updated(delta: int, total: int) -> void:
+func _on_steps_updated(_delta: int, total: int) -> void:
 	_total_steps = max(_total_steps, total)
 
 	var today := _today_key()
 	var today_steps := 0
 	if StepEngine and StepEngine.has_method("get_today_steps"):
 		today_steps = StepEngine.get_today_steps()
+
 	if today != _step_streak_checked_today:
+		# Day changed: evaluate previous day's steps for A6 streak
+		_record_daily_step_met(_daily_step_accumulator)
+		_daily_step_accumulator = today_steps
 		_step_streak_checked_today = today
-		_record_daily_step_met(today_steps)
+	else:
+		# Same day: track today's max steps
+		_daily_step_accumulator = max(_daily_step_accumulator, today_steps)
+
 	_check_step_achievements()
 
 
@@ -233,6 +246,13 @@ func _on_friendship_changed(_cat_id: String, friendship: int) -> void:
 	for def_dict in ACHIEVEMENTS:
 		if String(def_dict.get("type", "")) == "affection":
 			_check_def(def_dict)
+
+
+func _on_cat_interacted(cat_id: String, _interaction_type: String) -> void:
+	# Bridge to friendship check via InteractionSystem
+	if InteractionSystem:
+		var affection: int = InteractionSystem.get_affection(cat_id)
+		_on_friendship_changed(cat_id, affection)
 
 
 # ── Achievement evaluation ──

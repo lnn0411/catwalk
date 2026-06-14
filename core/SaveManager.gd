@@ -15,6 +15,7 @@ func save_all() -> void:
 	_write_energy()
 	_write_hatch()
 	_write_currency()
+	_write_achievements()
 	_config.save(SAVE_PATH)
 
 func load_and_apply() -> void:
@@ -28,6 +29,7 @@ func load_and_apply() -> void:
 	EnergyEngine.apply_save(_read_energy())
 	HatchEngine.apply_save(_read_hatch())
 	CurrencyManager.apply_save(_read_currency())
+	AchievementSystem.apply_save(_read_achievements())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
 	# 避免冷启动时"应用关闭期间累积的步数"在首帧丢失。
@@ -42,6 +44,7 @@ func reset_all() -> void:
 	EnergyEngine.apply_save({})
 	HatchEngine.apply_save({})
 	CurrencyManager.apply_save({})
+	AchievementSystem.reset_all()
 	_is_applying = false
 	save_all()
 
@@ -176,3 +179,38 @@ func _clear_cat_sections() -> void:
 	for section in _config.get_sections():
 		if String(section).begins_with("cat_"):
 			_config.erase_section(section)
+
+func _read_achievements() -> Dictionary:
+	return {
+		"unlocked": _config.get_value("achievements", "unlocked", []),
+		"hatch_count": _config.get_value("achievements", "hatch_count", 0),
+		"collected_breeds": _config.get_value("achievements", "collected_breeds", []),
+		"postcard_count": _config.get_value("achievements", "postcard_count", 0),
+		"max_level": _config.get_value("achievements", "max_level", 0),
+		"total_steps": _config.get_value("achievements", "total_steps", 0),
+		"daily_step_met": _config.get_value("achievements", "daily_step_met", {}),
+		"step_streak": _config.get_value("achievements", "step_streak", 0),
+		"daily_step_accumulator": _config.get_value("achievements", "daily_step_accumulator", 0),
+		"step_streak_checked_today": _config.get_value("achievements", "step_streak_checked_today", ""),
+		"cat_interactions": _config.get_value("achievements", "cat_interactions", {}),
+		"cat_streak": _config.get_value("achievements", "cat_streak", {}),
+		"cat_streak_checked_today": _config.get_value("achievements", "cat_streak_checked_today", ""),
+		"midnight_accessed": _config.get_value("achievements", "midnight_accessed", false),
+	}
+
+func _write_achievements() -> void:
+	var data: Dictionary = AchievementSystem.get_save_data()
+	_config.set_value("achievements", "unlocked", data.get("unlocked", []))
+	_config.set_value("achievements", "hatch_count", data.get("hatch_count", 0))
+	_config.set_value("achievements", "collected_breeds", data.get("collected_breeds", []))
+	_config.set_value("achievements", "postcard_count", data.get("postcard_count", 0))
+	_config.set_value("achievements", "max_level", data.get("max_level", 0))
+	_config.set_value("achievements", "total_steps", data.get("total_steps", 0))
+	_config.set_value("achievements", "daily_step_met", data.get("daily_step_met", {}))
+	_config.set_value("achievements", "step_streak", data.get("step_streak", 0))
+	_config.set_value("achievements", "daily_step_accumulator", data.get("daily_step_accumulator", 0))
+	_config.set_value("achievements", "step_streak_checked_today", data.get("step_streak_checked_today", ""))
+	_config.set_value("achievements", "cat_interactions", data.get("cat_interactions", {}))
+	_config.set_value("achievements", "cat_streak", data.get("cat_streak", {}))
+	_config.set_value("achievements", "cat_streak_checked_today", data.get("cat_streak_checked_today", ""))
+	_config.set_value("achievements", "midnight_accessed", data.get("midnight_accessed", false))
