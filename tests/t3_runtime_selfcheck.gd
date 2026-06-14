@@ -47,6 +47,7 @@ func _ready() -> void:
 	await _t_level_system()
 	await _t_interaction_system()
 	await _t_signin_system()
+	await _t_achievement_system()
 
 	print("\n" + "=".repeat(64))
 	print("  结果：%d 通过 / %d 失败" % [_pass, _fail])
@@ -878,6 +879,70 @@ func _t_signin_system() -> void:
 	_eq("P5 跨天后day+1", d1, d0 + 1)
 
 	P.reset_all()
+	SaveManager.reset_all()
+	await get_tree().process_frame
+
+# ============================================================
+# Q. AchievementSystem — 成就系统（TDD）
+# ============================================================
+func _t_achievement_system() -> void:
+	_sec("Q. AchievementSystem 成就系统")
+	var A = AchievementSystem
+
+	# Q1 20成就定义
+	A.reset_all()
+	_eq("Q1 成就总数20", A.get_definitions().size(), 20)
+
+	# Q2 步数A1
+	A.reset_all()
+	A._override_total_steps(1500)
+	A.check("A1")
+	_ok("Q2 A1解锁", A.is_unlocked("A1"))
+
+	# Q3 步数A2
+	A.reset_all()
+	A._override_total_steps(12000)
+	A.check("A2")
+	_ok("Q3 A2解锁", A.is_unlocked("A2"))
+
+	# Q4 收集B1
+	A.reset_all()
+	A._override_hatched_count(1)
+	A.check("B1")
+	_ok("Q4 B1解锁", A.is_unlocked("B1"))
+
+	# Q5 收集B5全品种
+	A.reset_all()
+	A._unlock_breed("orange")
+	A._unlock_breed("british")
+	A._unlock_breed("siamese")
+	A.check("B5")
+	_ok("Q5 B5全品种解锁", A.is_unlocked("B5"))
+
+	# Q6 养成C1 Lv3
+	A.reset_all()
+	A._override_cat_level("test_cat", 3)
+	A.check("C1")
+	_ok("Q6 C1 Lv3解锁", A.is_unlocked("C1"))
+
+	# Q7 防重复: 同条件触发两次仍只解锁一次
+	A.reset_all()
+	A._override_total_steps(1500)
+	A.check("A1")
+	_ok("Q7 A1首次解锁", A.is_unlocked("A1"))
+	A._override_total_steps(2000)
+	A.check("A1")
+	_ok("Q7 A1重复仍解锁不崩", A.is_unlocked("A1"))
+
+	# Q8 奖励
+	A.reset_all()
+	var reward = A.get_reward("A1")
+	_ge("Q8 A1奖励金币≥100", int(reward.get("gold", 0)), 100)
+
+	# Q9 重置
+	A.reset_all()
+	_ok("Q9 重置后A1未解锁", not A.is_unlocked("A1"))
+
 	SaveManager.reset_all()
 	await get_tree().process_frame
 
