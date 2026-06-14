@@ -29,13 +29,11 @@ git diff origin/main --stat
 ```
 
 **判定标准**：
-- 自检 ≥ 97 通过（当前 main 基准线：97/99，2 项 HatchEngine 槽位轮询为既有问题）
-- 低于 97 → block，修复后重跑
+- 自检 ≥ 101 通过（当前 main 基准线：101/0 全部通过）
+- 低于 101 → block，修复后重跑
 - `git diff --stat` 出现 `core/EnergyEngine.gd` 或 `core/HatchEngine.gd` → 禁止 push（除非在 feature/progressive-energy 分支）
 
-**当前基准线（2026-06-14）**：97/99 通过。2 项既有失败：
-- `轮询: collect slot0 后轮到 slot1=ready`（期望 ready，实际 incubating）
-- `轮询: slot1 满 4250`（期望 4250，实际 0）
+**当前基准线（2026-06-14）**：101/0 全部通过。C5 串行填充测试已对齐实际实现。
 
 ---
 
