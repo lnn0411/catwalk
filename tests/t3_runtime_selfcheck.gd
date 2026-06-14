@@ -602,12 +602,13 @@ func _t_emotion_state_machine() -> void:
 
 	# K3 annoyed触发
 	M.reset_all()
+	var interaction_types: Array = ["feed", "pet", "play", "photo"]
 	for i in range(4):
-		M.record_interaction("cat_k3", "feed")
+		M.record_interaction("cat_k3", interaction_types[i])
 		M._advance_window(300.0)
 	_eq("K3 4次互动变annoyed", M.get_emotion("cat_k3"), "annoyed")
 	_ok("K3 is_annoyed=true", M.is_annoyed("cat_k3"))
-	M._override_elapsed("cat_k3", 3601.0)
+	M._advance_window(3601.0)  # 推进1h+让历史记录滑出窗口
 	_eq("K3 1h后恢复idle", M.get_emotion("cat_k3"), "idle")
 
 	# K4 curious触发
@@ -628,9 +629,10 @@ func _t_emotion_state_machine() -> void:
 
 	# K6 互动历史滑动窗口
 	M.reset_all()
+	var k6_types: Array = ["feed", "pet", "play", "photo", "feed"]
 	for i in range(5):
-		M.record_interaction("cat_k6", "pet")
-		M._advance_window(1200.0)
+		M.record_interaction("cat_k6", k6_types[i])
+		M._advance_window(750.0)  # 12.5min间隔，5次=62.5min，第1次滑出1h窗口
 	_eq("K6 窗口外旧记录不计数", M.get_emotion("cat_k6"), "annoyed")
 
 	SaveManager.reset_all()
