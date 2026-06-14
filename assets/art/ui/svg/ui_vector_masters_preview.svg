@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="720" viewBox="0 0 960 720">
+<rect width="960" height="720" fill="#f7f1e6"/>
+<text x="40" y="58" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#24332b">Catwalk UI Vector Masters</text>
+<g transform="translate(40 90)"><rect x="0" y="0" width="880" height="130" rx="18" fill="#ffffff"/><text x="24" y="38" font-family="Arial" font-size="18" fill="#526157">HUD</text><g transform="translate(24 34)">
+
+  <rect x="8" y="18" width="344" height="60" rx="30" fill="#203528"/>
+  <rect x="22" y="32" width="228" height="32" rx="16" fill="#5ec66f"/>
+  <circle cx="54" cy="48" r="22" fill="#fff3a6"/>
+  <path d="M58 25 L42 52 H56 L49 72 L73 40 H59 Z" fill="#2f8b47"/>
+  <text x="92" y="56" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#ffffff">ENERGY</text>
+
+</g><g transform="translate(400 34)">
+
+  <rect x="8" y="18" width="284" height="60" rx="30" fill="#263544"/>
+  <circle cx="54" cy="48" r="22" fill="#dbeafe"/>
+  <path d="M43 54 C52 41 55 38 68 31" stroke="#395d88" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <circle cx="42" cy="58" r="5" fill="#395d88"/>
+  <circle cx="70" cy="29" r="5" fill="#395d88"/>
+  <text x="92" y="56" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#ffffff">STEPS</text>
+
+</g></g>
+<g transform="translate(40 250)"><rect x="0" y="0" width="880" height="180" rx="18" fill="#ffffff"/><text x="24" y="38" font-family="Arial" font-size="18" fill="#526157">Bottom navigation</text><g transform="translate(70 28)">
+
+  <rect x="12" y="20" width="696" height="120" rx="38" fill="#22312b"/>
+  <g fill="#f6f1e8" font-family="Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle">
+    <g transform="translate(72 52)"><path d="M0 24 L24 0 L48 24 V56 H12 V32 H36 V56 H48" fill="none" stroke="#f6f1e8" stroke-width="5" stroke-linejoin="round"/><text x="24" y="84">Home</text></g>
+    <g transform="translate(216 52)"><circle cx="24" cy="22" r="20" fill="none" stroke="#f6f1e8" stroke-width="5"/><path d="M16 24 L23 33 L34 12" fill="none" stroke="#88d08b" stroke-width="5" stroke-linecap="round"/><text x="24" y="84">Walk</text></g>
+    <g transform="translate(360 52)"><path d="M24 2 C42 15 46 29 24 54 C2 29 6 15 24 2Z" fill="none" stroke="#f6f1e8" stroke-width="5"/><text x="24" y="84">Care</text></g>
+    <g transform="translate(504 52)"><rect x="4" y="8" width="40" height="40" rx="10" fill="none" stroke="#f6f1e8" stroke-width="5"/><path d="M12 22 H36 M12 34 H30" stroke="#f6f1e8" stroke-width="5" stroke-linecap="round"/><text x="24" y="84">Tasks</text></g>
+    <g transform="translate(648 52)"><circle cx="24" cy="18" r="13" fill="none" stroke="#f6f1e8" stroke-width="5"/><path d="M3 56 C8 38 40 38 45 56" fill="none" stroke="#f6f1e8" stroke-width="5" stroke-linecap="round"/><text x="24" y="84">Me</text></g>
+  </g>
+
+</g></g>
+<g transform="translate(40 470)"><rect x="0" y="0" width="880" height="190" rx="18" fill="#ffffff"/><text x="24" y="38" font-family="Arial" font-size="18" fill="#526157">Avatar and action buttons</text><g transform="translate(50 45)">
+
+  <circle cx="64" cy="64" r="58" fill="#f5efe4" stroke="#2d3a32" stroke-width="6"/>
+  <path d="M36 53 L44 25 L61 45 L81 45 L98 25 L92 55 Z" fill="#e98d45" stroke="#6f3a1e" stroke-width="4" stroke-linejoin="round"/>
+  <circle cx="50" cy="66" r="5" fill="#263238"/>
+  <circle cx="78" cy="66" r="5" fill="#263238"/>
+  <path d="M62 76 L66 76 L64 81 Z" fill="#7a3d2a"/>
+  <path d="M52 88 C60 95 69 95 77 88" stroke="#7a3d2a" stroke-width="4" stroke-linecap="round" fill="none"/>
+
+</g><g transform="translate(230 48)">
+
+  <rect x="10" y="24" width="120" height="72" rx="24" fill="#6bbf73"/>
+  <path d="M52 44 L88 60 L52 76 Z" fill="#ffffff"/>
+  <rect x="150" y="24" width="120" height="72" rx="24" fill="#f2b84b"/>
+  <path d="M184 62 H236 M210 36 V88" stroke="#ffffff" stroke-width="10" stroke-linecap="round"/>
+  <rect x="290" y="24" width="120" height="72" rx="24" fill="#4e8fd8"/>
+  <path d="M328 72 C350 35 372 35 394 72" stroke="#ffffff" stroke-width="9" fill="none" stroke-linecap="round"/>
+  <circle cx="326" cy="76" r="6" fill="#ffffff"/><circle cx="394" cy="76" r="6" fill="#ffffff"/>
+
+</g></g>
+</svg>

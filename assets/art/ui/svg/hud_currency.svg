@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="96" viewBox="0 0 300 96">
+
+  <rect x="8" y="18" width="284" height="60" rx="30" fill="#3b2f23"/>
+  <circle cx="54" cy="48" r="23" fill="#ffd166"/>
+  <circle cx="54" cy="48" r="14" fill="#f9a825"/>
+  <text x="45" y="57" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#6b3f00">$</text>
+  <text x="92" y="56" font-family="Arial, sans-serif" font-size="26" font-weight="700" fill="#ffffff">COINS</text>
+</svg>
