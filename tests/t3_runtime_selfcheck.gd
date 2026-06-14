@@ -43,6 +43,10 @@ func _ready() -> void:
 	await _t_scene_smoke()
 	await _t_explore_engine()
 	await _t_emotion_state_machine()
+	await _t_cat_schedule()
+	await _t_level_system()
+	await _t_interaction_system()
+	await _t_signin_system()
 
 	print("\n" + "=".repeat(64))
 	print("  结果：%d 通过 / %d 失败" % [_pass, _fail])
@@ -635,6 +639,245 @@ func _t_emotion_state_machine() -> void:
 		M._advance_window(750.0)  # 12.5min间隔，5次=62.5min，第1次滑出1h窗口
 	_eq("K6 窗口外旧记录不计数", M.get_emotion("cat_k6"), "annoyed")
 
+	SaveManager.reset_all()
+	await get_tree().process_frame
+
+# ============================================================
+# L. CatSchedule — 作息时段系统（TDD）
+# ============================================================
+func _t_cat_schedule() -> void:
+	_sec("L. CatSchedule 作息时段")
+	if not FileAccess.file_exists("res://core/CatSchedule.gd"):
+		print("  [⏭] 跳过 — CatSchedule.gd 尚未创建")
+		await get_tree().process_frame
+		return
+	var C = load("res://core/CatSchedule.gd")
+
+	# L1 6时段定义
+	_eq("L1 6点=dawn", C.get_period(6), "dawn")
+	_eq("L1 8点=dawn", C.get_period(8), "dawn")
+	_eq("L1 9点=morning", C.get_period(9), "morning")
+	_eq("L1 11点=morning", C.get_period(11), "morning")
+	_eq("L1 12点=noon", C.get_period(12), "noon")
+	_eq("L1 13点=noon", C.get_period(13), "noon")
+	_eq("L1 14点=afternoon", C.get_period(14), "afternoon")
+	_eq("L1 17点=afternoon", C.get_period(17), "afternoon")
+	_eq("L1 18点=dusk", C.get_period(18), "dusk")
+	_eq("L1 19点=dusk", C.get_period(19), "dusk")
+	_eq("L1 20点=night", C.get_period(20), "night")
+	_eq("L1 23点=night", C.get_period(23), "night")
+	_eq("L1 0点=night", C.get_period(0), "night")
+	_eq("L1 5点=night", C.get_period(5), "night")
+
+	# L2 品种×时段状态
+	_eq("L2 橘猫dawn=sleep", C.get_state("orange", "dawn"), "sleep")
+	_eq("L2 橘猫noon=sleep", C.get_state("orange", "noon"), "sleep")
+	_eq("L2 橘猫night=sleep", C.get_state("orange", "night"), "sleep")
+	_eq("L2 橘猫morning=active", C.get_state("orange", "morning"), "active")
+	_eq("L2 橘猫afternoon=active", C.get_state("orange", "afternoon"), "active")
+	_eq("L2 橘猫dusk=active", C.get_state("orange", "dusk"), "active")
+	_eq("L2 英短noon=sleep", C.get_state("british", "noon"), "sleep")
+	_eq("L2 英短dawn=active", C.get_state("british", "dawn"), "active")
+	_eq("L2 英短dusk=active", C.get_state("british", "dusk"), "active")
+	_eq("L2 英短night=active", C.get_state("british", "night"), "active")
+	_eq("L2 暹罗night=sleep", C.get_state("siamese", "night"), "sleep")
+	_eq("L2 暹罗noon=active", C.get_state("siamese", "noon"), "active")
+	_eq("L2 暹罗dawn=active", C.get_state("siamese", "dawn"), "active")
+	_eq("L2 暹罗dusk=active", C.get_state("siamese", "dusk"), "active")
+
+	# L3 set_time_override 时间助手
+	C.set_time_override(13)
+	_eq("L3 override13点 当前=noon", C.get_current_period(), "noon")
+	C.set_time_override(8)
+	_eq("L3 override8点 当前=dawn", C.get_current_period(), "dawn")
+
+	# L4 night巡逻（仅20-23）
+	C.set_time_override(20)
+	_ok("L4 20点=巡逻", C.is_night_patrol())
+	C.set_time_override(23)
+	_ok("L4 23点=巡逻", C.is_night_patrol())
+	C.set_time_override(19)
+	_ok("L4 19点非巡逻", not C.is_night_patrol())
+	C.set_time_override(0)
+	_ok("L4 0点非巡逻", not C.is_night_patrol())
+
+	# L5 抚摸唤醒 — 仅睡眠时段可唤醒
+	C.set_time_override(7)    # dawn = 睡眠
+	_ok("L5 dawn可唤醒", C.can_wake("cat_l5"))
+	C.set_time_override(13)   # noon = 睡眠
+	_ok("L5 noon可唤醒", C.can_wake("cat_l5"))
+	C.set_time_override(22)   # night = 睡眠
+	_ok("L5 night可唤醒", C.can_wake("cat_l5"))
+	C.set_time_override(10)   # morning = 活动
+	_ok("L5 morning不可唤醒", not C.can_wake("cat_l5"))
+	C.set_time_override(16)   # afternoon = 活动
+	_ok("L5 afternoon不可唤醒", not C.can_wake("cat_l5"))
+
+	SaveManager.reset_all()
+	await get_tree().process_frame
+
+# ============================================================
+# M. LevelSystem — 等级/经验系统（TDD）
+# ============================================================
+func _t_level_system() -> void:
+	_sec("M. LevelSystem 等级系统")
+	if not FileAccess.file_exists("res://core/LevelSystem.gd"):
+		print("  [⏭] 跳过 — LevelSystem.gd 尚未创建")
+		await get_tree().process_frame
+		return
+	var L = load("res://core/LevelSystem.gd")
+
+	# M1 品种系数
+	_near("M1 橘猫系数1.0", L.get_breed_multiplier("orange"), 1.0)
+	_near("M1 英短系数1.2", L.get_breed_multiplier("british"), 1.2)
+	_near("M1 暹罗系数1.5", L.get_breed_multiplier("siamese"), 1.5)
+
+	# M2 经验计算 = 步数×系数
+	_near("M2 1000步×1.0", L.calc_exp(1000, 1.0), 1000.0)
+	_near("M2 1000步×1.2", L.calc_exp(1000, 1.2), 1200.0)
+	_near("M2 1000步×1.5", L.calc_exp(1000, 1.5), 1500.0)
+
+	# M3 Lv门槛
+	_eq("M3 0→Lv1", L.get_level(0), 1)
+	_eq("M3 5000→Lv2", L.get_level(5000), 2)
+	_eq("M3 15000→Lv3", L.get_level(15000), 3)
+	_eq("M3 30000→Lv4", L.get_level(30000), 4)
+	_eq("M3 50000→Lv5", L.get_level(50000), 5)
+	_eq("M3 75000→Lv6", L.get_level(75000), 6)
+	_eq("M3 100000→Lv7", L.get_level(100000), 7)
+	_eq("M3 120000→Lv8", L.get_level(120000), 8)
+	_eq("M3 138000→Lv9", L.get_level(138000), 9)
+	_eq("M3 150000→Lv10", L.get_level(150000), 10)
+
+	# M4 边界
+	_eq("M4 4999=Lv1", L.get_level(4999), 1)
+	_eq("M4 5000=Lv2", L.get_level(5000), 2)
+	_eq("M4 149999=Lv9", L.get_level(149999), 9)
+	_eq("M4 150000=Lv10", L.get_level(150000), 10)
+
+	# M5 满级
+	_ok("M5 150000满级", L.is_max_level(150000))
+	_ok("M5 200000满级", L.is_max_level(200000))
+	_ok("M5 149999未满级", not L.is_max_level(149999))
+
+	SaveManager.reset_all()
+	await get_tree().process_frame
+
+# ============================================================
+# N. InteractionSystem — 互动/冷却/好感系统（TDD）
+# ============================================================
+func _t_interaction_system() -> void:
+	_sec("N. InteractionSystem 互动系统")
+	if not FileAccess.file_exists("res://core/InteractionSystem.gd"):
+		print("  [⏭] 跳过 — InteractionSystem.gd 尚未创建")
+		await get_tree().process_frame
+		return
+	var I = load("res://core/InteractionSystem.gd")
+
+	# N1 冷却定义（分钟）
+	I.reset_all()
+	_eq("N1 feed冷却240", I.get_cooldown_minutes("feed"), 240)
+	_eq("N1 pet冷却120", I.get_cooldown_minutes("pet"), 120)
+	_eq("N1 play冷却360", I.get_cooldown_minutes("play"), 360)
+	_eq("N1 photo冷却60", I.get_cooldown_minutes("photo"), 60)
+
+	# N2 好感值增益
+	_eq("N2 feed好感+5", I.get_affection_gain("feed"), 5)
+	_eq("N2 pet好感+3", I.get_affection_gain("pet"), 3)
+	_eq("N2 play好感+4", I.get_affection_gain("play"), 4)
+	_eq("N2 photo好感+2", I.get_affection_gain("photo"), 2)
+
+	# N3 冷却检查
+	I.reset_all()
+	_ok("N3 初始可互动", I.can_interact("cat_n3", "feed"))
+	I.do_interact("cat_n3", "feed")
+	_ok("N3 互动后进入冷却", not I.can_interact("cat_n3", "feed"))
+	_ok("N3 不同类型不受影响", I.can_interact("cat_n3", "pet"))
+
+	# N4 执行互动返回好感增益
+	I.reset_all()
+	_eq("N4 do_interact(feed)返回5", I.do_interact("cat_n4", "feed"), 5)
+	_ok("N4 执行后进入冷却", not I.can_interact("cat_n4", "feed"))
+
+	# N5 冷却后重新可用
+	I.reset_all()
+	I.do_interact("cat_n5", "pet")
+	_ok("N5 刚互动仍冷却", not I.can_interact("cat_n5", "pet"))
+	I._override_last_interact("cat_n5", "pet", 121 * 60)   # 121分钟前 > 120冷却
+	_ok("N5 冷却过期重新可用", I.can_interact("cat_n5", "pet"))
+	I._override_last_interact("cat_n5", "pet", 119 * 60)   # 119分钟前 < 120
+	_ok("N5 未到冷却仍不可用", not I.can_interact("cat_n5", "pet"))
+
+	# N6 好感累积（跨多次互动）
+	I.reset_all()
+	_eq("N6 初始好感0", I.get_affection("cat_n6"), 0)
+	I.do_interact("cat_n6", "feed")   # +5
+	I.do_interact("cat_n6", "pet")    # +3
+	_eq("N6 好感累积=8", I.get_affection("cat_n6"), 8)
+
+	I.reset_all()
+	SaveManager.reset_all()
+	await get_tree().process_frame
+
+# ============================================================
+# P. SigninSystem — 签到系统（TDD）
+# ============================================================
+func _t_signin_system() -> void:
+	_sec("P. SigninSystem 签到系统")
+	if not FileAccess.file_exists("res://core/SigninSystem.gd"):
+		print("  [⏭] 跳过 — SigninSystem.gd 尚未创建")
+		await get_tree().process_frame
+		return
+	var P = load("res://core/SigninSystem.gd")
+
+	# P1 签到 day从1开始
+	P.reset_all()
+	P.set_date_override("2026-06-15")
+	var r1: Dictionary = P.signin()
+	_eq("P1 首签day=1", int(r1.get("day", 0)), 1)
+	_ok("P1 返回含reward", r1.has("reward"))
+
+	# P2 连续7天奖励序列
+	P.reset_all()
+	var rewards: Array = []
+	var days: Array = []
+	for i in range(7):
+		var r: Dictionary = P.signin()
+		days.append(int(r.get("day", 0)))
+		rewards.append(r.get("reward"))
+		P._simulate_next_day()
+	_eq("P2 day序列1-7", days, [1, 2, 3, 4, 5, 6, 7])
+	_eq("P2 day1金币100", rewards[0], "金币100")
+	_eq("P2 day2金币200", rewards[1], "金币200")
+	_eq("P2 day3金币150", rewards[2], "金币150")
+	_eq("P2 day4金币200", rewards[3], "金币200")
+	_eq("P2 day5金币100", rewards[4], "金币100")
+	_eq("P2 day6金币150", rewards[5], "金币150")
+	_eq("P2 day7宝箱", rewards[6], "宝箱")
+
+	# P3 断签退1（每漏1天退1级，非归1）
+	P.reset_all()
+	for i in range(4):                 # 连续签到累计到day4
+		P.signin()
+		P._simulate_next_day()
+	P.set_last_signin_days_ago(2)      # 漏签2天
+	var r3: Dictionary = P.signin()
+	_eq("P3 断签2天退2级 day=2", int(r3.get("day", 0)), 2)
+
+	# P4 补签卡 每周期最多2张
+	P.reset_all()
+	_ok("P4 第1张补签可用", P.use_makeup_card())
+	_ok("P4 第2张补签可用", P.use_makeup_card())
+	_ok("P4 第3张补签拒绝", not P.use_makeup_card())
+
+	# P5 跨天 day推进
+	P.reset_all()
+	var d0: int = int(P.signin().get("day", 0))
+	P._simulate_next_day()
+	var d1: int = int(P.signin().get("day", 0))
+	_eq("P5 跨天后day+1", d1, d0 + 1)
+
+	P.reset_all()
 	SaveManager.reset_all()
 	await get_tree().process_frame
 
