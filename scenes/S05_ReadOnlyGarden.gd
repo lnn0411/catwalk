@@ -2,6 +2,7 @@ extends "res://ui/UIPage.gd"
 
 const GardenBackground := preload("res://scenes/GardenBackground.gd")
 const CatSpriteScene := preload("res://scenes/CatSprite.tscn")
+const BottomNav := preload("res://ui/BottomNav.gd")
 const BottomNavScene := preload("res://ui/BottomNav.tscn")
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
