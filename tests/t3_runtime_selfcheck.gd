@@ -41,6 +41,8 @@ func _ready() -> void:
 	await _t_cat_spawner()
 	await _t_uimanager()
 	await _t_scene_smoke()
+	await _t_explore_engine()
+	await _t_emotion_state_machine()
 
 	print("\n" + "=".repeat(64))
 	print("  结果：%d 通过 / %d 失败" % [_pass, _fail])
@@ -511,6 +513,128 @@ func _find_child_named(node: Node, target: String, depth: int = 3) -> bool:
 		if _find_child_named(c, target, depth - 1):
 			return true
 	return false
+
+# ============================================================
+# J. ExploreEngine — 探索系统（TDD，先写测试再实现）
+# ============================================================
+func _t_explore_engine() -> void:
+	_sec("J. ExploreEngine 探索系统")
+	if not FileAccess.file_exists("res://core/ExploreEngine.gd"):
+		print("  [⏭] 跳过 — ExploreEngine.gd 尚未创建")
+		await get_tree().process_frame
+		return
+	var E = load("res://core/ExploreEngine.gd")
+
+	# J1 探索槽初始化
+	E.reset_all()
+	_eq("J1 探索槽共2个", E.get_slot_count(), 2)
+	_ok("J1 slot0初始可用", E.is_slot_available(0))
+	_ok("J1 slot1初始锁定(需孵5只)", not E.is_slot_available(1))
+
+	# J2 派遣猫咪
+	E.reset_all()
+	var dispatched: bool = E.dispatch("test_cat_1", 1)
+	_ok("J2 派遣成功", dispatched)
+	_ok("J2 猫在探索中", E.is_exploring("test_cat_1"))
+	_ok("J2 未到返回时间", not E.is_returned("test_cat_1"))
+	_ok("J2 重复派遣拒绝", not E.dispatch("test_cat_1", 1))
+
+	# J3 槽位并行
+	E.reset_all()
+	E._override_hatched_count(5)
+	_ok("J3 slot1已解锁", E.is_slot_available(1))
+	E.dispatch("cat_A", 1)
+	E.dispatch("cat_B", 2)
+	_ok("J3 两猫同时探索", E.is_exploring("cat_A") and E.is_exploring("cat_B"))
+
+	# J4 返回检测
+	E.reset_all()
+	E.dispatch("test_cat_2", 1)
+	E._override_return_time("test_cat_2", Time.get_unix_time_from_system() - 10.0)
+	_ok("J4 已过期返回true", E.is_returned("test_cat_2"))
+	E.dispatch("test_cat_3", 2)
+	_ok("J4 未来时间返回false", not E.is_returned("test_cat_3"))
+
+	# J5 奖励Roll类型验证
+	E.reset_all()
+	var types_seen: Array = []
+	for i in range(50):
+		var reward_type: String = E._roll_reward_type("test_cat_r")
+		if not types_seen.has(reward_type):
+			types_seen.append(reward_type)
+	_ok("J5 奖励类型在四选一内", types_seen.all(func(t): return t in ["postcard", "ingredient", "decoration", "hidden"]))
+	_ok("J5 多次roll覆盖多种类型", types_seen.size() >= 2)
+
+	# J6 防重复明信片
+	E.reset_all()
+	E._mock_collected_postcards(["pc_001", "pc_002"])
+	var dup_count := 0
+	for i in range(30):
+		if E._roll_reward_type("test_cat_d") == "postcard":
+			dup_count += 1
+	_ok("J6 防重复-连续postcard不超15次", dup_count <= 15)
+
+	SaveManager.reset_all()
+	await get_tree().process_frame
+
+# ============================================================
+# K. EmotionStateMachine — 情绪状态机（TDD）
+# ============================================================
+func _t_emotion_state_machine() -> void:
+	_sec("K. EmotionStateMachine 情绪状态机")
+	if not FileAccess.file_exists("res://core/EmotionStateMachine.gd"):
+		print("  [⏭] 跳过 — EmotionStateMachine.gd 尚未创建")
+		await get_tree().process_frame
+		return
+	var M = load("res://core/EmotionStateMachine.gd")
+
+	# K1 初始状态
+	M.reset_all()
+	_eq("K1 新猫默认idle", M.get_emotion("cat_k1"), "idle")
+
+	# K2 happy转换
+	M.reset_all()
+	M.record_interaction("cat_k2", "feed")
+	_eq("K2 互动后变happy", M.get_emotion("cat_k2"), "happy")
+	_ok("K2 30min内仍是happy", not M.is_expired("cat_k2", "happy", 30))
+	M._override_elapsed("cat_k2", 1801.0)
+	_eq("K2 30min后恢复idle", M.get_emotion("cat_k2"), "idle")
+
+	# K3 annoyed触发
+	M.reset_all()
+	for i in range(4):
+		M.record_interaction("cat_k3", "feed")
+		M._advance_window(300.0)
+	_eq("K3 4次互动变annoyed", M.get_emotion("cat_k3"), "annoyed")
+	_ok("K3 is_annoyed=true", M.is_annoyed("cat_k3"))
+	M._override_elapsed("cat_k3", 3601.0)
+	_eq("K3 1h后恢复idle", M.get_emotion("cat_k3"), "idle")
+
+	# K4 curious触发
+	M.reset_all()
+	M.trigger_curious("cat_k4", "new_cat_arrived")
+	_eq("K4 新猫触发curious", M.get_emotion("cat_k4"), "curious")
+	M._override_elapsed("cat_k4", 601.0)
+	_eq("K4 10min后消退", M.get_emotion("cat_k4"), "idle")
+
+	# K5 sleepy时段
+	M.reset_all()
+	M.set_schedule_override("sleep")
+	_eq("K5 sleep时段变sleepy", M.get_emotion("cat_k5"), "sleepy")
+	M.wake_up("cat_k5")
+	_eq("K5 抚摸唤醒变idle", M.get_emotion("cat_k5"), "idle")
+	M.set_schedule_override("active")
+	_eq("K5 active时段非sleepy", M.get_emotion("cat_k5"), "idle")
+
+	# K6 互动历史滑动窗口
+	M.reset_all()
+	for i in range(5):
+		M.record_interaction("cat_k6", "pet")
+		M._advance_window(1200.0)
+	_eq("K6 窗口外旧记录不计数", M.get_emotion("cat_k6"), "annoyed")
+
+	SaveManager.reset_all()
+	await get_tree().process_frame
 
 func _backup_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
