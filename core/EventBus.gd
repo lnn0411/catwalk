@@ -1,0 +1,23 @@
+# EventBus — 集中式信号总线 (Autoload)
+# 不要加 class_name，autoload 注册已提供全局名称
+extends Node
+
+signal step_updated(delta_steps: int, total_steps: int, tier: int)
+signal energy_changed(pool: int, reserve: int, total_produced: int)
+signal hatch_slot_updated(slot_id: int, status: int, progress: float)
+signal hatch_completed(cat_id: String)
+signal cat_spawned(cat_id: String, breed: String)
+signal cat_interacted(cat_id: String, interaction_type: String)
+signal emotion_changed(cat_id: String, emotion: String)
+signal explore_dispatched(cat_id: String, return_time: float)
+signal explore_returned(cat_id: String, reward_type: String)
+signal weather_changed(weather: String)
+signal time_period_changed(period: String)
+signal achievement_unlocked(achievement_id: String, reward: Dictionary)
+signal network_status_changed(online: bool)
+signal save_completed(success: bool)
+signal level_up(cat_id: String, from_level: int, to_level: int)
+signal postcard_obtained(postcard_id: String, location_type: String)
+signal signin_completed(day: int, reward: Dictionary)
+signal currency_changed(gold: int, diamonds: int, petals: int)
+signal inventory_changed(item_type: String, quantity: int)

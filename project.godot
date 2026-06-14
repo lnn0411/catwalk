@@ -52,6 +52,7 @@ config/icon="res://icon.svg"
 
 [autoload]
 
+EventBus="*res://core/EventBus.gd"
 Palette="*res://autoload/Palette.gd"
 Juice="*res://autoload/Juice.gd"
 UIManager="*res://ui/UIManager.gd"
