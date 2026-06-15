@@ -36,7 +36,6 @@ func _ensure_sprite() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.centered = false
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_sprite.z_index = 100
 	add_child(_sprite)
 
 
