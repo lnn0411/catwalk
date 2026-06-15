@@ -128,25 +128,6 @@ func _build_parallax_background() -> void:
 		sprite.centered = false
 		garden_layer.add_child(sprite)
 		push_warning("[Garden] loaded: %s size=%s" % [layer_paths[i].get_file(), str(tex.get_size())])
-	
-	# 诊断：红色 Label + 红色矩形验证 garden_layer Sprite2D 渲染
-	var dbg_lbl := Label.new()
-	dbg_lbl.text = "DIAG"
-	dbg_lbl.position = Vector2(100, 300)
-	dbg_lbl.add_theme_color_override("font_color", Color.RED)
-	dbg_lbl.add_theme_font_size_override("font_size", 48)
-	dbg_lbl.z_index = 999
-	garden_layer.add_child(dbg_lbl)
-	
-	# 纯色纹理 Sprite2D — 不依赖 PNG
-	var img := Image.create(512, 256, false, Image.FORMAT_RGBA8)
-	img.fill(Color(1, 0, 0, 0.8))
-	var tex := ImageTexture.create_from_image(img)
-	var rect := Sprite2D.new()
-	rect.texture = tex
-	rect.position = Vector2(200, 400)
-	rect.z_index = 998
-	garden_layer.add_child(rect)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
@@ -571,7 +552,6 @@ func _setup_camera() -> void:
 	# 初始显示花园左半部分（从 x=0 开始）
 	var half_visible_w: float = (view.x * 0.5) / max(_cam_zoom, 0.0001)
 	_camera.position = Vector2(half_visible_w, WORLD_HEIGHT * 0.5)
-	push_warning("[Camera] zoom=%.3f view=%s pos=%s" % [_cam_zoom, str(view), str(_camera.position)])
 	_clamp_camera_to_world()
 
 func _clamp_camera_to_world() -> void:
