@@ -128,6 +128,16 @@ func _build_parallax_background() -> void:
 		sprite.centered = false
 		sprite.z_index = i
 		garden_layer.add_child(sprite)
+		push_warning("[Garden] loaded: %s size=%s" % [layer_paths[i].get_file(), str(tex.get_size())])
+	
+	# 诊断：红色文字确认 garden_layer 在渲染
+	var dbg_lbl := Label.new()
+	dbg_lbl.text = "GARDEN_DIAG"
+	dbg_lbl.position = Vector2(100, 300)
+	dbg_lbl.add_theme_color_override("font_color", Color.RED)
+	dbg_lbl.add_theme_font_size_override("font_size", 48)
+	dbg_lbl.z_index = 999
+	garden_layer.add_child(dbg_lbl)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
