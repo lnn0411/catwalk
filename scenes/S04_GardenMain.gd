@@ -535,9 +535,18 @@ func _setup_camera() -> void:
 		_cam_zoom = CONTENT_SCALE
 	_camera.zoom = Vector2(_cam_zoom, _cam_zoom)
 	_camera.position = Vector2(WORLD_WIDTH * 0.5, WORLD_HEIGHT * 0.5)
-	print("[Camera] view=", view, " zoom=", _cam_zoom, " pos=", _camera.position)
+	push_warning("[Camera] view=%s zoom=%.3f" % [str(view), _cam_zoom])
 	_clamp_camera_to_world()
-	print("[Camera] after clamp pos=", _camera.position)
+	push_warning("[Camera] final pos=%s" % str(_camera.position))
+	
+	# 可视诊断标签
+	var dbg := Label.new()
+	dbg.text = "CAM zoom=%.2f pos=%s" % [_cam_zoom, str(_camera.position)]
+	dbg.add_theme_font_size_override("font_size", 24)
+	dbg.add_theme_color_override("font_color", Color.RED)
+	dbg.position = Vector2(10, 10)
+	dbg.z_index = 200
+	garden_layer.add_child(dbg)
 
 func _clamp_camera_to_world() -> void:
 	if _camera == null:
