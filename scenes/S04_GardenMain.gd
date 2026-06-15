@@ -141,7 +141,8 @@ func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, la
 func _build_hud() -> void:
 	# HUD 放在 CanvasLayer(1) 确保在花园上层
 	var hud_canvas := CanvasLayer.new()
-	hud_canvas.layer = 1
+	hud_canvas.layer = 100
+	hud_canvas.follow_viewport_enabled = false  # 不受花园Camera2D影响
 	add_child(hud_canvas)
 	
 	var root := Control.new()
