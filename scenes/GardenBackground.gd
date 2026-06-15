@@ -42,6 +42,7 @@ func _ensure_sprite() -> void:
 func _reload_layer_texture() -> void:
 	_ensure_sprite()
 	_sprite.texture = _load_layer_texture()
+	print("[GardenBG] layer=", _layer_type, " texture_loaded=", _sprite.texture != null, " size=", _sprite.texture.get_size() if _sprite.texture else Vector2.ZERO)
 
 
 func _load_layer_texture() -> Texture2D:

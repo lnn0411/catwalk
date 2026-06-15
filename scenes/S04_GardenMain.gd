@@ -528,13 +528,16 @@ func _setup_camera() -> void:
 	if _camera == null:
 		return
 	var view: Vector2 = get_viewport_rect().size
+	# 虚拟花园尺寸: 2048x1536, 竖屏希望高度填满
 	if view.y > 0.0 and WORLD_HEIGHT > 0.0:
 		_cam_zoom = view.y / WORLD_HEIGHT
 	else:
 		_cam_zoom = CONTENT_SCALE
 	_camera.zoom = Vector2(_cam_zoom, _cam_zoom)
 	_camera.position = Vector2(WORLD_WIDTH * 0.5, WORLD_HEIGHT * 0.5)
+	print("[Camera] view=", view, " zoom=", _cam_zoom, " pos=", _camera.position)
 	_clamp_camera_to_world()
+	print("[Camera] after clamp pos=", _camera.position)
 
 func _clamp_camera_to_world() -> void:
 	if _camera == null:
