@@ -101,8 +101,11 @@ func _build_garden_layer() -> void:
 	
 	_camera = Camera2D.new()
 	garden_layer.add_child(_camera)
-	_camera.make_current()
 	_setup_camera()
+	# make_current 必须在节点入树后调用（否则报 !is_inside_tree 且不生效）。
+	# garden_layer 已 add 进 garden_vp，但 garden_vp 此刻还没进主树——
+	# 延迟到本帧末，确保整条链入树后再激活相机。
+	_camera.call_deferred("make_current")
 	
 	_build_parallax_background()
 	
@@ -553,7 +556,10 @@ func _is_in_garden(pos: Vector2) -> bool:
 func _setup_camera() -> void:
 	if _camera == null:
 		return
-	var view: Vector2 = get_viewport_rect().size
+	# 用 SubViewport 的固定尺寸（DESIGN_SIZE 720x1280），不要用 get_viewport_rect()——
+	# _setup_camera 在 SubViewport 入主树前调用，那时取到的尺寸是错的，
+	# 导致 zoom 算错、相机对不准背景（棋盘格的根因之一）。
+	var view: Vector2 = DESIGN_SIZE
 	# 虚拟花园尺寸: 2048x1536, 竖屏希望高度填满
 	if view.y > 0.0 and WORLD_HEIGHT > 0.0:
 		_cam_zoom = view.y / WORLD_HEIGHT
@@ -568,7 +574,7 @@ func _setup_camera() -> void:
 func _clamp_camera_to_world() -> void:
 	if _camera == null:
 		return
-	var view: Vector2 = get_viewport_rect().size
+	var view: Vector2 = DESIGN_SIZE  # 同 _setup_camera：用固定设计尺寸，避免时序取错
 	var half_w: float = (view.x * 0.5) / max(_cam_zoom, 0.0001)
 	var min_x: float = half_w
 	var max_x: float = WORLD_WIDTH - half_w
