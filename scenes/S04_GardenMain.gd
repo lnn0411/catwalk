@@ -6,7 +6,7 @@ const BottomNav := preload("res://ui/BottomNav.gd")
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const HUD_HEIGHT := 130.0  # 顶部HUD灰条高度（内容y=60~120；此值=灰条底边，真机可微调120~140）
-const GARDEN_HEIGHT := 760.0
+const GARDEN_HEIGHT := 1150.0  # 扩大到接近全屏，原来760只覆盖到y=890
 const ACTION_HEIGHT := 64.0
 const HATCH_HEIGHT := 56.0
 const NAV_HEIGHT := 56.0
