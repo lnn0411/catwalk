@@ -281,6 +281,14 @@ func _stage5_render_p0_ui_thumbs() -> void:
 		rect.size = Vector2(thumb_size, thumb_size)
 		_hud.add_child(rect)
 
+		var label := Label.new()
+		label.text = P0_UI_THUMB_KEYS[i]
+		label.position = Vector2(pos.x, pos.y + thumb_size)
+		label.size = Vector2(thumb_size, 12.0)
+		label.add_theme_font_size_override("font_size", 8)
+		label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
+		_hud.add_child(label)
+
 	var rarity_y := 70.0 + 2 * thumb_size + 10.0
 	for i in RARITY_THUMB_KEYS.size():
 		var raw = _loaded.get(RARITY_THUMB_KEYS[i])
@@ -302,6 +310,14 @@ func _stage5_render_p0_ui_thumbs() -> void:
 		rect.position = pos
 		rect.size = Vector2(thumb_size, thumb_size)
 		_hud.add_child(rect)
+
+		var label := Label.new()
+		label.text = RARITY_THUMB_KEYS[i]
+		label.position = Vector2(pos.x, pos.y + thumb_size)
+		label.size = Vector2(thumb_size, 12.0)
+		label.add_theme_font_size_override("font_size", 8)
+		label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
+		_hud.add_child(label)
 
 
 func _print_full_report() -> void:
