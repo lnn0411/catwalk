@@ -6,7 +6,7 @@ const SECTION := "timeguard"
 const SECTION_ACTIONS := "actions"
 const SECONDS_PER_DAY := 86400.0
 const MAX_FORWARD_JUMP := 86400.0
-const MIN_VALID_YEAR := 2024.0
+const MIN_VALID_UNIX_TIME := 1704067200.0
 
 var _config := ConfigFile.new()
 var _last_seen: float = 0.0
@@ -29,7 +29,7 @@ func get_safe_unix_time() -> float:
 func _peek_safe_time() -> float:
 	var now := Time.get_unix_time_from_system()
 
-	if now < MIN_VALID_YEAR * 365.0 * SECONDS_PER_DAY:
+	if now < MIN_VALID_UNIX_TIME:
 		_tampered = true
 		push_error("TimeGuard: 系统时间异常(早于2024年) now=%.0f" % now)
 		return max(now, _last_seen)

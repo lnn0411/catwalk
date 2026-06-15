@@ -108,7 +108,7 @@ func _build_cat() -> void:
 func _build_camera() -> void:
 	_camera = Camera2D.new()
 	_camera.name = "Camera2D"
-	_camera.position = Vector2(1024.0, 768.0)
+	_camera.position = GARDEN_SCALED_SIZE * 0.5
 	add_child(_camera)
 	_camera.make_current()
 
@@ -177,7 +177,16 @@ func _clamp_camera_to_world() -> void:
 	if not _camera:
 		return
 
+	var half_viewport := VIEWPORT_SIZE * 0.5
+	var camera_x := GARDEN_SCALED_SIZE.x * 0.5
+	var camera_y := GARDEN_SCALED_SIZE.y * 0.5
+
+	if GARDEN_SCALED_SIZE.x > VIEWPORT_SIZE.x:
+		camera_x = clampf(_camera.position.x, half_viewport.x, GARDEN_SCALED_SIZE.x - half_viewport.x)
+	if GARDEN_SCALED_SIZE.y > VIEWPORT_SIZE.y:
+		camera_y = clampf(_camera.position.y, half_viewport.y, GARDEN_SCALED_SIZE.y - half_viewport.y)
+
 	_camera.position = Vector2(
-		clampf(_camera.position.x, VIEWPORT_SIZE.x * 0.5, GARDEN_SCALED_SIZE.x - VIEWPORT_SIZE.x * 0.5),
-		clampf(_camera.position.y, VIEWPORT_SIZE.y * 0.5, GARDEN_SCALED_SIZE.y - VIEWPORT_SIZE.y * 0.5)
+		camera_x,
+		camera_y
 	)
