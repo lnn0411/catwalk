@@ -1,6 +1,6 @@
 # Godot
 .godot/
-*.import
+# *.import  -- 已移除，Godot 4 需要提交 .import 文件才能让编辑器识别资产
 *.uid
 export_presets.cfg.gradle
 
