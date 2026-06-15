@@ -179,7 +179,12 @@ func _build_hud() -> void:
 
 	# 顶栏：程序绘制悬浮卡（暖白圆角+柔影），底垫纸纹理模拟手绘纸张感
 	var top_paper := TextureRect.new()
-	top_paper.texture = load("res://assets/temp/ui/paper_texture.png")
+	var paper_formal := "res://assets/art/ui/panels/paper_texture.png"
+	var paper_fallback := "res://assets/temp/ui/paper_texture.png"
+	if ResourceLoader.exists(paper_formal):
+		top_paper.texture = load(paper_formal)
+	else:
+		top_paper.texture = load(paper_fallback)
 	top_paper.stretch_mode = TextureRect.STRETCH_TILE
 	top_paper.anchor_left = 0.0
 	top_paper.anchor_right = 1.0
@@ -239,7 +244,12 @@ func _build_hud() -> void:
 	top_row.add_child(steps_box)
 
 	var steps_icon := TextureRect.new()
-	steps_icon.texture = load(UI_TEXTURE_PATH + "icon_steps.png")
+	var steps_formal := "res://assets/art/ui/icons/icon_steps.png"
+	var steps_fallback := UI_TEXTURE_PATH + "icon_steps.png"
+	if ResourceLoader.exists(steps_formal):
+		steps_icon.texture = load(steps_formal)
+	else:
+		steps_icon.texture = load(steps_fallback)
 	steps_icon.custom_minimum_size = Vector2(30.0, 30.0)
 	steps_icon.stretch_mode = TextureRect.STRETCH_SCALE
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -258,7 +268,12 @@ func _build_hud() -> void:
 	top_row.add_child(energy_box)
 
 	var energy_icon := TextureRect.new()
-	energy_icon.texture = load(UI_TEXTURE_PATH + "icon_energy.png")
+	var energy_formal := "res://assets/art/ui/icons/icon_energy.png"
+	var energy_fallback := UI_TEXTURE_PATH + "icon_energy.png"
+	if ResourceLoader.exists(energy_formal):
+		energy_icon.texture = load(energy_formal)
+	else:
+		energy_icon.texture = load(energy_fallback)
 	energy_icon.custom_minimum_size = Vector2(30.0, 30.0)
 	energy_icon.stretch_mode = TextureRect.STRETCH_SCALE
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE

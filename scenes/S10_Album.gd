@@ -91,7 +91,12 @@ func _draw() -> void:
 
 func _build_texture_layers() -> void:
 	var bg := TextureRect.new()
-	bg.texture = load(UI_TEXTURE_PATH + "grid_album_bg.png")
+	var bg_formal := "res://assets/art/ui/panels/grid_album_bg.png"
+	var bg_fallback := UI_TEXTURE_PATH + "grid_album_bg.png"
+	if ResourceLoader.exists(bg_formal):
+		bg.texture = load(bg_formal)
+	else:
+		bg.texture = load(bg_fallback)
 	bg.stretch_mode = TextureRect.STRETCH_SCALE
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -100,7 +105,12 @@ func _build_texture_layers() -> void:
 
 	var back := TextureRect.new()
 	back.name = "BackTexture"
-	back.texture = load(UI_TEXTURE_PATH + "btn_album.png")
+	var back_formal := "res://assets/art/ui/buttons/btn_album.png"
+	var back_fallback := UI_TEXTURE_PATH + "btn_album.png"
+	if ResourceLoader.exists(back_formal):
+		back.texture = load(back_formal)
+	else:
+		back.texture = load(back_fallback)
 	back.stretch_mode = TextureRect.STRETCH_SCALE
 	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	back.show_behind_parent = true
@@ -189,7 +199,12 @@ func _draw_cat_card(rect: Rect2, cat) -> void:
 func _sync_card_textures(count: int) -> void:
 	while _card_textures.size() < count:
 		var texture_rect := TextureRect.new()
-		texture_rect.texture = load(UI_TEXTURE_PATH + "panel_cat_card.png")
+		var card_formal := "res://assets/art/ui/panels/panel_cat_card.png"
+		var card_fallback := UI_TEXTURE_PATH + "panel_cat_card.png"
+		if ResourceLoader.exists(card_formal):
+			texture_rect.texture = load(card_formal)
+		else:
+			texture_rect.texture = load(card_fallback)
 		texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
 		texture_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		texture_rect.show_behind_parent = true

@@ -47,7 +47,12 @@ func _build_tabs() -> void:
 
 	# 导航底：程序绘制圆角浮岛 + 纸纹理底（深暖棕配色不变）
 	var nav_paper := TextureRect.new()
-	nav_paper.texture = load("res://assets/temp/ui/paper_texture.png")
+	var paper_formal := "res://assets/art/ui/panels/paper_texture.png"
+	var paper_fallback := "res://assets/temp/ui/paper_texture.png"
+	if ResourceLoader.exists(paper_formal):
+		nav_paper.texture = load(paper_formal)
+	else:
+		nav_paper.texture = load(paper_fallback)
 	nav_paper.stretch_mode = TextureRect.STRETCH_TILE
 	nav_paper.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	nav_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -141,7 +146,13 @@ class NavTab:
 		var active := index == nav.current_index
 		var icon_name := String(BottomNav.TABS[index]["icon"])
 		var suffix := "_active" if active else ""
-		_icon.texture = load(BottomNav.UI_TEXTURE_PATH + "nav_%s%s.png" % [icon_name, suffix])
+		var file_name := "nav_%s%s.png" % [icon_name, suffix]
+		var formal_path := "res://assets/art/ui/nav/" + file_name
+		var fallback_path := BottomNav.UI_TEXTURE_PATH + file_name
+		if ResourceLoader.exists(formal_path):
+			_icon.texture = load(formal_path)
+		else:
+			_icon.texture = load(fallback_path)
 		_label.text = String(BottomNav.TABS[index]["label"])
 		_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY if active else Color("#6B6B6B"))
 		_active_bar.visible = active

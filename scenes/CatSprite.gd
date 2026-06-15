@@ -140,7 +140,23 @@ func _update_sprite() -> void:
 	else:
 		_walk_frame = 0
 
-	_sprite.texture = load('res://assets/temp/cats/cat_%s_%s.png' % [breed, animation_name])
+	var formal_breed := breed
+	if formal_breed == "orange":
+		formal_breed = "orange_tabby"
+	var frame_name := "idle_00"
+	match animation_name:
+		"idle":
+			frame_name = "idle_00"
+		"walk_a":
+			frame_name = "idle_01"
+		"walk_b":
+			frame_name = "idle_02"
+	var formal_path := "res://assets/art/cats/%s/%s.png" % [formal_breed, frame_name]
+	var fallback_path := "res://assets/temp/cats/cat_%s_%s.png" % [breed, animation_name]
+	if ResourceLoader.exists(formal_path):
+		_sprite.texture = load(formal_path)
+	else:
+		_sprite.texture = load(fallback_path)
 
 func _physics_process(delta: float) -> void:
 	if is_moving:

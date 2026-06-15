@@ -57,7 +57,12 @@ func _draw() -> void:
 func _build_texture_layers() -> void:
 	var back := TextureRect.new()
 	back.name = "BackTexture"
-	back.texture = load(UI_TEXTURE_PATH + "btn_settings.png")
+	var back_formal := "res://assets/art/ui/buttons/btn_settings.png"
+	var back_fallback := UI_TEXTURE_PATH + "btn_settings.png"
+	if ResourceLoader.exists(back_formal):
+		back.texture = load(back_formal)
+	else:
+		back.texture = load(back_fallback)
 	back.stretch_mode = TextureRect.STRETCH_SCALE
 	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	back.show_behind_parent = true
@@ -66,7 +71,13 @@ func _build_texture_layers() -> void:
 	for name in ["TogglePanelTexture", "RowsPanelTexture", "ClearTexture"]:
 		var panel := TextureRect.new()
 		panel.name = name
-		panel.texture = load(UI_TEXTURE_PATH + ("btn_secondary.png" if name == "ClearTexture" else "panel_settings.png"))
+		var formal_file := "buttons/btn_secondary.png" if name == "ClearTexture" else "panels/panel_settings.png"
+		var formal_path := "res://assets/art/ui/" + formal_file
+		var fallback_path := UI_TEXTURE_PATH + ("btn_secondary.png" if name == "ClearTexture" else "panel_settings.png")
+		if ResourceLoader.exists(formal_path):
+			panel.texture = load(formal_path)
+		else:
+			panel.texture = load(fallback_path)
 		panel.stretch_mode = TextureRect.STRETCH_SCALE
 		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		panel.show_behind_parent = true
@@ -74,7 +85,12 @@ func _build_texture_layers() -> void:
 
 	for i in range(3):
 		var toggle := TextureButton.new()
-		toggle.texture_normal = load(UI_TEXTURE_PATH + "toggle_on.png")
+		var toggle_formal := "res://assets/art/ui/panels/toggle_on.png"
+		var toggle_fallback := UI_TEXTURE_PATH + "toggle_on.png"
+		if ResourceLoader.exists(toggle_formal):
+			toggle.texture_normal = load(toggle_formal)
+		else:
+			toggle.texture_normal = load(toggle_fallback)
 		toggle.texture_pressed = toggle.texture_normal
 		toggle.texture_hover = toggle.texture_normal
 		toggle.stretch_mode = TextureButton.STRETCH_SCALE
@@ -109,7 +125,13 @@ func _draw_toggles() -> void:
 		if i < _toggle_buttons.size():
 			_toggle_buttons[i].position = toggle_rect.position
 			_toggle_buttons[i].size = toggle_rect.size
-			_toggle_buttons[i].texture_normal = load(UI_TEXTURE_PATH + ("toggle_on.png" if values[i] else "toggle_off.png"))
+			var toggle_file := "toggle_on.png" if values[i] else "toggle_off.png"
+			var toggle_formal := "res://assets/art/ui/panels/" + toggle_file
+			var toggle_fallback := UI_TEXTURE_PATH + toggle_file
+			if ResourceLoader.exists(toggle_formal):
+				_toggle_buttons[i].texture_normal = load(toggle_formal)
+			else:
+				_toggle_buttons[i].texture_normal = load(toggle_fallback)
 			_toggle_buttons[i].texture_pressed = _toggle_buttons[i].texture_normal
 			_toggle_buttons[i].texture_hover = _toggle_buttons[i].texture_normal
 		if i < labels.size() - 1:

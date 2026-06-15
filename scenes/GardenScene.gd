@@ -65,9 +65,16 @@ func _build_debug_toggle() -> void:
 	add_child(canvas)
 
 	toggle_button = TextureButton.new()
-	toggle_button.texture_normal = load('res://assets/temp/ui/btn_debug.png')
-	toggle_button.texture_pressed = load('res://assets/temp/ui/btn_debug.png')
-	toggle_button.texture_hover = load('res://assets/temp/ui/btn_debug.png')
+	var debug_formal := "res://assets/art/ui/buttons/btn_debug.png"
+	var debug_fallback := "res://assets/temp/ui/btn_debug.png"
+	var debug_tex: Texture2D
+	if ResourceLoader.exists(debug_formal):
+		debug_tex = load(debug_formal)
+	else:
+		debug_tex = load(debug_fallback)
+	toggle_button.texture_normal = debug_tex
+	toggle_button.texture_pressed = debug_tex
+	toggle_button.texture_hover = debug_tex
 	toggle_button.custom_minimum_size = Vector2(96.0, 96.0)
 	toggle_button.size = Vector2(96.0, 96.0)
 	toggle_button.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)

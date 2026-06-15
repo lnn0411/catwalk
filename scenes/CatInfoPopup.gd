@@ -17,14 +17,24 @@ func _ready() -> void:
 	add_child(center)
 
 	var card := TextureRect.new()
-	card.texture = load('res://assets/temp/ui/popup_bg.png')
+	var bg_formal := "res://assets/art/ui/panels/popup_bg.png"
+	var bg_fallback := "res://assets/temp/ui/popup_bg.png"
+	if ResourceLoader.exists(bg_formal):
+		card.texture = load(bg_formal)
+	else:
+		card.texture = load(bg_fallback)
 	card.custom_minimum_size = Vector2(400.0, 300.0)
 	card.size = Vector2(400.0, 300.0)
 	card.stretch_mode = TextureRect.STRETCH_SCALE
 	center.add_child(card)
 
 	var rarity_icon := TextureRect.new()
-	rarity_icon.texture = load('res://assets/temp/rarity/rarity_%s.png' % cat_data.rarity)
+	var rarity_formal := "res://assets/art/ui/rarity/rarity_%s.png" % cat_data.rarity
+	var rarity_fallback := "res://assets/temp/rarity/rarity_%s.png" % cat_data.rarity
+	if ResourceLoader.exists(rarity_formal):
+		rarity_icon.texture = load(rarity_formal)
+	else:
+		rarity_icon.texture = load(rarity_fallback)
 	rarity_icon.custom_minimum_size = Vector2(48.0, 48.0)
 	rarity_icon.size = Vector2(48.0, 48.0)
 	rarity_icon.position = Vector2(328.0, 24.0)
@@ -59,9 +69,16 @@ func _ready() -> void:
 	content.add_child(rarity_label)
 
 	var close_button := TextureButton.new()
-	close_button.texture_normal = load('res://assets/temp/ui/popup_close.png')
-	close_button.texture_pressed = load('res://assets/temp/ui/popup_close.png')
-	close_button.texture_hover = load('res://assets/temp/ui/popup_close.png')
+	var close_formal := "res://assets/art/ui/panels/popup_close.png"
+	var close_fallback := "res://assets/temp/ui/popup_close.png"
+	var close_tex: Texture2D
+	if ResourceLoader.exists(close_formal):
+		close_tex = load(close_formal)
+	else:
+		close_tex = load(close_fallback)
+	close_button.texture_normal = close_tex
+	close_button.texture_pressed = close_tex
+	close_button.texture_hover = close_tex
 	close_button.custom_minimum_size = Vector2(64.0, 64.0)
 	close_button.size = Vector2(64.0, 64.0)
 	close_button.pressed.connect(_on_close)
