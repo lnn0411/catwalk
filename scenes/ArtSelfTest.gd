@@ -126,8 +126,8 @@ func _stage2_render_garden() -> void:
 
 	_camera = Camera2D.new()
 	_camera.name = "Camera2D"
-	_camera.make_current()
 	add_child(_camera)
+	_camera.make_current()
 	_apply_view_mode()
 
 
