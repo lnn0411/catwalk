@@ -88,10 +88,15 @@ func _exit_tree() -> void:
 			CatSpawner.set_cat_container(null)
 
 func _build_garden_layer() -> void:
+	# 花园放在 CanvasLayer(-1) 确保在 UI 下层渲染
+	var garden_canvas := CanvasLayer.new()
+	garden_canvas.layer = -1
+	add_child(garden_canvas)
+	
 	garden_layer = Node2D.new()
 	garden_layer.name = "GardenLayer"
 	garden_layer.position = Vector2(0.0, HUD_HEIGHT)
-	add_child(garden_layer)
+	garden_canvas.add_child(garden_layer)
 	
 	# 必须先建相机，ParallaxBackground 初始化时需要读取 Camera2D
 	_camera = Camera2D.new()
@@ -126,7 +131,6 @@ func _build_parallax_background() -> void:
 		var sprite := Sprite2D.new()
 		sprite.texture = tex
 		sprite.centered = false
-		sprite.z_index = i - 10  # 花园在 UI 下层
 		garden_layer.add_child(sprite)
 		push_warning("[Garden] loaded: %s size=%s" % [layer_paths[i].get_file(), str(tex.get_size())])
 	
