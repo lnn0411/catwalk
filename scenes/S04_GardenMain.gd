@@ -88,17 +88,12 @@ func _exit_tree() -> void:
 			CatSpawner.set_cat_container(null)
 
 func _build_garden_layer() -> void:
-	# 花园放在 CanvasLayer(-1) 确保在 UI 下层渲染
-	var garden_canvas := CanvasLayer.new()
-	garden_canvas.layer = -1
-	add_child(garden_canvas)
-	
 	garden_layer = Node2D.new()
 	garden_layer.name = "GardenLayer"
 	garden_layer.position = Vector2(0.0, HUD_HEIGHT)
-	garden_canvas.add_child(garden_layer)
+	add_child(garden_layer)
 	
-	# 必须先建相机，ParallaxBackground 初始化时需要读取 Camera2D
+	# 必须先建相机
 	_camera = Camera2D.new()
 	garden_layer.add_child(_camera)
 	_camera.make_current()
@@ -163,13 +158,18 @@ func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, la
 	layer.add_child(background)
 
 func _build_hud() -> void:
+	# HUD 放在 CanvasLayer(1) 确保在花园上层
+	var hud_canvas := CanvasLayer.new()
+	hud_canvas.layer = 1
+	add_child(hud_canvas)
+	
 	var root := Control.new()
 	root.name = "HUD"
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# 全屏 HUD 容器放行：只让真正的按钮/导航(子控件)拦截点击，
 	# 空白区域事件穿透到花园(拖动 + 点猫拾取)。
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(root)
+	hud_canvas.add_child(root)
 
 	# 顶栏：程序绘制悬浮卡（暖白圆角+柔影），底垫纸纹理模拟手绘纸张感
 	var top_paper := TextureRect.new()
