@@ -88,12 +88,17 @@ func _exit_tree() -> void:
 			CatSpawner.set_cat_container(null)
 
 func _build_garden_layer() -> void:
+	# SubViewport 隔离花园和 UI 渲染，彻底解决层级问题
+	var garden_vp := SubViewport.new()
+	garden_vp.name = "GardenViewport"
+	garden_vp.size = Vector2(720, 1280)
+	garden_vp.transparent_bg = true
+	garden_vp.handle_input_locally = false
+	
 	garden_layer = Node2D.new()
 	garden_layer.name = "GardenLayer"
-	garden_layer.position = Vector2(0.0, HUD_HEIGHT)
-	add_child(garden_layer)
+	garden_vp.add_child(garden_layer)
 	
-	# 必须先建相机
 	_camera = Camera2D.new()
 	garden_layer.add_child(_camera)
 	_camera.make_current()
@@ -105,6 +110,17 @@ func _build_garden_layer() -> void:
 	cat_container.name = "CatContainer"
 	cat_container.position = Vector2(0.0, 256.0)
 	garden_layer.add_child(cat_container)
+	
+	# SubViewport 的输出贴到 TextureRect 显示
+	var garden_display := SubViewportContainer.new()
+	garden_display.stretch = true
+	garden_display.add_child(garden_vp)
+	garden_display.anchor_left = 0.0
+	garden_display.anchor_right = 1.0
+	garden_display.anchor_top = 0.0
+	garden_display.anchor_bottom = 1.0
+	garden_display.offset_top = HUD_HEIGHT
+	add_child(garden_display)
 
 	if CatSpawner:
 		CatSpawner.set_cat_container(cat_container)
@@ -139,19 +155,13 @@ func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, la
 	layer.add_child(background)
 
 func _build_hud() -> void:
-	# HUD 放在 CanvasLayer(1) 确保在花园上层
-	var hud_canvas := CanvasLayer.new()
-	hud_canvas.layer = 100
-	hud_canvas.follow_viewport_enabled = false  # 不受花园Camera2D影响
-	add_child(hud_canvas)
-	
 	var root := Control.new()
 	root.name = "HUD"
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# 全屏 HUD 容器放行：只让真正的按钮/导航(子控件)拦截点击，
 	# 空白区域事件穿透到花园(拖动 + 点猫拾取)。
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	hud_canvas.add_child(root)
+	add_child(root)
 
 	# 顶栏：程序绘制悬浮卡（暖白圆角+柔影），底垫纸纹理模拟手绘纸张感
 	var top_paper := TextureRect.new()
