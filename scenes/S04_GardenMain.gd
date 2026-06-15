@@ -145,8 +145,19 @@ func _build_parallax_background() -> void:
 		var sprite := Sprite2D.new()
 		sprite.texture = tex
 		sprite.centered = false
+		sprite.z_index = i  # far=0 mid=1 near=2，确保叠放顺序明确
 		garden_layer.add_child(sprite)
-		push_warning("[Garden] loaded: %s size=%s" % [layer_paths[i].get_file(), str(tex.get_size())])
+		push_warning("[Garden] loaded: %s size=%s pos=%s" % [layer_paths[i].get_file(), str(tex.get_size()), str(sprite.position)])
+	# 诊断：把相机和视口的真实数据打出来（call_deferred 确保入树后才读）
+	call_deferred("_debug_dump_garden")
+
+func _debug_dump_garden() -> void:
+	if _camera:
+		push_warning("[GardenDBG] camera pos=%s zoom=%s current=%s" % [str(_camera.global_position), str(_camera.zoom), str(_camera.is_current())])
+	push_warning("[GardenDBG] garden_layer pos=%s scale=%s child_count=%d" % [str(garden_layer.position), str(garden_layer.scale), garden_layer.get_child_count()])
+	var vp := garden_layer.get_viewport()
+	if vp:
+		push_warning("[GardenDBG] subviewport size=%s" % str(vp.get_visible_rect().size))
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
