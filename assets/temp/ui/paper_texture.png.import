@@ -2,12 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dngmq6wd4qqoo"
-valid=false
+uid="uid://d3tq1yh550u8e"
+path="res://.godot/imported/paper_texture.png-c9252a999ae55134c2dc4694518fe987.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://assets/temp/ui/paper_texture.png"
+dest_files=["res://.godot/imported/paper_texture.png-c9252a999ae55134c2dc4694518fe987.ctex"]
 
 [params]
 

@@ -79,7 +79,7 @@ static func collect(cat_id: String) -> Dictionary:
 		return {}
 	if not is_returned(cat_id):
 		return {}
-	var entry := _explorers[cat_id].duplicate()
+	var entry: Dictionary = _explorers[cat_id].duplicate()
 	_explorers.erase(cat_id)
 	_save()
 	return entry

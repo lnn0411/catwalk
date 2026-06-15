@@ -404,8 +404,8 @@ func check(id: String) -> void:
 func _override_total_steps(n: int) -> void:
 	_total_steps = n
 
-func _override_hatched_count(n: int) -> void:
-	_hatched_count = n
+func _override_hatch_count(n: int) -> void:
+	_hatch_count = n
 
 func _override_cat_level(_cat_id: String, level: int) -> void:
 	_max_level = max(_max_level, level)
