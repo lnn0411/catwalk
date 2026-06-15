@@ -91,7 +91,7 @@ func _build_garden_layer() -> void:
 	# SubViewport 隔离花园和 UI 渲染，彻底解决层级问题
 	var garden_vp := SubViewport.new()
 	garden_vp.name = "GardenViewport"
-	garden_vp.size = Vector2(720, 1280)
+	garden_vp.size = Vector2(720, 1280 - int(HUD_HEIGHT))  # 与 SubViewportContainer 实际高度一致（顶部被 HUD 占 130）
 	garden_vp.transparent_bg = true
 	garden_vp.handle_input_locally = false
 	
@@ -567,10 +567,10 @@ func _is_in_garden(pos: Vector2) -> bool:
 func _setup_camera() -> void:
 	if _camera == null:
 		return
-	# 用 SubViewport 的固定尺寸（DESIGN_SIZE 720x1280），不要用 get_viewport_rect()——
-	# _setup_camera 在 SubViewport 入主树前调用，那时取到的尺寸是错的，
-	# 导致 zoom 算错、相机对不准背景（棋盘格的根因之一）。
-	var view: Vector2 = DESIGN_SIZE
+	# 用 SubViewport 的真实尺寸（720 × (1280-HUD)）算 zoom——
+	# SubViewportContainer 顶部被 HUD 占 130px，视口实际只有 1150 高。
+	# 之前按 1280 算 zoom，导致背景按错误比例显示、下方露空（棋盘格根因）。
+	var view: Vector2 = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
 	# 虚拟花园尺寸: 2048x1536, 竖屏希望高度填满
 	if view.y > 0.0 and WORLD_HEIGHT > 0.0:
 		_cam_zoom = view.y / WORLD_HEIGHT
@@ -585,7 +585,7 @@ func _setup_camera() -> void:
 func _clamp_camera_to_world() -> void:
 	if _camera == null:
 		return
-	var view: Vector2 = DESIGN_SIZE  # 同 _setup_camera：用固定设计尺寸，避免时序取错
+	var view: Vector2 = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)  # 同 _setup_camera：扣掉 HUD 的真实视口
 	var half_w: float = (view.x * 0.5) / max(_cam_zoom, 0.0001)
 	var min_x: float = half_w
 	var max_x: float = WORLD_WIDTH - half_w
