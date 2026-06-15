@@ -21,7 +21,6 @@ var _sprite: Sprite2D
 func _ready() -> void:
 	_ensure_sprite()
 	_reload_layer_texture()
-	push_warning("[GardenBG] layer=%d texture=%s size=%s" % [_layer_type, str(_sprite.texture != null), str(_sprite.texture.get_size() if _sprite.texture else Vector2.ZERO)])
 
 
 func set_layer_type(value: int) -> void:
@@ -44,7 +43,6 @@ func _ensure_sprite() -> void:
 func _reload_layer_texture() -> void:
 	_ensure_sprite()
 	_sprite.texture = _load_layer_texture()
-
 
 func _load_layer_texture() -> Texture2D:
 	var texture_path := FAR_TEXTURE_PATH

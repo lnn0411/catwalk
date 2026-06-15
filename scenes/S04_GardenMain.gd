@@ -93,18 +93,7 @@ func _build_garden_layer() -> void:
 	garden_layer.position = Vector2(0.0, HUD_HEIGHT)
 	add_child(garden_layer)
 	
-	# 直接贴 master 合成图验证资产加载
-	var tex := load("res://assets/art/garden/garden_master.png") as Texture2D
-	if tex:
-		var sprite := Sprite2D.new()
-		sprite.texture = tex
-		sprite.centered = false
-		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-		sprite.z_index = 50
-		garden_layer.add_child(sprite)
-		push_warning("[Garden] master PNG loaded: %s" % str(tex.get_size()))
-	else:
-		push_error("[Garden] FAILED to load garden_master.png!")
+	_build_parallax_background()
 	
 	cat_container = Node2D.new()
 	cat_container.name = "CatContainer"
@@ -522,7 +511,7 @@ func _input(event: InputEvent) -> void:
 		if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_dragging = false
 		else:
-			var drag_delta := event.position - _drag_start
+			var drag_delta: Vector2 = event.position - _drag_start
 			_camera.position.x -= drag_delta.x / _cam_zoom
 			_clamp_camera_to_world()
 			_drag_start = event.position
@@ -544,18 +533,7 @@ func _setup_camera() -> void:
 		_cam_zoom = CONTENT_SCALE
 	_camera.zoom = Vector2(_cam_zoom, _cam_zoom)
 	_camera.position = Vector2(WORLD_WIDTH * 0.5, WORLD_HEIGHT * 0.5)
-	push_warning("[Camera] view=%s zoom=%.3f" % [str(view), _cam_zoom])
 	_clamp_camera_to_world()
-	push_warning("[Camera] final pos=%s" % str(_camera.position))
-	
-	# 可视诊断标签
-	var dbg := Label.new()
-	dbg.text = "CAM zoom=%.2f pos=%s" % [_cam_zoom, str(_camera.position)]
-	dbg.add_theme_font_size_override("font_size", 24)
-	dbg.add_theme_color_override("font_color", Color.RED)
-	dbg.position = Vector2(10, 10)
-	dbg.z_index = 200
-	garden_layer.add_child(dbg)
 
 func _clamp_camera_to_world() -> void:
 	if _camera == null:
