@@ -511,24 +511,21 @@ func _toggle_stats() -> void:
 		]
 		Popups.show_info(text if _stats_visible else "stats hidden")
 
-func _unhandled_input(event: InputEvent) -> void:
+func _input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed and _is_in_garden(event.position):
 			_dragging = true
-			_drag_start = get_global_mouse_position()
+			_drag_start = event.position
 		else:
 			_dragging = false
 	elif event is InputEventMouseMotion and _dragging and _camera:
-		# 防卡死：若 _dragging 残留为 true 但左键并未真正按住（例如点猫开弹窗后
-		# 松开事件被弹窗遮罩吃掉，桌面悬停移动会误触发平移），此处自动归正。
-		if not (event.button_mask & MOUSE_BUTTON_MASK_LEFT):
+		if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_dragging = false
 		else:
-			var drag_delta := get_global_mouse_position() - _drag_start
-			# 横版花园：只左右滚动（竖直锁定）
+			var drag_delta := event.position - _drag_start
 			_camera.position.x -= drag_delta.x / _cam_zoom
 			_clamp_camera_to_world()
-			_drag_start = get_global_mouse_position()
+			_drag_start = event.position
 
 func _is_in_garden(pos: Vector2) -> bool:
 	return pos.y >= HUD_HEIGHT and pos.y <= HUD_HEIGHT + GARDEN_HEIGHT
