@@ -126,18 +126,28 @@ func _build_parallax_background() -> void:
 		var sprite := Sprite2D.new()
 		sprite.texture = tex
 		sprite.centered = false
-		sprite.z_index = i
+		sprite.z_index = i - 10  # 花园在 UI 下层
 		garden_layer.add_child(sprite)
 		push_warning("[Garden] loaded: %s size=%s" % [layer_paths[i].get_file(), str(tex.get_size())])
 	
-	# 诊断：红色文字确认 garden_layer 在渲染
+	# 诊断：红色 Label + 红色矩形验证 garden_layer Sprite2D 渲染
 	var dbg_lbl := Label.new()
-	dbg_lbl.text = "GARDEN_DIAG"
+	dbg_lbl.text = "DIAG"
 	dbg_lbl.position = Vector2(100, 300)
 	dbg_lbl.add_theme_color_override("font_color", Color.RED)
 	dbg_lbl.add_theme_font_size_override("font_size", 48)
 	dbg_lbl.z_index = 999
 	garden_layer.add_child(dbg_lbl)
+	
+	# 纯色纹理 Sprite2D — 不依赖 PNG
+	var img := Image.create(512, 256, false, Image.FORMAT_RGBA8)
+	img.fill(Color(1, 0, 0, 0.8))
+	var tex := ImageTexture.create_from_image(img)
+	var rect := Sprite2D.new()
+	rect.texture = tex
+	rect.position = Vector2(200, 400)
+	rect.z_index = 998
+	garden_layer.add_child(rect)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
