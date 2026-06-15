@@ -92,8 +92,20 @@ func _build_garden_layer() -> void:
 	garden_layer.name = "GardenLayer"
 	garden_layer.position = Vector2(0.0, HUD_HEIGHT)
 	add_child(garden_layer)
-
-	_build_parallax_background()
+	
+	# 直接贴 master 合成图验证资产加载
+	var tex := load("res://assets/art/garden/garden_master.png") as Texture2D
+	if tex:
+		var sprite := Sprite2D.new()
+		sprite.texture = tex
+		sprite.centered = false
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.z_index = 50
+		garden_layer.add_child(sprite)
+		push_warning("[Garden] master PNG loaded: %s" % str(tex.get_size()))
+	else:
+		push_error("[Garden] FAILED to load garden_master.png!")
+	
 	cat_container = Node2D.new()
 	cat_container.name = "CatContainer"
 	cat_container.position = Vector2(0.0, 256.0)
