@@ -23,10 +23,31 @@ const ASSETS := [
 	["hud_steps", "res://assets/art/ui/svg/hud_steps.svg"],
 	["ui_vector_masters_preview", "res://assets/art/ui/svg/ui_vector_masters_preview.svg"],
 	["ui_masters_preview", "res://assets/art/ui/ui_masters_preview.png"],
+	["cat_orange_idle", "res://assets/temp/cats/cat_orange_idle.png"],
+	["cat_orange_walk_a", "res://assets/temp/cats/cat_orange_walk_a.png"],
+	["cat_orange_walk_b", "res://assets/temp/cats/cat_orange_walk_b.png"],
+	["p0ui_nav_home", "res://assets/temp/ui/nav_home.png"],
+	["p0ui_nav_home_active", "res://assets/temp/ui/nav_home_active.png"],
+	["p0ui_btn_play", "res://assets/temp/ui/btn_play.png"],
+	["p0ui_btn_feed", "res://assets/temp/ui/btn_feed.png"],
+	["p0ui_btn_pet", "res://assets/temp/ui/btn_pet.png"],
+	["p0ui_icon_energy", "res://assets/temp/ui/icon_energy.png"],
+	["p0ui_icon_steps", "res://assets/temp/ui/icon_steps.png"],
+	["p0ui_energy_bar_fill", "res://assets/temp/ui/energy_bar_fill.png"],
+	["rarity_common", "res://assets/temp/rarity/rarity_common.png"],
+	["rarity_rare", "res://assets/temp/rarity/rarity_rare.png"],
+	["rarity_epic", "res://assets/temp/rarity/rarity_epic.png"],
+	["rarity_legendary", "res://assets/temp/rarity/rarity_legendary.png"],
 ]
 
 const GARDEN_LAYER_KEYS := ["garden_far", "garden_mid", "garden_near"]
 const CAT_FRAME_KEYS := ["idle_00", "idle_01", "idle_02"]
+const TEMP_CAT_FRAME_KEYS := ["cat_orange_idle", "cat_orange_walk_a", "cat_orange_walk_b"]
+const P0_UI_THUMB_KEYS := [
+	"p0ui_nav_home", "p0ui_nav_home_active", "p0ui_btn_play", "p0ui_btn_feed",
+	"p0ui_btn_pet", "p0ui_icon_energy", "p0ui_icon_steps", "p0ui_energy_bar_fill",
+]
+const RARITY_THUMB_KEYS := ["rarity_common", "rarity_rare", "rarity_epic", "rarity_legendary"]
 
 enum ViewMode { FULL, LEFT, RIGHT }
 
@@ -42,6 +63,11 @@ var _cat_frames: Array[Texture2D] = []
 var _cat_frame_index := 0
 var _cat_elapsed := 0.0
 
+var _temp_cat_sprite: Sprite2D
+var _temp_cat_frames: Array[Texture2D] = []
+var _temp_cat_frame_index := 0
+var _temp_cat_elapsed := 0.0
+
 var _garden_size := Vector2(2048.0, 1536.0)
 var _fit_zoom := 1.0
 var _view_mode: int = ViewMode.FULL
@@ -49,6 +75,7 @@ var _view_mode: int = ViewMode.FULL
 var _dragging := false
 var _drag_last := Vector2.ZERO
 
+var _hud: CanvasLayer
 var _summary_label: Label
 var _hint_label: Label
 
@@ -62,7 +89,9 @@ func _run_all_stages() -> void:
 	_stage1_load_assets()
 	_stage2_render_garden()
 	_stage3_render_cat()
+	_stage3b_render_temp_cat()
 	_stage4_summary()
+	_stage5_render_p0_ui_thumbs()
 	_print_full_report()
 
 
@@ -79,6 +108,11 @@ func _reset_state() -> void:
 	_cat_frames.clear()
 	_cat_frame_index = 0
 	_cat_elapsed = 0.0
+	_temp_cat_sprite = null
+	_temp_cat_frames.clear()
+	_temp_cat_frame_index = 0
+	_temp_cat_elapsed = 0.0
+	_hud = null
 	_summary_label = null
 	_hint_label = null
 
@@ -165,11 +199,28 @@ func _stage3_render_cat() -> void:
 	_world_root.add_child(_cat_sprite)
 
 
+func _stage3b_render_temp_cat() -> void:
+	for key in TEMP_CAT_FRAME_KEYS:
+		var raw = _loaded.get(key)
+		if raw is Texture2D:
+			_temp_cat_frames.append(raw)
+	if _temp_cat_frames.is_empty():
+		return
+	_temp_cat_sprite = Sprite2D.new()
+	_temp_cat_sprite.name = "TempOrangeCat"
+	_temp_cat_sprite.centered = true
+	_temp_cat_sprite.position = CAT_WORLD_POSITION + Vector2(200.0, 0.0)
+	_temp_cat_sprite.texture = _temp_cat_frames[0]
+	_temp_cat_sprite.z_index = 10
+	_world_root.add_child(_temp_cat_sprite)
+
+
 func _stage4_summary() -> void:
 	var hud := CanvasLayer.new()
 	hud.name = "HUD"
 	hud.layer = 100
 	add_child(hud)
+	_hud = hud
 
 	var vp := get_viewport_rect().size
 	var all_pass := _fail_count == 0
@@ -198,6 +249,61 @@ func _stage4_summary() -> void:
 	hud.add_child(_hint_label)
 
 
+func _stage5_render_p0_ui_thumbs() -> void:
+	if _hud == null:
+		return
+
+	var vp := get_viewport_rect().size
+	var thumb_size := 48.0
+	var cols := 4
+	var start_pos := Vector2(vp.x - 4 * thumb_size - 20.0, 70.0)
+
+	for i in P0_UI_THUMB_KEYS.size():
+		var raw = _loaded.get(P0_UI_THUMB_KEYS[i])
+		if not (raw is Texture2D):
+			continue
+		var col := i % cols
+		var row := i / cols
+		var pos := start_pos + Vector2(col * thumb_size, row * thumb_size)
+
+		var bg := ColorRect.new()
+		bg.color = Color(1, 1, 1, 0.2)
+		bg.position = pos
+		bg.size = Vector2(thumb_size, thumb_size)
+		_hud.add_child(bg)
+
+		var rect := TextureRect.new()
+		rect.name = P0_UI_THUMB_KEYS[i]
+		rect.texture = raw
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.position = pos
+		rect.size = Vector2(thumb_size, thumb_size)
+		_hud.add_child(rect)
+
+	var rarity_y := 70.0 + 2 * thumb_size + 10.0
+	for i in RARITY_THUMB_KEYS.size():
+		var raw = _loaded.get(RARITY_THUMB_KEYS[i])
+		if not (raw is Texture2D):
+			continue
+		var pos := Vector2(start_pos.x + i * thumb_size, rarity_y)
+
+		var bg := ColorRect.new()
+		bg.color = Color(1, 1, 1, 0.2)
+		bg.position = pos
+		bg.size = Vector2(thumb_size, thumb_size)
+		_hud.add_child(bg)
+
+		var rect := TextureRect.new()
+		rect.name = RARITY_THUMB_KEYS[i]
+		rect.texture = raw
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.position = pos
+		rect.size = Vector2(thumb_size, thumb_size)
+		_hud.add_child(rect)
+
+
 func _print_full_report() -> void:
 	var all_pass := _fail_count == 0
 	print("=============== ART SELF TEST ===============")
@@ -208,13 +314,18 @@ func _print_full_report() -> void:
 
 
 func _process(delta: float) -> void:
-	if _cat_sprite == null or _cat_frames.size() < 2:
-		return
-	_cat_elapsed += delta
-	if _cat_elapsed >= CAT_FRAME_INTERVAL:
-		_cat_elapsed -= CAT_FRAME_INTERVAL
-		_cat_frame_index = (_cat_frame_index + 1) % _cat_frames.size()
-		_cat_sprite.texture = _cat_frames[_cat_frame_index]
+	if _cat_sprite != null and _cat_frames.size() >= 2:
+		_cat_elapsed += delta
+		if _cat_elapsed >= CAT_FRAME_INTERVAL:
+			_cat_elapsed -= CAT_FRAME_INTERVAL
+			_cat_frame_index = (_cat_frame_index + 1) % _cat_frames.size()
+			_cat_sprite.texture = _cat_frames[_cat_frame_index]
+	if _temp_cat_sprite != null and _temp_cat_frames.size() >= 2:
+		_temp_cat_elapsed += delta
+		if _temp_cat_elapsed >= CAT_FRAME_INTERVAL:
+			_temp_cat_elapsed -= CAT_FRAME_INTERVAL
+			_temp_cat_frame_index = (_temp_cat_frame_index + 1) % _temp_cat_frames.size()
+			_temp_cat_sprite.texture = _temp_cat_frames[_temp_cat_frame_index]
 
 
 func _input(event: InputEvent) -> void:
