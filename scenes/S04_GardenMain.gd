@@ -111,11 +111,23 @@ func _build_garden_layer() -> void:
 			CatSpawner.cat_count_changed.connect(_on_cat_count_changed)
 
 func _build_parallax_background() -> void:
-	var parallax := ParallaxBackground.new()
-	garden_layer.add_child(parallax)
-	_add_background_layer(parallax, Vector2(0.05, 0.0), GardenBackground.LAYER_FAR)
-	_add_background_layer(parallax, Vector2(0.3, 0.0), GardenBackground.LAYER_MID)
-	_add_background_layer(parallax, Vector2(0.8, 0.0), GardenBackground.LAYER_NEAR)
+	# 直接三层 Sprite2D 叠放，避免 ParallaxBackground/Camera 时序问题
+	var layers := [
+		{path = "res://assets/art/garden/layers/garden_far.png", z = 0},
+		{path = "res://assets/art/garden/layers/garden_mid.png", z = 1},
+		{path = "res://assets/art/garden/layers/garden_near.png", z = 2},
+	]
+	for cfg in layers:
+		var tex := load(cfg.path) as Texture2D
+		if tex == null:
+			push_error("[Garden] FAILED: " + cfg.path)
+			continue
+		var sprite := Sprite2D.new()
+		sprite.texture = tex
+		sprite.centered = false
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		sprite.z_index = cfg.z
+		garden_layer.add_child(sprite)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
