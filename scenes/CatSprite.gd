@@ -33,6 +33,7 @@ var _cur_speed := 0.0    # 当前实际速度（加减速过渡）
 var _turn_tween: Tween   # 转身翻转/过渡动画
 var _turn_playing := false  # 转身过渡帧播放中（锁住走路换帧防打架）
 var _cached_frame_count := 0  # 该品种序列帧数缓存（首次探测后固定，避免重复扫描）
+var _diag_done := false
 var _stuck_time := 0.0   # 撞障碍累计卡顿时长（超阈值就换方向）
 var _move_dir := Vector2.ZERO  # 当前移动方向（平滑转向，走曲线不走折线）
 var _bounce_tween: Tween   # 点击弹跳，防重复叠加
@@ -289,6 +290,10 @@ func _update_sprite() -> void:
 		# 仅在还没有任何贴图时才用占位图兜底；已有贴图则保持上一帧，
 		# 绝不在正式美术图之间穿插占位图（那会高频闪烁）。
 		_sprite.texture = load(fallback_path)
+	if not _diag_done:
+		_diag_done = true
+		var used := formal_path if ResourceLoader.exists(formal_path) else fallback_path
+		print(">>>>> [猫诊断] breed=[%s] species映射后formal_breed=[%s] 实际显示=[%s]" % [breed, formal_breed, used])
 
 func _physics_process(delta: float) -> void:
 	if is_moving:
