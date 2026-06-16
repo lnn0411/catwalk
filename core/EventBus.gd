@@ -25,6 +25,14 @@ signal inventory_changed(item_type: String, quantity: int)
 # 新增信号
 signal time_anomaly_detected(drift_seconds: float)
 signal progressive_energy_routed(egg_index: int, amount: float)
+signal workshop_activated
+signal hatch_activated
+signal backpack_capacity_expanded(new_capacity: int)
+signal love_petals_changed(amount: int, weekly_total: int)
+signal relinquish_completed(cat_id: String, petals_earned: int, gold_earned: int)
+signal mail_received(mail_id: String, mail_type: String)
+signal surprise_box_ready
+signal overflow_warning
 
 
 # --- Emit 辅助方法 ---
@@ -91,6 +99,30 @@ func emit_time_anomaly_detected(drift_seconds: float) -> void:
 
 func emit_progressive_energy_routed(egg_index: int, amount: float) -> void:
 	progressive_energy_routed.emit(egg_index, amount)
+
+func emit_workshop_activated() -> void:
+	workshop_activated.emit()
+
+func emit_hatch_activated() -> void:
+	hatch_activated.emit()
+
+func emit_backpack_capacity_expanded(new_capacity: int) -> void:
+	backpack_capacity_expanded.emit(new_capacity)
+
+func emit_love_petals_changed(amount: int, weekly_total: int) -> void:
+	love_petals_changed.emit(amount, weekly_total)
+
+func emit_relinquish_completed(cat_id: String, petals_earned: int, gold_earned: int) -> void:
+	relinquish_completed.emit(cat_id, petals_earned, gold_earned)
+
+func emit_mail_received(mail_id: String, mail_type: String) -> void:
+	mail_received.emit(mail_id, mail_type)
+
+func emit_surprise_box_ready() -> void:
+	surprise_box_ready.emit()
+
+func emit_overflow_warning() -> void:
+	overflow_warning.emit()
 
 
 # --- 通用工具方法 ---

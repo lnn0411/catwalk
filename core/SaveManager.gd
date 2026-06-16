@@ -35,6 +35,12 @@ func load_and_apply() -> void:
 	var currency_data := _read_currency()
 	currency_data["love_petals"] = int(_config.get_value("relinquish", "love_petals", 0))
 	CurrencyManager.apply_save(currency_data)
+	if RelinquishSystem:
+		RelinquishSystem.apply_save(_read_relinquish())
+	if PackageSystem:
+		PackageSystem.apply_save(_read_relinquish())
+	if MailSystem:
+		MailSystem.apply_save(_read_relinquish())
 	AchievementSystem.apply_save(_read_achievements())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
@@ -220,12 +226,24 @@ func _read_relinquish() -> Dictionary:
 	}
 
 func _write_relinquish() -> void:
-	# love_petals 来自 CurrencyManager，其他字段在关联模块创建后补全
+	# love_petals 对齐 CurrencyManager.flower_petals
 	if CurrencyManager:
-		_config.set_value("relinquish", "love_petals", int(CurrencyManager.love_petals))
-	# backpack_max_capacity 写入值由 PackageSystem 管理，此处保持已有值
-	if not _config.has_section_key("relinquish", "backpack_max_capacity"):
+		_config.set_value("relinquish", "love_petals", CurrencyManager.flower_petals)
+	# 背包容量由 PackageSystem 管理
+	if PackageSystem:
+		_config.set_value("relinquish", "backpack_max_capacity", PackageSystem.get_capacity())
+	elif not _config.has_section_key("relinquish", "backpack_max_capacity"):
 		_config.set_value("relinquish", "backpack_max_capacity", 24)
+	# 工坊缓存由 HatchEngine 管理
+	if HatchEngine:
+		_config.set_value("relinquish", "workshop_cached_energy", int(HatchEngine.workshop_cached_energy))
+		_config.set_value("relinquish", "surprise_box_ready", HatchEngine.surprise_box_ready)
+	# 送养周计数与幂等键由 RelinquishSystem 管理
+	if RelinquishSystem:
+		var rd := RelinquishSystem.get_save_data()
+		_config.set_value("relinquish", "this_week_petals_gained", int(rd.get("this_week_petals_gained", 0)))
+		_config.set_value("relinquish", "week_reset_timestamp", int(rd.get("week_reset_timestamp", 0)))
+		_config.set_value("relinquish", "relinquished_event_ids", Array(rd.get("relinquished_event_ids", [])))
 
 func _check_week_reset() -> void:
 	var now_unix: int = int(Time.get_unix_time_from_system())
