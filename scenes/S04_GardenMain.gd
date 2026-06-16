@@ -131,18 +131,22 @@ func _build_garden_layer() -> void:
 			CatSpawner.cat_count_changed.connect(_on_cat_count_changed)
 
 func _build_parallax_background() -> void:
-	# 花园背景用整图 garden_master.png（2048×1536，无透明区）。
-	# 不用 layers/ 下的三张分层图——near 层导出错误（棋盘格被画成实心、
-	# 100%不透明盖死下层），master 是完整干净的单图。
-	var tex := load("res://assets/art/garden/garden_master.png") as Texture2D
-	if tex == null:
-		push_error("[Garden] 背景图加载失败: garden_master.png")
-		return
-	var sprite := Sprite2D.new()
-	sprite.texture = tex
-	sprite.centered = false
-	sprite.position = Vector2.ZERO
-	garden_layer.add_child(sprite)
+	# 三层花园直接 Sprite2D 叠放（自检场景已验证可行，已清理 near 层不透明遮挡 bug）
+	var layer_paths := [
+		"res://assets/art/garden/layers/garden_far.png",
+		"res://assets/art/garden/layers/garden_mid.png",
+		"res://assets/art/garden/layers/garden_near.png",
+	]
+	for i in range(layer_paths.size()):
+		var tex := load(layer_paths[i]) as Texture2D
+		if tex == null:
+			push_error("[Garden] 失败加载背景层: " + layer_paths[i])
+			continue
+		var sprite := Sprite2D.new()
+		sprite.texture = tex
+		sprite.centered = false
+		sprite.z_index = i  # far=0 mid=1 near=2，确保叠放顺序明确
+		garden_layer.add_child(sprite)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
