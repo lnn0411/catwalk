@@ -20,6 +20,9 @@ var cat_data
 @export var walk_scale_factor: float = 1.02  # 缩放因子：微调走路图片比例（如果画小了，代码自动放大）
 @export var idle_scale_factor: float = 0.88  # 缩放因子：微调待机图片比例（如果画大了，代码自动缩小）
 @export var turn_scale_factor: float = 0.85  # 再次调低转身缩放，确保转体时视觉尺寸平滑一致
+@export var turn_speed_ratio: float = 0.30   # 移动中转身的速度比率（默认 30% 速度，防止完全刹车或太空步）
+@export var move_turn_interval: float = 0.06 # 移动中转身单帧间隔秒数（正面帧会自动乘 1.5 倍）
+@export var static_turn_interval: float = 0.10 # 原地/静态转身单帧间隔秒数
 
 var rng: RandomNumberGenerator
 var timer: Timer
@@ -153,17 +156,18 @@ func _play_turn_sequence(to_left: bool, is_move_turn: bool = false) -> void:
 					_sprite.texture = _texture_cache[path]
 				elif ResourceLoader.exists(path):
 					_sprite.texture = load(path))
-		# 移动中转身各帧播放加快，避免拖沓；正面帧（2）稍微停驻
-		var interval := (0.11 if idx == 2 else 0.07) if is_move_turn else (0.26 if idx == 2 else 0.10)
+		# 动态计算每帧间隔，正面帧多停留 1.5 倍以体现转体质感
+		var base_int := move_turn_interval if is_move_turn else static_turn_interval
+		var interval := base_int * 1.5 if idx == 2 else base_int
 		_turn_tween.tween_interval(interval)
-	# 播完：重置动画序列，并【立即】强行调用 _update_sprite()，实现零延迟、无缝衔接走路/待机第 0 帧，彻底消灭末尾卡顿！
+	# 播完：重置动画序列，并【立即】强行调用 _update_sprite()，实现零延迟、无缝衔接
 	_turn_tween.tween_callback(func() -> void:
 		_turn_playing = false
 		_last_turn_time = Time.get_ticks_msec() # 记录时间
-		_walk_frame = -1 # 设为 -1，使得 _update_sprite() 累加后完美从第 0 帧 (walk_00/idle_00) 开始播放
-		_update_sprite()
 		if _sprite:
-			_sprite.flip_h = _facing_left)
+			_sprite.flip_h = _facing_left # 必须在 _update_sprite() 之前翻面，防止 1 帧的翻转闪动！
+		_walk_frame = -1 # 设为 -1，使得 _update_sprite() 累加后完美从第 0 帧开始播放
+		_update_sprite())
 
 # 兼容旧调用名（CatSpawner 入场等处用 face_direction）
 func face_direction(dx: float) -> void:
@@ -424,8 +428,8 @@ func _physics_process(delta: float) -> void:
 				velocity = Vector2.ZERO
 				return
 			else:
-				# 移动中转身：大幅平滑减速（降至 15% 速度），做自然的轴心旋转，100% 消除由于高位移带来的“太空步/向后滑行倒退”失真！
-				_cur_speed = lerpf(_cur_speed, move_speed * 0.15, delta * 12.0)
+				# 移动中转身：大幅平滑减速，做自然的轴心旋转，100% 消除由于高位移带来的“太空步/向后滑行倒退”失真！
+				_cur_speed = lerpf(_cur_speed, move_speed * turn_speed_ratio, delta * 12.0)
 		
 		var to_target := (target_position - position)
 		var dist := to_target.length()
