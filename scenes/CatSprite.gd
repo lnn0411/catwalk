@@ -147,7 +147,12 @@ func _update_sprite() -> void:
 
 	var frame_index := 0
 	if is_moving:
-		_walk_frame = (_walk_frame + 1) % max_frames
+		if max_frames == 3:
+			# 3帧经典模式：只在 idle_01 (walk_a) 和 idle_02 (walk_b) 之间循环，剔除站立帧 idle_00，避免漫步时一瘸一拐
+			_walk_frame = (_walk_frame % 2) + 1
+		else:
+			# 多帧序列模式：全序列（0 到 max_frames - 1）均为行走帧
+			_walk_frame = (_walk_frame + 1) % max_frames
 		frame_index = _walk_frame
 	else:
 		_walk_frame = 0
