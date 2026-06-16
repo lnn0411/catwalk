@@ -93,7 +93,8 @@ func _play_turn_sequence(to_left: bool) -> void:
 		_turn_tween.tween_callback(func() -> void:
 			if _sprite and ResourceLoader.exists(path):
 				_sprite.texture = load(path))
-		_turn_tween.tween_interval(0.05)
+		# 每帧 0.11s（原 0.05 太快一闪而过）；正面帧 turn_02 多停，"看你一眼"要停得住
+		_turn_tween.tween_interval(0.30 if idx == 2 else 0.11)
 	# 播完：落到目标朝向（之后走路帧由 _update_sprite 接管，靠 flip_h 表现左右）
 	_turn_tween.tween_callback(func() -> void:
 		_turn_playing = false
@@ -269,6 +270,10 @@ func _update_sprite() -> void:
 
 func _physics_process(delta: float) -> void:
 	if is_moving:
+		# 转身过渡播放时暂停移动：猫停下来回头看，转完再走（符合直觉，也避免转身没播完就变向卡顿）
+		if _turn_playing:
+			velocity = Vector2.ZERO
+			return
 		var to_target := (target_position - position)
 		var dist := to_target.length()
 		var desired_dir := to_target.normalized()
