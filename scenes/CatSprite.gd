@@ -371,10 +371,15 @@ func _update_sprite() -> void:
 
 func _physics_process(delta: float) -> void:
 	if is_moving:
-		# 转身过渡播放时暂停移动：猫停下来回头看，转完再走（移动转身 move_turn 除外，避免顿挫）
-		if _turn_playing and not _is_move_turn:
-			velocity = Vector2.ZERO
-			return
+		# 转身过渡播放时暂停移动：猫停下来回头看，转完再走（移动转身 move_turn 除外，大幅降速平滑过弯）
+		if _turn_playing:
+			if not _is_move_turn:
+				velocity = Vector2.ZERO
+				return
+			else:
+				# 移动中转身：大幅平滑减速（降至 15% 速度），做自然的轴心旋转，100% 消除由于高位移带来的“太空步/向后滑行倒退”失真！
+				_cur_speed = lerpf(_cur_speed, move_speed * 0.15, delta * 12.0)
+		
 		var to_target := (target_position - position)
 		var dist := to_target.length()
 		var desired_dir := to_target.normalized()
@@ -396,7 +401,14 @@ func _physics_process(delta: float) -> void:
 		
 		if neighbors_count > 0:
 			separation = (separation / neighbors_count)
-			# 强力混合：给予 1.5 倍高权重排斥力，让猫咪极度敏感地偏航、环绕走，绝不硬怼
+			
+			# 核心物理避障优化：将排斥力投影到目标方向的垂直面（法线上），只做“左右侧向绕行避让”，绝对不往后推！
+			# 这样可以保证猫咪永远顺着前进方向“优雅偏航”，彻底消除因为排斥方向和目标相反时产生的“轨迹倒退、原地打转”！
+			var dot_prod := separation.dot(desired_dir)
+			if dot_prod < 0.0:
+				# 减去向后的反向分量，只保留侧向避让分量
+				separation = separation - dot_prod * desired_dir
+			
 			desired_dir = (desired_dir + separation * 1.5).normalized()
 
 		# ① 方向曲线化：当前朝向平滑转向目标方向，而不是瞬间对准直线奔过去。
