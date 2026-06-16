@@ -33,7 +33,6 @@ var _cur_speed := 0.0    # 当前实际速度（加减速过渡）
 var _turn_tween: Tween   # 转身翻转/过渡动画
 var _turn_playing := false  # 转身过渡帧播放中（锁住走路换帧防打架）
 var _cached_frame_count := 0  # 该品种序列帧数缓存（首次探测后固定，避免重复扫描）
-var _diag_done := false
 var _stuck_time := 0.0   # 撞障碍累计卡顿时长（超阈值就换方向）
 var _move_dir := Vector2.ZERO  # 当前移动方向（平滑转向，走曲线不走折线）
 var _bounce_tween: Tween   # 点击弹跳，防重复叠加
@@ -124,7 +123,6 @@ func _ready() -> void:
 		if c is Sprite2D:
 			existing_sprites += 1
 	if existing_sprites > 0:
-		print(">>>>> [CatDup] breed='%s' _ready时已有%d个Sprite! 清除重建" % [breed, existing_sprites])
 		for c in get_children():
 			if c is Sprite2D:
 				c.queue_free()
@@ -134,7 +132,6 @@ func _ready() -> void:
 	add_child(_sprite)
 	_sprite.flip_h = _facing_left  # 应用 add_child 前（入场）设置的朝向
 	_update_sprite()
-	print(">>>>> [CatReady] breed='%s' sprite建好, 当前Sprite子节点数=%d" % [breed, _count_child_sprites()])
 
 	var body_shape := CollisionShape2D.new()
 	var body_circle := CircleShape2D.new()
@@ -208,7 +205,7 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 	var offset := Vector2(cos(ang) * 1.0, sin(ang) * 0.55) * d
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 120.0, 1880.0)
-	target_position.y = clampf(target_position.y, 620.0, 880.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
+	target_position.y = clampf(target_position.y, 620.0, 1080.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
 	is_moving = true
 	_face_to(target_position.x - position.x)
 
@@ -225,7 +222,7 @@ func _on_wander_tick() -> void:
 	var offset := Vector2(cos(wander_angle) * 1.0, sin(wander_angle) * 0.55) * wander_distance
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 120.0, 1880.0)
-	target_position.y = clampf(target_position.y, 620.0, 880.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
+	target_position.y = clampf(target_position.y, 620.0, 1080.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
 	is_moving = true
 	_face_to(target_position.x - position.x)
 
@@ -290,10 +287,6 @@ func _update_sprite() -> void:
 		# 仅在还没有任何贴图时才用占位图兜底；已有贴图则保持上一帧，
 		# 绝不在正式美术图之间穿插占位图（那会高频闪烁）。
 		_sprite.texture = load(fallback_path)
-	if not _diag_done:
-		_diag_done = true
-		var used := formal_path if ResourceLoader.exists(formal_path) else fallback_path
-		print(">>>>> [猫诊断] breed=[%s] species映射后formal_breed=[%s] 实际显示=[%s]" % [breed, formal_breed, used])
 
 func _physics_process(delta: float) -> void:
 	if is_moving:
@@ -344,7 +337,7 @@ func _physics_process(delta: float) -> void:
 			_schedule_wander()
 	# 自愈保险：任何原因出界都拉回活动范围（仅出界时写，避免每帧赋值）
 	var cx := clampf(position.x, 100.0, 1900.0)
-	var cy := clampf(position.y, 620.0, 880.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
+	var cy := clampf(position.y, 620.0, 1080.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
 	if cx != position.x or cy != position.y:
 		position = Vector2(cx, cy)
 
@@ -379,15 +372,16 @@ func _play_click_feedback() -> void:
 
 # ============ 动态椭圆阴影绘制 ============
 func _draw() -> void:
-	# 绘制一个扁平椭圆半透明黑影子，坐落在猫咪脚底中心
-	var shadow_color := Color(0, 0, 0, 0.16)
+	# 脚下落地影：低透明度+偏冷绿暗色（非纯黑），叠在黄绿草地上不混出"脏泥坑"。
+	# 纯黑0.16在亮草地上显脏，是"泥坑错觉"的真因。
+	var shadow_color := Color(0.12, 0.14, 0.06, 0.11)
 	var bounce_ratio := 1.0
 	if is_moving:
 		# 向上跳起时，影子微弱缩小变淡
 		bounce_ratio = clampf(1.0 - (absf(_sprite.position.y) / 18.0) * 0.25, 0.75, 1.0)
 	
 	# 阴影尺寸根据猫咪呼吸/跳跃高度联动缩放
-	var shadow_size := Vector2(35.0 * bounce_ratio, 9.0 * bounce_ratio)
+	var shadow_size := Vector2(30.0 * bounce_ratio, 7.0 * bounce_ratio)
 	# 阴影圆心位于猫咪脚底下边缘
 	draw_oval(Vector2(0, 60.0), shadow_size, shadow_color)
 
