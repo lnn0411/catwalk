@@ -40,6 +40,7 @@ var _turn_tween: Tween   # 转身翻转/过渡动画
 var _turn_playing := false  # 转身过渡帧播放中（锁住走路换帧防打架）
 var _is_move_turn := false  # 当前是否为移动中转向过渡
 var _last_turn_time := 0  # 记录上一次转身结束的系统时间（毫秒），防止频繁摆动乱晃
+var _cur_scale_factor := 1.0 # 声明一个当前运行的整体缩放因子，用于在不同动作切换时进行平滑插值过渡
 var _cached_frame_count := 0  # 该品种序列帧数缓存
 var _cached_walk_frame_count := 0 # 该品种走路序列帧数缓存
 var _texture_cache := {} # 缓存该品种所有常用的序列帧，防止运行时动态 load() 磁盘读写卡顿
@@ -262,6 +263,17 @@ func _process(delta: float) -> void:
 	
 	var turning: bool = _turn_playing or (_turn_tween != null and _turn_tween.is_valid())
 	
+	# 🎯 核心优化：动态确定目标缩放因子，并在不同姿态间进行平滑 LERP 插值，
+	# 彻底消除由于待机 (0.88) 和走路 (1.02) 切换导致的突发性“缩水或暴涨”的忽大忽小感！
+	var target_scale_factor := idle_scale_factor
+	if turning:
+		target_scale_factor = turn_scale_factor
+	elif is_moving:
+		target_scale_factor = walk_scale_factor
+		
+	_cur_scale_factor = lerpf(_cur_scale_factor, target_scale_factor, delta * 10.0)
+	var base_scale := _cur_scale_factor * depth_scale
+	
 	if is_moving:
 		var speed_ratio: float = clampf(_cur_speed / maxf(move_speed, 1.0), 0.0, 1.0)
 		_step_phase += delta * lerpf(5.0, 9.0, speed_ratio)
@@ -273,39 +285,37 @@ func _process(delta: float) -> void:
 			var bounce_y = -absf(cycle) * 2.0 * speed_ratio * vertical_bias
 			
 			var ss := (absf(cycle) - 0.5) * 0.02 * speed_ratio
-			var s_factor = walk_scale_factor * depth_scale
-			var final_y_scale = s_factor * (1.0 + ss)
-			_sprite.scale = Vector2(s_factor * (1.0 - ss), final_y_scale)
+			var final_y_scale = base_scale * (1.0 + ss)
+			_sprite.scale = Vector2(base_scale * (1.0 - ss), final_y_scale)
 			
-			# 透视缩放位移补偿：将缩放的物理中心锁定在脚底接触面（Y=60.0 像素处），
+			# 透视缩放位移补偿：将缩放的物理中心锁定在脚底接触面（Y=64.0 像素处），
 			# 从而 100% 消除缩放时脚底由于和草地阴影剥离产生的“浮空、滑行、漂移”感！
-			_sprite.position.y = 60.0 * (1.0 - final_y_scale) + bounce_y
+			_sprite.position.y = 64.0 * (1.0 - final_y_scale) + bounce_y
 		else:
-			# 移动转身中：同步应用深度透视和位移补偿，不做走路摇摆
-			var s_factor = turn_scale_factor * depth_scale
-			_sprite.scale = Vector2(s_factor, s_factor)
-			_sprite.position.y = 60.0 * (1.0 - s_factor)
+			# 移动转身中：同步应用平滑插值后的深度透视和位移补偿，并将倾斜平滑归 0 防止歪头！
+			_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 12.0)
+			_sprite.scale = Vector2(base_scale, base_scale)
+			_sprite.position.y = 64.0 * (1.0 - base_scale)
 	else:
 		# idle 待机状态
 		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
 		
 		if turning:
-			# 静态转身中：同步应用深度透视和位移补偿
-			var s_factor = turn_scale_factor * depth_scale
-			_sprite.scale = Vector2(s_factor, s_factor)
-			_sprite.position.y = 60.0 * (1.0 - s_factor)
+			# 静态转身中：同步应用平滑插值后的深度透视和位移补偿，平滑重置旋转
+			_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 12.0)
+			_sprite.scale = Vector2(base_scale, base_scale)
+			_sprite.position.y = 64.0 * (1.0 - base_scale)
 		else:
 			var idle_frames := _count_breed_frames(formal_breed)
-			var s_factor = idle_scale_factor * depth_scale
 			
 			if idle_frames > 1:
-				_sprite.scale = Vector2(s_factor, s_factor)
-				_sprite.position.y = 60.0 * (1.0 - s_factor)
+				_sprite.scale = Vector2(base_scale, base_scale)
+				_sprite.position.y = 64.0 * (1.0 - base_scale)
 			else:
 				var breath := 1.0 + (sin(_anim_time * 1.6) + 1.0) * 0.5 * 0.03
-				var final_y_scale = s_factor * breath
-				_sprite.scale = Vector2(s_factor, final_y_scale)
-				_sprite.position.y = 60.0 * (1.0 - final_y_scale)
+				var final_y_scale = base_scale * breath
+				_sprite.scale = Vector2(base_scale, final_y_scale)
+				_sprite.position.y = 64.0 * (1.0 - final_y_scale)
 	
 	# 刷新底层扁平椭圆阴影的实时重绘
 	queue_redraw()
@@ -547,7 +557,7 @@ func _draw() -> void:
 	# 阴影尺寸根据猫咪呼吸/跳跃高度联动缩放
 	var shadow_size := Vector2(30.0 * bounce_ratio, 7.0 * bounce_ratio)
 	# 阴影圆心位于猫咪脚底下边缘
-	draw_oval(Vector2(0, 60.0), shadow_size, shadow_color)
+	draw_oval(Vector2(0, 64.0), shadow_size, shadow_color)
 
 # 绘制扁平椭圆形影子的辅助方法（Godot 4 兼容）
 func draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
