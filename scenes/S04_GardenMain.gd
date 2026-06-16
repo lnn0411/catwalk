@@ -131,33 +131,18 @@ func _build_garden_layer() -> void:
 			CatSpawner.cat_count_changed.connect(_on_cat_count_changed)
 
 func _build_parallax_background() -> void:
-	# 三层花园直接 Sprite2D 叠放（自检场景已验证可行）
-	var layer_paths := [
-		"res://assets/art/garden/layers/garden_far.png",
-		"res://assets/art/garden/layers/garden_mid.png",
-		"res://assets/art/garden/layers/garden_near.png",
-	]
-	for i in range(layer_paths.size()):
-		var tex := load(layer_paths[i]) as Texture2D
-		if tex == null:
-			print(">>>>> [Garden] FAILED: " + layer_paths[i])
-			continue
-		var sprite := Sprite2D.new()
-		sprite.texture = tex
-		sprite.centered = false
-		sprite.z_index = i  # far=0 mid=1 near=2，确保叠放顺序明确
-		garden_layer.add_child(sprite)
-		print(">>>>> [Garden] loaded: %s size=%s pos=%s" % [layer_paths[i].get_file(), str(tex.get_size()), str(sprite.position)])
-	# 诊断：把相机和视口的真实数据打出来（call_deferred 确保入树后才读）
-	call_deferred("_debug_dump_garden")
-
-func _debug_dump_garden() -> void:
-	if _camera:
-		print(">>>>> [GardenDBG] camera pos=%s zoom=%s current=%s" % [str(_camera.global_position), str(_camera.zoom), str(_camera.is_current())])
-	print(">>>>> [GardenDBG] garden_layer pos=%s scale=%s child_count=%d" % [str(garden_layer.position), str(garden_layer.scale), garden_layer.get_child_count()])
-	var vp := garden_layer.get_viewport()
-	if vp:
-		print(">>>>> [GardenDBG] subviewport size=%s" % str(vp.get_visible_rect().size))
+	# 花园背景用整图 garden_master.png（2048×1536，无透明区）。
+	# 不用 layers/ 下的三张分层图——near 层导出错误（棋盘格被画成实心、
+	# 100%不透明盖死下层），master 是完整干净的单图。
+	var tex := load("res://assets/art/garden/garden_master.png") as Texture2D
+	if tex == null:
+		push_error("[Garden] 背景图加载失败: garden_master.png")
+		return
+	var sprite := Sprite2D.new()
+	sprite.texture = tex
+	sprite.centered = false
+	sprite.position = Vector2.ZERO
+	garden_layer.add_child(sprite)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
@@ -179,12 +164,7 @@ func _build_hud() -> void:
 
 	# 顶栏：程序绘制悬浮卡（暖白圆角+柔影），底垫纸纹理模拟手绘纸张感
 	var top_paper := TextureRect.new()
-	var paper_formal := "res://assets/art/ui/panels/paper_texture.png"
-	var paper_fallback := "res://assets/temp/ui/paper_texture.png"
-	if ResourceLoader.exists(paper_formal):
-		top_paper.texture = load(paper_formal)
-	else:
-		top_paper.texture = load(paper_fallback)
+	top_paper.texture = load("res://assets/temp/ui/paper_texture.png")
 	top_paper.stretch_mode = TextureRect.STRETCH_TILE
 	top_paper.anchor_left = 0.0
 	top_paper.anchor_right = 1.0
@@ -244,12 +224,7 @@ func _build_hud() -> void:
 	top_row.add_child(steps_box)
 
 	var steps_icon := TextureRect.new()
-	var steps_formal := "res://assets/art/ui/icons/icon_steps.png"
-	var steps_fallback := UI_TEXTURE_PATH + "icon_steps.png"
-	if ResourceLoader.exists(steps_formal):
-		steps_icon.texture = load(steps_formal)
-	else:
-		steps_icon.texture = load(steps_fallback)
+	steps_icon.texture = load(UI_TEXTURE_PATH + "icon_steps.png")
 	steps_icon.custom_minimum_size = Vector2(30.0, 30.0)
 	steps_icon.stretch_mode = TextureRect.STRETCH_SCALE
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -268,12 +243,7 @@ func _build_hud() -> void:
 	top_row.add_child(energy_box)
 
 	var energy_icon := TextureRect.new()
-	var energy_formal := "res://assets/art/ui/icons/icon_energy.png"
-	var energy_fallback := UI_TEXTURE_PATH + "icon_energy.png"
-	if ResourceLoader.exists(energy_formal):
-		energy_icon.texture = load(energy_formal)
-	else:
-		energy_icon.texture = load(energy_fallback)
+	energy_icon.texture = load(UI_TEXTURE_PATH + "icon_energy.png")
 	energy_icon.custom_minimum_size = Vector2(30.0, 30.0)
 	energy_icon.stretch_mode = TextureRect.STRETCH_SCALE
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
