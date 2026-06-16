@@ -372,18 +372,9 @@ func _play_click_feedback() -> void:
 
 # ============ 动态椭圆阴影绘制 ============
 func _draw() -> void:
-	# 脚下落地影：低透明度+偏冷绿暗色（非纯黑），叠在黄绿草地上不混出"脏泥坑"。
-	# 纯黑0.16在亮草地上显脏，是"泥坑错觉"的真因。
-	var shadow_color := Color(0.12, 0.14, 0.06, 0.11)
-	var bounce_ratio := 1.0
-	if is_moving:
-		# 向上跳起时，影子微弱缩小变淡
-		bounce_ratio = clampf(1.0 - (absf(_sprite.position.y) / 18.0) * 0.25, 0.75, 1.0)
-	
-	# 阴影尺寸根据猫咪呼吸/跳跃高度联动缩放
-	var shadow_size := Vector2(30.0 * bounce_ratio, 7.0 * bounce_ratio)
-	# 阴影圆心位于猫咪脚底下边缘
-	draw_oval(Vector2(0, 60.0), shadow_size, shadow_color)
+	# 【临时测试】完全关闭影子，用于定性"泥坑"是不是影子造成的。
+	# 泥坑消失=是影子；泥坑还在=与影子无关(背景图/裁切)。
+	return
 
 # 绘制扁平椭圆形影子的辅助方法（Godot 4 兼容）
 func draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
