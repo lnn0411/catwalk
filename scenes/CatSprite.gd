@@ -52,15 +52,13 @@ func _face_to(dx: float) -> void:
 		return
 	if _turn_tween and _turn_tween.is_valid():
 		_turn_tween.kill()
-	# 转身：压扁到接近0（这一瞬间≈猫正面对着你）→ 短暂停顿 → 翻面 → 展开。
-	# 比纯翻面慢，"完全压扁"的那一刻替代了缺失的正面帧，看起来像转过身来看了你一眼。
-	# 注：真正"露正面"需美术补侧→正→侧过渡帧，纯代码只能用压扁暗示。
+	# 干净利落翻转：瞬间换朝向，配一个轻微的缩放回弹给个手感（不压扁假装转身）。
+	# 2D单视角贴图本质是镜像翻转，朴素利落反而比"压扁障眼法"自然。
+	# 真正的转身体积感需美术补侧→正→侧过渡帧，留待正式美术阶段。
+	_sprite.flip_h = _facing_left
+	_sprite.scale.x = 0.86
 	_turn_tween = create_tween()
-	_turn_tween.tween_property(_sprite, "scale:x", 0.04, 0.16).set_ease(Tween.EASE_IN_OUT)
-	_turn_tween.tween_interval(0.10)  # 压扁瞬间停顿一下（"看你一眼"）
-	_turn_tween.tween_callback(func() -> void:
-		if _sprite: _sprite.flip_h = _facing_left)
-	_turn_tween.tween_property(_sprite, "scale:x", 1.0, 0.18).set_ease(Tween.EASE_OUT)
+	_turn_tween.tween_property(_sprite, "scale:x", 1.0, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 # 兼容旧调用名（CatSpawner 入场等处用 face_direction）
 func face_direction(dx: float) -> void:
