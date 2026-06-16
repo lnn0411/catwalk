@@ -105,15 +105,34 @@ func _play_turn_sequence(to_left: bool) -> void:
 func face_direction(dx: float) -> void:
 	_face_to(dx)
 
+func _count_child_sprites() -> int:
+	var n := 0
+	for c in get_children():
+		if c is Sprite2D:
+			n += 1
+	return n
+
 func _ready() -> void:
 	rng = RandomNumberGenerator.new()
 	rng.randomize()
+
+	# 防重复：若已有 Sprite 子节点（_ready 重入/重复 instance），先清掉，避免两张图叠着。
+	var existing_sprites := 0
+	for c in get_children():
+		if c is Sprite2D:
+			existing_sprites += 1
+	if existing_sprites > 0:
+		print(">>>>> [CatDup] breed='%s' _ready时已有%d个Sprite! 清除重建" % [breed, existing_sprites])
+		for c in get_children():
+			if c is Sprite2D:
+				c.queue_free()
 
 	_sprite = Sprite2D.new()
 	_sprite.name = "Sprite"
 	add_child(_sprite)
 	_sprite.flip_h = _facing_left  # 应用 add_child 前（入场）设置的朝向
 	_update_sprite()
+	print(">>>>> [CatReady] breed='%s' sprite建好, 当前Sprite子节点数=%d" % [breed, _count_child_sprites()])
 
 	var body_shape := CollisionShape2D.new()
 	var body_circle := CircleShape2D.new()
