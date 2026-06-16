@@ -101,8 +101,6 @@ func _build_garden_layer() -> void:
 	
 	_camera = Camera2D.new()
 	garden_layer.add_child(_camera)
-	# 核心修复：连接子视口的大小改变信号，当在不同真机/模拟器分辨率下 Stretched 缩放时，自动重新计算相机 zoom 与视口对齐
-	garden_vp.size_changed.connect(_setup_camera)
 	_setup_camera()
 	# make_current 必须在节点入树后调用（否则报 !is_inside_tree 且不生效）。
 	# garden_layer 已 add 进 garden_vp，但 garden_vp 此刻还没进主树——
@@ -114,7 +112,7 @@ func _build_garden_layer() -> void:
 	cat_container = Node2D.new()
 	cat_container.name = "CatContainer"
 	cat_container.position = Vector2(0.0, 256.0)
-	cat_container.z_index = 3  # 核心修复：确保猫咪渲染在最前景 near（z_index=2）背景层之上，不被盖死！
+	cat_container.z_index = 3  # 核心修复：确保猫咪渲染在最顶层，不被任何背景元素盖死
 	garden_layer.add_child(cat_container)
 	
 	# SubViewport 的输出贴到 TextureRect 显示
@@ -134,30 +132,18 @@ func _build_garden_layer() -> void:
 			CatSpawner.cat_count_changed.connect(_on_cat_count_changed)
 
 func _build_parallax_background() -> void:
-	# 1. 添加底图纸纹理 Sprite2D，防止背景各景深层边缘透明露空/出现棋盘格（用 Node2D 混排，防止 ColorRect 盖死场景）
-	var bg_sprite := Sprite2D.new()
-	bg_sprite.texture = load("res://assets/temp/ui/paper_texture.png")
-	bg_sprite.centered = false
-	bg_sprite.scale = Vector2(WORLD_WIDTH / 1408.0, WORLD_HEIGHT / 768.0)
-	bg_sprite.z_index = -10
-	garden_layer.add_child(bg_sprite)
-
-	# 2. 三层花园直接 Sprite2D 叠放（不使用 ParallaxBackground，防止 SubViewport 隔离下不渲染导致背景完全消失）
-	var layer_paths := [
-		"res://assets/art/garden/layers/garden_far.png",
-		"res://assets/art/garden/layers/garden_mid.png",
-		"res://assets/art/garden/layers/garden_near.png",
-	]
-	for i in range(layer_paths.size()):
-		var tex := load(layer_paths[i]) as Texture2D
-		if tex == null:
-			push_error("[Garden] 失败加载背景层: " + layer_paths[i])
-			continue
-		var sprite := Sprite2D.new()
-		sprite.texture = tex
-		sprite.centered = false
-		sprite.z_index = i  # far=0 mid=1 near=2，确保叠放顺序明确
-		garden_layer.add_child(sprite)
+	# 花园背景用整图 garden_master.png（2048×1536，无透明区）。
+	# 不用 layers/ 下的三张分层图——near 层导出错误（棋盘格被画成实心、
+	# 100%不透明盖死下层），master 是完整干净的单图。
+	var tex := load("res://assets/art/garden/garden_master.png") as Texture2D
+	if tex == null:
+		push_error("[Garden] 背景图加载失败: garden_master.png")
+		return
+	var sprite := Sprite2D.new()
+	sprite.texture = tex
+	sprite.centered = false
+	sprite.position = Vector2.ZERO
+	garden_layer.add_child(sprite)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
@@ -564,21 +550,14 @@ func _is_in_garden(pos: Vector2) -> bool:
 
 # 横版花园相机：按真实视口尺寸算缩放，让世界高度恰好填满可视高度（消除上下黑边）；
 # 世界比屏幕宽 → 只支持左右滚动，竖直居中锁定。aspect=expand 下视口尺寸随设备变化，
-# 故用 get_viewport() 取真实尺寸，不写死。
+# 故用 get_viewport_rect() 取真实尺寸，不写死。
 func _setup_camera() -> void:
 	if _camera == null:
 		return
-	# 核心安全修复：防止节点未入树时 get_viewport() 报空指针，入树前用设计尺寸保底，入树后自动刷新真实尺寸
-	var vp := _camera.get_viewport()
-	var view: Vector2
-	if vp != null:
-		view = vp.get_visible_rect().size
-	else:
-		view = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
-	
-	if view.y <= 0.0:
-		view = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
-	
+	# 用 SubViewport 的真实尺寸（720 × (1280-HUD)）算 zoom——
+	# SubViewportContainer 顶部被 HUD 占 130px，视口实际只有 1150 高。
+	# 之前按 1280 算 zoom，导致背景按错误比例显示、下方露空（棋盘格根因）。
+	var view: Vector2 = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
 	# 虚拟花园尺寸: 2048x1536, 竖屏希望高度填满
 	if view.y > 0.0 and WORLD_HEIGHT > 0.0:
 		_cam_zoom = view.y / WORLD_HEIGHT
@@ -593,12 +572,7 @@ func _setup_camera() -> void:
 func _clamp_camera_to_world() -> void:
 	if _camera == null:
 		return
-	# 核心安全修复：防止节点未入树时 get_viewport() 报空指针
-	var vp := _camera.get_viewport()
-	var view: Vector2 = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
-	if vp != null and vp.get_visible_rect().size.y > 0.0:
-		view = vp.get_visible_rect().size
-		
+	var view: Vector2 = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)  # 同 _setup_camera：扣掉 HUD 的真实视口
 	var half_w: float = (view.x * 0.5) / max(_cam_zoom, 0.0001)
 	var min_x: float = half_w
 	var max_x: float = WORLD_WIDTH - half_w
