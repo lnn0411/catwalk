@@ -30,6 +30,7 @@ var _walk_frame: int = 0
 var _anim_time := 0.0
 var _step_phase := 0.0   # 走路步频相位（摇摆/颠步共用，随速度推进）
 var _cur_speed := 0.0    # 当前实际速度（加减速过渡）
+var _turn_tween: Tween   # 转身挤压翻转动画
 var _bounce_tween: Tween   # 点击弹跳，防重复叠加
 # 朝向（修复：CharacterBody2D 不支持负 scale——物理服务器会正交规范化变换，
 # move_and_slide 时视觉与物理不一致，移动中位置漂移/瞬移="走着走着消失"。
@@ -38,12 +39,29 @@ var _facing_left := false
 
 # 公有：按水平方向设置朝向（CatSpawner 入场时会在 add_child 前调用，
 # 此时 _sprite 尚未创建，先存状态、_ready 时应用）
-func face_direction(dx: float) -> void:
+# 转向：不再瞬间镜像翻转——做一个"横向挤压→翻面→弹回"的小动画，
+# 模拟猫转身的视觉（squash 翻转法，2帧贴图也能有转身感）。
+func _face_to(dx: float) -> void:
 	if absf(dx) < 0.001:
 		return
-	_facing_left = dx < 0.0
-	if _sprite != null:
-		_sprite.flip_h = _facing_left
+	var want_left: bool = dx < 0.0
+	if want_left == _facing_left and _sprite != null and _sprite.flip_h == want_left:
+		return  # 朝向没变，不重复播
+	_facing_left = want_left
+	if _sprite == null:
+		return
+	if _turn_tween and _turn_tween.is_valid():
+		_turn_tween.kill()
+	# 横向压扁 → 翻面 → 弹回正常宽度
+	_turn_tween = create_tween()
+	_turn_tween.tween_property(_sprite, "scale:x", 0.15, 0.08).set_ease(Tween.EASE_IN)
+	_turn_tween.tween_callback(func() -> void:
+		if _sprite: _sprite.flip_h = _facing_left)
+	_turn_tween.tween_property(_sprite, "scale:x", 1.0, 0.10).set_ease(Tween.EASE_OUT)
+
+# 兼容旧调用名（CatSpawner 入场等处用 face_direction）
+func face_direction(dx: float) -> void:
+	_face_to(dx)
 
 func _ready() -> void:
 	rng = RandomNumberGenerator.new()
@@ -96,21 +114,24 @@ func _process(delta: float) -> void:
 	if _sprite == null:
 		return
 	if is_moving:
+		# 转身动画进行中时，不写 scale（让 _face_to 的挤压翻转独占，否则被覆盖）
+		var turning: bool = _turn_tween != null and _turn_tween.is_valid()
 		# 10帧贴图已自带腿部动作——代码动效退为"轻微辅助"，避免贴图动+代码晃的双重运动。
-		# 步频/幅度随实际速度收放，三者共用 _step_phase 保持同步。
 		var speed_ratio: float = clampf(_cur_speed / maxf(move_speed, 1.0), 0.0, 1.0)
 		_step_phase += delta * lerpf(5.0, 9.0, speed_ratio)
 		var cycle := sin(_step_phase)
-		_sprite.rotation = cycle * 0.025 * speed_ratio          # 摇摆减弱（贴图已有动作）
-		_sprite.position.y = -absf(cycle) * 2.0 * speed_ratio   # 颠步减弱
-		var ss := (absf(cycle) - 0.5) * 0.02 * speed_ratio      # 挤压减弱
-		_sprite.scale = Vector2(1.0 - ss, 1.0 + ss)
+		_sprite.rotation = cycle * 0.025 * speed_ratio
+		_sprite.position.y = -absf(cycle) * 2.0 * speed_ratio
+		if not turning:
+			var ss := (absf(cycle) - 0.5) * 0.02 * speed_ratio
+			_sprite.scale = Vector2(1.0 - ss, 1.0 + ss)
 	else:
 		# idle：缓慢呼吸（y 轴 1.0~1.03），轻微到"感觉活着"即可
 		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
 		_sprite.position.y = lerpf(_sprite.position.y, 0.0, delta * 8.0)
 		var breath := 1.0 + (sin(_anim_time * 1.6) + 1.0) * 0.5 * 0.03
-		_sprite.scale = Vector2(1.0, breath)
+		if not (_turn_tween != null and _turn_tween.is_valid()):
+			_sprite.scale = Vector2(1.0, breath)
 	
 	# 刷新底层扁平椭圆阴影的实时重绘
 	queue_redraw()
@@ -121,17 +142,19 @@ func _schedule_wander() -> void:
 func _on_wander_tick() -> void:
 	# M4：25% 概率不移动，只原地转个身（小动作，添生气）
 	if rng.randf() < 0.25:
-		face_direction(1.0 if _facing_left else -1.0)  # 原地转身=翻面取反
+		_face_to(1.0 if _facing_left else -1.0)  # 原地转身=朝向取反(带翻转动画)
 		_schedule_wander()
 		return
-	var wander_distance := rng.randf_range(100.0, 300.0)
+	# wander 偏水平：草坪是横向的，但要有纵深，否则猫被压成一条线只会左右平移。
+	# 角度做成"以水平为主、上下为辅"的椭圆分布，斜线走得出来又不会乱窜。
+	var wander_distance := rng.randf_range(150.0, 380.0)
 	var wander_angle := rng.randf_range(0.0, TAU)
-	var offset := Vector2(cos(wander_angle), sin(wander_angle)) * wander_distance
+	var offset := Vector2(cos(wander_angle) * 1.0, sin(wander_angle) * 0.55) * wander_distance
 	target_position = position + offset
-	target_position.x = clampf(target_position.x, 100.0, 1900.0)
-	target_position.y = clampf(target_position.y, 800.0, 1050.0) # 核心修复：限制 Y 轴活动范围在地面草坪，防止猫咪起飞到天上（穿模）
+	target_position.x = clampf(target_position.x, 120.0, 1880.0)
+	target_position.y = clampf(target_position.y, 620.0, 1080.0)  # 纵深扩到460px(原250太扁), 草坪范围内
 	is_moving = true
-	face_direction(target_position.x - position.x)
+	_face_to(target_position.x - position.x)
 
 func _update_sprite() -> void:
 	if _sprite == null:
@@ -198,7 +221,7 @@ func _physics_process(delta: float) -> void:
 			_schedule_wander()
 	# 自愈保险：任何原因出界都拉回活动范围（仅出界时写，避免每帧赋值）
 	var cx := clampf(position.x, 100.0, 1900.0)
-	var cy := clampf(position.y, 800.0, 1050.0) # 核心修复：限制物理自愈范围在地面草坪上，防飞天
+	var cy := clampf(position.y, 620.0, 1080.0) # 与 wander 纵深一致(620~1080)，否则自愈把猫拉回旧边界=卡成横线
 	if cx != position.x or cy != position.y:
 		position = Vector2(cx, cy)
 
