@@ -34,6 +34,7 @@ var _turn_tween: Tween   # 转身挤压翻转动画
 var _stuck_time := 0.0   # 撞障碍累计卡顿时长（超阈值就换方向）
 var _move_dir := Vector2.ZERO  # 当前移动方向（平滑转向，走曲线不走折线）
 var _bounce_tween: Tween   # 点击弹跳，防重复叠加
+var _is_turning := false   # 是否正在播放转身过渡帧动画
 # 朝向（修复：CharacterBody2D 不支持负 scale——物理服务器会正交规范化变换，
 # move_and_slide 时视觉与物理不一致，移动中位置漂移/瞬移="走着走着消失"。
 # 翻面一律走 _sprite.flip_h，根节点 scale 永远保持 (1,1)）
@@ -41,25 +42,54 @@ var _facing_left := false
 
 # 公有：按水平方向设置朝向（CatSpawner 入场时会在 add_child 前调用，
 # 此时 _sprite 尚未创建，先存状态、_ready 时应用）
-# 转向：不再瞬间镜像翻转——做一个"横向挤压→翻面→弹回"的小动画，
-# 模拟猫转身的视觉（squash 翻转法，2帧贴图也能有转身感）。
+# 转向：若存在 `turn_00~04` 转身序列帧，则播放丝滑过渡帧动画（左转正放，右转倒放）；
+# 否则，退回到 2D 瞬间翻转 + 弹性回弹手感补充。
 func _face_to(dx: float) -> void:
 	if absf(dx) < 0.001:
 		return
 	var want_left: bool = dx < 0.0
-	if want_left == _facing_left and _sprite != null and _sprite.flip_h == want_left:
+	if want_left == _facing_left and _sprite != null:
 		return  # 朝向没变，不重复播
 	_facing_left = want_left
 	if _sprite == null:
 		return
 	if _turn_tween and _turn_tween.is_valid():
 		_turn_tween.kill()
-	# 干净利落翻转：瞬间换朝向 + 轻微弹性回弹给手感（不压扁假装转身）。
-	# 2D单视角贴图本质是镜像翻转，朴素利落比障眼法自然；真正转身体积感留待美术补帧。
-	_sprite.flip_h = _facing_left
-	_sprite.scale.x = 0.86
-	_turn_tween = create_tween()
-	_turn_tween.tween_property(_sprite, "scale:x", 1.0, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		
+	var formal_breed := breed
+	if formal_breed == "orange":
+		formal_breed = "orange_tabby"
+		
+	var turn_path_base := "res://assets/art/cats/%s/turn_00.png" % formal_breed
+	if ResourceLoader.exists(turn_path_base):
+		_is_turning = true
+		_turn_tween = create_tween()
+		
+		# 转身序列帧：左转(正序 0->4)，右转(倒序 4->0)
+		var frames := [0, 1, 2, 3, 4]
+		if not _facing_left:
+			frames.reverse()
+			
+		for i in range(frames.size()):
+			var f_idx = frames[i]
+			var path := "res://assets/art/cats/%s/turn_%02d.png" % [formal_breed, f_idx]
+			_turn_tween.tween_callback(func() -> void:
+				if _sprite:
+					_sprite.texture = load(path)
+					_sprite.flip_h = false # 过渡帧本身已自带对称，无需再 flip_h
+			)
+			_turn_tween.tween_interval(0.06) # 每帧播放 0.06s (总长 0.3s)
+			
+		_turn_tween.tween_callback(func() -> void:
+			_is_turning = false
+			_update_sprite() # 播放完毕，刷新回标准步态
+		)
+	else:
+		# 干净利落翻转：瞬间换朝向 + 轻微弹性回弹给手感（不压扁假装转身）。
+		_sprite.flip_h = _facing_left
+		_sprite.scale.x = 0.86
+		_turn_tween = create_tween()
+		_turn_tween.tween_property(_sprite, "scale:x", 1.0, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 # 兼容旧调用名（CatSpawner 入场等处用 face_direction）
 func face_direction(dx: float) -> void:
@@ -182,7 +212,7 @@ func _schedule_wander() -> void:
 	timer.start(pause)
 
 func _update_sprite() -> void:
-	if _sprite == null:
+	if _sprite == null or _is_turning:
 		return
 
 	# 1. 动态自适应确定当前品种的最大序列帧数（自动扫描文件夹下 idle_*.png 的实际数量）
