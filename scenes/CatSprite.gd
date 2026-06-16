@@ -208,7 +208,7 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 	var offset := Vector2(cos(ang) * 1.0, sin(ang) * 0.55) * d
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 120.0, 1880.0)
-	target_position.y = clampf(target_position.y, 620.0, 1080.0)
+	target_position.y = clampf(target_position.y, 620.0, 880.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
 	is_moving = true
 	_face_to(target_position.x - position.x)
 
@@ -225,7 +225,7 @@ func _on_wander_tick() -> void:
 	var offset := Vector2(cos(wander_angle) * 1.0, sin(wander_angle) * 0.55) * wander_distance
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 120.0, 1880.0)
-	target_position.y = clampf(target_position.y, 620.0, 1080.0)
+	target_position.y = clampf(target_position.y, 620.0, 880.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
 	is_moving = true
 	_face_to(target_position.x - position.x)
 
@@ -344,7 +344,7 @@ func _physics_process(delta: float) -> void:
 			_schedule_wander()
 	# 自愈保险：任何原因出界都拉回活动范围（仅出界时写，避免每帧赋值）
 	var cx := clampf(position.x, 100.0, 1900.0)
-	var cy := clampf(position.y, 620.0, 1080.0) # 与 wander 纵深一致(620~1080)，否则自愈把猫拉回旧边界=卡成横线
+	var cy := clampf(position.y, 620.0, 880.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
 	if cx != position.x or cy != position.y:
 		position = Vector2(cx, cy)
 
