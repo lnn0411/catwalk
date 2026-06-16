@@ -565,8 +565,14 @@ func _is_in_garden(pos: Vector2) -> bool:
 func _setup_camera() -> void:
 	if _camera == null:
 		return
-	# 核心修复：读取相机所在 SubViewport 的真实高度和宽度，动态适配拉伸与屏幕比，消除上下棋盘格
-	var view: Vector2 = _camera.get_viewport().get_visible_rect().size
+	# 核心安全修复：防止节点未入树时 get_viewport() 报空指针，入树前用设计尺寸保底，入树后自动刷新真实尺寸
+	var vp := _camera.get_viewport()
+	var view: Vector2
+	if vp != null:
+		view = vp.get_visible_rect().size
+	else:
+		view = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
+	
 	if view.y <= 0.0:
 		view = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
 	
@@ -584,10 +590,11 @@ func _setup_camera() -> void:
 func _clamp_camera_to_world() -> void:
 	if _camera == null:
 		return
-	# 核心修复：读取相机所在 SubViewport 的真实高度和宽度
-	var view: Vector2 = _camera.get_viewport().get_visible_rect().size
-	if view.y <= 0.0:
-		view = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
+	# 核心安全修复：防止节点未入树时 get_viewport() 报空指针
+	var vp := _camera.get_viewport()
+	var view: Vector2 = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
+	if vp != null and vp.get_visible_rect().size.y > 0.0:
+		view = vp.get_visible_rect().size
 		
 	var half_w: float = (view.x * 0.5) / max(_cam_zoom, 0.0001)
 	var min_x: float = half_w
