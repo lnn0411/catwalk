@@ -138,15 +138,12 @@ func _update_sprite() -> void:
 	if _sprite == null:
 		return
 
-	# 1. 动态确定当前品种的最大序列帧数（根据正式文件夹下 idle_03.png 是否存在自动判断）
+	# 1. 动态自适应确定当前品种的最大序列帧数（自动扫描文件夹下 idle_*.png 的实际数量）
 	var formal_breed := breed
 	if formal_breed == "orange":
 		formal_breed = "orange_tabby"
 		
-	var max_frames := 3 # 默认 fallback 到老版 3 帧
-	var check_path := "res://assets/art/cats/%s/idle_03.png" % formal_breed
-	if ResourceLoader.exists(check_path):
-		max_frames = 10
+	var max_frames := _count_breed_frames(formal_breed)
 
 	var frame_index := 0
 	if is_moving:
@@ -156,9 +153,9 @@ func _update_sprite() -> void:
 		_walk_frame = 0
 		frame_index = 0
 
-	# 动态自适应步伐时间间隔 (10帧小碎步用 0.08s 快帧率以保证极其丝滑；3帧用 0.16s 标准步频)
+	# 动态自适应步伐时间间隔 (多帧小碎步用 0.08s 快帧率以保证极其丝滑；3帧用 0.16s 标准步频)
 	if sprite_timer != null:
-		sprite_timer.wait_time = 0.08 if max_frames == 10 else 0.16
+		sprite_timer.wait_time = 0.08 if max_frames >= 5 else 0.16
 
 	# 2. 动态生成正式路径：如 res://assets/art/cats/orange_tabby/idle_05.png
 	var frame_name := "idle_%02d" % frame_index
@@ -243,3 +240,22 @@ func draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
 		var angle := float(i) / steps * TAU
 		points.append(center + Vector2(cos(angle) * size.x, sin(angle) * size.y))
 	draw_colored_polygon(points, color)
+
+# 动态计算该猫种正式目录下实际存在的 idle_*.png 帧数，实现全自动智能兼容
+func _count_breed_frames(breed_name: String) -> int:
+	var path := "res://assets/art/cats/" + breed_name + "/"
+	var dir := DirAccess.open(path)
+	if dir == null:
+		return 3 # 无法打开目录则安全 fallback 到 3 帧
+		
+	var count := 0
+	dir.list_dir_begin()
+	var file_name := dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.begins_with("idle_") and file_name.ends_with(".png"):
+			count += 1
+		file_name = dir.get_next()
+	dir.list_dir_end()
+	
+	# 如果没有正式序列帧，返回 3 帧以进行 fallback
+	return count if count > 0 else 3
