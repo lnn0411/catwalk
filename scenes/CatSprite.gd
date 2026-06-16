@@ -138,32 +138,39 @@ func _update_sprite() -> void:
 	if _sprite == null:
 		return
 
-	var animation_name := "idle"
-	if is_moving:
-		_walk_frame = (_walk_frame + 1) % 3
-		match _walk_frame:
-			1:
-				animation_name = "walk_a"
-			2:
-				animation_name = "walk_b"
-			_:
-				animation_name = "idle"
-	else:
-		_walk_frame = 0
-
+	# 1. 动态确定当前品种的最大序列帧数（根据正式文件夹下 idle_03.png 是否存在自动判断）
 	var formal_breed := breed
 	if formal_breed == "orange":
 		formal_breed = "orange_tabby"
-	var frame_name := "idle_00"
-	match animation_name:
-		"idle":
-			frame_name = "idle_00"
-		"walk_a":
-			frame_name = "idle_01"
-		"walk_b":
-			frame_name = "idle_02"
+		
+	var max_frames := 3 # 默认 fallback 到老版 3 帧
+	var check_path := "res://assets/art/cats/%s/idle_03.png" % formal_breed
+	if ResourceLoader.exists(check_path):
+		max_frames = 10
+
+	var frame_index := 0
+	if is_moving:
+		_walk_frame = (_walk_frame + 1) % max_frames
+		frame_index = _walk_frame
+	else:
+		_walk_frame = 0
+		frame_index = 0
+
+	# 动态自适应步伐时间间隔 (10帧小碎步用 0.08s 快帧率以保证极其丝滑；3帧用 0.16s 标准步频)
+	if sprite_timer != null:
+		sprite_timer.wait_time = 0.08 if max_frames == 10 else 0.16
+
+	# 2. 动态生成正式路径：如 res://assets/art/cats/orange_tabby/idle_05.png
+	var frame_name := "idle_%02d" % frame_index
 	var formal_path := "res://assets/art/cats/%s/%s.png" % [formal_breed, frame_name]
-	var fallback_path := "res://assets/temp/cats/cat_%s_%s.png" % [breed, animation_name]
+	
+	# 3. 动态生成 Fallback 备份名（确保没图时也绝对 100% 绿色不报错）
+	# 如果正式路径下没有 10 帧，奇数帧走 walk_a，偶数帧走 walk_b
+	var fallback_anim := "idle"
+	if is_moving:
+		fallback_anim = "walk_a" if (frame_index % 2 == 1) else "walk_b"
+	var fallback_path := "res://assets/temp/cats/cat_%s_%s.png" % [breed, fallback_anim]
+
 	if ResourceLoader.exists(formal_path):
 		_sprite.texture = load(formal_path)
 	else:
