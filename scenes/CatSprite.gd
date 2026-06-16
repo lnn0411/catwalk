@@ -111,14 +111,15 @@ func _play_turn_sequence(to_left: bool, is_move_turn: bool = false) -> void:
 			if _sprite and ResourceLoader.exists(path):
 				_sprite.texture = load(path))
 		# 移动中转身各帧播放加快，避免拖沓；正面帧（2）稍微停驻
-		var interval := (0.15 if idx == 2 else 0.08) if is_move_turn else (0.30 if idx == 2 else 0.11)
+		var interval := (0.11 if idx == 2 else 0.07) if is_move_turn else (0.26 if idx == 2 else 0.10)
 		_turn_tween.tween_interval(interval)
-	# 播完：落到目标朝向
+	# 播完：重置动画序列，并【立即】强行调用 _update_sprite()，实现零延迟、无缝衔接走路/待机第 0 帧，彻底消灭末尾卡顿！
 	_turn_tween.tween_callback(func() -> void:
 		_turn_playing = false
+		_walk_frame = -1 # 设为 -1，使得 _update_sprite() 累加后完美从第 0 帧 (walk_00/idle_00) 开始播放
+		_update_sprite()
 		if _sprite:
-			_sprite.flip_h = _facing_left
-			_sprite.scale = Vector2.ONE)
+			_sprite.flip_h = _facing_left)
 
 # 兼容旧调用名（CatSpawner 入场等处用 face_direction）
 func face_direction(dx: float) -> void:
