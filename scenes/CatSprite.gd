@@ -17,9 +17,9 @@ signal cat_clicked(cat_data)
 var cat_data
 @export var breed: String = "orange"
 @export var move_speed: float = 50.0
-@export var walk_scale_factor: float = 1.05  # 缩放因子：微调走路图片比例（如果画小了，代码自动放大）
-@export var idle_scale_factor: float = 0.95  # 缩放因子：微调待机图片比例（如果画大了，代码自动缩小）
-@export var turn_scale_factor: float = 0.88  # 再次调低转身缩放，确保转体时视觉尺寸平滑一致
+@export var walk_scale_factor: float = 1.02  # 缩放因子：微调走路图片比例（如果画小了，代码自动放大）
+@export var idle_scale_factor: float = 0.88  # 缩放因子：微调待机图片比例（如果画大了，代码自动缩小）
+@export var turn_scale_factor: float = 0.85  # 再次调低转身缩放，确保转体时视觉尺寸平滑一致
 
 var rng: RandomNumberGenerator
 var timer: Timer
@@ -207,6 +207,10 @@ func _process(delta: float) -> void:
 	# 近大远小透视比例（走上去变小，走下来变大）
 	var depth_scale := _get_perspective_scale()
 	
+	var formal_breed := breed
+	if formal_breed == "orange":
+		formal_breed = "orange_tabby"
+	
 	if is_moving:
 		# 转身过渡播放时，走路动效全让位（不写 rotation/position/scale），让转身帧干净显示
 		var turning: bool = _turn_playing or (_turn_tween != null and _turn_tween.is_valid())
@@ -223,13 +227,24 @@ func _process(delta: float) -> void:
 			var s_factor = walk_scale_factor * depth_scale
 			_sprite.scale = Vector2(s_factor * (1.0 - ss), s_factor * (1.0 + ss))
 	else:
-		# idle：缓慢呼吸（y 轴 1.0~1.03），轻微到"感觉活着"即可
+		# idle 待机状态
 		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
 		_sprite.position.y = lerpf(_sprite.position.y, 0.0, delta * 8.0)
-		var breath := 1.0 + (sin(_anim_time * 1.6) + 1.0) * 0.5 * 0.03
+		
 		if not (_turn_tween != null and _turn_tween.is_valid()):
+			var idle_frames := _count_breed_frames(formal_breed)
 			var s_factor = idle_scale_factor * depth_scale
-			_sprite.scale = Vector2(s_factor, s_factor * breath)
+			
+			if idle_frames > 1:
+				# ✨ 核心优化：既然我们已经有了主人给的 10 帧高保真手绘待机/呼吸序列，
+				# 我们就 100% 依赖手绘序列来展现自然的呼吸！
+				# 此时必须【禁用】代码里的程序化拉伸（breath），防止手绘呼吸与程序拉伸双重叠加，
+				# 导致猫咪停顿下来时像气球一样突兀地“吹胀、变大、忽大忽小”！
+				_sprite.scale = Vector2(s_factor, s_factor)
+			else:
+				# 回退低配模式：若没有多帧序列，才用代码程序化拉伸
+				var breath := 1.0 + (sin(_anim_time * 1.6) + 1.0) * 0.5 * 0.03
+				_sprite.scale = Vector2(s_factor, s_factor * breath)
 	
 	# 刷新底层扁平椭圆阴影的实时重绘
 	queue_redraw()
