@@ -17,7 +17,9 @@ signal cat_clicked(cat_data)
 var cat_data
 @export var breed: String = "orange"
 @export var move_speed: float = 50.0
-@export var turn_scale_factor: float = 0.92  # 缩放因子：微调转身图片比例，防止突变“变大”的视觉膨胀感
+@export var walk_scale_factor: float = 1.05  # 缩放因子：微调走路图片比例（如果画小了，代码自动放大）
+@export var idle_scale_factor: float = 0.95  # 缩放因子：微调待机图片比例（如果画大了，代码自动缩小）
+@export var turn_scale_factor: float = 0.88  # 再次调低转身缩放，确保转体时视觉尺寸平滑一致
 
 var rng: RandomNumberGenerator
 var timer: Timer
@@ -205,14 +207,16 @@ func _process(delta: float) -> void:
 			_sprite.rotation = cycle * 0.025 * speed_ratio
 			_sprite.position.y = -absf(cycle) * 2.0 * speed_ratio
 			var ss := (absf(cycle) - 0.5) * 0.02 * speed_ratio
-			_sprite.scale = Vector2(1.0 - ss, 1.0 + ss)
+			var s_factor = walk_scale_factor
+			_sprite.scale = Vector2(s_factor * (1.0 - ss), s_factor * (1.0 + ss))
 	else:
 		# idle：缓慢呼吸（y 轴 1.0~1.03），轻微到"感觉活着"即可
 		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
 		_sprite.position.y = lerpf(_sprite.position.y, 0.0, delta * 8.0)
 		var breath := 1.0 + (sin(_anim_time * 1.6) + 1.0) * 0.5 * 0.03
 		if not (_turn_tween != null and _turn_tween.is_valid()):
-			_sprite.scale = Vector2(1.0, breath)
+			var s_factor = idle_scale_factor
+			_sprite.scale = Vector2(s_factor, s_factor * breath)
 	
 	# 刷新底层扁平椭圆阴影的实时重绘
 	queue_redraw()
@@ -340,14 +344,17 @@ func _physics_process(delta: float) -> void:
 			for child in parent.get_children():
 				if child != self and "is_moving" in child:
 					var d := position.distance_to(child.position)
-					if d < 100.0 and d > 0.1: # 100 像素内产生排斥力
+					if d < 180.0 and d > 0.1: # 扩大检测范围到 180 像素，提前避让
 						var push: Vector2 = (position - child.position).normalized()
-						separation += push * (1.0 - d / 100.0)
+						# 排斥力呈非线性放大，距离越近，力量越是强力（2.5倍力量因子）
+						var strength := (1.0 - d / 180.0) * 2.5
+						separation += push * strength
 						neighbors_count += 1
 		
 		if neighbors_count > 0:
-			separation = (separation / neighbors_count) * 0.7 # 给予 0.7 权重的排斥力
-			desired_dir = (desired_dir + separation).normalized()
+			separation = (separation / neighbors_count)
+			# 强力混合：给予 1.5 倍高权重排斥力，让猫咪极度敏感地偏航、环绕走，绝不硬怼
+			desired_dir = (desired_dir + separation * 1.5).normalized()
 
 		# ① 方向曲线化：当前朝向平滑转向目标方向，而不是瞬间对准直线奔过去。
 		# 转向有惯性 → 走出来是弧线，不是生硬折线。
