@@ -131,7 +131,14 @@ func _build_garden_layer() -> void:
 			CatSpawner.cat_count_changed.connect(_on_cat_count_changed)
 
 func _build_parallax_background() -> void:
-	# 三层花园直接 Sprite2D 叠放（自检场景已验证可行，已清理 near 层不透明遮挡 bug）
+	# 1. 添加一底面色块（纸张底色），防止背景各景深层边缘透明露空/出现棋盘格
+	var bg_color := ColorRect.new()
+	bg_color.color = Palette.BG_WARM_WHITE
+	bg_color.size = Vector2(WORLD_WIDTH, WORLD_HEIGHT)
+	bg_color.z_index = -10
+	garden_layer.add_child(bg_color)
+
+	# 2. 三层花园直接 Sprite2D 叠放（已清理 near 层不透明遮挡 bug）
 	var layer_paths := [
 		"res://assets/art/garden/layers/garden_far.png",
 		"res://assets/art/garden/layers/garden_mid.png",
