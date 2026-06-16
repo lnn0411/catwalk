@@ -40,6 +40,9 @@ var _interact_reset_timer: Timer
 
 func _ready() -> void:
 	super()
+	# 核心修复：监听视口大小改变，手动强制缩放本页面以对齐屏幕物理宽度（解决 CanvasLayer 下 Control 锚点失效、顶栏短一截的问题）
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	_on_viewport_size_changed()
 	# 花园页根节点放行鼠标/触摸事件：UIPage 默认 STOP 会吃掉全屏事件，
 	# 导致屏幕拖动(_unhandled_input)收不到。改 IGNORE 让空白区事件穿透；
 	# HUD 上的按钮/底部导航是子控件，会优先命中，不受影响。
@@ -52,6 +55,12 @@ func _ready() -> void:
 	_build_debug_panel()
 	_connect_data()
 	_refresh_all()
+
+func _on_viewport_size_changed() -> void:
+	var vp_size := get_viewport().get_visible_rect().size
+	if vp_size.x > 0 and vp_size.y > 0:
+		await get_tree().process_frame
+		size = vp_size
 
 func on_enter(_data: Dictionary = {}) -> void:
 	_hatch_navigating = false
