@@ -290,19 +290,6 @@ func _update_unlocks() -> void:
 			slot["status"] = "empty"
 		slots[i] = slot
 
-func _assign_next_empty_slots() -> void:
-	for i in range(SLOT_COUNT):
-		var slot: Dictionary = slots[i]
-		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "empty":
-			var species: String = _roll_next_species()
-			slot["status"] = "incubating"
-			slot["energy"] = 0.0
-			slot["max_energy"] = float(CatData.get_hatch_cost(species))
-			slot["species"] = species
-			slots[i] = slot
-			hatch_started.emit(i)
-			_emit_slot_progress(i)
-
 func _get_active_filling_slot() -> int:
 	# 串行填充：始终优先填最低索引的 incubating 槽（GDD §2.2）
 	for i in range(SLOT_COUNT):
@@ -445,7 +432,7 @@ func is_energy_overflowing() -> bool:
 	# 主池满 + 备用槽满 + 礼盒 Ready 未拆 → 硬截断预警
 	return surprise_box_ready \
 		and (EnergyEngine == null or EnergyEngine.energy_pool >= EnergyEngine.MAX_ENERGY_POOL) \
-		and (EnergyEngine == null or EnergyEngine.reserve_tank >= EnergyEngine.RESERVE_TANK_CAP)
+		and (EnergyEngine == null or EnergyEngine.reserve_tank >= EnergyEngine.MAX_RESERVE_TANK)
 
 # ── GDD v2.17 0.5s 自动落蛋 + 新手首蛋 ──
 
