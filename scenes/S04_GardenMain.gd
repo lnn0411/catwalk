@@ -101,6 +101,8 @@ func _build_garden_layer() -> void:
 	
 	_camera = Camera2D.new()
 	garden_layer.add_child(_camera)
+	# 核心修复：连接子视口的大小改变信号，当在不同真机/模拟器分辨率下 Stretched 缩放时，自动重新计算相机 zoom 与视口对齐
+	garden_vp.size_changed.connect(_setup_camera)
 	_setup_camera()
 	# make_current 必须在节点入树后调用（否则报 !is_inside_tree 且不生效）。
 	# garden_layer 已 add 进 garden_vp，但 garden_vp 此刻还没进主树——
