@@ -36,6 +36,7 @@ var _cur_speed := 0.0    # 当前实际速度（加减速过渡）
 var _turn_tween: Tween   # 转身翻转/过渡动画
 var _turn_playing := false  # 转身过渡帧播放中（锁住走路换帧防打架）
 var _is_move_turn := false  # 当前是否为移动中转向过渡
+var _last_turn_time := 0  # 记录上一次转身结束的系统时间（毫秒），防止频繁摆动乱晃
 var _cached_frame_count := 0  # 该品种序列帧数缓存
 var _cached_walk_frame_count := 0 # 该品种走路序列帧数缓存
 var _texture_cache := {} # 缓存该品种所有常用的序列帧，防止运行时动态 load() 磁盘读写卡顿
@@ -93,6 +94,11 @@ func _face_to(dx: float) -> void:
 	if _turn_playing:
 		_facing_left = want_left  # 转身动画进行中，只更新目标朝向，不打断
 		return
+	
+	# 增加转身冷却缓冲（400 毫秒内不允许连续转身），极大防止由于碰撞或寻路微调产生的“频繁晃体、疯狂原地转身”！
+	if Time.get_ticks_msec() - _last_turn_time < 400:
+		return
+		
 	_facing_left = want_left
 	if _sprite == null:
 		return
@@ -153,6 +159,7 @@ func _play_turn_sequence(to_left: bool, is_move_turn: bool = false) -> void:
 	# 播完：重置动画序列，并【立即】强行调用 _update_sprite()，实现零延迟、无缝衔接走路/待机第 0 帧，彻底消灭末尾卡顿！
 	_turn_tween.tween_callback(func() -> void:
 		_turn_playing = false
+		_last_turn_time = Time.get_ticks_msec() # 记录时间
 		_walk_frame = -1 # 设为 -1，使得 _update_sprite() 累加后完美从第 0 帧 (walk_00/idle_00) 开始播放
 		_update_sprite()
 		if _sprite:
