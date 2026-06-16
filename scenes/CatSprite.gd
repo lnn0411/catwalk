@@ -52,12 +52,15 @@ func _face_to(dx: float) -> void:
 		return
 	if _turn_tween and _turn_tween.is_valid():
 		_turn_tween.kill()
-	# 横向压扁 → 翻面 → 弹回正常宽度
+	# 转身：压扁到接近0（这一瞬间≈猫正面对着你）→ 短暂停顿 → 翻面 → 展开。
+	# 比纯翻面慢，"完全压扁"的那一刻替代了缺失的正面帧，看起来像转过身来看了你一眼。
+	# 注：真正"露正面"需美术补侧→正→侧过渡帧，纯代码只能用压扁暗示。
 	_turn_tween = create_tween()
-	_turn_tween.tween_property(_sprite, "scale:x", 0.15, 0.08).set_ease(Tween.EASE_IN)
+	_turn_tween.tween_property(_sprite, "scale:x", 0.04, 0.16).set_ease(Tween.EASE_IN_OUT)
+	_turn_tween.tween_interval(0.10)  # 压扁瞬间停顿一下（"看你一眼"）
 	_turn_tween.tween_callback(func() -> void:
 		if _sprite: _sprite.flip_h = _facing_left)
-	_turn_tween.tween_property(_sprite, "scale:x", 1.0, 0.10).set_ease(Tween.EASE_OUT)
+	_turn_tween.tween_property(_sprite, "scale:x", 1.0, 0.18).set_ease(Tween.EASE_OUT)
 
 # 兼容旧调用名（CatSpawner 入场等处用 face_direction）
 func face_direction(dx: float) -> void:
@@ -136,25 +139,34 @@ func _process(delta: float) -> void:
 	# 刷新底层扁平椭圆阴影的实时重绘
 	queue_redraw()
 
-func _schedule_wander() -> void:
-	timer.start(rng.randf_range(3.0, 6.0))
-
 func _on_wander_tick() -> void:
-	# M4：25% 概率不移动，只原地转个身（小动作，添生气）
-	if rng.randf() < 0.25:
-		_face_to(1.0 if _facing_left else -1.0)  # 原地转身=朝向取反(带翻转动画)
+	# 35% 原地小动作：转身张望 / 短暂发呆（不移动，添生气）
+	if rng.randf() < 0.35:
+		if rng.randf() < 0.6:
+			_face_to(1.0 if _facing_left else -1.0)  # 转身张望
 		_schedule_wander()
 		return
-	# wander 偏水平：草坪是横向的，但要有纵深，否则猫被压成一条线只会左右平移。
-	# 角度做成"以水平为主、上下为辅"的椭圆分布，斜线走得出来又不会乱窜。
-	var wander_distance := rng.randf_range(150.0, 380.0)
+	# 距离更碎、更随机：短踱步多、偶尔大步——避免"每次都走同样一段直线"的呆板
+	var wander_distance := rng.randf_range(60.0, 340.0)
 	var wander_angle := rng.randf_range(0.0, TAU)
 	var offset := Vector2(cos(wander_angle) * 1.0, sin(wander_angle) * 0.55) * wander_distance
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 120.0, 1880.0)
-	target_position.y = clampf(target_position.y, 620.0, 1080.0)  # 纵深扩到460px(原250太扁), 草坪范围内
+	target_position.y = clampf(target_position.y, 620.0, 1080.0)
 	is_moving = true
 	_face_to(target_position.x - position.x)
+
+func _schedule_wander() -> void:
+	# 停顿时长随机化：多数短停(像猫边走边改主意)，偶尔长停张望——比固定3~6s自然
+	var pause: float
+	var r := rng.randf()
+	if r < 0.45:
+		pause = rng.randf_range(0.3, 1.2)   # 短停，接近连续走
+	elif r < 0.85:
+		pause = rng.randf_range(1.5, 3.5)   # 中停
+	else:
+		pause = rng.randf_range(4.0, 7.0)   # 偶尔长停发呆
+	timer.start(pause)
 
 func _update_sprite() -> void:
 	if _sprite == null:
