@@ -133,14 +133,20 @@ func _ready() -> void:
 	_sprite.flip_h = _facing_left  # 应用 add_child 前（入场）设置的朝向
 	_update_sprite()
 
+	# 碰撞层/掩码：让猫之间互相阻挡（没设的话猫互相穿透→避障检测永不触发）
+	collision_layer = 2
+	collision_mask = 2
+
 	var body_shape := CollisionShape2D.new()
 	var body_circle := CircleShape2D.new()
-	body_circle.radius = 30.0
+	body_circle.radius = 26.0
 	body_shape.shape = body_circle
 	add_child(body_shape)
 
 	var area := Area2D.new()
 	area.input_pickable = true
+	area.collision_layer = 4   # 点击层独立，不和物理猫层混
+	area.collision_mask = 0
 	add_child(area)
 
 	var click_shape := CollisionShape2D.new()
@@ -204,8 +210,8 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 	var d := rng.randf_range(80.0, 200.0)
 	var offset := Vector2(cos(ang) * 1.0, sin(ang) * 0.55) * d
 	target_position = position + offset
-	target_position.x = clampf(target_position.x, 120.0, 1880.0)
-	target_position.y = clampf(target_position.y, 300.0, 640.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
+	target_position.x = clampf(target_position.x, 350.0, 1700.0)
+	target_position.y = clampf(target_position.y, 380.0, 640.0) # 草坪安全区：避开背景下半土区(Y)和左右灌木/小路(X)
 	is_moving = true
 	_face_to(target_position.x - position.x)
 
@@ -221,8 +227,8 @@ func _on_wander_tick() -> void:
 	var wander_angle := rng.randf_range(0.0, TAU)
 	var offset := Vector2(cos(wander_angle) * 1.0, sin(wander_angle) * 0.55) * wander_distance
 	target_position = position + offset
-	target_position.x = clampf(target_position.x, 120.0, 1880.0)
-	target_position.y = clampf(target_position.y, 300.0, 640.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
+	target_position.x = clampf(target_position.x, 350.0, 1700.0)
+	target_position.y = clampf(target_position.y, 380.0, 640.0) # 草坪安全区：避开背景下半土区(Y)和左右灌木/小路(X)
 	is_moving = true
 	_face_to(target_position.x - position.x)
 
@@ -336,8 +342,8 @@ func _physics_process(delta: float) -> void:
 			_update_sprite()
 			_schedule_wander()
 	# 自愈保险：任何原因出界都拉回活动范围（仅出界时写，避免每帧赋值）
-	var cx := clampf(position.x, 100.0, 1900.0)
-	var cy := clampf(position.y, 300.0, 640.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
+	var cx := clampf(position.x, 350.0, 1700.0)
+	var cy := clampf(position.y, 380.0, 640.0) # 草坪安全区：避开背景下半土区(Y)和左右灌木/小路(X)
 	if cx != position.x or cy != position.y:
 		position = Vector2(cx, cy)
 
