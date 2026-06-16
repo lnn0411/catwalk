@@ -21,8 +21,8 @@ var cat_data
 @export var idle_scale_factor: float = 0.88  # 缩放因子：微调待机图片比例（如果画大了，代码自动缩小）
 @export var turn_scale_factor: float = 0.85  # 再次调低转身缩放，确保转体时视觉尺寸平滑一致
 @export var turn_speed_ratio: float = 0.30   # 移动中转身的速度比率（默认 30% 速度，防止完全刹车或太空步）
-@export var move_turn_interval: float = 0.06 # 移动中转身单帧间隔秒数（正面帧会自动乘 1.5 倍）
-@export var static_turn_interval: float = 0.10 # 原地/静态转身单帧间隔秒数
+@export var move_turn_interval: float = 0.12 # 移动中转身单帧间隔秒数（正面帧会自动乘 1.5 倍）
+@export var static_turn_interval: float = 0.18 # 原地/静态转身单帧间隔秒数
 
 var rng: RandomNumberGenerator
 var timer: Timer
