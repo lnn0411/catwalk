@@ -16,6 +16,7 @@ func save_all() -> void:
 	_write_hatch()
 	_write_currency()
 	_write_achievements()
+	_write_relinquish()
 	_config.save(SAVE_PATH)
 
 func load_and_apply() -> void:
@@ -24,11 +25,16 @@ func load_and_apply() -> void:
 	if err != OK:
 		_config.clear()
 
+	# 周重置：本地周一 00:00 跨越后清空本周心动花瓣累计并顺延重置点。
+	_check_week_reset()
+
 	_is_applying = true
 	StepEngine.apply_save(_read_steps())
 	EnergyEngine.apply_save(_read_energy())
 	HatchEngine.apply_save(_read_hatch())
-	CurrencyManager.apply_save(_read_currency())
+	var currency_data := _read_currency()
+	currency_data["love_petals"] = int(_config.get_value("relinquish", "love_petals", 0))
+	CurrencyManager.apply_save(currency_data)
 	AchievementSystem.apply_save(_read_achievements())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
@@ -38,6 +44,7 @@ func load_and_apply() -> void:
 
 func reset_all() -> void:
 	_config.clear()
+	_config.erase_section("relinquish")
 	_config.save(SAVE_PATH)
 	_is_applying = true
 	StepEngine.apply_save({})
@@ -197,6 +204,55 @@ func _read_achievements() -> Dictionary:
 		"cat_streak_checked_today": _config.get_value("achievements", "cat_streak_checked_today", ""),
 		"midnight_accessed": _config.get_value("achievements", "midnight_accessed", false),
 	}
+
+# ── GDD v2.17 Relinquish section ──
+
+func _read_relinquish() -> Dictionary:
+	return {
+		"love_petals": int(_config.get_value("relinquish", "love_petals", 0)),
+		"backpack_max_capacity": int(_config.get_value("relinquish", "backpack_max_capacity", 24)),
+		"workshop_cached_energy": int(_config.get_value("relinquish", "workshop_cached_energy", 0)),
+		"surprise_box_ready": bool(_config.get_value("relinquish", "surprise_box_ready", false)),
+		"this_week_petals_gained": int(_config.get_value("relinquish", "this_week_petals_gained", 0)),
+		"week_reset_timestamp": int(_config.get_value("relinquish", "week_reset_timestamp", 0)),
+		"relinquished_event_ids": Array(_config.get_value("relinquish", "relinquished_event_ids", [])),
+	}
+
+func _write_relinquish() -> void:
+	# love_petals 来自 CurrencyManager，其他字段在关联模块创建后补全
+	if CurrencyManager:
+		_config.set_value("relinquish", "love_petals", int(CurrencyManager.love_petals))
+	# backpack_max_capacity 写入值由 PackageSystem 管理，此处保持已有值
+	if not _config.has_section_key("relinquish", "backpack_max_capacity"):
+		_config.set_value("relinquish", "backpack_max_capacity", 24)
+
+func _check_week_reset() -> void:
+	var now_unix: int = int(Time.get_unix_time_from_system())
+	var stored: int = int(_config.get_value("relinquish", "week_reset_timestamp", 0))
+	if stored == 0 or now_unix >= stored:
+		var next_monday: int = _next_monday_midnight_unix()
+		_config.set_value("relinquish", "week_reset_timestamp", next_monday)
+		if stored != 0:
+			_config.set_value("relinquish", "this_week_petals_gained", 0)
+
+func _next_monday_midnight_unix() -> int:
+	var dt: Dictionary = Time.get_datetime_dict_from_system()
+	# weekday: 0=Sunday,...,6=Saturday → 下周一 = (8 - weekday) % 7 天后
+	# 但 Godot 的 weekday 是 0=Sun,...,6=Sat。周一 = weekday 1。
+	var weekday: int = int(dt["weekday"])
+	var days_until_monday: int = (8 - weekday) % 7
+	if days_until_monday == 0:
+		days_until_monday = 7  # 如果今天是周一，下一个周一是 7 天后
+	var dt_dict: Dictionary = {
+		"year": int(dt["year"]),
+		"month": int(dt["month"]),
+		"day": int(dt["day"]),
+		"hour": 0,
+		"minute": 0,
+		"second": 0,
+	}
+	var today_start: int = int(Time.get_unix_time_from_datetime_dict(dt_dict))
+	return today_start + days_until_monday * 86400
 
 func _write_achievements() -> void:
 	var data: Dictionary = AchievementSystem.get_save_data()
