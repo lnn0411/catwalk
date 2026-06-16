@@ -288,11 +288,13 @@ func _update_sprite() -> void:
 	var fallback_path := "res://assets/temp/cats/cat_%s_%s.png" % [breed, fallback_anim]
 
 	if ResourceLoader.exists(formal_path):
-		_sprite.texture = load(formal_path)
+		var tex = load(formal_path)
+		if tex != null:
+			_sprite.texture = tex
 	elif _sprite.texture == null:
-		# 仅在还没有任何贴图时才用占位图兜底；已有贴图则保持上一帧，
-		# 绝不在正式美术图之间穿插占位图（那会高频闪烁）。
-		_sprite.texture = load(fallback_path)
+		var tex = load(fallback_path)
+		if tex != null:
+			_sprite.texture = tex
 
 func _physics_process(delta: float) -> void:
 	if is_moving:
