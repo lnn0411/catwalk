@@ -30,11 +30,11 @@ var _walk_frame: int = 0
 var _anim_time := 0.0
 var _step_phase := 0.0   # 走路步频相位（摇摆/颠步共用，随速度推进）
 var _cur_speed := 0.0    # 当前实际速度（加减速过渡）
-var _turn_tween: Tween   # 转身挤压翻转动画
+var _turn_tween: Tween   # 转身翻转/过渡动画
+var _turn_playing := false  # 转身过渡帧播放中（锁住走路换帧防打架）
 var _stuck_time := 0.0   # 撞障碍累计卡顿时长（超阈值就换方向）
 var _move_dir := Vector2.ZERO  # 当前移动方向（平滑转向，走曲线不走折线）
 var _bounce_tween: Tween   # 点击弹跳，防重复叠加
-var _is_turning := false   # 是否正在播放转身过渡帧动画
 # 朝向（修复：CharacterBody2D 不支持负 scale——物理服务器会正交规范化变换，
 # move_and_slide 时视觉与物理不一致，移动中位置漂移/瞬移="走着走着消失"。
 # 翻面一律走 _sprite.flip_h，根节点 scale 永远保持 (1,1)）
@@ -42,54 +42,63 @@ var _facing_left := false
 
 # 公有：按水平方向设置朝向（CatSpawner 入场时会在 add_child 前调用，
 # 此时 _sprite 尚未创建，先存状态、_ready 时应用）
-# 转向：若存在 `turn_00~04` 转身序列帧，则播放丝滑过渡帧动画（左转正放，右转倒放）；
-# 否则，退回到 2D 瞬间翻转 + 弹性回弹手感补充。
+# 转向：不再瞬间镜像翻转——做一个"横向挤压→翻面→弹回"的小动画，
+# 模拟猫转身的视觉（squash 翻转法，2帧贴图也能有转身感）。
 func _face_to(dx: float) -> void:
 	if absf(dx) < 0.001:
 		return
 	var want_left: bool = dx < 0.0
-	if want_left == _facing_left and _sprite != null:
+	if want_left == _facing_left and _sprite != null and _sprite.flip_h == want_left:
 		return  # 朝向没变，不重复播
+	if _turn_playing:
+		_facing_left = want_left  # 转身动画进行中，只更新目标朝向，不打断
+		return
 	_facing_left = want_left
 	if _sprite == null:
 		return
+	# 优先：若该品种有转身过渡帧（turn_00~04），播"侧→正→侧"序列（库洛洛补帧后自动启用）。
+	# 没有则回退到瞬间翻转+回弹。回退保护：图未补/路径不对都不会报错或空白。
+	if _has_turn_frames():
+		_play_turn_sequence(want_left)
+		return
 	if _turn_tween and _turn_tween.is_valid():
 		_turn_tween.kill()
-		
-	var formal_breed := breed
-	if formal_breed == "orange":
-		formal_breed = "orange_tabby"
-		
-	var turn_path_base := "res://assets/art/cats/%s/turn_00.png" % formal_breed
-	if ResourceLoader.exists(turn_path_base):
-		_is_turning = true
-		_turn_tween = create_tween()
-		
-		# 转身序列帧：左转(正序 0->4)，右转(倒序 4->0)
-		var frames := [0, 1, 2, 3, 4]
-		if not _facing_left:
-			frames.reverse()
-			
-		for i in range(frames.size()):
-			var f_idx = frames[i]
-			var path := "res://assets/art/cats/%s/turn_%02d.png" % [formal_breed, f_idx]
-			_turn_tween.tween_callback(func() -> void:
-				if _sprite:
-					_sprite.texture = load(path)
-					_sprite.flip_h = false # 过渡帧本身已自带对称，无需再 flip_h
-			)
-			_turn_tween.tween_interval(0.06) # 每帧播放 0.06s (总长 0.3s)
-			
+	# 干净利落翻转：瞬间换朝向 + 轻微弹性回弹给手感（不压扁假装转身）。
+	_sprite.flip_h = _facing_left
+	_sprite.scale.x = 0.86
+	_turn_tween = create_tween()
+	_turn_tween.tween_property(_sprite, "scale:x", 1.0, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+# 品种目录名（orange→orange_tabby，其余同名）
+func _breed_dir() -> String:
+	return "orange_tabby" if breed == "orange" else breed
+
+# 是否存在转身过渡帧（只查首帧，存在即认为整组就绪）
+func _has_turn_frames() -> bool:
+	return ResourceLoader.exists("res://assets/art/cats/%s/turn_00.png" % _breed_dir())
+
+# 播放转身过渡序列：左转正序 turn_00→04，右转倒序 turn_04→00（库洛洛只画一套）。
+# 播放期间锁住走路换帧（_turn_playing），播完落到目标朝向并恢复。
+func _play_turn_sequence(to_left: bool) -> void:
+	if _turn_tween and _turn_tween.is_valid():
+		_turn_tween.kill()
+	_turn_playing = true
+	_sprite.scale.x = 1.0
+	_sprite.flip_h = false  # 转身帧本身已画好朝向，不用镜像
+	var dir := _breed_dir()
+	var order := [0, 1, 2, 3, 4] if to_left else [4, 3, 2, 1, 0]
+	_turn_tween = create_tween()
+	for idx in order:
+		var path := "res://assets/art/cats/%s/turn_%02d.png" % [dir, idx]
 		_turn_tween.tween_callback(func() -> void:
-			_is_turning = false
-			_update_sprite() # 播放完毕，刷新回标准步态
-		)
-	else:
-		# 干净利落翻转：瞬间换朝向 + 轻微弹性回弹给手感（不压扁假装转身）。
-		_sprite.flip_h = _facing_left
-		_sprite.scale.x = 0.86
-		_turn_tween = create_tween()
-		_turn_tween.tween_property(_sprite, "scale:x", 1.0, 0.14).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			if _sprite and ResourceLoader.exists(path):
+				_sprite.texture = load(path))
+		_turn_tween.tween_interval(0.05)
+	# 播完：落到目标朝向（之后走路帧由 _update_sprite 接管，靠 flip_h 表现左右）
+	_turn_tween.tween_callback(func() -> void:
+		_turn_playing = false
+		if _sprite:
+			_sprite.flip_h = _facing_left)
 
 # 兼容旧调用名（CatSpawner 入场等处用 face_direction）
 func face_direction(dx: float) -> void:
@@ -146,15 +155,14 @@ func _process(delta: float) -> void:
 	if _sprite == null:
 		return
 	if is_moving:
-		# 转身动画进行中时，不写 scale（让 _face_to 的挤压翻转独占，否则被覆盖）
-		var turning: bool = _turn_tween != null and _turn_tween.is_valid()
-		# 10帧贴图已自带腿部动作——代码动效退为"轻微辅助"，避免贴图动+代码晃的双重运动。
+		# 转身过渡播放时，走路动效全让位（不写 rotation/position/scale），让转身帧干净显示
+		var turning: bool = _turn_playing or (_turn_tween != null and _turn_tween.is_valid())
 		var speed_ratio: float = clampf(_cur_speed / maxf(move_speed, 1.0), 0.0, 1.0)
 		_step_phase += delta * lerpf(5.0, 9.0, speed_ratio)
-		var cycle := sin(_step_phase)
-		_sprite.rotation = cycle * 0.025 * speed_ratio
-		_sprite.position.y = -absf(cycle) * 2.0 * speed_ratio
 		if not turning:
+			var cycle := sin(_step_phase)
+			_sprite.rotation = cycle * 0.025 * speed_ratio
+			_sprite.position.y = -absf(cycle) * 2.0 * speed_ratio
 			var ss := (absf(cycle) - 0.5) * 0.02 * speed_ratio
 			_sprite.scale = Vector2(1.0 - ss, 1.0 + ss)
 	else:
@@ -212,8 +220,10 @@ func _schedule_wander() -> void:
 	timer.start(pause)
 
 func _update_sprite() -> void:
-	if _sprite == null or _is_turning:
+	if _sprite == null:
 		return
+	if _turn_playing:
+		return  # 转身过渡帧播放中，不被走路换帧覆盖
 
 	# 1. 动态自适应确定当前品种的最大序列帧数（自动扫描文件夹下 idle_*.png 的实际数量）
 	var formal_breed := breed
