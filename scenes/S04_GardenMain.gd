@@ -139,14 +139,22 @@ func _build_parallax_background() -> void:
 	bg_color.z_index = -10
 	garden_layer.add_child(bg_color)
 
-	# 2. 三层视差滚动叠放（恢复原版 Parallax 保证图层对齐与多层横向景深）
-	var parallax := ParallaxBackground.new()
-	parallax.scroll_base_scale = Vector2.ONE
-	garden_layer.add_child(parallax)
-
-	_add_background_layer(parallax, Vector2(0.05, 0.0), GardenBackground.LAYER_FAR)
-	_add_background_layer(parallax, Vector2(0.3, 0.0), GardenBackground.LAYER_MID)
-	_add_background_layer(parallax, Vector2(0.8, 0.0), GardenBackground.LAYER_NEAR)
+	# 2. 三层花园直接 Sprite2D 叠放（不使用 ParallaxBackground，防止 SubViewport 隔离下不渲染导致背景完全消失）
+	var layer_paths := [
+		"res://assets/art/garden/layers/garden_far.png",
+		"res://assets/art/garden/layers/garden_mid.png",
+		"res://assets/art/garden/layers/garden_near.png",
+	]
+	for i in range(layer_paths.size()):
+		var tex := load(layer_paths[i]) as Texture2D
+		if tex == null:
+			push_error("[Garden] 失败加载背景层: " + layer_paths[i])
+			continue
+		var sprite := Sprite2D.new()
+		sprite.texture = tex
+		sprite.centered = false
+		sprite.z_index = i  # far=0 mid=1 near=2，确保叠放顺序明确
+		garden_layer.add_child(sprite)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
