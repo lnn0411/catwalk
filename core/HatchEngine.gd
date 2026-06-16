@@ -3,6 +3,8 @@ extends Node
 signal hatch_started(slot: int)
 signal hatch_progress(slot: int, progress: float)
 signal hatch_complete(cat_data)
+signal workshop_activated()
+signal hatched_activated()
 
 const CatData := preload("res://core/CatData.gd")
 const SLOT_COUNT := 4
@@ -18,6 +20,15 @@ var epic_pity_count: int = 0
 var legendary_pity_count: int = 0
 var rng := RandomNumberGenerator.new()
 var _fill_timer: Timer  # 填蛋定时兜底（步数静止时池能量也能流进蛋）
+var _assign_timer: Timer  # 0.5s 自动落蛋延迟（检测到空槽后延迟装填）
+var _was_workshop_mode: bool = false  # 工坊/孵化态切换的去抖：仅在跨态时派发信号
+
+# GDD v2.17：工坊态/孵化态双轨切换 + 能量溢出链
+const WORKSHOP_CACHE_CAP := 3000.0
+var workshop_cached_energy: float = 0.0   # 工坊态半满能量冻结缓存（切回孵化态保留不丢）
+var surprise_box_ready: bool = false      # 惊喜礼盒是否 Ready（工坊缓存灌满触发）
+var backpack_max_capacity: int = 24       # 当前猫包上限
+var has_tutorial_first_egg: bool = false  # 是否已触发新手首蛋
 
 # 看广告加速（GDD v2.14 §3.7/§12.2）：每次补 3000 能量（≈30分钟步行），每日 3 次。
 # v1.0 纯客户端计数器，跨天按本地日期重置。
@@ -30,6 +41,13 @@ func _ready() -> void:
 	rng.randomize()
 	_ensure_slots()
 	_update_unlocks()
+	# 自动落蛋定时（0.5s 一次性）：_assign_next_empty_slots 检测到空槽后延迟装填。
+	_assign_timer = Timer.new()
+	_assign_timer.wait_time = 0.5
+	_assign_timer.one_shot = true
+	_assign_timer.timeout.connect(_do_assign_empty_slots)
+	add_child(_assign_timer)
+	_was_workshop_mode = is_workshop_mode()
 	_assign_next_empty_slots()
 	if StepEngine and not StepEngine.steps_updated.is_connected(_on_steps_updated):
 		StepEngine.steps_updated.connect(_on_steps_updated)
@@ -146,8 +164,13 @@ func apply_save(data: Dictionary) -> void:
 	legendary_pity_count = max(int(data.get("legendary_pity_count", 0)), 0)
 	ad_speedup_count = max(int(data.get("ad_speedup_count", 0)), 0)
 	ad_speedup_date = String(data.get("ad_speedup_date", ""))
+	workshop_cached_energy = clamp(float(data.get("workshop_cached_energy", 0.0)), 0.0, WORKSHOP_CACHE_CAP)
+	surprise_box_ready = bool(data.get("surprise_box_ready", false))
+	backpack_max_capacity = max(int(data.get("backpack_max_capacity", backpack_max_capacity)), 1)
+	has_tutorial_first_egg = bool(data.get("has_tutorial_first_egg", false))
 	_ensure_slots()
 	_update_unlocks()
+	_was_workshop_mode = is_workshop_mode()
 	_assign_next_empty_slots()
 	_emit_all_progress()
 
@@ -169,6 +192,10 @@ func get_save_data() -> Dictionary:
 		"legendary_pity_count": legendary_pity_count,
 		"ad_speedup_count": ad_speedup_count,
 		"ad_speedup_date": ad_speedup_date,
+		"workshop_cached_energy": workshop_cached_energy,
+		"surprise_box_ready": surprise_box_ready,
+		"backpack_max_capacity": backpack_max_capacity,
+		"has_tutorial_first_egg": has_tutorial_first_egg,
 	}
 
 func get_unlocked_species() -> Array:
@@ -196,6 +223,11 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 # 只在池能"完整孵化一颗蛋"时才扣，余额留在池里（避免清零，对齐 HUD 余量显示）。
 func _fill_slots_from_pool() -> void:
 	if EnergyEngine == null:
+		return
+	_update_mode()
+	# 工坊态（背包已满且无蛋在孵）：能量转入工坊缓存，不再灌蛋（GDD v2.17 能量溢出链）。
+	if is_workshop_mode():
+		_fill_workshop_cache()
 		return
 	# 渐进灌注（设计决策 2026-06-12）：池里有多少灌多少，蛋随走路实时增长，
 	# GDD §8.2 蛋壳 4 阶段渐进视觉得以生效。
@@ -369,3 +401,92 @@ func _emit_slot_progress(slot_id: int) -> void:
 func _emit_all_progress() -> void:
 	for i in range(slots.size()):
 		_emit_slot_progress(i)
+
+# ── GDD v2.17 工坊态/孵化态双轨切换 ──
+
+func is_workshop_mode() -> bool:
+	# 工坊态条件：猫包已满（cats.size() >= backpack_max_capacity）且无 incubating 槽
+	return cats.size() >= backpack_max_capacity and _get_active_filling_slot() == -1
+
+func _update_mode() -> void:
+	var workshop_now: bool = is_workshop_mode()
+	if workshop_now and not _was_workshop_mode:
+		workshop_activated.emit()
+	elif not workshop_now and _was_workshop_mode:
+		hatched_activated.emit()
+	_was_workshop_mode = workshop_now
+
+# ── GDD v2.17 能量溢出链（工坊态）──
+
+func _fill_workshop_cache() -> void:
+	if EnergyEngine == null:
+		return
+	if surprise_box_ready:
+		# 礼盒 Ready 未拆 → 溢出链：主池(15000) → 备用槽(6000) → 硬截断
+		# 能量已在池中积累，不再流入工坊
+		return
+	var missing: float = WORKSHOP_CACHE_CAP - workshop_cached_energy
+	if missing <= 0.0:
+		return
+	# 从主池取能量注入工坊缓存
+	while missing > 0.0:
+		var available: float = EnergyEngine.energy_pool
+		if available <= 0.0:
+			break
+		var amount: float = minf(available, missing)
+		EnergyEngine.spend_pool(amount)
+		workshop_cached_energy += amount
+		missing -= amount
+	if workshop_cached_energy >= WORKSHOP_CACHE_CAP:
+		workshop_cached_energy = WORKSHOP_CACHE_CAP
+		surprise_box_ready = true
+
+func is_energy_overflowing() -> bool:
+	# 主池满 + 备用槽满 + 礼盒 Ready 未拆 → 硬截断预警
+	return surprise_box_ready \
+		and (EnergyEngine == null or EnergyEngine.energy_pool >= EnergyEngine.MAX_ENERGY_POOL) \
+		and (EnergyEngine == null or EnergyEngine.reserve_tank >= EnergyEngine.RESERVE_TANK_CAP)
+
+# ── GDD v2.17 0.5s 自动落蛋 + 新手首蛋 ──
+
+func _do_assign_empty_slots() -> void:
+	# 0.5s Timer 回调：执行实际的蛋装填
+	for i in range(SLOT_COUNT):
+		var slot: Dictionary = slots[i]
+		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "empty":
+			var species: String = _roll_next_species()
+			slot["status"] = "incubating"
+			slot["energy"] = 0.0
+			slot["max_energy"] = float(CatData.get_hatch_cost(species))
+			slot["species"] = species
+			slots[i] = slot
+			hatch_started.emit(i)
+			_emit_slot_progress(i)
+
+func _assign_next_empty_slots() -> void:
+	if hatched_count == 0 and not has_tutorial_first_egg:
+		_assign_tutorial_first_egg()
+		return
+	# 检测是否有空槽，有则启动 0.5s Timer
+	var any_empty: bool = false
+	for i in range(SLOT_COUNT):
+		var slot: Dictionary = slots[i]
+		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "empty":
+			any_empty = true
+			break
+	if any_empty and _assign_timer.is_stopped():
+		_assign_timer.start()
+
+func _assign_tutorial_first_egg() -> void:
+	# 新手首蛋：slot[0] 自动落入橘猫蛋，直接灌满 4250 能量 → Ready 态
+	if slots.size() < 1:
+		return
+	var slot: Dictionary = slots[0]
+	slot["status"] = "ready"
+	slot["energy"] = float(CatData.HATCH_ENERGY_REQUIRED)
+	slot["max_energy"] = float(CatData.HATCH_ENERGY_REQUIRED)
+	slot["species"] = CatData.BREED_ORANGE
+	slots[0] = slot
+	has_tutorial_first_egg = true
+	hatch_started.emit(0)
+	_emit_slot_progress(0)
