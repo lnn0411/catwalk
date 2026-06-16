@@ -94,16 +94,27 @@ func _process(delta: float) -> void:
 	if _sprite == null:
 		return
 	if is_moving:
-		# 走路：左右轻摇 + 颠步起伏（核心优化：频率提升至 18.0，与 0.16s 帧率完美对齐，行走更自然）
-		_sprite.rotation = sin(_anim_time * 18.0) * 0.05
-		_sprite.position.y = -absf(sin(_anim_time * 18.0)) * 2.5
-		_sprite.scale = Vector2.ONE
+		# 走路：左右轻摇 (Waddle) + 步频起伏 (Bobbing) + Q弹挤压拉伸 (Squash & Stretch)
+		var cycle := sin(_anim_time * 18.0)
+		_sprite.rotation = cycle * 0.08  # 左右重心摇摆 (waddle)
+		
+		# 更加明显的颠腿起伏 (Bobbing)
+		var bounce := -absf(cycle) * 6.0
+		_sprite.position.y = bounce
+		
+		# 落地挤压，腾空拉伸 (Squash & Stretch)
+		var stretch_y := 1.0 + (absf(cycle) - 0.5) * 0.06
+		var stretch_x := 1.0 - (absf(cycle) - 0.5) * 0.06
+		_sprite.scale = Vector2(stretch_x, stretch_y)
 	else:
 		# idle：缓慢呼吸（y 轴 1.0~1.03），轻微到"感觉活着"即可
 		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
 		_sprite.position.y = lerpf(_sprite.position.y, 0.0, delta * 8.0)
 		var breath := 1.0 + (sin(_anim_time * 1.6) + 1.0) * 0.5 * 0.03
 		_sprite.scale = Vector2(1.0, breath)
+	
+	# 刷新底层扁平椭圆阴影的实时重绘
+	queue_redraw()
 
 func _schedule_wander() -> void:
 	timer.start(rng.randf_range(3.0, 6.0))
@@ -202,3 +213,26 @@ func _play_click_feedback() -> void:
 	ht.tween_property(heart, "position:y", heart.position.y - 44.0, 0.7).set_ease(Tween.EASE_OUT)
 	ht.tween_property(heart, "modulate:a", 0.0, 0.7).set_ease(Tween.EASE_IN)
 	ht.chain().tween_callback(heart.queue_free)
+
+# ============ 动态椭圆阴影绘制 ============
+func _draw() -> void:
+	# 绘制一个扁平椭圆半透明黑影子，坐落在猫咪脚底中心
+	var shadow_color := Color(0, 0, 0, 0.16)
+	var bounce_ratio := 1.0
+	if is_moving:
+		# 向上跳起时，影子微弱缩小变淡
+		bounce_ratio = clampf(1.0 - (absf(_sprite.position.y) / 18.0) * 0.25, 0.75, 1.0)
+	
+	# 阴影尺寸根据猫咪呼吸/跳跃高度联动缩放
+	var shadow_size := Vector2(35.0 * bounce_ratio, 9.0 * bounce_ratio)
+	# 阴影圆心位于猫咪脚底下边缘
+	draw_oval(Vector2(0, 60.0), shadow_size, shadow_color)
+
+# 绘制扁平椭圆形影子的辅助方法（Godot 4 兼容）
+func draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
+	var points := PackedVector2Array()
+	var steps := 24
+	for i in range(steps):
+		var angle := float(i) / steps * TAU
+		points.append(center + Vector2(cos(angle) * size.x, sin(angle) * size.y))
+	draw_colored_polygon(points, color)
