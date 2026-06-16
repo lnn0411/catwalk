@@ -119,7 +119,7 @@ func _on_wander_tick() -> void:
 	var offset := Vector2(cos(wander_angle), sin(wander_angle)) * wander_distance
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 100.0, 1900.0)
-	target_position.y = clampf(target_position.y, 116.0, 1016.0)
+	target_position.y = clampf(target_position.y, 800.0, 1050.0) # 核心修复：限制 Y 轴活动范围在地面草坪，防止猫咪起飞到天上（穿模）
 	is_moving = true
 	face_direction(target_position.x - position.x)
 
@@ -170,7 +170,7 @@ func _physics_process(delta: float) -> void:
 			_schedule_wander()
 	# 自愈保险：任何原因出界都拉回活动范围（仅出界时写，避免每帧赋值）
 	var cx := clampf(position.x, 100.0, 1900.0)
-	var cy := clampf(position.y, 116.0, 1016.0)
+	var cy := clampf(position.y, 800.0, 1050.0) # 核心修复：限制物理自愈范围在地面草坪上，防飞天
 	if cx != position.x or cy != position.y:
 		position = Vector2(cx, cy)
 
