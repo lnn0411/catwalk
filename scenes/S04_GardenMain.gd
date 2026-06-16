@@ -561,14 +561,15 @@ func _is_in_garden(pos: Vector2) -> bool:
 
 # 横版花园相机：按真实视口尺寸算缩放，让世界高度恰好填满可视高度（消除上下黑边）；
 # 世界比屏幕宽 → 只支持左右滚动，竖直居中锁定。aspect=expand 下视口尺寸随设备变化，
-# 故用 get_viewport_rect() 取真实尺寸，不写死。
+# 故用 get_viewport() 取真实尺寸，不写死。
 func _setup_camera() -> void:
 	if _camera == null:
 		return
-	# 用 SubViewport 的真实尺寸（720 × (1280-HUD)）算 zoom——
-	# SubViewportContainer 顶部被 HUD 占 130px，视口实际只有 1150 高。
-	# 之前按 1280 算 zoom，导致背景按错误比例显示、下方露空（棋盘格根因）。
-	var view: Vector2 = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
+	# 核心修复：读取相机所在 SubViewport 的真实高度和宽度，动态适配拉伸与屏幕比，消除上下棋盘格
+	var view: Vector2 = _camera.get_viewport().get_visible_rect().size
+	if view.y <= 0.0:
+		view = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
+	
 	# 虚拟花园尺寸: 2048x1536, 竖屏希望高度填满
 	if view.y > 0.0 and WORLD_HEIGHT > 0.0:
 		_cam_zoom = view.y / WORLD_HEIGHT
@@ -583,7 +584,11 @@ func _setup_camera() -> void:
 func _clamp_camera_to_world() -> void:
 	if _camera == null:
 		return
-	var view: Vector2 = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)  # 同 _setup_camera：扣掉 HUD 的真实视口
+	# 核心修复：读取相机所在 SubViewport 的真实高度和宽度
+	var view: Vector2 = _camera.get_viewport().get_visible_rect().size
+	if view.y <= 0.0:
+		view = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
+		
 	var half_w: float = (view.x * 0.5) / max(_cam_zoom, 0.0001)
 	var min_x: float = half_w
 	var max_x: float = WORLD_WIDTH - half_w
