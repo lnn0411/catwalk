@@ -159,11 +159,12 @@ func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, la
 func _build_hud() -> void:
 	var root := Control.new()
 	root.name = "HUD"
-	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	# 全屏 HUD 容器放行：只让真正的按钮/导航(子控件)拦截点击，
 	# 空白区域事件穿透到花园(拖动 + 点猫拾取)。
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
+	# 核心修复：必须先 add_child 进场景树，再设置全屏锚点，否则在不同真机分辨率下无法拉伸对齐宽度！
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	# 顶栏：程序绘制悬浮卡（暖白圆角+柔影），底垫纸纹理模拟手绘纸张感
 	var top_paper := TextureRect.new()
@@ -205,8 +206,15 @@ func _build_hud() -> void:
 	var debug_btn := Button.new()
 	debug_btn.text = "DBG"
 	debug_btn.flat = true
-	debug_btn.position = Vector2(670.0, 8.0)
-	debug_btn.size = Vector2(44.0, 36.0)
+	# 核心修复：DBG 按钮采用右对齐锚点，动态适应不同真机/模拟器屏幕宽度
+	debug_btn.anchor_left = 1.0
+	debug_btn.anchor_right = 1.0
+	debug_btn.anchor_top = 0.0
+	debug_btn.anchor_bottom = 0.0
+	debug_btn.offset_left = -54.0
+	debug_btn.offset_right = -10.0
+	debug_btn.offset_top = 8.0
+	debug_btn.offset_bottom = 44.0
 	debug_btn.add_theme_color_override("font_color", Color.WHITE)
 	debug_btn.add_theme_font_size_override("font_size", 14)
 	var red_bg := StyleBoxFlat.new()
@@ -217,8 +225,15 @@ func _build_hud() -> void:
 	root.add_child(debug_btn)
 
 	var top_row := HBoxContainer.new()
-	top_row.position = Vector2(24.0, 60.0)
-	top_row.size = Vector2(656.0, 60.0)
+	# 核心修复：顶栏内容 HBoxContainer 采用左右等比拉伸锚点，彻底解决在真机/高分辨率下顶栏“左右短了”或偏离的问题
+	top_row.anchor_left = 0.0
+	top_row.anchor_right = 1.0
+	top_row.anchor_top = 0.0
+	top_row.anchor_bottom = 0.0
+	top_row.offset_left = 24.0
+	top_row.offset_right = -24.0
+	top_row.offset_top = 60.0
+	top_row.offset_bottom = 120.0
 	top_row.add_theme_constant_override("separation", 16)
 	root.add_child(top_row)
 
