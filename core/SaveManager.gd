@@ -141,10 +141,11 @@ func _read_hatch() -> Dictionary:
 		"legendary_pity_count": int(_config.get_value("hatch", "legendary_pity_count", 0)),
 		"ad_speedup_count": int(_config.get_value("hatch", "ad_speedup_count", 0)),
 		"ad_speedup_date": String(_config.get_value("hatch", "ad_speedup_date", "")),
+		"has_first_hatch_done": bool(_config.get_value("hatch", "has_first_hatch_done", false)),
 	}
 
 func _write_hatch() -> void:
-	var data := HatchEngine.get_save_data()
+	var data: Dictionary = HatchEngine.get_save_data()
 	var cats: Array = Array(data.get("cats", []))
 	_clear_cat_sections()
 	_config.set_value("hatch", "slots", Array(data.get("slots", [])))
