@@ -114,7 +114,7 @@ func _setup_entrance(cat_node) -> void:
 	var target: Vector2 = cat_node.position  # _pick_spawn_position 已选好镜头内目标
 	var from_left: bool = rng.randf() < 0.5
 	var start_x: float = (view.position.x - 90.0) if from_left else (view.end.x + 90.0)
-	var start_y: float = clampf(target.y + rng.randf_range(-50.0, 50.0), 800.0, 1050.0) # 核心修复：入场限制在地面草坪，防飞天
+	var start_y: float = clampf(target.y + rng.randf_range(-50.0, 50.0), 300.0, 640.0) # 核心修复：入场限制在地面草坪，防飞天
 	cat_node.position = Vector2(start_x, start_y)
 	cat_node.target_position = target
 	cat_node.is_moving = true
@@ -127,8 +127,8 @@ func _pick_spawn_position(in_view: bool = true) -> Vector2:
 	# wander 同款世界限界（出生点不能超出猫的活动范围）
 	var min_x := 100.0
 	var max_x := 1900.0
-	var min_y := 800.0   # 核心修复：出生限制在地面草坪，防飞天
-	var max_y := 1050.0  # 核心修复：出生限制在地面草坪，防飞天
+	var min_y := 300.0   # 核心修复：出生限制在地面草坪，防飞天
+	var max_y := 640.0  # 核心修复：出生限制在地面草坪，防飞天
 	# in_view=true：出生在【当前镜头可视范围】内（新孵化猫的入场目标/保底首只）。
 	# in_view=false：全花园随机散布（重启恢复的猫——它们一直住在这里，
 	# 不该全挤在首屏，玩家拖动镜头逐渐发现才自然）。
@@ -146,8 +146,8 @@ func _pick_spawn_position(in_view: bool = true) -> Vector2:
 				min_x = 100.0
 				max_x = 1900.0
 			if min_y >= max_y:
-				min_y = 800.0
-				max_y = 1050.0
+				min_y = 300.0
+				max_y = 640.0
 	var position := Vector2.ZERO
 	if not in_view:
 		# 刻意避开镜头区：恢复的猫要"拖动才发现"，不赌随机概率。

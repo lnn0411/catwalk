@@ -205,7 +205,7 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 	var offset := Vector2(cos(ang) * 1.0, sin(ang) * 0.55) * d
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 120.0, 1880.0)
-	target_position.y = clampf(target_position.y, 620.0, 1080.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
+	target_position.y = clampf(target_position.y, 300.0, 640.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
 	is_moving = true
 	_face_to(target_position.x - position.x)
 
@@ -222,7 +222,7 @@ func _on_wander_tick() -> void:
 	var offset := Vector2(cos(wander_angle) * 1.0, sin(wander_angle) * 0.55) * wander_distance
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 120.0, 1880.0)
-	target_position.y = clampf(target_position.y, 620.0, 1080.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
+	target_position.y = clampf(target_position.y, 300.0, 640.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
 	is_moving = true
 	_face_to(target_position.x - position.x)
 
@@ -337,7 +337,7 @@ func _physics_process(delta: float) -> void:
 			_schedule_wander()
 	# 自愈保险：任何原因出界都拉回活动范围（仅出界时写，避免每帧赋值）
 	var cx := clampf(position.x, 100.0, 1900.0)
-	var cy := clampf(position.y, 620.0, 1080.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
+	var cy := clampf(position.y, 300.0, 640.0) # 限制在 880，配合容器偏移 256.0，使得全局坐标 1136.0 完好呈现在视口 1150 高度内，防底部切边
 	if cx != position.x or cy != position.y:
 		position = Vector2(cx, cy)
 
@@ -372,9 +372,17 @@ func _play_click_feedback() -> void:
 
 # ============ 动态椭圆阴影绘制 ============
 func _draw() -> void:
-	# 【临时测试】完全关闭影子，用于定性"泥坑"是不是影子造成的。
-	# 泥坑消失=是影子；泥坑还在=与影子无关(背景图/裁切)。
-	return
+	# 脚下落地影：低透明度+偏冷绿暗色（非纯黑），叠在黄绿草地上不混出"脏泥坑"。
+	var shadow_color := Color(0.12, 0.14, 0.06, 0.11)
+	var bounce_ratio := 1.0
+	if is_moving:
+		# 向上跳起时，影子微弱缩小变淡
+		bounce_ratio = clampf(1.0 - (absf(_sprite.position.y) / 18.0) * 0.25, 0.75, 1.0)
+	
+	# 阴影尺寸根据猫咪呼吸/跳跃高度联动缩放
+	var shadow_size := Vector2(30.0 * bounce_ratio, 7.0 * bounce_ratio)
+	# 阴影圆心位于猫咪脚底下边缘
+	draw_oval(Vector2(0, 60.0), shadow_size, shadow_color)
 
 # 绘制扁平椭圆形影子的辅助方法（Godot 4 兼容）
 func draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
