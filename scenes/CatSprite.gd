@@ -341,7 +341,7 @@ func _physics_process(delta: float) -> void:
 				if child != self and "is_moving" in child:
 					var d := position.distance_to(child.position)
 					if d < 100.0 and d > 0.1: # 100 像素内产生排斥力
-						var push := (position - child.position).normalized()
+						var push: Vector2 = (position - child.position).normalized()
 						separation += push * (1.0 - d / 100.0)
 						neighbors_count += 1
 		
