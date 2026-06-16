@@ -211,9 +211,9 @@ func _process(delta: float) -> void:
 	if formal_breed == "orange":
 		formal_breed = "orange_tabby"
 	
+	var turning: bool = _turn_playing or (_turn_tween != null and _turn_tween.is_valid())
+	
 	if is_moving:
-		# 转身过渡播放时，走路动效全让位（不写 rotation/position/scale），让转身帧干净显示
-		var turning: bool = _turn_playing or (_turn_tween != null and _turn_tween.is_valid())
 		var speed_ratio: float = clampf(_cur_speed / maxf(move_speed, 1.0), 0.0, 1.0)
 		_step_phase += delta * lerpf(5.0, 9.0, speed_ratio)
 		if not turning:
@@ -221,30 +221,45 @@ func _process(delta: float) -> void:
 			_sprite.rotation = cycle * 0.025 * speed_ratio
 			# 如果 Y 轴纵向移动分量大，增加踏步反弹高度，消除平移像"飘过去"的滑行鬼魂感
 			var vertical_bias := lerpf(1.0, 2.5, absf(_move_dir.y))
-			_sprite.position.y = -absf(cycle) * 2.0 * speed_ratio * vertical_bias
+			var bounce_y = -absf(cycle) * 2.0 * speed_ratio * vertical_bias
 			
 			var ss := (absf(cycle) - 0.5) * 0.02 * speed_ratio
 			var s_factor = walk_scale_factor * depth_scale
-			_sprite.scale = Vector2(s_factor * (1.0 - ss), s_factor * (1.0 + ss))
+			var final_y_scale = s_factor * (1.0 + ss)
+			_sprite.scale = Vector2(s_factor * (1.0 - ss), final_y_scale)
+			
+			# 透视缩放位移补偿：将缩放的物理中心锁定在脚底接触面（Y=60.0 像素处），
+			# 从而 100% 消除缩放时脚底由于和草地阴影剥离产生的“浮空、滑行、漂移”感！
+			_sprite.position.y = 60.0 * (1.0 - final_y_scale) + bounce_y
+		else:
+			# 移动转身中：同步应用深度透视和位移补偿，不做走路摇摆
+			var s_factor = turn_scale_factor * depth_scale
+			_sprite.scale = Vector2(s_factor, s_factor)
+			_sprite.position.y = 60.0 * (1.0 - s_factor)
 	else:
 		# idle 待机状态
 		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
-		_sprite.position.y = lerpf(_sprite.position.y, 0.0, delta * 8.0)
 		
-		if not (_turn_tween != null and _turn_tween.is_valid()):
+		if turning:
+			# 静态转身中：同步应用深度透视和位移补偿
+			var s_factor = turn_scale_factor * depth_scale
+			_sprite.scale = Vector2(s_factor, s_factor)
+			_sprite.position.y = 60.0 * (1.0 - s_factor)
+		else:
 			var idle_frames := _count_breed_frames(formal_breed)
 			var s_factor = idle_scale_factor * depth_scale
 			
 			if idle_frames > 1:
-				# ✨ 核心优化：既然我们已经有了主人给的 10 帧高保真手绘待机/呼吸序列，
-				# 我们就 100% 依赖手绘序列来展现自然的呼吸！
-				# 此时必须【禁用】代码里的程序化拉伸（breath），防止手绘呼吸与程序拉伸双重叠加，
-				# 导致猫咪停顿下来时像气球一样突兀地“吹胀、变大、忽大忽小”！
 				_sprite.scale = Vector2(s_factor, s_factor)
+				_sprite.position.y = 60.0 * (1.0 - s_factor)
 			else:
-				# 回退低配模式：若没有多帧序列，才用代码程序化拉伸
 				var breath := 1.0 + (sin(_anim_time * 1.6) + 1.0) * 0.5 * 0.03
-				_sprite.scale = Vector2(s_factor, s_factor * breath)
+				var final_y_scale = s_factor * breath
+				_sprite.scale = Vector2(s_factor, final_y_scale)
+				_sprite.position.y = 60.0 * (1.0 - final_y_scale)
+	
+	# 刷新底层扁平椭圆阴影的实时重绘
+	queue_redraw()
 	
 	# 刷新底层扁平椭圆阴影的实时重绘
 	queue_redraw()
