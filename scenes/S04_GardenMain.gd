@@ -178,6 +178,7 @@ func _build_hud() -> void:
 	var top_paper := TextureRect.new()
 	top_paper.texture = load("res://assets/temp/ui/paper_texture.png")
 	top_paper.stretch_mode = TextureRect.STRETCH_TILE
+	top_paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE # 核心修复：防止 Godot 4 默认按纹理大尺寸（768px高）拉伸覆盖上半屏幕！
 	top_paper.anchor_left = 0.0
 	top_paper.anchor_right = 1.0
 	top_paper.anchor_top = 0.0
