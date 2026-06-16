@@ -184,17 +184,21 @@ func _build_hud() -> void:
 	top_paper.anchor_right = 1.0
 	top_paper.anchor_top = 0.0
 	top_paper.anchor_bottom = 0.0
-	top_paper.offset_left = 10.0
-	top_paper.offset_right = -10.0
-	top_paper.offset_top = 8.0
-	top_paper.offset_bottom = HUD_HEIGHT - 2.0
+	top_paper.offset_left = 0.0
+	top_paper.offset_right = 0.0
+	top_paper.offset_top = 0.0
+	top_paper.offset_bottom = HUD_HEIGHT
 	top_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_paper)
 
 	var top_bar := Panel.new()
 	var top_style := StyleBoxFlat.new()
 	top_style.bg_color = Color(Palette.BG_CEMENT, 0.94)
-	top_style.set_corner_radius_all(20)
+	# 核心适配：与底部 UI 对齐（左右满边，底部带优雅圆角，顶部 flat）
+	top_style.corner_radius_bottom_left = 24
+	top_style.corner_radius_bottom_right = 24
+	top_style.corner_radius_top_left = 0
+	top_style.corner_radius_top_right = 0
 	top_style.border_width_bottom = 1
 	top_style.border_color = Palette.BORDER_DEFAULT
 	top_style.shadow_color = Palette.UI_SHADOW
@@ -205,10 +209,10 @@ func _build_hud() -> void:
 	top_bar.anchor_right = 1.0
 	top_bar.anchor_top = 0.0
 	top_bar.anchor_bottom = 0.0
-	top_bar.offset_left = 10.0
-	top_bar.offset_right = -10.0
-	top_bar.offset_top = 8.0
-	top_bar.offset_bottom = HUD_HEIGHT - 2.0
+	top_bar.offset_left = 0.0
+	top_bar.offset_right = 0.0
+	top_bar.offset_top = 0.0
+	top_bar.offset_bottom = HUD_HEIGHT
 	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_bar)
 
