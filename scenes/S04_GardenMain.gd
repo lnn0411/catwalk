@@ -132,12 +132,13 @@ func _build_garden_layer() -> void:
 			CatSpawner.cat_count_changed.connect(_on_cat_count_changed)
 
 func _build_parallax_background() -> void:
-	# 1. 添加一底面色块（纸张底色），防止背景各景深层边缘透明露空/出现棋盘格
-	var bg_color := ColorRect.new()
-	bg_color.color = Palette.BG_WARM_WHITE
-	bg_color.size = Vector2(WORLD_WIDTH, WORLD_HEIGHT)
-	bg_color.z_index = -10
-	garden_layer.add_child(bg_color)
+	# 1. 添加底图纸纹理 Sprite2D，防止背景各景深层边缘透明露空/出现棋盘格（用 Node2D 混排，防止 ColorRect 盖死场景）
+	var bg_sprite := Sprite2D.new()
+	bg_sprite.texture = load("res://assets/temp/ui/paper_texture.png")
+	bg_sprite.centered = false
+	bg_sprite.scale = Vector2(WORLD_WIDTH / 1408.0, WORLD_HEIGHT / 768.0)
+	bg_sprite.z_index = -10
+	garden_layer.add_child(bg_sprite)
 
 	# 2. 三层花园直接 Sprite2D 叠放（不使用 ParallaxBackground，防止 SubViewport 隔离下不渲染导致背景完全消失）
 	var layer_paths := [
