@@ -31,6 +31,7 @@ var _anim_time := 0.0
 var _step_phase := 0.0   # 走路步频相位（摇摆/颠步共用，随速度推进）
 var _cur_speed := 0.0    # 当前实际速度（加减速过渡）
 var _turn_tween: Tween   # 转身挤压翻转动画
+var _stuck_time := 0.0   # 撞障碍累计卡顿时长（超阈值就换方向）
 var _bounce_tween: Tween   # 点击弹跳，防重复叠加
 # 朝向（修复：CharacterBody2D 不支持负 scale——物理服务器会正交规范化变换，
 # move_and_slide 时视觉与物理不一致，移动中位置漂移/瞬移="走着走着消失"。
@@ -52,9 +53,8 @@ func _face_to(dx: float) -> void:
 		return
 	if _turn_tween and _turn_tween.is_valid():
 		_turn_tween.kill()
-	# 干净利落翻转：瞬间换朝向，配一个轻微的缩放回弹给个手感（不压扁假装转身）。
-	# 2D单视角贴图本质是镜像翻转，朴素利落反而比"压扁障眼法"自然。
-	# 真正的转身体积感需美术补侧→正→侧过渡帧，留待正式美术阶段。
+	# 干净利落翻转：瞬间换朝向 + 轻微弹性回弹给手感（不压扁假装转身）。
+	# 2D单视角贴图本质是镜像翻转，朴素利落比障眼法自然；真正转身体积感留待美术补帧。
 	_sprite.flip_h = _facing_left
 	_sprite.scale.x = 0.86
 	_turn_tween = create_tween()
@@ -136,6 +136,20 @@ func _process(delta: float) -> void:
 	
 	# 刷新底层扁平椭圆阴影的实时重绘
 	queue_redraw()
+
+# 撞障碍后：往"远离障碍"的方向偏着重选目标（在反方向±60°扇形里挑），
+# 避免立刻又撞上同一个东西。短距离试探，走得通再说。
+func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
+	var away := -blocked_dir
+	var base_angle := away.angle()
+	var ang := base_angle + rng.randf_range(-PI / 3.0, PI / 3.0)
+	var d := rng.randf_range(80.0, 200.0)
+	var offset := Vector2(cos(ang) * 1.0, sin(ang) * 0.55) * d
+	target_position = position + offset
+	target_position.x = clampf(target_position.x, 120.0, 1880.0)
+	target_position.y = clampf(target_position.y, 620.0, 1080.0)
+	is_moving = true
+	_face_to(target_position.x - position.x)
 
 func _on_wander_tick() -> void:
 	# 35% 原地小动作：转身张望 / 短暂发呆（不移动，添生气）
@@ -222,7 +236,24 @@ func _physics_process(delta: float) -> void:
 			target_speed = move_speed * maxf(dist / 80.0, 0.35)
 		_cur_speed = lerpf(_cur_speed, target_speed, delta * 6.0)
 		velocity = direction * _cur_speed
+		var before := position
 		move_and_slide()
+		# 撞障碍检测：实际移动远小于预期（被其他猫/边界挡住）→ 累计卡顿；
+		# 连续卡几帧就放弃当前目标、换个方向重新溜达（轻量避障，不做 A* 绕路）。
+		var moved := position.distance_to(before)
+		var expected := _cur_speed * delta
+		if expected > 1.0 and moved < expected * 0.4:
+			_stuck_time += delta
+			if _stuck_time > 0.25:
+				_stuck_time = 0.0
+				is_moving = false
+				_cur_speed = 0.0
+				velocity = Vector2.ZERO
+				# 立刻换个方向重选目标（_on_wander_tick 会避开，往反方向偏）
+				_pick_new_target_away_from(direction)
+				return
+		else:
+			_stuck_time = 0.0
 		if dist < 10.0:
 			is_moving = false
 			_cur_speed = 0.0
