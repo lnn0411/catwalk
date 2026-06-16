@@ -76,7 +76,7 @@ func _ready() -> void:
 	timer.timeout.connect(_on_wander_tick)
 
 	sprite_timer = Timer.new()
-	sprite_timer.wait_time = 0.3
+	sprite_timer.wait_time = 0.16 # 核心优化：将帧率从 0.3s (慢幻灯片) 提升至 0.16s (流畅行走步频)
 	sprite_timer.one_shot = false
 	add_child(sprite_timer)
 	sprite_timer.timeout.connect(_update_sprite)
@@ -94,9 +94,9 @@ func _process(delta: float) -> void:
 	if _sprite == null:
 		return
 	if is_moving:
-		# 走路：左右轻摇 + 颠步起伏（频率与步频感匹配）
-		_sprite.rotation = sin(_anim_time * 9.0) * 0.06
-		_sprite.position.y = -absf(sin(_anim_time * 9.0)) * 3.0
+		# 走路：左右轻摇 + 颠步起伏（核心优化：频率提升至 18.0，与 0.16s 帧率完美对齐，行走更自然）
+		_sprite.rotation = sin(_anim_time * 18.0) * 0.05
+		_sprite.position.y = -absf(sin(_anim_time * 18.0)) * 2.5
 		_sprite.scale = Vector2.ONE
 	else:
 		# idle：缓慢呼吸（y 轴 1.0~1.03），轻微到"感觉活着"即可
