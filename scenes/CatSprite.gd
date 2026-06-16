@@ -28,6 +28,8 @@ var _walk_frame: int = 0
 
 # —— M4 动画状态 ——
 var _anim_time := 0.0
+var _step_phase := 0.0   # 走路步频相位（摇摆/颠步共用，随速度推进）
+var _cur_speed := 0.0    # 当前实际速度（加减速过渡）
 var _bounce_tween: Tween   # 点击弹跳，防重复叠加
 # 朝向（修复：CharacterBody2D 不支持负 scale——物理服务器会正交规范化变换，
 # move_and_slide 时视觉与物理不一致，移动中位置漂移/瞬移="走着走着消失"。
@@ -94,18 +96,15 @@ func _process(delta: float) -> void:
 	if _sprite == null:
 		return
 	if is_moving:
-		# 走路：左右轻摇 (Waddle) + 步频起伏 (Bobbing) + Q弹挤压拉伸 (Squash & Stretch)
-		var cycle := sin(_anim_time * 18.0)
-		_sprite.rotation = cycle * 0.08  # 左右重心摇摆 (waddle)
-		
-		# 更加明显的颠腿起伏 (Bobbing)
-		var bounce := -absf(cycle) * 6.0
-		_sprite.position.y = bounce
-		
-		# 落地挤压，腾空拉伸 (Squash & Stretch)
-		var stretch_y := 1.0 + (absf(cycle) - 0.5) * 0.06
-		var stretch_x := 1.0 - (absf(cycle) - 0.5) * 0.06
-		_sprite.scale = Vector2(stretch_x, stretch_y)
+		# 10帧贴图已自带腿部动作——代码动效退为"轻微辅助"，避免贴图动+代码晃的双重运动。
+		# 步频/幅度随实际速度收放，三者共用 _step_phase 保持同步。
+		var speed_ratio: float = clampf(_cur_speed / maxf(move_speed, 1.0), 0.0, 1.0)
+		_step_phase += delta * lerpf(5.0, 9.0, speed_ratio)
+		var cycle := sin(_step_phase)
+		_sprite.rotation = cycle * 0.025 * speed_ratio          # 摇摆减弱（贴图已有动作）
+		_sprite.position.y = -absf(cycle) * 2.0 * speed_ratio   # 颠步减弱
+		var ss := (absf(cycle) - 0.5) * 0.02 * speed_ratio      # 挤压减弱
+		_sprite.scale = Vector2(1.0 - ss, 1.0 + ss)
 	else:
 		# idle：缓慢呼吸（y 轴 1.0~1.03），轻微到"感觉活着"即可
 		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
@@ -160,7 +159,9 @@ func _update_sprite() -> void:
 
 	# 动态自适应步伐时间间隔 (多帧小碎步用 0.08s 快帧率以保证极其丝滑；3帧用 0.16s 标准步频)
 	if sprite_timer != null:
-		sprite_timer.wait_time = 0.08 if max_frames >= 5 else 0.16
+		var speed_ratio: float = clampf(_cur_speed / maxf(move_speed, 1.0), 0.25, 1.0)
+		var base: float = 0.07 if max_frames >= 5 else 0.18  # 10帧用0.07s丝滑
+		sprite_timer.wait_time = base / speed_ratio
 
 	# 2. 动态生成正式路径：如 res://assets/art/cats/orange_tabby/idle_05.png
 	var frame_name := "idle_%02d" % frame_index
@@ -181,10 +182,17 @@ func _update_sprite() -> void:
 func _physics_process(delta: float) -> void:
 	if is_moving:
 		var direction := (target_position - position).normalized()
-		velocity = direction * move_speed
+		var dist := position.distance_to(target_position)
+		# 起步平滑加速、临近目标减速（不再瞬间满速/急停）
+		var target_speed := move_speed
+		if dist < 80.0:
+			target_speed = move_speed * maxf(dist / 80.0, 0.35)
+		_cur_speed = lerpf(_cur_speed, target_speed, delta * 6.0)
+		velocity = direction * _cur_speed
 		move_and_slide()
-		if position.distance_to(target_position) < 10.0:
+		if dist < 10.0:
 			is_moving = false
+			_cur_speed = 0.0
 			velocity = Vector2.ZERO
 			_update_sprite()
 			_schedule_wander()
