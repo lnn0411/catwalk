@@ -112,6 +112,7 @@ func _build_garden_layer() -> void:
 	cat_container = Node2D.new()
 	cat_container.name = "CatContainer"
 	cat_container.position = Vector2(0.0, 256.0)
+	cat_container.z_index = 3  # 核心修复：确保猫咪渲染在最前景 near（z_index=2）背景层之上，不被盖死！
 	garden_layer.add_child(cat_container)
 	
 	# SubViewport 的输出贴到 TextureRect 显示
