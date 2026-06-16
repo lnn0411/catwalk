@@ -192,11 +192,20 @@ func _ready() -> void:
 
 	_schedule_wander()
 
+# 计算近大远小的透视比例（草地 Y 轴范围 380 ~ 640，对应比例从 0.82 渐变到 1.15）
+func _get_perspective_scale() -> float:
+	var t := clampf((position.y - 380.0) / (640.0 - 380.0), 0.0, 1.0)
+	return lerpf(0.82, 1.15, t)
+
 # ============ M4：每帧动画（全部作用于 _sprite 子节点）============
 func _process(delta: float) -> void:
 	_anim_time += delta
 	if _sprite == null:
 		return
+	
+	# 近大远小透视比例（走上去变小，走下来变大）
+	var depth_scale := _get_perspective_scale()
+	
 	if is_moving:
 		# 转身过渡播放时，走路动效全让位（不写 rotation/position/scale），让转身帧干净显示
 		var turning: bool = _turn_playing or (_turn_tween != null and _turn_tween.is_valid())
@@ -205,9 +214,12 @@ func _process(delta: float) -> void:
 		if not turning:
 			var cycle := sin(_step_phase)
 			_sprite.rotation = cycle * 0.025 * speed_ratio
-			_sprite.position.y = -absf(cycle) * 2.0 * speed_ratio
+			# 如果 Y 轴纵向移动分量大，增加踏步反弹高度，消除平移像"飘过去"的滑行鬼魂感
+			var vertical_bias := lerpf(1.0, 2.5, absf(_move_dir.y))
+			_sprite.position.y = -absf(cycle) * 2.0 * speed_ratio * vertical_bias
+			
 			var ss := (absf(cycle) - 0.5) * 0.02 * speed_ratio
-			var s_factor = walk_scale_factor
+			var s_factor = walk_scale_factor * depth_scale
 			_sprite.scale = Vector2(s_factor * (1.0 - ss), s_factor * (1.0 + ss))
 	else:
 		# idle：缓慢呼吸（y 轴 1.0~1.03），轻微到"感觉活着"即可
@@ -215,7 +227,7 @@ func _process(delta: float) -> void:
 		_sprite.position.y = lerpf(_sprite.position.y, 0.0, delta * 8.0)
 		var breath := 1.0 + (sin(_anim_time * 1.6) + 1.0) * 0.5 * 0.03
 		if not (_turn_tween != null and _turn_tween.is_valid()):
-			var s_factor = idle_scale_factor
+			var s_factor = idle_scale_factor * depth_scale
 			_sprite.scale = Vector2(s_factor, s_factor * breath)
 	
 	# 刷新底层扁平椭圆阴影的实时重绘
