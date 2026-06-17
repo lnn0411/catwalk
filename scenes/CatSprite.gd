@@ -375,7 +375,13 @@ func _apply_visual_motion(delta: float) -> void:
 		var t := clampf((position.y - wander_y_min) / maxf(wander_y_max - wander_y_min, 1.0), 0.0, 1.0)
 		depth_scale = lerpf(0.82, 1.15, t)
 
-	var base_scale := sprite_scale * depth_scale
+	var breed_scale := 1.0
+	match breed:
+		"orange", "orange_tabby": breed_scale = 0.82
+		"british": breed_scale = 0.82
+		_: breed_scale = 1.0
+
+	var base_scale := sprite_scale * depth_scale * breed_scale
 
 	if is_moving:
 		var speed_ratio := clampf(_cur_speed / maxf(move_speed, 1.0), 0.0, 1.0)
