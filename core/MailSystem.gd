@@ -1,191 +1,183 @@
-# MailSystem — 节日挂号信调度自动加载 (Autoload)
-# GDD v2.17 §2.2.1 二、· T3-4 §5.5
-# 基于客户端 Local Time 跨越 0 点进行本地化调度
+# MailSystem — 节日挂号信调度 (Autoload)
+# GDD v2.17 §2.2.1  T3-4 §5.5  基于客户端本地时间跨 0 点触发
 extends Node
 
 signal mail_delivered(mail: Dictionary)
 
-# 节日定义：window=[month_start,day_start,month_end,day_end]，fixed=[month,day]
+# type: "fixed" | "window" | "computed"
+# compute: "easter" | "thanksgiving"  (仅 computed 类型使用)
 const HOLIDAYS: Array = [
 	{
 		"id": "spring_festival",
-		"title": "森林来信 · 春节",
-		"body": "主人！森林乐园今天挂满了红灯笼，我给蝴蝶们讲了我们的故事。\n新年快乐，我很想你。\n——你的小家伙",
-		"sender": "乐园信差",
 		"type": "window",
 		"month_start": 1, "day_start": 25,
-		"month_end": 2, "day_end": 2,
+		"month_end": 2,   "day_end": 2,
+		"title": "新春来信 · 春节快乐",
+		"body": "主人，过年啦！乐园里的小伙伴们一起挂起了红灯笼，还包了许多糯糯的汤圆。新的一年，愿你万事顺遂、步步生花，阖家幸福安康。我会一直在这里陪着你哦~ 🧧",
+		"sender": "猫步天下",
 	},
 	{
 		"id": "valentines",
-		"title": "森林来信 · 情人节",
-		"body": "今天松鼠姐姐在树洞门口偷偷放了一颗松果，说是送给最喜欢的人。\n我把它留好了，等你来拿。\n——你的小家伙",
-		"sender": "乐园信差",
 		"type": "fixed",
 		"month": 2, "day": 14,
+		"title": "粉色来信 · 情人节",
+		"body": "今天是情人节，我悄悄在你的门口放了一束野花。不管你身边有没有人陪，记得今天要好好爱自己。被爱的感觉，从来都不需要理由。💌",
+		"sender": "猫步天下",
 	},
 	{
 		"id": "easter",
-		"title": "森林来信 · 复活节",
-		"body": "乐园里的兔子今早藏了好多彩蛋，我数了数，少了一颗——那颗留给你的。\n愿你总能找到属于自己的惊喜。\n——你的小家伙",
-		"sender": "乐园信差",
 		"type": "computed",
 		"compute": "easter",
+		"title": "彩蛋来信 · 复活节",
+		"body": "复活节快乐！我把染好色的彩蛋藏在了花丛里，你能找到几颗呢？春天已经悄悄爬进每一个角落，希望你也感受到那股暖融融的喜悦。🐣",
+		"sender": "猫步天下",
 	},
 	{
 		"id": "mid_autumn",
-		"title": "森林来信 · 中秋",
-		"body": "今晚的月亮和你的眼睛一样圆。\n我在乐园最高的树上，替你看了很久的月亮。\n——你的小家伙",
-		"sender": "乐园信差",
 		"type": "fixed",
 		"month": 9, "day": 15,
+		"title": "月光来信 · 中秋节",
+		"body": "今晚的月亮又大又圆，我爬到乐园最高的树上替你看了好久。月饼分你一半，思念留给自己。无论身在何处，都要记得抬头望望同一轮明月。🌕",
+		"sender": "猫步天下",
 	},
 	{
 		"id": "halloween",
-		"title": "森林来信 · 万圣节",
-		"body": "乐园今晚点起了南瓜灯，小狐狸画了个大胡子，把大家都逗笑了。\n我给你留了一颗最甜的糖。\n——你的小家伙",
-		"sender": "乐园信差",
 		"type": "fixed",
 		"month": 10, "day": 31,
+		"title": "南瓜来信 · 万圣节",
+		"body": "咚咚咚！不给糖就捣蛋哦！我戴上了小巫师帽，在乐园门口摆了一排会发光的南瓜灯。今晚的夜风带着一点甜，是属于你的糖果味万圣节。🎃",
+		"sender": "猫步天下",
 	},
 	{
 		"id": "thanksgiving",
-		"title": "森林来信 · 感恩节",
-		"body": "谢谢你让我住进了这个乐园。这里有很多新朋友，但没有一个能替代你掌心的温度。\n——你的小家伙",
-		"sender": "乐园信差",
 		"type": "computed",
 		"compute": "thanksgiving",
+		"title": "暖心来信 · 感恩节",
+		"body": "感恩节快乐！谢谢你让乐园变得这么有温度。谢谢你每一次的陪伴，每一次轻轻的点击。有你在，这里才真的像一个家。我也很感谢，遇见了你。🦃",
+		"sender": "猫步天下",
 	},
 	{
 		"id": "christmas",
-		"title": "森林来信 · 圣诞",
-		"body": "我们在森林里堆了一棵小雪人，它的鼻子是我从厨房叼来的小胡萝卜。\n圣诞快乐，愿你被温柔对待。\n——你的小家伙",
-		"sender": "乐园信差",
 		"type": "fixed",
 		"month": 12, "day": 25,
+		"title": "雪花来信 · 圣诞节",
+		"body": "叮叮当，铃儿响！圣诞老爷爷把礼物偷偷放在了你的袜子里。我们在乐园里堆了一棵雪人，它的鼻子是我叼来的小胡萝卜。圣诞快乐，愿冬天因你而温暖。🎄",
+		"sender": "猫步天下",
 	},
 ]
 
 var last_mail_check_date: String = ""
 var mailed_holidays: Array = []
 
+var _last_day_key: String = ""
+
 func _ready() -> void:
-	pass
+	_last_day_key = _today_key()
 
-# 每帧或定时调用：跨越 0 点后检查是否有节日邮件需要派发
+# 由外部（GameLoop / Timer）每帧或定时调用，检测跨 0 点后派送节日邮件
 func check_day_boundary() -> void:
-	var today: String = _today_key()
-	if today == last_mail_check_date:
+	var today := _today_key()
+	if today == _last_day_key:
 		return
-	last_mail_check_date = today
+	_last_day_key = today
+	_check_and_deliver(today)
 
-	var dt: Dictionary = Time.get_date_dict_from_system()
-	var year: int  = int(dt["year"])
-	var month: int = int(dt["month"])
-	var day: int   = int(dt["day"])
-
-	for holiday in HOLIDAYS:
-		if _holiday_matches(holiday, year, month, day):
-			var dedup_key: String = "%s_%d" % [holiday["id"], year]
-			if dedup_key in mailed_holidays:
-				continue
-			mailed_holidays.append(dedup_key)
-			var letter: Dictionary = _build_letter(holiday, year, month, day)
-			mail_delivered.emit(letter)
+func _check_and_deliver(date_key: String) -> void:
+	var parts := date_key.split("-")
+	var year  := int(parts[0])
+	var month := int(parts[1])
+	var day   := int(parts[2])
+	for h: Dictionary in HOLIDAYS:
+		var dedup: String = str(h["id"]) + "_" + str(year)
+		if dedup in mailed_holidays:
+			continue
+		if _holiday_matches(h, year, month, day):
+			mailed_holidays.append(dedup)
+			last_mail_check_date = date_key
+			mail_delivered.emit(_build_mail(h, date_key, year))
 
 func _holiday_matches(h: Dictionary, year: int, month: int, day: int) -> bool:
 	match h["type"]:
 		"fixed":
 			return month == int(h["month"]) and day == int(h["day"])
 		"window":
-			var sm: int = int(h["month_start"])
-			var sd: int = int(h["day_start"])
-			var em: int = int(h["month_end"])
-			var ed: int = int(h["day_end"])
-			var cur: int = month * 100 + day
-			var start: int = sm * 100 + sd
-			var end_: int  = em * 100 + ed
-			return cur >= start and cur <= end_
+			var s := _doy(year, int(h["month_start"]), int(h["day_start"]))
+			var e := _doy(year, int(h["month_end"]),   int(h["day_end"]))
+			var t := _doy(year, month, day)
+			return t >= s and t <= e if s <= e else t >= s or t <= e
 		"computed":
-			var target: Dictionary = {}
+			var target: Dictionary
 			if h["compute"] == "easter":
 				target = _calc_easter_sunday(year)
-			elif h["compute"] == "thanksgiving":
+			else:
 				target = _calc_thanksgiving(year)
-			if target.is_empty():
-				return false
 			return month == int(target["month"]) and day == int(target["day"])
 	return false
 
-func _build_letter(h: Dictionary, year: int, month: int, day: int) -> Dictionary:
-	return {
-		"id": h["id"],
-		"title": h["title"],
-		"body": h["body"],
-		"sender": h["sender"],
-		"date": "%04d-%02d-%02d" % [year, month, day],
-		"read": false,
-	}
-
-# 匿名格里高利算法计算复活节（公历）
+# 匿名格里高利算法（Butcher / Anonymous Gregorian）计算复活节
 func _calc_easter_sunday(year: int) -> Dictionary:
-	var a: int = year % 19
-	var b: int = year / 100
-	var c: int = year % 100
-	var d: int = b / 4
-	var e: int = b % 4
-	var f: int = (b + 8) / 25
-	var g: int = (b - f + 1) / 3
-	var h: int = (19 * a + b - d - g + 15) % 30
-	var i: int = c / 4
-	var k: int = c % 4
-	var l: int = (32 + 2 * e + 2 * i - h - k) % 7
-	var m: int = (a + 11 * h + 22 * l) / 451
-	var month: int = (h + l - 7 * m + 114) / 31
-	var day: int   = ((h + l - 7 * m + 114) % 31) + 1
+	var a := year % 19
+	var b := year / 100
+	var c := year % 100
+	var d := b / 4
+	var e := b % 4
+	var f := (b + 8) / 25
+	var g := (b - f + 1) / 3
+	var h := (19 * a + b - d - g + 15) % 30
+	var i := c / 4
+	var k := c % 4
+	var l := (32 + 2 * e + 2 * i - h - k) % 7
+	var m := (a + 11 * h + 22 * l) / 451
+	var raw := h + l - 7 * m + 114
+	return {"month": raw / 31, "day": raw % 31 + 1}
 
-	# 题目要求第三个周日 4 月 —— 若算出结果非 4 月则回退到 4 月第三个周日
-	if month != 4:
-		# 计算 4 月第三个周日
-		return _third_sunday_in_april(year)
-	return {"month": month, "day": day}
-
-# 4 月第三个周日（复活节不在 4 月时的回退，以及 spec 要求的 "3rd Sun Apr"）
-func _third_sunday_in_april(year: int) -> Dictionary:
-	# 找出 4/1 是星期几（0=Sunday … 6=Saturday 采用 Godot 的 weekday）
-	var ts: int = Time.get_unix_time_from_datetime_dict({
-		"year": year, "month": 4, "day": 1,
-		"hour": 12, "minute": 0, "second": 0
-	})
-	var wd: int = Time.get_datetime_dict_from_unix_time(ts)["weekday"]  # 0=Sun
-	var days_to_first_sun: int = (7 - wd) % 7
-	var third_sun_day: int = 1 + days_to_first_sun + 14
-	return {"month": 4, "day": third_sun_day}
-
-# 11 月第四个星期四（感恩节）
+# 11 月第 4 个星期四（美国感恩节）
 func _calc_thanksgiving(year: int) -> Dictionary:
-	var ts: int = Time.get_unix_time_from_datetime_dict({
-		"year": year, "month": 11, "day": 1,
-		"hour": 12, "minute": 0, "second": 0
-	})
-	var wd: int = Time.get_datetime_dict_from_unix_time(ts)["weekday"]  # 0=Sun
-	# Thursday = 4
-	var days_to_first_thu: int = (4 - wd + 7) % 7
-	var fourth_thu_day: int = 1 + days_to_first_thu + 21
-	return {"month": 11, "day": fourth_thu_day}
+	var dow := _day_of_week(year, 11, 1)          # 0=Sun … 6=Sat
+	var first_thu := 1 + (4 - dow + 7) % 7
+	return {"month": 11, "day": first_thu + 21}
+
+# Tomohiko Sakamoto 算法：返回 0=Sun, 1=Mon … 6=Sat
+func _day_of_week(year: int, month: int, day: int) -> int:
+	var t := [0, 3, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4]
+	var y := year - 1 if month < 3 else year
+	return (y + y / 4 - y / 100 + y / 400 + t[month - 1] + day) % 7
+
+# 年内第几天（用于窗口型节日范围判断）
+func _doy(year: int, month: int, day: int) -> int:
+	var dim := [0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+	if (year % 4 == 0 and year % 100 != 0) or year % 400 == 0:
+		dim[2] = 29
+	var n := 0
+	for mo in range(1, month):
+		n += dim[mo]
+	return n + day
 
 func _today_key() -> String:
-	var dt: Dictionary = Time.get_date_dict_from_system()
+	var dt := Time.get_datetime_dict_from_system(false)   # false = 本地时区
 	return "%04d-%02d-%02d" % [int(dt["year"]), int(dt["month"]), int(dt["day"])]
 
-# 存档读写
-func apply_save(data: Dictionary) -> void:
-	last_mail_check_date = str(data.get("last_mail_check_date", ""))
-	var raw: Variant = data.get("mailed_holidays", [])
-	mailed_holidays = raw if raw is Array else []
+func _build_mail(h: Dictionary, date_key: String, year: int) -> Dictionary:
+	return {
+		"id":     h["id"] + "_" + str(year),
+		"title":  h["title"],
+		"body":   h["body"],
+		"sender": h["sender"],
+		"date":   date_key,
+		"read":   false,
+	}
+
+# ── 存档读写 ──────────────────────────────────────────────────────────────────
 
 func get_save_data() -> Dictionary:
 	return {
 		"last_mail_check_date": last_mail_check_date,
-		"mailed_holidays": mailed_holidays,
+		"mailed_holidays":      mailed_holidays.duplicate(),
 	}
+
+func apply_save(data: Dictionary) -> void:
+	last_mail_check_date = str(data.get("last_mail_check_date", ""))
+	mailed_holidays = (data.get("mailed_holidays", []) as Array).duplicate()
+	_last_day_key = _today_key()
+	# 首次登录当天检查（离线期间跨过的节日不补发，只补当天）
+	_check_and_deliver(_last_day_key)
