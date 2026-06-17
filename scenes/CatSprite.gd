@@ -672,10 +672,10 @@ func _draw() -> void:
 
 func _get_shadow_y() -> float:
 	if _sprite == null:
-		return FOOT_Y - FRAME_SIZE.y * 0.5 + 3.0
+		return FOOT_Y - FRAME_SIZE.y * 0.5 + 8.0
 
 	var foot_local_y := FOOT_Y - FRAME_SIZE.y * 0.5
-	return _sprite.position.y + foot_local_y + 3.0
+	return _sprite.position.y + foot_local_y + 8.0
 
 
 func _draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
