@@ -365,7 +365,7 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 	var d := rng.randf_range(80.0, 200.0)
 	var offset := Vector2(cos(ang) * 1.0, sin(ang) * 0.55) * d
 	target_position = position + offset
-	target_position.x = clampf(target_position.x, 350.0, 1700.0)
+	target_position.x = clampf(target_position.x, 150.0, 1950.0)
 	target_position.y = clampf(target_position.y, 380.0, 780.0) # 草坪安全区
 	is_moving = true
 
@@ -392,7 +392,7 @@ func _on_wander_tick() -> void:
 	var offset := Vector2(cos(wander_angle) * 1.0, sin(wander_angle) * 0.55) * wander_distance
 	offset = _limit_move_offset_angle(offset)
 	target_position = position + offset
-	target_position.x = clampf(target_position.x, 350.0, 1700.0)
+	target_position.x = clampf(target_position.x, 150.0, 1950.0)
 	target_position.y = clampf(target_position.y, 380.0, 780.0)
 	is_moving = true
 
@@ -561,7 +561,7 @@ func _physics_process(delta: float) -> void:
 			_update_sprite()
 			_schedule_wander()
 	# 自愈保险：任何原因出界都拉回活动范围（仅出界时写，避免每帧赋值）
-	var cx := clampf(position.x, 350.0, 1700.0)
+	var cx := clampf(position.x, 150.0, 1950.0)
 	var cy := clampf(position.y, 380.0, 780.0) # 草坪安全区
 	if cx != position.x or cy != position.y:
 		position = Vector2(cx, cy)
