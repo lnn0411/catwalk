@@ -358,7 +358,7 @@ func _apply_visual_motion(_delta: float) -> void:
 		sx *= 0.93
 		sy *= 0.93
 
-	z_index = int(position.y * 10.0)
+	z_index = int(position.y)
 
 	_sprite.rotation = 0.0
 	_sprite.scale = Vector2(sx, sy)
