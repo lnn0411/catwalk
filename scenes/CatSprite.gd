@@ -381,8 +381,8 @@ func _limit_move_offset_angle(offset: Vector2) -> Vector2:
 	return fixed
 
 func _on_wander_tick() -> void:
-	# 35% 原地小动作：转身张望 / 短暂发呆（不移动，添生气）
-	if rng.randf() < 0.35:
+	# 10% 原地小动作：转身张望 / 短暂发呆（不移动，添生气）
+	if rng.randf() < 0.10:
 		if rng.randf() < 0.6:
 			_face_to(1.0 if _facing_left else -1.0)  # 转身张望
 		_schedule_wander()
