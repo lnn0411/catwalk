@@ -67,8 +67,6 @@ func _build_debug_panel() -> void:
 		debug_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 		add_child(debug_panel)
 
-func _build_debug_toggle() -> void:
-
 # ── GDD v2.17 MultiMeshInstance2D 花海合批渲染 ──
 
 func _build_flower_field() -> void:
