@@ -26,6 +26,8 @@ var cat_data
 
 const FACE_MOTION_DEADZONE_X := 0.35
 const FACE_STABLE_TIME := 0.06
+const MAX_MOVE_ANGLE_DEG := 60.0
+const MIN_HORIZONTAL_MOVE_X := 80.0
 
 var rng: RandomNumberGenerator
 var timer: Timer
@@ -362,10 +364,21 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 	var ang := base_angle + rng.randf_range(-PI / 3.0, PI / 3.0)
 	var d := rng.randf_range(80.0, 200.0)
 	var offset := Vector2(cos(ang) * 1.0, sin(ang) * 0.55) * d
+	offset = _limit_move_offset_angle(offset)
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 350.0, 1700.0)
 	target_position.y = clampf(target_position.y, 380.0, 640.0) # 草坪安全区：避开背景下半土区(Y)和左右灌木/小路(X)
 	is_moving = true
+
+func _limit_move_offset_angle(offset: Vector2) -> Vector2:
+	if offset.length() < 0.001:
+		return Vector2(MIN_HORIZONTAL_MOVE_X, 0.0)
+	var fixed := offset
+	if absf(fixed.x) < MIN_HORIZONTAL_MOVE_X:
+		fixed.x = MIN_HORIZONTAL_MOVE_X if rng.randf() > 0.5 else -MIN_HORIZONTAL_MOVE_X
+	var max_y := absf(fixed.x) * tan(deg_to_rad(MAX_MOVE_ANGLE_DEG))
+	fixed.y = clampf(fixed.y, -max_y, max_y)
+	return fixed
 
 func _on_wander_tick() -> void:
 	# 35% 原地小动作：转身张望 / 短暂发呆（不移动，添生气）
@@ -378,6 +391,7 @@ func _on_wander_tick() -> void:
 	var wander_distance := rng.randf_range(60.0, 340.0)
 	var wander_angle := rng.randf_range(0.0, TAU)
 	var offset := Vector2(cos(wander_angle) * 1.0, sin(wander_angle) * 0.55) * wander_distance
+	offset = _limit_move_offset_angle(offset)
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 350.0, 1700.0)
 	target_position.y = clampf(target_position.y, 380.0, 640.0)
