@@ -5,8 +5,8 @@ const BottomNavScene := preload("res://ui/BottomNav.tscn")
 const BottomNav := preload("res://ui/BottomNav.gd")
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
-const HUD_HEIGHT := 56.0  # 顶部HUD高度，与底部NAV_HEIGHT一致
-const GARDEN_HEIGHT := 1224.0  # 1280 - HUD_HEIGHT
+const HUD_HEIGHT := 0.0  # HUD关闭，图标由top_row直接挂root不受裁切
+const GARDEN_HEIGHT := 1280.0  # 1280 - HUD_HEIGHT
 const ACTION_HEIGHT := 64.0
 const HATCH_HEIGHT := 56.0
 const NAV_HEIGHT := 56.0
