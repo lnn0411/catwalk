@@ -5,8 +5,8 @@ const BottomNavScene := preload("res://ui/BottomNav.tscn")
 const BottomNav := preload("res://ui/BottomNav.gd")
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
-const HUD_HEIGHT := 0.0  # 临时关闭HUD
-const GARDEN_HEIGHT := 1280.0  # 1280 - HUD_HEIGHT
+const HUD_HEIGHT := 56.0  # 顶部HUD高度，与底部NAV_HEIGHT一致
+const GARDEN_HEIGHT := 1224.0  # 1280 - HUD_HEIGHT
 const ACTION_HEIGHT := 64.0
 const HATCH_HEIGHT := 56.0
 const NAV_HEIGHT := 56.0
@@ -245,8 +245,8 @@ func _build_hud() -> void:
 	top_row.anchor_bottom = 0.0
 	top_row.offset_left = 24.0
 	top_row.offset_right = -24.0
-	top_row.offset_top = 60.0
-	top_row.offset_bottom = 120.0
+	top_row.offset_top = 30.0
+	top_row.offset_bottom = 90.0
 	top_row.add_theme_constant_override("separation", 16)
 	root.add_child(top_row)
 
