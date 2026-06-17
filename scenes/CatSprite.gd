@@ -306,6 +306,11 @@ func _apply_visual_motion(_delta: float) -> void:
 	var sx := sprite_scale * depth_scale
 	var sy := sx
 
+	# 橘猫视觉略小
+	if breed == "orange" or breed == "orange_tabby":
+		sx *= 0.93
+		sy *= 0.93
+
 	z_index = int(position.y * 10.0)
 
 	_sprite.rotation = 0.0
