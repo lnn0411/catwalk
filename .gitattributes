@@ -1,0 +1,19 @@
+# Godot project line endings — LF for all text formats
+*.gd text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.import text eol=lf
+*.md text eol=lf
+*.json text eol=lf
+*.cfg text eol=lf
+*.gdap text eol=lf
+
+# Binary assets — no conversion
+*.png binary
+*.jpg binary
+*.webp binary
+*.svg binary
+*.ogg binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
