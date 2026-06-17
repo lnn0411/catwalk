@@ -34,6 +34,9 @@ signal cat_clicked(cat_data)
 
 const FRAME_SIZE := Vector2i(100, 140)
 const FOOT_Y := 131
+const WALK_PX_BRITISH := 4.0
+const WALK_PX_ORANGE := 6.5
+const WALK_PX_SIAMESE := 7.0
 
 const ANIM_WALK_RIGHT := "walk_right"
 const ANIM_WALK_UP_RIGHT := "walk_up_right"
@@ -88,6 +91,9 @@ var _move_dir := Vector2.ZERO
 var _cur_speed := 0.0
 var _idle_phase := 0.0
 var _stuck_time := 0.0
+var _walk_accum := 0.0
+var _walk_px_per_frame := 6.5
+var _last_frame_pos := Vector2.ZERO
 
 var _wander_timer: Timer
 var _bounce_tween: Tween
@@ -106,6 +112,10 @@ func _ready() -> void:
 	_wander_timer.one_shot = true
 	add_child(_wander_timer)
 	_wander_timer.timeout.connect(_on_wander_tick)
+
+	# 位移驱动帧：品种步幅 + 初始位置
+	_walk_px_per_frame = _get_walk_px_per_frame()
+	_last_frame_pos = global_position
 
 	set_process(true)
 	set_physics_process(true)
@@ -220,11 +230,47 @@ func _setup_click_area() -> void:
 
 func _process(delta: float) -> void:
 	_idle_phase += delta
-	_advance_animation(delta)
+
+	# Walk 动画：位移驱动（脚随身体走）；其他：时间驱动
+	if _is_walk_anim(_current_anim):
+		_advance_walk_by_distance()
+	else:
+		_advance_animation(delta)
+
 	_apply_visual_motion(delta)
+	_last_frame_pos = global_position
 
 	if shadow_enabled:
 		queue_redraw()
+
+
+func _get_walk_px_per_frame() -> float:
+	if breed == "british":
+		return WALK_PX_BRITISH
+	if breed == "orange" or breed == "orange_tabby":
+		return WALK_PX_ORANGE
+	return WALK_PX_SIAMESE
+
+
+func _is_walk_anim(anim_name: String) -> bool:
+	return anim_name != ANIM_IDLE and anim_name != ANIM_TURN and anim_name != ANIM_MOVE_TURN
+
+
+func _advance_walk_by_distance() -> void:
+	var moved := global_position.distance_to(_last_frame_pos)
+	_walk_accum += moved
+
+	var max_frames: int = ANIM_FRAME_COUNT.get(_current_anim, 4)
+	while _walk_accum >= _walk_px_per_frame:
+		_walk_accum -= _walk_px_per_frame
+		_current_col += 1
+		if _current_col >= max_frames:
+			_current_col = 0
+			if _turn_playing:
+				_turn_playing = false
+				_set_anim(_turn_after_anim, _turn_after_flip, true)
+				return
+		_apply_frame(_current_anim, _current_col)
 
 
 func _advance_animation(delta: float) -> void:
@@ -268,6 +314,7 @@ func _set_anim(anim_name: String, flip_left: bool, force: bool = false) -> void:
 	_current_anim = anim_name
 	_current_col = 0
 	_frame_accum = 0.0
+	_walk_accum = 0.0
 	_facing_left = flip_left
 	_sprite.flip_h = _facing_left
 	_apply_frame(_current_anim, _current_col)
