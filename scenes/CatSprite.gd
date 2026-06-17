@@ -29,7 +29,7 @@ class_name CatSprite
 signal cat_clicked(cat_data)
 
 @export var breed: String = "orange" # orange / orange_tabby / british / siamese
-@export var cat_data: Dictionary = {}
+@export var cat_data: Resource = null # CatData resource
 
 @export_group("Movement")
 @export var move_speed: float = 52.0
