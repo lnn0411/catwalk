@@ -14,7 +14,7 @@ signal cat_clicked(cat_data)
 @export var wander_max_distance: float = 260.0
 @export var wander_x_min: float = 150.0
 @export var wander_x_max: float = 1950.0
-@export var wander_y_min: float = 380.0
+@export var wander_y_min: float = 440.0
 @export var wander_y_max: float = 780.0
 
 @export_group("Animation")
