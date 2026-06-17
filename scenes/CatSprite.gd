@@ -24,6 +24,9 @@ var cat_data
 @export var move_turn_interval: float = 0.12 # 移动中转身单帧间隔秒数（正面帧会自动乘 1.5 倍）
 @export var static_turn_interval: float = 0.18 # 原地/静态转身单帧间隔秒数
 
+const FACE_MOTION_DEADZONE_X := 0.35
+const FACE_STABLE_TIME := 0.06
+
 var rng: RandomNumberGenerator
 var timer: Timer
 var sprite_timer: Timer
@@ -84,6 +87,8 @@ var _bounce_tween: Tween   # 点击弹跳，防重复叠加
 # move_and_slide 时视觉与物理不一致，移动中位置漂移/瞬移="走着走着消失"。
 # 翻面一律走 _sprite.flip_h，根节点 scale 永远保持 (1,1)）
 var _facing_left := false
+var _pending_face_motion_x := 0.0
+var _face_motion_stable_timer := 0.0
 
 # 公有：按水平方向设置朝向（CatSpawner 入场时会在 add_child 前调用，
 # 此时 _sprite 尚未创建，先存状态、_ready 时应用）
@@ -173,6 +178,32 @@ func _play_turn_sequence(to_left: bool, is_move_turn: bool = false) -> void:
 # 兼容旧调用名（CatSpawner 入场等处用 face_direction）
 func face_direction(dx: float) -> void:
 	_face_to(dx)
+
+func _update_facing_from_actual_motion(actual_dx: float, delta: float) -> void:
+	if _turn_playing:
+		return
+	if not is_moving:
+		_pending_face_motion_x = 0.0
+		_face_motion_stable_timer = 0.0
+		return
+	if absf(actual_dx) < FACE_MOTION_DEADZONE_X:
+		return
+	var want_left := actual_dx < 0.0
+	if want_left == _facing_left:
+		_pending_face_motion_x = actual_dx
+		_face_motion_stable_timer = 0.0
+		return
+	var current_sign := -1.0 if actual_dx < 0.0 else 1.0
+	var pending_sign := -1.0 if _pending_face_motion_x < 0.0 else 1.0
+	if _pending_face_motion_x == 0.0 or current_sign != pending_sign:
+		_pending_face_motion_x = actual_dx
+		_face_motion_stable_timer = 0.0
+		return
+	_face_motion_stable_timer += delta
+	if _face_motion_stable_timer >= FACE_STABLE_TIME:
+		_pending_face_motion_x = 0.0
+		_face_motion_stable_timer = 0.0
+		_face_to(actual_dx)
 
 func _count_child_sprites() -> int:
 	var n := 0
@@ -335,7 +366,6 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 	target_position.x = clampf(target_position.x, 350.0, 1700.0)
 	target_position.y = clampf(target_position.y, 380.0, 640.0) # 草坪安全区：避开背景下半土区(Y)和左右灌木/小路(X)
 	is_moving = true
-	_face_to(target_position.x - position.x)
 
 func _on_wander_tick() -> void:
 	# 35% 原地小动作：转身张望 / 短暂发呆（不移动，添生气）
@@ -350,9 +380,8 @@ func _on_wander_tick() -> void:
 	var offset := Vector2(cos(wander_angle) * 1.0, sin(wander_angle) * 0.55) * wander_distance
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 350.0, 1700.0)
-	target_position.y = clampf(target_position.y, 380.0, 640.0) # 草坪安全区：避开背景下半土区(Y)和左右灌木/小路(X)
+	target_position.y = clampf(target_position.y, 380.0, 640.0)
 	is_moving = true
-	_face_to(target_position.x - position.x)
 
 func _schedule_wander() -> void:
 	# 停顿时长随机化：多数短停(像猫边走边改主意)，偶尔长停张望——比固定3~6s自然
@@ -486,6 +515,8 @@ func _physics_process(delta: float) -> void:
 		velocity = _move_dir * _cur_speed
 		var before := position
 		move_and_slide()
+		var actual_dx := position.x - before.x
+		_update_facing_from_actual_motion(actual_dx, delta)
 		# 撞障碍检测：实际移动远小于预期（被其他猫/边界挡住）→ 累计卡顿；
 		# 连续卡几帧就放弃当前目标、换个方向重新溜达（轻量避障，不做 A* 绕路）。
 		var moved := position.distance_to(before)
@@ -493,13 +524,14 @@ func _physics_process(delta: float) -> void:
 		if expected > 1.0 and moved < expected * 0.4:
 			_stuck_time += delta
 			if _stuck_time > 0.25:
-				_stuck_time = 0.0
-				is_moving = false
-				_cur_speed = 0.0
-				_move_dir = Vector2.ZERO
-				velocity = Vector2.ZERO
-				# 立刻换个方向重选目标（往反方向偏，避开障碍）
-				_pick_new_target_away_from(_move_dir)
+			_stuck_time = 0.0
+			is_moving = false
+			_cur_speed = 0.0
+			var blocked_dir := _move_dir
+			_move_dir = Vector2.ZERO
+			velocity = Vector2.ZERO
+			# 立刻换个方向重选目标（往反方向偏，避开障碍）
+			_pick_new_target_away_from(blocked_dir)
 				return
 		else:
 			_stuck_time = 0.0
