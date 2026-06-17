@@ -546,16 +546,29 @@ func _play_click_feedback() -> void:
 	ht.chain().tween_callback(heart.queue_free)
 
 # ============ 动态椭圆阴影绘制 ============
-const SHADOW_BASE_Y := 50.0
-const SHADOW_FOLLOW_FACTOR := 0.15
+const SPRITE_TEXTURE_H := 140.0
+const SPRITE_FOOT_BOTTOM_Y := 131.0
+const SHADOW_FOOT_OFFSET_Y := -6.0
+const SHADOW_FOLLOW_BOUNCE := true
+
+func _get_shadow_y() -> float:
+	if _sprite == null:
+		return 61.0
+	var texture_h := SPRITE_TEXTURE_H
+	if _sprite.texture:
+		texture_h = float(_sprite.texture.get_height())
+	var foot_local_y := SPRITE_FOOT_BOTTOM_Y - texture_h * 0.5
+	if SHADOW_FOLLOW_BOUNCE:
+		return _sprite.position.y + foot_local_y + SHADOW_FOOT_OFFSET_Y
+	return foot_local_y + SHADOW_FOOT_OFFSET_Y
+
 func _draw() -> void:
 	var shadow_color := Color(0.12, 0.14, 0.06, 0.11)
 	var bounce_ratio := 1.0
-	var shadow_y := SHADOW_BASE_Y
 	if _sprite:
 		bounce_ratio = clampf(1.0 - (absf(_sprite.position.y) / 18.0) * 0.25, 0.75, 1.0)
-		shadow_y = SHADOW_BASE_Y + (_sprite.position.y * SHADOW_FOLLOW_FACTOR)
 	var shadow_size := Vector2(30.0 * bounce_ratio, 7.0 * bounce_ratio)
+	var shadow_y := _get_shadow_y()
 	draw_oval(Vector2(0.0, shadow_y), shadow_size, shadow_color)
 
 # 绘制扁平椭圆形影子的辅助方法（Godot 4 兼容）
