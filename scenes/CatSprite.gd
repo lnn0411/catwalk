@@ -308,11 +308,6 @@ func _apply_visual_motion(_delta: float) -> void:
 
 	z_index = int(position.y * 10.0)
 
-	# 已经有真实 walk 帧后，不再做程序颠步 bounce。
-	# 只保留 idle 极轻微呼吸，而且脚底保持锁定在 CharacterBody2D 原点。
-	if not is_moving and idle_breath_enabled and not _turn_playing:
-		sy *= 1.0 + sin(_idle_phase * 1.6) * 0.012
-
 	_sprite.rotation = 0.0
 	_sprite.scale = Vector2(sx, sy)
 	_apply_sprite_anchor(sx, sy)
