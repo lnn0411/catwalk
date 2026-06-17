@@ -94,6 +94,7 @@ var _stuck_time := 0.0
 var _walk_accum := 0.0
 var _walk_px_per_frame := 6.5
 var _last_frame_pos := Vector2.ZERO
+var _turn_cooldown := 0.0
 
 var _wander_timer: Timer
 var _bounce_tween: Tween
@@ -230,6 +231,7 @@ func _setup_click_area() -> void:
 
 func _process(delta: float) -> void:
 	_idle_phase += delta
+	_turn_cooldown = maxf(0.0, _turn_cooldown - delta)
 
 	# Walk 动画：位移驱动（脚随身体走）；其他：时间驱动
 	if _is_walk_anim(_current_anim):
@@ -439,8 +441,9 @@ func _physics_process(delta: float) -> void:
 		var selected := _select_anim_from_direction(_last_motion_dir)
 		var next_anim: String = selected["anim"]
 		var next_flip: bool = selected["flip"]
-		if next_flip != _facing_left and not _turn_playing:
+		if next_flip != _facing_left and not _turn_playing and _turn_cooldown <= 0.0:
 			_start_turn_anim(true, next_anim, next_flip)
+			_turn_cooldown = 0.5
 		else:
 			_set_anim(next_anim, next_flip)
 
