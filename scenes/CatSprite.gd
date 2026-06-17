@@ -39,8 +39,8 @@ signal cat_clicked(cat_data)
 @export var wander_max_distance: float = 260.0
 @export var wander_x_min: float = 150.0
 @export var wander_x_max: float = 1950.0
-@export var wander_y_min: float = 380.0
-@export var wander_y_max: float = 780.0
+@export var wander_y_min: float = 440.0
+@export var wander_y_max: float = 640.0
 
 @export_group("Animation")
 @export var walk_fps: float = 8.0
@@ -60,6 +60,10 @@ const FRAME_SIZE := Vector2i(100, 140)
 const COLS := 4
 const ROWS := 8
 const FOOT_Y := 131
+
+const WALK_PX_BRITISH := 4.0
+const WALK_PX_ORANGE := 6.5
+const WALK_PX_SIAMESE := 7.0
 
 const ANIM_WALK_RIGHT := "walk_right"
 const ANIM_WALK_UP_RIGHT := "walk_up_right"
@@ -116,6 +120,9 @@ var _cur_speed := 0.0
 var _step_phase := 0.0
 var _idle_phase := 0.0
 var _stuck_time := 0.0
+var _walk_accum := 0.0
+var _walk_px_per_frame := 6.5
+var _last_frame_pos := Vector2.ZERO
 
 var _wander_timer: Timer
 var _bounce_tween: Tween
@@ -134,6 +141,9 @@ func _ready() -> void:
 	_wander_timer.one_shot = true
 	add_child(_wander_timer)
 	_wander_timer.timeout.connect(_on_wander_tick)
+
+	_walk_px_per_frame = _get_walk_px_per_frame()
+	_last_frame_pos = global_position
 
 	set_process(true)
 	set_physics_process(true)
@@ -272,13 +282,39 @@ func _setup_click_area() -> void:
 
 func _process(delta: float) -> void:
 	_idle_phase += delta
-	_step_phase += delta * maxf(_cur_speed / maxf(move_speed, 1.0), 0.25) * 8.0
 
-	_advance_animation(delta)
+	# Walk: 位移驱动（脚随身体走）；非 walk: 时间驱动
+	if _is_walk_anim(_current_anim):
+		_advance_walk_by_distance()
+	else:
+		_advance_animation(delta)
+
 	_apply_visual_motion(delta)
+	_last_frame_pos = global_position
 
 	if shadow_enabled:
 		queue_redraw()
+
+
+func _is_walk_anim(anim_name: String) -> bool:
+	return anim_name != ANIM_IDLE and anim_name != ANIM_TURN and anim_name != ANIM_MOVE_TURN
+
+
+func _advance_walk_by_distance() -> void:
+	var moved := global_position.distance_to(_last_frame_pos)
+	_walk_accum += moved
+
+	var max_frames: int = ANIM_FRAME_COUNT.get(_current_anim, 4)
+	while _walk_accum >= _walk_px_per_frame:
+		_walk_accum -= _walk_px_per_frame
+		_current_col += 1
+		if _current_col >= max_frames:
+			_current_col = 0
+			if _turn_playing:
+				_turn_playing = false
+				_set_anim(_turn_after_anim, _turn_after_flip, true)
+				return
+		_apply_frame(_current_anim, _current_col)
 
 
 func _advance_animation(delta: float) -> void:
@@ -325,6 +361,7 @@ func _set_anim(anim_name: String, flip_left: bool, force: bool = false) -> void:
 	_current_row = ANIM_ROWS.get(anim_name, 5)
 	_current_col = 0
 	_frame_accum = 0.0
+	_walk_accum = 0.0
 	_facing_left = flip_left
 	_sprite.flip_h = _facing_left
 	_apply_frame(_current_anim, _current_col)
@@ -366,6 +403,13 @@ func _get_region_from_config(anim_name: String, col: int) -> Array:
 	return frame.get("region", [])
 
 
+func _get_walk_px_per_frame() -> float:
+	match breed:
+		"orange", "orange_tabby": return WALK_PX_ORANGE
+		"british": return WALK_PX_BRITISH
+		_: return WALK_PX_SIAMESE
+
+
 func _apply_visual_motion(delta: float) -> void:
 	if _sprite == null:
 		return
@@ -384,13 +428,10 @@ func _apply_visual_motion(delta: float) -> void:
 	var base_scale := sprite_scale * depth_scale * breed_scale
 
 	if is_moving:
-		var speed_ratio := clampf(_cur_speed / maxf(move_speed, 1.0), 0.0, 1.0)
-		var cycle := sin(_step_phase)
-		var bounce_y := -absf(cycle) * 5.0 * speed_ratio
-		var squash := (absf(cycle) - 0.5) * 0.028 * speed_ratio
-		_sprite.rotation = lerpf(_sprite.rotation, cycle * 0.06 * speed_ratio, delta * 10.0)
-		_sprite.scale = Vector2(base_scale * (1.0 - squash), base_scale * (1.0 + squash))
-		_sprite.position.y = -((FRAME_SIZE.y * 0.5) - FOOT_Y) * (base_scale - 1.0) + bounce_y
+		# 移动中：底盘锁死，零颠簸零压扁，脚随身体走
+		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 12.0)
+		_sprite.scale = Vector2(base_scale, base_scale)
+		_sprite.position.y = -((FRAME_SIZE.y * 0.5) - FOOT_Y) * (base_scale - 1.0)
 	else:
 		var breath := 1.0 + sin(_idle_phase * 1.8) * 0.012
 		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
@@ -463,7 +504,6 @@ func _physics_process(delta: float) -> void:
 	var target_speed := move_speed
 	if dist < 90.0:
 		target_speed = move_speed * maxf(dist / 90.0, 0.35)
-	target_speed *= 1.0 + sin(_step_phase * 2.0) * 0.10
 
 	var target_velocity := _move_dir * target_speed
 	velocity = velocity.lerp(target_velocity, delta * acceleration)
