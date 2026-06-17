@@ -386,9 +386,9 @@ func _apply_visual_motion(delta: float) -> void:
 	if is_moving:
 		var speed_ratio := clampf(_cur_speed / maxf(move_speed, 1.0), 0.0, 1.0)
 		var cycle := sin(_step_phase)
-		var bounce_y := -absf(cycle) * 2.0 * speed_ratio
-		var squash := (absf(cycle) - 0.5) * 0.018 * speed_ratio
-		_sprite.rotation = lerpf(_sprite.rotation, cycle * 0.02 * speed_ratio, delta * 10.0)
+		var bounce_y := -absf(cycle) * 5.0 * speed_ratio
+		var squash := (absf(cycle) - 0.5) * 0.028 * speed_ratio
+		_sprite.rotation = lerpf(_sprite.rotation, cycle * 0.06 * speed_ratio, delta * 10.0)
 		_sprite.scale = Vector2(base_scale * (1.0 - squash), base_scale * (1.0 + squash))
 		_sprite.position.y = -((FRAME_SIZE.y * 0.5) - FOOT_Y) * (base_scale - 1.0) + bounce_y
 	else:
@@ -463,6 +463,7 @@ func _physics_process(delta: float) -> void:
 	var target_speed := move_speed
 	if dist < 90.0:
 		target_speed = move_speed * maxf(dist / 90.0, 0.35)
+	target_speed *= 1.0 + sin(_step_phase * 2.0) * 0.10
 
 	var target_velocity := _move_dir * target_speed
 	velocity = velocity.lerp(target_velocity, delta * acceleration)
