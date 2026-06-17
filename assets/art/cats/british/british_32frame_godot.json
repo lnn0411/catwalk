@@ -1,0 +1,561 @@
+{
+  "texture_path": "res://assets/art/cats/british/british_32frame_green_fixed.png",
+  "species": "british",
+  "frame_size": {
+    "width": 100,
+    "height": 140
+  },
+  "foot_y": 131,
+  "sheet": {
+    "rows": 8,
+    "cols": 4,
+    "width": 400,
+    "height": 1120
+  },
+  "animations": {
+    "walk_right": {
+      "row": 0,
+      "frame_count": 4,
+      "loop": true,
+      "fps": 8,
+      "frames": [
+        {
+          "row": 0,
+          "col": 0,
+          "region": [
+            0,
+            0,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 0,
+          "col": 1,
+          "region": [
+            100,
+            0,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 0,
+          "col": 2,
+          "region": [
+            200,
+            0,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 0,
+          "col": 3,
+          "region": [
+            300,
+            0,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        }
+      ]
+    },
+    "walk_up_right": {
+      "row": 1,
+      "frame_count": 4,
+      "loop": true,
+      "fps": 8,
+      "frames": [
+        {
+          "row": 1,
+          "col": 0,
+          "region": [
+            0,
+            140,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 1,
+          "col": 1,
+          "region": [
+            100,
+            140,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 1,
+          "col": 2,
+          "region": [
+            200,
+            140,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 1,
+          "col": 3,
+          "region": [
+            300,
+            140,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        }
+      ]
+    },
+    "walk_up": {
+      "row": 2,
+      "frame_count": 4,
+      "loop": true,
+      "fps": 8,
+      "frames": [
+        {
+          "row": 2,
+          "col": 0,
+          "region": [
+            0,
+            280,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 2,
+          "col": 1,
+          "region": [
+            100,
+            280,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 2,
+          "col": 2,
+          "region": [
+            200,
+            280,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 2,
+          "col": 3,
+          "region": [
+            300,
+            280,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        }
+      ]
+    },
+    "walk_down_right": {
+      "row": 3,
+      "frame_count": 4,
+      "loop": true,
+      "fps": 8,
+      "frames": [
+        {
+          "row": 3,
+          "col": 0,
+          "region": [
+            0,
+            420,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 3,
+          "col": 1,
+          "region": [
+            100,
+            420,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 3,
+          "col": 2,
+          "region": [
+            200,
+            420,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 3,
+          "col": 3,
+          "region": [
+            300,
+            420,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        }
+      ]
+    },
+    "walk_down": {
+      "row": 4,
+      "frame_count": 4,
+      "loop": true,
+      "fps": 8,
+      "frames": [
+        {
+          "row": 4,
+          "col": 0,
+          "region": [
+            0,
+            560,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 4,
+          "col": 1,
+          "region": [
+            100,
+            560,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 4,
+          "col": 2,
+          "region": [
+            200,
+            560,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 4,
+          "col": 3,
+          "region": [
+            300,
+            560,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        }
+      ]
+    },
+    "idle": {
+      "row": 5,
+      "frame_count": 4,
+      "loop": true,
+      "fps": 4,
+      "frames": [
+        {
+          "row": 5,
+          "col": 0,
+          "region": [
+            0,
+            700,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 5,
+          "col": 1,
+          "region": [
+            100,
+            700,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 5,
+          "col": 2,
+          "region": [
+            200,
+            700,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 5,
+          "col": 3,
+          "region": [
+            300,
+            700,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        }
+      ]
+    },
+    "turn": {
+      "row": 6,
+      "frame_count": 4,
+      "loop": false,
+      "fps": 10,
+      "frames": [
+        {
+          "row": 6,
+          "col": 0,
+          "region": [
+            0,
+            840,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 6,
+          "col": 1,
+          "region": [
+            100,
+            840,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 6,
+          "col": 2,
+          "region": [
+            200,
+            840,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 6,
+          "col": 3,
+          "region": [
+            300,
+            840,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        }
+      ]
+    },
+    "move_turn": {
+      "row": 7,
+      "frame_count": 4,
+      "loop": false,
+      "fps": 10,
+      "frames": [
+        {
+          "row": 7,
+          "col": 0,
+          "region": [
+            0,
+            980,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 7,
+          "col": 1,
+          "region": [
+            100,
+            980,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 7,
+          "col": 2,
+          "region": [
+            200,
+            980,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        },
+        {
+          "row": 7,
+          "col": 3,
+          "region": [
+            300,
+            980,
+            100,
+            140
+          ],
+          "origin": [
+            50,
+            131
+          ],
+          "foot_y": 131
+        }
+      ]
+    }
+  }
+}

@@ -1,35 +1,10 @@
 extends CharacterBody2D
 class_name CatSprite
 
-# ============================================================
-# CatSprite —— M5 32帧 spritesheet 版
-# ------------------------------------------------------------
-# 适配规格：
-# - 每品种 1 张 spritesheet
-# - 8 行 × 4 列 = 32 帧
-# - 每格 100×140
-# - 脚底 y = 131
-# - 背景纯绿 #00FF00，运行时用 shader 色键抠掉
-#
-# Row 0 walk_right      Walk →  侧身右
-# Row 1 walk_up_right   Walk ↗  3/4背侧
-# Row 2 walk_up         Walk ↑  纯背
-# Row 3 walk_down_right Walk ↘  3/4腹侧
-# Row 4 walk_down       Walk ↓  正脸
-# Row 5 idle            Idle
-# Row 6 turn            Turn
-# Row 7 move_turn       Move Turn
-#
-# 镜像补全：
-# ←  = row 0 + flip_h
-# ↖ = row 1 + flip_h
-# ↙ = row 3 + flip_h
-# ============================================================
-
 signal cat_clicked(cat_data)
 
 @export var breed: String = "orange" # orange / orange_tabby / british / siamese
-@export var cat_data: Resource = null # CatData resource
+@export var cat_data
 
 @export_group("Movement")
 @export var move_speed: float = 52.0
@@ -39,17 +14,18 @@ signal cat_clicked(cat_data)
 @export var wander_max_distance: float = 260.0
 @export var wander_x_min: float = 150.0
 @export var wander_x_max: float = 1950.0
-@export var wander_y_min: float = 440.0
-@export var wander_y_max: float = 640.0
+@export var wander_y_min: float = 380.0
+@export var wander_y_max: float = 780.0
 
 @export_group("Animation")
 @export var walk_fps: float = 8.0
 @export var idle_fps: float = 4.0
 @export var turn_fps: float = 10.0
 @export var move_turn_fps: float = 10.0
-@export var sprite_scale: float = 0.85
+@export var sprite_scale: float = 1.0
 @export var depth_scale_enabled: bool = true
 @export var shadow_enabled: bool = true
+@export var idle_breath_enabled: bool = true
 
 @export_group("Chroma Key")
 @export var chroma_key_enabled: bool = true
@@ -57,13 +33,7 @@ signal cat_clicked(cat_data)
 @export var chroma_key_softness: float = 0.08
 
 const FRAME_SIZE := Vector2i(100, 140)
-const COLS := 4
-const ROWS := 8
 const FOOT_Y := 131
-
-const WALK_PX_BRITISH := 4.0
-const WALK_PX_ORANGE := 6.5
-const WALK_PX_SIAMESE := 7.0
 
 const ANIM_WALK_RIGHT := "walk_right"
 const ANIM_WALK_UP_RIGHT := "walk_up_right"
@@ -105,7 +75,6 @@ var _texture: Texture2D
 var _config: Dictionary = {}
 
 var _current_anim := ANIM_IDLE
-var _current_row := 5
 var _current_col := 0
 var _frame_accum := 0.0
 var _facing_left := false
@@ -117,12 +86,8 @@ var _turn_after_flip := false
 
 var _move_dir := Vector2.ZERO
 var _cur_speed := 0.0
-var _step_phase := 0.0
 var _idle_phase := 0.0
 var _stuck_time := 0.0
-var _walk_accum := 0.0
-var _walk_px_per_frame := 6.5
-var _last_frame_pos := Vector2.ZERO
 
 var _wander_timer: Timer
 var _bounce_tween: Tween
@@ -142,9 +107,6 @@ func _ready() -> void:
 	add_child(_wander_timer)
 	_wander_timer.timeout.connect(_on_wander_tick)
 
-	_walk_px_per_frame = _get_walk_px_per_frame()
-	_last_frame_pos = global_position
-
 	set_process(true)
 	set_physics_process(true)
 
@@ -152,22 +114,34 @@ func _ready() -> void:
 	_schedule_wander()
 
 
-# ------------------------------------------------------------
-# Asset loading
-# ------------------------------------------------------------
-
 func _breed_dir() -> String:
-	if breed == "orange":
-		return "orange_tabby"
-	return breed
+	return "orange_tabby" if breed == "orange" else breed
 
 
 func _texture_path() -> String:
-	return "res://assets/art/cats/%s/spritesheet.png" % _breed_dir()
+	var dir := _breed_dir()
+	return "res://assets/art/cats/%s/%s_32frame_green_fixed.png" % [dir, dir]
 
 
 func _config_path() -> String:
-	return "res://assets/art/cats/%s/spritesheet.qc.json" % _breed_dir()
+	var dir := _breed_dir()
+	return "res://assets/art/cats/%s/%s_32frame_godot.json" % [dir, dir]
+
+
+func _setup_sprite() -> void:
+	for c in get_children():
+		if c is Sprite2D:
+			c.queue_free()
+
+	_sprite = Sprite2D.new()
+	_sprite.name = "Sprite"
+	_sprite.region_enabled = true
+	_sprite.centered = false
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	add_child(_sprite)
+
+	if chroma_key_enabled:
+		_sprite.material = _make_chroma_key_material()
 
 
 func _load_spritesheet() -> void:
@@ -183,42 +157,12 @@ func _load_spritesheet() -> void:
 		var text := FileAccess.get_file_as_string(cfg_path)
 		var parsed = JSON.parse_string(text)
 		if typeof(parsed) == TYPE_DICTIONARY:
-			# Convert QC JSON to CatSprite format
-			if parsed.has("layout") and parsed.has("frames"):
-				var row_names: Array = parsed["layout"]["row_names"]
-				var qc_frames: Array = parsed["frames"]
-				var animations := {}
-				for f in qc_frames:
-					var anim_name: String = row_names[f["row"]]
-					var b = f["bbox"]
-					if not animations.has(anim_name):
-						animations[anim_name] = {"frames": []}
-					animations[anim_name]["frames"].append({
-						"region": [b["x"], b["y"], b["width"], b["height"]]
-					})
-				_config = {"animations": animations}
-			else:
-				_config = parsed
+			_config = parsed
 		else:
 			push_warning("CatSprite: invalid JSON config: %s" % cfg_path)
 
 	_apply_frame(ANIM_IDLE, 0)
-
-
-func _setup_sprite() -> void:
-	for c in get_children():
-		if c is Sprite2D:
-			c.queue_free()
-
-	_sprite = Sprite2D.new()
-	_sprite.name = "Sprite"
-	_sprite.region_enabled = true
-	_sprite.centered = true
-	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	add_child(_sprite)
-
-	if chroma_key_enabled:
-		_sprite.material = _make_chroma_key_material()
+	_apply_sprite_anchor(1.0, 1.0)
 
 
 func _make_chroma_key_material() -> ShaderMaterial:
@@ -244,15 +188,12 @@ void fragment() {
 	return mat
 
 
-# ------------------------------------------------------------
-# Collision / click
-# ------------------------------------------------------------
-
 func _setup_collision() -> void:
 	collision_layer = 2
 	collision_mask = 2
 
 	var body_shape := CollisionShape2D.new()
+	body_shape.position = Vector2(0, -42)
 	var circle := CircleShape2D.new()
 	circle.radius = 26.0
 	body_shape.shape = circle
@@ -265,56 +206,25 @@ func _setup_click_area() -> void:
 	area.input_pickable = true
 	area.collision_layer = 4
 	area.collision_mask = 0
+	area.position = Vector2(0, -58)
 	add_child(area)
 
 	var click_shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
-	circle.radius = 42.0
+	circle.radius = 44.0
 	click_shape.shape = circle
 	area.add_child(click_shape)
 
 	area.input_event.connect(_on_input_event)
 
 
-# ------------------------------------------------------------
-# Animation
-# ------------------------------------------------------------
-
 func _process(delta: float) -> void:
 	_idle_phase += delta
-
-	# Walk: 位移驱动（脚随身体走）；非 walk: 时间驱动
-	if _is_walk_anim(_current_anim):
-		_advance_walk_by_distance()
-	else:
-		_advance_animation(delta)
-
+	_advance_animation(delta)
 	_apply_visual_motion(delta)
-	_last_frame_pos = global_position
 
 	if shadow_enabled:
 		queue_redraw()
-
-
-func _is_walk_anim(anim_name: String) -> bool:
-	return anim_name != ANIM_IDLE and anim_name != ANIM_TURN and anim_name != ANIM_MOVE_TURN
-
-
-func _advance_walk_by_distance() -> void:
-	var moved := global_position.distance_to(_last_frame_pos)
-	_walk_accum += moved
-
-	var max_frames: int = ANIM_FRAME_COUNT.get(_current_anim, 4)
-	while _walk_accum >= _walk_px_per_frame:
-		_walk_accum -= _walk_px_per_frame
-		_current_col += 1
-		if _current_col >= max_frames:
-			_current_col = 0
-			if _turn_playing:
-				_turn_playing = false
-				_set_anim(_turn_after_anim, _turn_after_flip, true)
-				return
-		_apply_frame(_current_anim, _current_col)
 
 
 func _advance_animation(delta: float) -> void:
@@ -334,8 +244,7 @@ func _advance_animation(delta: float) -> void:
 				_turn_playing = false
 				_set_anim(_turn_after_anim, _turn_after_flip, true)
 				return
-			else:
-				_current_col = 0
+			_current_col = 0
 
 		_apply_frame(_current_anim, _current_col)
 
@@ -353,44 +262,30 @@ func _get_anim_fps(anim_name: String) -> float:
 func _set_anim(anim_name: String, flip_left: bool, force: bool = false) -> void:
 	if _turn_playing and not force:
 		return
-
 	if not force and _current_anim == anim_name and _facing_left == flip_left:
 		return
 
 	_current_anim = anim_name
-	_current_row = ANIM_ROWS.get(anim_name, 5)
 	_current_col = 0
 	_frame_accum = 0.0
-	_walk_accum = 0.0
 	_facing_left = flip_left
 	_sprite.flip_h = _facing_left
 	_apply_frame(_current_anim, _current_col)
 
 
 func _apply_frame(anim_name: String, col: int) -> void:
-	if _sprite == null:
-		return
-
 	var row: int = ANIM_ROWS.get(anim_name, 5)
 	var region := Rect2i(col * FRAME_SIZE.x, row * FRAME_SIZE.y, FRAME_SIZE.x, FRAME_SIZE.y)
 
-	# 如果 JSON 里有 region，则优先使用 JSON；否则使用标准 100×140 网格。
 	var json_region := _get_region_from_config(anim_name, col)
 	if json_region.size() == 4:
-		region = Rect2i(
-			int(json_region[0]),
-			int(json_region[1]),
-			int(json_region[2]),
-			int(json_region[3])
-		)
+		region = Rect2i(int(json_region[0]), int(json_region[1]), int(json_region[2]), int(json_region[3]))
 
 	_sprite.region_rect = region
 
 
 func _get_region_from_config(anim_name: String, col: int) -> Array:
-	if _config.is_empty():
-		return []
-	if not _config.has("animations"):
+	if _config.is_empty() or not _config.has("animations"):
 		return []
 	var animations: Dictionary = _config["animations"]
 	if not animations.has(anim_name):
@@ -399,44 +294,32 @@ func _get_region_from_config(anim_name: String, col: int) -> Array:
 	var frames: Array = anim.get("frames", [])
 	if col < 0 or col >= frames.size():
 		return []
-	var frame: Dictionary = frames[col]
-	return frame.get("region", [])
+	return frames[col].get("region", [])
 
 
-func _get_walk_px_per_frame() -> float:
-	match breed:
-		"orange", "orange_tabby": return WALK_PX_ORANGE
-		"british": return WALK_PX_BRITISH
-		_: return WALK_PX_SIAMESE
-
-
-func _apply_visual_motion(delta: float) -> void:
-	if _sprite == null:
-		return
-
+func _apply_visual_motion(_delta: float) -> void:
 	var depth_scale := 1.0
 	if depth_scale_enabled:
 		var t := clampf((position.y - wander_y_min) / maxf(wander_y_max - wander_y_min, 1.0), 0.0, 1.0)
 		depth_scale = lerpf(0.82, 1.15, t)
 
-	var breed_scale := 1.0
-	match breed:
-		"orange", "orange_tabby": breed_scale = 0.82
-		"british": breed_scale = 0.82
-		_: breed_scale = 1.0
+	var sx := sprite_scale * depth_scale
+	var sy := sx
 
-	var base_scale := sprite_scale * depth_scale * breed_scale
+	# 已经有真实 walk 帧后，不再做程序颠步 bounce。
+	# 只保留 idle 极轻微呼吸，而且脚底保持锁定在 CharacterBody2D 原点。
+	if not is_moving and idle_breath_enabled and not _turn_playing:
+		sy *= 1.0 + sin(_idle_phase * 1.6) * 0.012
 
-	if is_moving:
-		# 移动中：底盘锁死，零颠簸零压扁，脚随身体走
-		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 12.0)
-		_sprite.scale = Vector2(base_scale, base_scale)
-		_sprite.position.y = -((FRAME_SIZE.y * 0.5) - FOOT_Y) * (base_scale - 1.0)
-	else:
-		var breath := 1.0 + sin(_idle_phase * 1.8) * 0.012
-		_sprite.rotation = lerpf(_sprite.rotation, 0.0, delta * 8.0)
-		_sprite.scale = Vector2(base_scale, base_scale * breath)
-		_sprite.position.y = -((FRAME_SIZE.y * 0.5) - FOOT_Y) * (base_scale * breath - 1.0)
+	_sprite.rotation = 0.0
+	_sprite.scale = Vector2(sx, sy)
+	_apply_sprite_anchor(sx, sy)
+
+
+func _apply_sprite_anchor(sx: float, sy: float) -> void:
+	# Sprite2D centered=false 时，纹理局部坐标 (50, 131) 是脚底锚点。
+	# 这里让脚底锚点永远落在 CatSprite 根节点原点，避免猫漂浮。
+	_sprite.position = Vector2(-FRAME_SIZE.x * 0.5 * sx, -FOOT_Y * sy)
 
 
 func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> void:
@@ -451,8 +334,6 @@ func _select_anim_from_direction(dir: Vector2) -> Dictionary:
 		return {"anim": ANIM_IDLE, "flip": _facing_left}
 
 	var deg := rad_to_deg(dir.angle())
-
-	# Godot 2D: right=0, down=90, up=-90.
 	if deg >= -22.5 and deg < 22.5:
 		return {"anim": ANIM_WALK_RIGHT, "flip": false}
 	elif deg >= 22.5 and deg < 67.5:
@@ -471,10 +352,6 @@ func _select_anim_from_direction(dir: Vector2) -> Dictionary:
 		return {"anim": ANIM_WALK_UP_RIGHT, "flip": false}
 
 
-# ------------------------------------------------------------
-# Movement / wander
-# ------------------------------------------------------------
-
 func _physics_process(delta: float) -> void:
 	if not is_moving:
 		velocity = velocity.lerp(Vector2.ZERO, delta * acceleration)
@@ -483,7 +360,6 @@ func _physics_process(delta: float) -> void:
 
 	var to_target := target_position - position
 	var dist := to_target.length()
-
 	if dist <= arrive_distance:
 		is_moving = false
 		velocity = Vector2.ZERO
@@ -496,17 +372,13 @@ func _physics_process(delta: float) -> void:
 	var desired_dir := to_target.normalized()
 	desired_dir = _apply_separation(desired_dir)
 
-	if _move_dir == Vector2.ZERO:
-		_move_dir = desired_dir
-	else:
-		_move_dir = _move_dir.lerp(desired_dir, delta * 4.0).normalized()
+	_move_dir = desired_dir if _move_dir == Vector2.ZERO else _move_dir.lerp(desired_dir, delta * 4.0).normalized()
 
 	var target_speed := move_speed
 	if dist < 90.0:
 		target_speed = move_speed * maxf(dist / 90.0, 0.35)
 
-	var target_velocity := _move_dir * target_speed
-	velocity = velocity.lerp(target_velocity, delta * acceleration)
+	velocity = velocity.lerp(_move_dir * target_speed, delta * acceleration)
 	_cur_speed = velocity.length()
 
 	var before := position
@@ -518,7 +390,6 @@ func _physics_process(delta: float) -> void:
 		var selected := _select_anim_from_direction(_last_motion_dir)
 		var next_anim: String = selected["anim"]
 		var next_flip: bool = selected["flip"]
-
 		if next_flip != _facing_left and not _turn_playing:
 			_start_turn_anim(true, next_anim, next_flip)
 		else:
@@ -535,26 +406,19 @@ func _apply_separation(desired_dir: Vector2) -> Vector2:
 
 	var separation := Vector2.ZERO
 	var count := 0
-
 	for child in parent.get_children():
-		if child == self:
+		if child == self or not (child is Node2D):
 			continue
-		if not (child is Node2D):
-			continue
-
 		var d := position.distance_to(child.position)
 		if d > 0.1 and d < 160.0:
-			var push: Vector2 = (position - child.position).normalized()
-			var strength := (1.0 - d / 160.0) * 1.8
-			separation += push * strength
+			var push := (position - child.position).normalized()
+			separation += push * ((1.0 - d / 160.0) * 1.8)
 			count += 1
 
 	if count == 0:
 		return desired_dir
 
 	separation /= count
-
-	# 不允许被 separation 往后推，只保留侧向绕行分量。
 	var dot_prod := separation.dot(desired_dir)
 	if dot_prod < 0.0:
 		separation -= dot_prod * desired_dir
@@ -588,7 +452,6 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 
 
 func _on_wander_tick() -> void:
-	# 小概率原地转身/张望。
 	if rng.randf() < 0.12:
 		_start_turn_anim(false, ANIM_IDLE, not _facing_left)
 		_facing_left = not _facing_left
@@ -598,7 +461,6 @@ func _on_wander_tick() -> void:
 	var dist := rng.randf_range(wander_min_distance, wander_max_distance)
 	var angle := rng.randf_range(0.0, TAU)
 	var offset := Vector2(cos(angle), sin(angle) * 0.65) * dist
-
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, wander_x_min, wander_x_max)
 	target_position.y = clampf(target_position.y, wander_y_min, wander_y_max)
@@ -606,43 +468,22 @@ func _on_wander_tick() -> void:
 
 
 func _schedule_wander() -> void:
-	if _wander_timer == null:
-		return
-
 	var r := rng.randf()
-	var pause := 0.0
-	if r < 0.45:
-		pause = rng.randf_range(0.4, 1.2)
-	elif r < 0.85:
-		pause = rng.randf_range(1.5, 3.5)
-	else:
-		pause = rng.randf_range(4.0, 7.0)
-
+	var pause := rng.randf_range(0.4, 1.2) if r < 0.45 else (rng.randf_range(1.5, 3.5) if r < 0.85 else rng.randf_range(4.0, 7.0))
 	_wander_timer.start(pause)
 
 
 func _clamp_to_wander_area() -> void:
-	var x := clampf(position.x, wander_x_min, wander_x_max)
-	var y := clampf(position.y, wander_y_min, wander_y_max)
-	if x != position.x or y != position.y:
-		position = Vector2(x, y)
+	position.x = clampf(position.x, wander_x_min, wander_x_max)
+	position.y = clampf(position.y, wander_y_min, wander_y_max)
 
-
-# ------------------------------------------------------------
-# Public helpers
-# ------------------------------------------------------------
 
 func face_direction(dx: float) -> void:
-	_face_to(dx)
-
-
-func _face_to(dx: float) -> void:
 	if absf(dx) < 0.001:
 		return
 	var want_left := dx < 0.0
 	if want_left == _facing_left:
 		return
-
 	_facing_left = want_left
 	if is_moving:
 		_start_turn_anim(true, _current_anim, want_left)
@@ -657,10 +498,6 @@ func set_breed(new_breed: String) -> void:
 	_set_anim(ANIM_IDLE, false, true)
 
 
-# ------------------------------------------------------------
-# Click feedback
-# ------------------------------------------------------------
-
 func _on_input_event(_viewport, event, _shape_idx) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_play_click_feedback()
@@ -668,22 +505,20 @@ func _on_input_event(_viewport, event, _shape_idx) -> void:
 
 
 func _play_click_feedback() -> void:
-	var j := get_node_or_null("/root/Juice")
-	if j:
-		j.tap()
-
 	if _bounce_tween and _bounce_tween.is_valid():
 		_bounce_tween.kill()
 
 	_bounce_tween = create_tween()
-	_bounce_tween.tween_property(_sprite, "position:y", _sprite.position.y - 16.0, 0.10).set_ease(Tween.EASE_OUT)
-	_bounce_tween.tween_property(_sprite, "position:y", _sprite.position.y, 0.16).set_ease(Tween.EASE_IN)
+	_bounce_tween.tween_property(_sprite, "position:y", _sprite.position.y - 12.0, 0.10).set_ease(Tween.EASE_OUT)
+	_bounce_tween.tween_callback(func() -> void:
+		_apply_visual_motion(0.0)
+	)
 
 	var heart := Label.new()
 	heart.text = "♥"
 	heart.add_theme_font_size_override("font_size", 30)
 	heart.add_theme_color_override("font_color", Color("#D98E8E"))
-	heart.position = Vector2(-12.0, -86.0)
+	heart.position = Vector2(-12.0, -96.0)
 	add_child(heart)
 
 	var ht := create_tween()
@@ -693,36 +528,15 @@ func _play_click_feedback() -> void:
 	ht.chain().tween_callback(heart.queue_free)
 
 
-# ------------------------------------------------------------
-# Shadow
-# ------------------------------------------------------------
-
 func _draw() -> void:
 	if not shadow_enabled:
 		return
-
-	var bounce_ratio := 1.0
-	if _sprite:
-		bounce_ratio = clampf(1.0 - absf(_sprite.position.y) / 28.0 * 0.25, 0.75, 1.0)
-
-	var shadow_color := Color(0.12, 0.14, 0.06, 0.11)
-	var shadow_size := Vector2(30.0 * bounce_ratio, 7.0 * bounce_ratio)
-	var shadow_y := _get_shadow_y()
-	_draw_oval(Vector2(0.0, shadow_y), shadow_size, shadow_color)
-
-
-func _get_shadow_y() -> float:
-	if _sprite == null:
-		return FOOT_Y - FRAME_SIZE.y * 0.5 + 8.0
-
-	var foot_local_y := FOOT_Y - FRAME_SIZE.y * 0.5
-	return _sprite.position.y + foot_local_y + 8.0
+	_draw_oval(Vector2(0, 3), Vector2(30, 7), Color(0.12, 0.14, 0.06, 0.11))
 
 
 func _draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
 	var points := PackedVector2Array()
-	var steps := 24
-	for i in range(steps):
-		var angle := float(i) / steps * TAU
+	for i in range(24):
+		var angle := float(i) / 24.0 * TAU
 		points.append(center + Vector2(cos(angle) * size.x, sin(angle) * size.y))
 	draw_colored_polygon(points, color)
