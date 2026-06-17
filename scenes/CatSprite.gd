@@ -547,7 +547,7 @@ func _physics_process(delta: float) -> void:
 				# 立刻换个方向重选目标（往反方向偏，避开障碍）
 				_pick_new_target_away_from(blocked_dir)
 				_move_dir = (target_position - position).normalized()
-				_face_to(_move_dir.x, true)
+				_face_to(_move_dir.x)
 				return
 		else:
 			_stuck_time = 0.0
