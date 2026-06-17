@@ -26,7 +26,7 @@ var cat_data
 
 const FACE_MOTION_DEADZONE_X := 0.35
 const FACE_STABLE_TIME := 0.06
-const MAX_MOVE_ANGLE_DEG := 60.0
+const MAX_MOVE_ANGLE_DEG := 45.0
 const MIN_HORIZONTAL_MOVE_X := 80.0
 
 var rng: RandomNumberGenerator
