@@ -364,7 +364,6 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 	var ang := base_angle + rng.randf_range(-PI / 3.0, PI / 3.0)
 	var d := rng.randf_range(80.0, 200.0)
 	var offset := Vector2(cos(ang) * 1.0, sin(ang) * 0.55) * d
-	offset = _limit_move_offset_angle(offset)
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 350.0, 1700.0)
 	target_position.y = clampf(target_position.y, 380.0, 640.0) # 草坪安全区：避开背景下半土区(Y)和左右灌木/小路(X)
