@@ -97,7 +97,7 @@ func _make_flower_texture() -> Texture2D:
 		Color(0.6, 0.3, 1.0, 1.0),  # 紫色
 		Color(1.0, 0.5, 0.3, 1.0),  # 橙色
 	]
-	var col := colors[randi() % colors.size()]
+	var col: Color = colors[randi() % colors.size()]
 	# 画 5 个花瓣圆
 	for angle_deg in [0, 72, 144, 216, 288]:
 		var rad := deg_to_rad(float(angle_deg))
