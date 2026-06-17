@@ -548,7 +548,7 @@ func _play_click_feedback() -> void:
 # ============ 动态椭圆阴影绘制 ============
 const SPRITE_TEXTURE_H := 140.0
 const SPRITE_FOOT_BOTTOM_Y := 131.0
-const SHADOW_FOOT_OFFSET_Y := 0.0
+const SHADOW_FOOT_OFFSET_Y := 3.0
 
 func _get_shadow_y() -> float:
 	if _sprite == null:
