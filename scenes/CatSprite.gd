@@ -24,8 +24,8 @@ var cat_data
 @export var move_turn_interval: float = 0.12 # 移动中转身单帧间隔秒数（正面帧会自动乘 1.5 倍）
 @export var static_turn_interval: float = 0.18 # 原地/静态转身单帧间隔秒数
 
-const FACE_MOTION_DEADZONE_X := 0.35
-const FACE_STABLE_TIME := 0.06
+const FACE_MOTION_DEADZONE_X := 1.0
+const FACE_STABLE_TIME := 0.20
 const MAX_MOVE_ANGLE_DEG := 45.0
 const MIN_HORIZONTAL_MOVE_X := 80.0
 
@@ -96,7 +96,7 @@ var _face_motion_stable_timer := 0.0
 # 此时 _sprite 尚未创建，先存状态、_ready 时应用）
 # 转向：不再瞬间镜像翻转——做一个"横向挤压→翻面→弹回"的小动画，
 # 模拟猫转身的视觉（squash 翻转法，2帧贴图也能有转身感）。
-func _face_to(dx: float) -> void:
+func _face_to(dx: float, force: bool = false) -> void:
 	if absf(dx) < 0.001:
 		return
 	var want_left: bool = dx < 0.0
@@ -106,8 +106,8 @@ func _face_to(dx: float) -> void:
 		_facing_left = want_left  # 转身动画进行中，只更新目标朝向，不打断
 		return
 	
-	# 增加转身冷却缓冲（400 毫秒内不允许连续转身），极大防止由于碰撞或寻路微调产生的“频繁晃体、疯狂原地转身”！
-	if Time.get_ticks_msec() - _last_turn_time < 400:
+	# 增加转身冷却缓冲（800 毫秒内不允许连续转身），极大防止由于碰撞或寻路微调产生的“频繁晃体、疯狂原地转身”！
+	if not force and Time.get_ticks_msec() - _last_turn_time < 800:
 		return
 		
 	_facing_left = want_left
@@ -205,7 +205,7 @@ func _update_facing_from_actual_motion(actual_dx: float, delta: float) -> void:
 	if _face_motion_stable_timer >= FACE_STABLE_TIME:
 		_pending_face_motion_x = 0.0
 		_face_motion_stable_timer = 0.0
-		_face_to(actual_dx)
+		_face_to(actual_dx, true)
 
 func _count_child_sprites() -> int:
 	var n := 0
@@ -381,8 +381,8 @@ func _limit_move_offset_angle(offset: Vector2) -> Vector2:
 	return fixed
 
 func _on_wander_tick() -> void:
-	# 35% 原地小动作：转身张望 / 短暂发呆（不移动，添生气）
-	if rng.randf() < 0.35:
+	# 15% 原地小动作：转身张望 / 短暂发呆（不移动，添生气）
+	if rng.randf() < 0.15:
 		if rng.randf() < 0.6:
 			_face_to(1.0 if _facing_left else -1.0)  # 转身张望
 		_schedule_wander()
