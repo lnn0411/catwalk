@@ -548,19 +548,13 @@ func _play_click_feedback() -> void:
 # ============ 动态椭圆阴影绘制 ============
 const SPRITE_TEXTURE_H := 140.0
 const SPRITE_FOOT_BOTTOM_Y := 131.0
-const SHADOW_FOOT_OFFSET_Y := -6.0
-const SHADOW_FOLLOW_BOUNCE := true
+const SHADOW_FOOT_OFFSET_Y := 0.0
 
 func _get_shadow_y() -> float:
 	if _sprite == null:
 		return 61.0
-	var texture_h := SPRITE_TEXTURE_H
-	if _sprite.texture:
-		texture_h = float(_sprite.texture.get_height())
-	var foot_local_y := SPRITE_FOOT_BOTTOM_Y - texture_h * 0.5
-	if SHADOW_FOLLOW_BOUNCE:
-		return _sprite.position.y + foot_local_y + SHADOW_FOOT_OFFSET_Y
-	return foot_local_y + SHADOW_FOOT_OFFSET_Y
+	var foot_local_y := SPRITE_FOOT_BOTTOM_Y - SPRITE_TEXTURE_H * 0.5
+	return _sprite.position.y + foot_local_y + SHADOW_FOOT_OFFSET_Y
 
 func _draw() -> void:
 	var shadow_color := Color(0.12, 0.14, 0.06, 0.11)
