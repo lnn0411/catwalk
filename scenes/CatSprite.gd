@@ -29,7 +29,7 @@ class_name CatSprite
 signal cat_clicked(cat_data)
 
 @export var breed: String = "orange" # orange / orange_tabby / british / siamese
-@export var cat_data
+@export var cat_data: Dictionary = {}
 
 @export_group("Movement")
 @export var move_speed: float = 52.0
@@ -497,7 +497,7 @@ func _apply_separation(desired_dir: Vector2) -> Vector2:
 
 		var d := position.distance_to(child.position)
 		if d > 0.1 and d < 160.0:
-			var push := (position - child.position).normalized()
+			var push: Vector2 = (position - child.position).normalized()
 			var strength := (1.0 - d / 160.0) * 1.8
 			separation += push * strength
 			count += 1
