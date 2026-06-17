@@ -551,10 +551,11 @@ const SHADOW_FOLLOW_FACTOR := 0.15
 func _draw() -> void:
 	var shadow_color := Color(0.12, 0.14, 0.06, 0.11)
 	var bounce_ratio := 1.0
+	var shadow_y := SHADOW_BASE_Y
 	if _sprite:
 		bounce_ratio = clampf(1.0 - (absf(_sprite.position.y) / 18.0) * 0.25, 0.75, 1.0)
+		shadow_y = SHADOW_BASE_Y + (_sprite.position.y * SHADOW_FOLLOW_FACTOR)
 	var shadow_size := Vector2(30.0 * bounce_ratio, 7.0 * bounce_ratio)
-	var shadow_y := SHADOW_BASE_Y + (_sprite.position.y * SHADOW_FOLLOW_FACTOR)
 	draw_oval(Vector2(0.0, shadow_y), shadow_size, shadow_color)
 
 # 绘制扁平椭圆形影子的辅助方法（Godot 4 兼容）
