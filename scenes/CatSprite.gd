@@ -549,7 +549,7 @@ func _physics_process(delta: float) -> void:
 				_facing_left = _move_dir.x < 0.0
 				if _sprite:
 					_sprite.flip_h = _facing_left
-				_cur_speed = max_walk_speed * 1.2
+				_cur_speed = move_speed * 1.2
 				return
 		else:
 			_stuck_time = 0.0
