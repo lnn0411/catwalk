@@ -306,6 +306,8 @@ func _apply_visual_motion(_delta: float) -> void:
 	var sx := sprite_scale * depth_scale
 	var sy := sx
 
+	z_index = int(position.y * 10.0)
+
 	# 已经有真实 walk 帧后，不再做程序颠步 bounce。
 	# 只保留 idle 极轻微呼吸，而且脚底保持锁定在 CharacterBody2D 原点。
 	if not is_moving and idle_breath_enabled and not _turn_playing:
