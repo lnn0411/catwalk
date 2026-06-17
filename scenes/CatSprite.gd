@@ -278,7 +278,7 @@ func _ready() -> void:
 
 # 计算近大远小的透视比例（草地 Y 轴范围 380 ~ 640，对应比例从 0.82 渐变到 1.15）
 func _get_perspective_scale() -> float:
-	var t := clampf((position.y - 380.0) / (640.0 - 380.0), 0.0, 1.0)
+	var t := clampf((position.y - 380.0) / (780.0 - 380.0), 0.0, 1.0)
 	return lerpf(0.82, 1.15, t)
 
 # ============ M4：每帧动画（全部作用于 _sprite 子节点）============
@@ -366,7 +366,7 @@ func _pick_new_target_away_from(blocked_dir: Vector2) -> void:
 	var offset := Vector2(cos(ang) * 1.0, sin(ang) * 0.55) * d
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 350.0, 1700.0)
-	target_position.y = clampf(target_position.y, 380.0, 640.0) # 草坪安全区：避开背景下半土区(Y)和左右灌木/小路(X)
+	target_position.y = clampf(target_position.y, 380.0, 780.0) # 草坪安全区
 	is_moving = true
 
 func _limit_move_offset_angle(offset: Vector2) -> Vector2:
@@ -393,7 +393,7 @@ func _on_wander_tick() -> void:
 	offset = _limit_move_offset_angle(offset)
 	target_position = position + offset
 	target_position.x = clampf(target_position.x, 350.0, 1700.0)
-	target_position.y = clampf(target_position.y, 380.0, 640.0)
+	target_position.y = clampf(target_position.y, 380.0, 780.0)
 	is_moving = true
 
 func _schedule_wander() -> void:
@@ -562,7 +562,7 @@ func _physics_process(delta: float) -> void:
 			_schedule_wander()
 	# 自愈保险：任何原因出界都拉回活动范围（仅出界时写，避免每帧赋值）
 	var cx := clampf(position.x, 350.0, 1700.0)
-	var cy := clampf(position.y, 380.0, 640.0) # 草坪安全区：避开背景下半土区(Y)和左右灌木/小路(X)
+	var cy := clampf(position.y, 380.0, 780.0) # 草坪安全区
 	if cx != position.x or cy != position.y:
 		position = Vector2(cx, cy)
 
