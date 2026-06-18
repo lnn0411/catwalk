@@ -1,21 +1,23 @@
 extends "res://ui/UIPage.gd"
 
-const ALLOW_BUTTON_SIZE := Vector2(480.0, 56.0)
-const LATER_BUTTON_SIZE := Vector2(220.0, 56.0)
-const SETTINGS_BUTTON_SIZE := Vector2(480.0, 56.0)
+const MAIN_BUTTON_SIZE := Vector2(480.0, 60.0)
+const SKIP_BUTTON_SIZE := Vector2(220.0, 50.0)
 
-var _allow_rect := Rect2()
-var _later_rect := Rect2()
-var _settings_rect := Rect2()
-var _show_settings := false
-var _requesting := false
+var _main_rect := Rect2()
+var _skip_rect := Rect2()
+var _returning_from_settings := false
 
 func _ready() -> void:
 	super._ready()
 	_add_background()
 	_layout_hotspots()
-	# 进页面立即触发权限请求
-	call_deferred("_on_allow_pressed")
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_IN and _returning_from_settings:
+		_returning_from_settings = false
+		if _check_permission():
+			SaveManager.save_all()
+			UIManager.replace("res://scenes/S02_Loading.tscn")
 
 func _add_background() -> void:
 	var bg := TextureRect.new()
@@ -29,16 +31,13 @@ func _add_background() -> void:
 
 func _layout_hotspots() -> void:
 	var screen := get_viewport_rect().size
-	_allow_rect = Rect2(Vector2((screen.x - ALLOW_BUTTON_SIZE.x) * 0.5, 980.0), ALLOW_BUTTON_SIZE)
-	_later_rect = Rect2(Vector2((screen.x - LATER_BUTTON_SIZE.x) * 0.5, screen.y - 250.0), LATER_BUTTON_SIZE)
-	_settings_rect = Rect2(Vector2((screen.x - SETTINGS_BUTTON_SIZE.x) * 0.5, 900.0), SETTINGS_BUTTON_SIZE)
+	_main_rect = Rect2(Vector2((screen.x - MAIN_BUTTON_SIZE.x) * 0.5, 900.0), MAIN_BUTTON_SIZE)
+	_skip_rect = Rect2(Vector2((screen.x - SKIP_BUTTON_SIZE.x) * 0.5, screen.y - 250.0), SKIP_BUTTON_SIZE)
 
 func handle_back() -> bool:
 	return true
 
 func _gui_input(event: InputEvent) -> void:
-	if _requesting:
-		return
 	var released := false
 	var pos := Vector2.ZERO
 	if event is InputEventScreenTouch and not event.pressed:
@@ -49,49 +48,23 @@ func _gui_input(event: InputEvent) -> void:
 		pos = event.position
 	if not released:
 		return
-	if _show_settings and _settings_rect.has_point(pos):
-		_open_app_settings()
-	elif _allow_rect.has_point(pos):
-		_on_allow_pressed()
-	elif _later_rect.has_point(pos):
+	if _main_rect.has_point(pos):
+		_open_settings()
+	elif _skip_rect.has_point(pos):
 		UIManager.replace("res://scenes/S02_Loading.tscn")
 
-func _on_allow_pressed() -> void:
-	_requesting = true
-	var step_counter := Engine.get_singleton("StepCounter")
-	if step_counter == null:
-		# Editor / non-Android → skip permission, go to garden
-		UIManager.replace("res://scenes/S02_Loading.tscn")
-		return
-	if step_counter.has_signal("permission_result") and not step_counter.permission_result.is_connected(_on_permission_result):
-		step_counter.permission_result.connect(_on_permission_result, CONNECT_ONE_SHOT)
-	if step_counter.has_method("hasActivityRecognitionPermission") and bool(step_counter.call("hasActivityRecognitionPermission")):
-		_on_permission_result(true)
-		return
-	if step_counter.has_method("requestActivityRecognitionPermission"):
-		step_counter.call("requestActivityRecognitionPermission")
-	elif step_counter.has_method("request_permission"):
-		step_counter.call("request_permission")
-	else:
-		_on_permission_result(false)
+## —— 内部函数 ——
 
-func _on_permission_result(granted: bool) -> void:
-	_requesting = false
-	if granted:
-		SaveManager.save_all()
-		UIManager.replace("res://scenes/S02_Loading.tscn")
-		return
-	_show_settings = true
-	var step_counter := Engine.get_singleton("StepCounter")
-	if step_counter != null:
-		if step_counter.has_method("isPermissionDeniedPermanently") and bool(step_counter.call("isPermissionDeniedPermanently")):
-			UIManager.replace("res://scenes/S91_PermDenied.tscn")
-			return
-		if step_counter.has_method("is_permission_denied_permanently") and bool(step_counter.call("is_permission_denied_permanently")):
-			UIManager.replace("res://scenes/S91_PermDenied.tscn")
-			return
-
-func _open_app_settings() -> void:
+func _open_settings() -> void:
+	_returning_from_settings = true
 	var sc := Engine.get_singleton("StepCounter")
 	if sc and sc.has_method("openAppSettings"):
 		sc.call("openAppSettings")
+
+func _check_permission() -> bool:
+	var sc := Engine.get_singleton("StepCounter")
+	if sc == null:
+		return true  # editor
+	if sc.has_method("hasActivityRecognitionPermission"):
+		return bool(sc.call("hasActivityRecognitionPermission"))
+	return true
