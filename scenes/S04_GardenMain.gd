@@ -722,34 +722,42 @@ class EnergyMeter:
 	var current: float = 0.0
 	var max_value: float = 15000.0
 	var _label: Label
+	var _fill: TextureRect
 
 	func set_energy(value: float, limit: float) -> void:
 		current = maxf(value, 0.0)
 		max_value = maxf(limit, 1.0)
-		queue_redraw()
 		if _label:
 			_label.text = "%s/%s" % [_fmt(int(current)), _fmt(int(max_value))]
+		if _fill:
+			var ratio: float = clampf(current / max_value, 0.0, 1.0)
+			_fill.size.x = _fill.custom_minimum_size.x * ratio
 
 	func _ready() -> void:
+		var bar_bg := TextureRect.new()
+		bar_bg.texture = load("res://assets/art/ui/progress/progress_empty.png")
+		bar_bg.custom_minimum_size = Vector2(200.0, 16.0)
+		bar_bg.stretch_mode = TextureRect.STRETCH_SCALE
+		bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(bar_bg)
+
+		_fill = TextureRect.new()
+		_fill.texture = load("res://assets/art/ui/progress/progress_fill.png")
+		_fill.custom_minimum_size = Vector2(200.0, 16.0)
+		_fill.stretch_mode = TextureRect.STRETCH_SCALE
+		_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_fill)
+
 		_label = Label.new()
 		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		_label.add_theme_font_size_override("font_size", 15)
-		# 文字压在能量条上（左半棕橙AMBER/右半浅米），用白字+深色描边
-		# 保证在两种底色上都清晰可读
 		_label.add_theme_color_override("font_color", Color.WHITE)
 		_label.add_theme_color_override("font_outline_color", Palette.TEXT_PRIMARY)
 		_label.add_theme_constant_override("outline_size", 4)
 		_label.size = Vector2(200.0, 36.0)
 		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_label)
-
-	func _draw() -> void:
-		var bar_rect := Rect2(0.0, 8.0, 200.0, 16.0)
-		draw_rect(bar_rect, Palette.BORDER_DEFAULT, true)
-		var ratio: float = clampf(current / max_value, 0.0, 1.0)
-		draw_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * ratio, bar_rect.size.y)), Palette.AMBER, true)
-		draw_rect(bar_rect, Palette.BORDER_ACTIVE, false, 2.0)
 
 	func _fmt(value: int) -> String:
 		var raw: String = str(value)

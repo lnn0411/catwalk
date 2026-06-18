@@ -118,13 +118,13 @@ class NavTab:
 		add_child(_active_bar)
 
 		_icon = TextureRect.new()
-		_icon.custom_minimum_size = Vector2(28.0, 28.0)
-		_icon.stretch_mode = TextureRect.STRETCH_SCALE
+		_icon.custom_minimum_size = Vector2(40.0, 40.0)
+		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		_icon.anchor_left = 0.5
 		_icon.anchor_right = 0.5
-		_icon.offset_left = -14.0
-		_icon.offset_right = 14.0
+		_icon.offset_left = -20.0
+		_icon.offset_right = 20.0
 		_icon.offset_top = 8.0
 		_icon.offset_bottom = 36.0
 		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
