@@ -38,11 +38,11 @@ func _add_background() -> void:
 func _draw() -> void:
 	var screen := get_viewport_rect().size
 	_draw_centered_text("花园正在等你回来……", screen.y * 0.40, 28, Color.WHITE)
-	draw_arc(screen / 2.0 + Vector2(0.0, 120.0), 42.0, _spinner_angle, _spinner_angle + PI * 1.45, 36, Palette.AMBER, 6.0)
+	draw_arc(screen / 2.0 + Vector2(0.0, 120.0), 42.0, _spinner_angle, _spinner_angle + PI * 1.45, 36, Color.WHITE, 6.0)
 
 	var bar_pos := Vector2((screen.x - LOADING_BAR_SIZE.x) * 0.5, screen.y - 260.0)
-	draw_rect(Rect2(bar_pos, LOADING_BAR_SIZE), Palette.BORDER_DEFAULT)
-	draw_rect(Rect2(bar_pos, Vector2(LOADING_BAR_SIZE.x * clamp(_progress, 0.0, 1.0), LOADING_BAR_SIZE.y)), Palette.AMBER)
+	draw_rect(Rect2(bar_pos, LOADING_BAR_SIZE), Color.WHITE * 0.4)
+	draw_rect(Rect2(bar_pos, Vector2(LOADING_BAR_SIZE.x * clamp(_progress, 0.0, 1.0), LOADING_BAR_SIZE.y)), Color.WHITE)
 
 func _start_timeout() -> void:
 	var timer := get_tree().create_timer(LOAD_TIMEOUT_SECONDS)
