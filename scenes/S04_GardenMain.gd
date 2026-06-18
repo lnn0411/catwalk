@@ -882,18 +882,26 @@ class HatchSlotView:
 		if not unlocked:
 			fs.bg_color = Color(Palette.CITY_GRAY, 0.30)
 			fs.border_color = Color(Palette.BORDER_DEFAULT, 0.6)
-			fs.set_border_width_all(1)
+			fs.border_width_left = 1
+			fs.border_width_right = 1
+			fs.border_width_top = 1
 		elif status == "ready" or (status == "incubating" and progress >= 1.0):
 			fs.bg_color = Color(Palette.AMBER, 0.22)
 			fs.border_color = Palette.AMBER
-			fs.set_border_width_all(2)
+			fs.border_width_left = 2
+			fs.border_width_right = 2
+			fs.border_width_top = 2
 		elif status == "incubating":
 			fs.bg_color = Color(Palette.BG_WARM_WHITE, 0.90)
 			fs.border_color = Color(Palette.AMBER, 0.55)
-			fs.set_border_width_all(1)
+			fs.border_width_left = 1
+			fs.border_width_right = 1
+			fs.border_width_top = 1
 		else:
 			fs.bg_color = Color(Palette.BG_WARM_WHITE, 0.75)
 			fs.border_color = Color(Palette.BORDER_DEFAULT, 0.8)
-			fs.set_border_width_all(1)
+			fs.border_width_left = 1
+			fs.border_width_right = 1
+			fs.border_width_top = 1
 		_frame.add_theme_stylebox_override("panel", fs)
 		_detail_label.text = detail
