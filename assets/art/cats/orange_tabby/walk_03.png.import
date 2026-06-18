@@ -2,7 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-path="res://.godot/imported/walk_03.png-53141f518379478c9c94530b31a8d0d1.ctex"
+uid="uid://b26jucf7id3wm"
+path="res://.godot/imported/walk_03.png-3cf41db46e9862173aec441980ab06f1.ctex"
 metadata={
 "vram_texture": false
 }
@@ -10,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/cats/orange_tabby/walk_03.png"
-dest_files=["res://.godot/imported/walk_03.png-53141f518379478c9c94530b31a8d0d1.ctex"]
+dest_files=["res://.godot/imported/walk_03.png-3cf41db46e9862173aec441980ab06f1.ctex"]
 
 [params]
 

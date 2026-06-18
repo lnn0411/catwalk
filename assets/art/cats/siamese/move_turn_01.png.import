@@ -2,7 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-path="res://.godot/imported/move_turn_01.png-e8fdb16044ae62ffda2da646ac96b7a1.ctex"
+uid="uid://s0nkflywl0ym"
+path="res://.godot/imported/move_turn_01.png-359e7d0ea70760466377122d73cbc206.ctex"
 metadata={
 "vram_texture": false
 }
@@ -10,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/cats/siamese/move_turn_01.png"
-dest_files=["res://.godot/imported/move_turn_01.png-e8fdb16044ae62ffda2da646ac96b7a1.ctex"]
+dest_files=["res://.godot/imported/move_turn_01.png-359e7d0ea70760466377122d73cbc206.ctex"]
 
 [params]
 

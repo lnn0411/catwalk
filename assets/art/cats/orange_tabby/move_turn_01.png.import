@@ -2,7 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-path="res://.godot/imported/move_turn_01.png-53141f518379478c9c94530b31a8d0d1.ctex"
+uid="uid://qgvq85gicn6b"
+path="res://.godot/imported/move_turn_01.png-acfa7bf6872f318ba67806878b8afe9f.ctex"
 metadata={
 "vram_texture": false
 }
@@ -10,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/cats/orange_tabby/move_turn_01.png"
-dest_files=["res://.godot/imported/move_turn_01.png-53141f518379478c9c94530b31a8d0d1.ctex"]
+dest_files=["res://.godot/imported/move_turn_01.png-acfa7bf6872f318ba67806878b8afe9f.ctex"]
 
 [params]
 

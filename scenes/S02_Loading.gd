@@ -11,6 +11,7 @@ var _timed_out := false
 
 func _ready() -> void:
 	super._ready()
+	_add_background()
 	set_process(true)
 	var tween := create_tween()
 	tween.tween_property(self, "_progress", 1.0, LOAD_DELAY_SECONDS)
@@ -24,9 +25,18 @@ func _process(delta: float) -> void:
 	_spinner_angle = fmod(_spinner_angle + delta * 4.0, TAU)
 	queue_redraw()
 
+func _add_background() -> void:
+	var bg := TextureRect.new()
+	bg.texture = preload("res://assets/art/ui/loading_bg.png")
+	bg.expand_mode = TextureRect.EXPAND_FIT_WIDTH
+	bg.stretch_mode = TextureRect.STRETCH_KEEP
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg.show_behind_parent = true
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+
 func _draw() -> void:
 	var screen := get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_CEMENT)
 	_draw_centered_text("花园正在等你回来……", screen.y * 0.40, 28, Palette.TEXT_PRIMARY)
 	draw_arc(screen / 2.0 + Vector2(0.0, 120.0), 42.0, _spinner_angle, _spinner_angle + PI * 1.45, 36, Palette.AMBER, 6.0)
 

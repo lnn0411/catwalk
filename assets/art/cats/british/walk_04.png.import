@@ -2,7 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-path="res://.godot/imported/walk_04.png-f120df47c4ea9d244124e2acf0a9259a.ctex"
+uid="uid://dpapu0ubqb3sl"
+path="res://.godot/imported/walk_04.png-afbbd1cb657bfce768e0c82f916a93f0.ctex"
 metadata={
 "vram_texture": false
 }
@@ -10,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/cats/british/walk_04.png"
-dest_files=["res://.godot/imported/walk_04.png-f120df47c4ea9d244124e2acf0a9259a.ctex"]
+dest_files=["res://.godot/imported/walk_04.png-afbbd1cb657bfce768e0c82f916a93f0.ctex"]
 
 [params]
 

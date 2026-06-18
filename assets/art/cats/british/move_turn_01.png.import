@@ -2,7 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-path="res://.godot/imported/move_turn_01.png-f120df47c4ea9d244124e2acf0a9259a.ctex"
+uid="uid://cdlwwbhmkv6kx"
+path="res://.godot/imported/move_turn_01.png-4c32c0126038997b59464676c2121502.ctex"
 metadata={
 "vram_texture": false
 }
@@ -10,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/cats/british/move_turn_01.png"
-dest_files=["res://.godot/imported/move_turn_01.png-f120df47c4ea9d244124e2acf0a9259a.ctex"]
+dest_files=["res://.godot/imported/move_turn_01.png-4c32c0126038997b59464676c2121502.ctex"]
 
 [params]
 

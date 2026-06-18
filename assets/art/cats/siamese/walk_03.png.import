@@ -2,7 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-path="res://.godot/imported/walk_03.png-e8fdb16044ae62ffda2da646ac96b7a1.ctex"
+uid="uid://b8r65mhf848ko"
+path="res://.godot/imported/walk_03.png-cf952de6f20529aa6fcc57da12bebe6b.ctex"
 metadata={
 "vram_texture": false
 }
@@ -10,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/cats/siamese/walk_03.png"
-dest_files=["res://.godot/imported/walk_03.png-e8fdb16044ae62ffda2da646ac96b7a1.ctex"]
+dest_files=["res://.godot/imported/walk_03.png-cf952de6f20529aa6fcc57da12bebe6b.ctex"]
 
 [params]
 
