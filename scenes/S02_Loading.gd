@@ -1,17 +1,28 @@
 extends "res://ui/UIPage.gd"
 
-const LOADING_BAR_SIZE := Vector2(600.0, 8.0)
 const LOAD_DELAY_SECONDS := 1.5
 const LOAD_TIMEOUT_SECONDS := 5.0
+const BAR_WIDTH := 400.0
+const BAR_HEIGHT := 6.0
 
 var _progress := 0.0
 var _spinner_angle := 0.0
 var _load_finished := false
 var _timed_out := false
 
+var _spinner: SpinnerArc = null
+var _bar_fill: ColorRect = null
+
+class SpinnerArc extends Control:
+	var angle := 0.0
+
+	func _draw() -> void:
+		draw_arc(Vector2(64.0, 60.0), 42.0, angle, angle + PI * 1.45, 36, Color.WHITE, 6.0)
+
 func _ready() -> void:
 	super._ready()
 	_add_background()
+	_add_foreground()
 	set_process(true)
 	var tween := create_tween()
 	tween.tween_property(self, "_progress", 1.0, LOAD_DELAY_SECONDS)
@@ -23,7 +34,11 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_spinner_angle = fmod(_spinner_angle + delta * 4.0, TAU)
-	queue_redraw()
+	if _spinner != null:
+		_spinner.angle = _spinner_angle
+		_spinner.queue_redraw()
+	if _bar_fill != null:
+		_bar_fill.size.x = BAR_WIDTH * clamp(_progress, 0.0, 1.0)
 
 func _add_background() -> void:
 	var bg := TextureRect.new()
@@ -35,14 +50,60 @@ func _add_background() -> void:
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-func _draw() -> void:
-	var screen := get_viewport_rect().size
-	_draw_centered_text("花园正在等你回来……", screen.y * 0.72, 28, Color.WHITE)
-	draw_arc(screen / 2.0 + Vector2(0.0, 40.0), 42.0, _spinner_angle, _spinner_angle + PI * 1.45, 36, Color.WHITE, 6.0)
+func _add_foreground() -> void:
+	var label := Label.new()
+	label.text = "花园正在等你回来……"
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", 28)
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.anchor_left = 0.5
+	label.anchor_right = 0.5
+	label.anchor_top = 0.0
+	label.anchor_bottom = 0.0
+	label.offset_left = -200.0
+	label.offset_right = 200.0
+	label.offset_top = 500.0
+	label.offset_bottom = 540.0
+	add_child(label)
 
-	var bar_pos := Vector2((screen.x - LOADING_BAR_SIZE.x) * 0.5, screen.y - 260.0)
-	draw_rect(Rect2(bar_pos, LOADING_BAR_SIZE), Color.WHITE * 0.4)
-	draw_rect(Rect2(bar_pos, Vector2(LOADING_BAR_SIZE.x * clamp(_progress, 0.0, 1.0), LOADING_BAR_SIZE.y)), Color.WHITE)
+	_spinner = SpinnerArc.new()
+	_spinner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_spinner.anchor_left = 0.5
+	_spinner.anchor_right = 0.5
+	_spinner.anchor_top = 0.5
+	_spinner.anchor_bottom = 0.5
+	_spinner.offset_left = -64.0
+	_spinner.offset_right = 64.0
+	_spinner.offset_top = -64.0
+	_spinner.offset_bottom = 64.0
+	add_child(_spinner)
+
+	var bar_bg := ColorRect.new()
+	bar_bg.color = Color.WHITE * 0.4
+	bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bar_bg.anchor_left = 0.5
+	bar_bg.anchor_right = 0.5
+	bar_bg.anchor_top = 1.0
+	bar_bg.anchor_bottom = 1.0
+	bar_bg.offset_left = -BAR_WIDTH * 0.5
+	bar_bg.offset_right = BAR_WIDTH * 0.5
+	bar_bg.offset_top = -200.0
+	bar_bg.offset_bottom = -200.0 + BAR_HEIGHT
+	add_child(bar_bg)
+
+	_bar_fill = ColorRect.new()
+	_bar_fill.color = Color.WHITE
+	_bar_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_bar_fill.anchor_left = 0.5
+	_bar_fill.anchor_right = 0.5
+	_bar_fill.anchor_top = 1.0
+	_bar_fill.anchor_bottom = 1.0
+	_bar_fill.offset_left = -BAR_WIDTH * 0.5
+	_bar_fill.offset_top = -200.0
+	_bar_fill.offset_bottom = -200.0 + BAR_HEIGHT
+	_bar_fill.size = Vector2(BAR_WIDTH * clamp(_progress, 0.0, 1.0), BAR_HEIGHT)
+	add_child(_bar_fill)
 
 func _start_timeout() -> void:
 	var timer := get_tree().create_timer(LOAD_TIMEOUT_SECONDS)
@@ -99,8 +160,3 @@ func _days_since_last_open() -> int:
 		"second": 0,
 	})
 	return max(int(floor((today_time - last_time) / float(24 * 60 * 60))), 0)
-
-func _draw_centered_text(text: String, y: float, font_size: int, color: Color) -> void:
-	var font := get_theme_default_font()
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x
-	draw_string(font, Vector2((get_viewport_rect().size.x - width) * 0.5, y), text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, color)
