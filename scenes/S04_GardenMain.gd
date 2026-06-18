@@ -387,6 +387,7 @@ func _build_debug_panel() -> void:
 		["清空数据", func() -> void: _clear_cache()],
 		["Show/Hide stats", func() -> void: _toggle_stats()],
 		["重播Onboarding", func() -> void: _replay_onboarding()],
+		["注入数据", func() -> void: _inject_data()],
 	]:
 		var button := Button.new()
 		button.text = String(item[0])
@@ -531,9 +532,18 @@ func _add_mock_steps(amount: int) -> void:
 	if SaveManager:
 		SaveManager.save_all()
 
+
+func _inject_data() -> void:
+	if StepEngine:
+		StepEngine.add_mock_steps(10000)
+	if EnergyEngine:
+		EnergyEngine.energy_pool = EnergyEngine.MAX_ENERGY
+		print("[Inject] steps=10000 energy=%.0f" % EnergyEngine.energy_pool)
+	if SaveManager:
+		SaveManager.save_all()
+
+
 func _replay_onboarding() -> void:
-	# 模拟首次启动：清存档+重置created_at → 跳Splash → 自动进入Onboarding
-	if _debug_panel:
 		_debug_panel.visible = false
 	if SaveManager:
 		SaveManager.reset_all()
