@@ -2,7 +2,7 @@ extends "res://ui/UIPage.gd"
 
 const PAGE_COUNT := 3
 const SWIPE_THRESHOLD := 100.0
-const AUTO_ADVANCE_INTERVAL := 3.0
+const AUTO_ADVANCE_INTERVAL := 2.0
 const START_BUTTON_SIZE := Vector2(360.0, 48.0)
 const SKIP_BUTTON_SIZE := Vector2(180.0, 56.0)
 
