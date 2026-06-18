@@ -532,9 +532,14 @@ func _add_mock_steps(amount: int) -> void:
 		SaveManager.save_all()
 
 func _replay_onboarding() -> void:
-	# 模拟首次启动：重置created_at → 跳Splash → 自动进入Onboarding
+	# 模拟首次启动：清存档+重置created_at → 跳Splash → 自动进入Onboarding
 	if _debug_panel:
 		_debug_panel.visible = false
+	if SaveManager:
+		SaveManager.reset_all()
+		var dir := DirAccess.open("user://")
+		if dir:
+			dir.remove("save.cfg")
 	EnergyEngine.created_at = 0.0
 	UIManager.replace("res://scenes/S00_Splash.tscn")
 
