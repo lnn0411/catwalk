@@ -46,14 +46,14 @@ func _gui_input(event: InputEvent) -> void:
 	if _allow_rect.has_point(pos):
 		_on_allow_pressed()
 	elif _later_rect.has_point(pos):
-		UIManager.replace("res://scenes/S04_GardenMain.tscn")
+		UIManager.replace("res://scenes/S02_Loading.tscn")
 
 func _on_allow_pressed() -> void:
 	_requesting = true
 	var step_counter := Engine.get_singleton("StepCounter")
 	if step_counter == null:
 		# Editor / non-Android → skip permission, go to garden
-		UIManager.replace("res://scenes/S04_GardenMain.tscn")
+		UIManager.replace("res://scenes/S02_Loading.tscn")
 		return
 	if step_counter.has_signal("permission_result") and not step_counter.permission_result.is_connected(_on_permission_result):
 		step_counter.permission_result.connect(_on_permission_result, CONNECT_ONE_SHOT)
@@ -71,7 +71,7 @@ func _on_permission_result(granted: bool) -> void:
 	_requesting = false
 	if granted:
 		SaveManager.save_all()
-		UIManager.replace("res://scenes/S04_GardenMain.tscn")
+		UIManager.replace("res://scenes/S02_Loading.tscn")
 		return
 	var step_counter := Engine.get_singleton("StepCounter")
 	if step_counter != null:

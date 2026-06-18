@@ -18,6 +18,8 @@ var _tracking_touch := false
 var _pages: Array[TextureRect] = []
 var _start_button: Button
 var _auto_timer: Timer
+var _page_tween: Tween
+var _first_update := true
 
 func _ready() -> void:
 	super._ready()
@@ -104,7 +106,34 @@ func _on_auto_advance() -> void:
 		_auto_timer.start()
 
 func _update_page_visibility() -> void:
+	if _page_tween != null and _page_tween.is_valid():
+		_page_tween.kill()
+		_page_tween = null
+	if _first_update:
+		_first_update = false
+		for i in range(_pages.size()):
+			var page := _pages[i]
+			page.visible = i == _current_page
+			page.modulate.a = 1.0 if i == _current_page else 0.0
+			page.scale = Vector2.ONE
+		if _start_button != null:
+			_start_button.visible = _current_page == PAGE_COUNT - 1
+		return
+	_page_tween = create_tween()
+	_page_tween.set_parallel(true)
 	for i in range(_pages.size()):
-		_pages[i].visible = i == _current_page
+		var page := _pages[i]
+		if i == _current_page:
+			page.visible = true
+			page.pivot_offset = page.size * 0.5
+			page.modulate.a = 0.0
+			page.scale = Vector2(0.95, 0.95)
+			_page_tween.tween_property(page, "modulate:a", 1.0, 0.4)
+			_page_tween.tween_property(page, "scale", Vector2.ONE, 0.4)
+		elif page.visible:
+			page.pivot_offset = page.size * 0.5
+			_page_tween.tween_property(page, "modulate:a", 0.0, 0.4)
+			_page_tween.tween_property(page, "scale", Vector2(1.05, 1.05), 0.4)
+			_page_tween.tween_callback(page.hide).set_delay(0.4)
 	if _start_button != null:
 		_start_button.visible = _current_page == PAGE_COUNT - 1
