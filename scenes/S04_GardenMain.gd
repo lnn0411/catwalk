@@ -306,7 +306,7 @@ func _build_hud() -> void:
 	_empty_label.text = "多走几步，猫咪就来了"
 	_empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_empty_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_empty_label.position = Vector2(0.0, 499.0)
+	_empty_label.position = Vector2(0.0, 620.0)
 	_empty_label.size = Vector2(720.0, 56.0)
 	_empty_label.add_theme_font_size_override("font_size", 18)
 	_empty_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
