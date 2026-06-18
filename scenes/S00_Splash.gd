@@ -5,6 +5,10 @@ const FIRST_TIME_SECONDS := 10.0 * 60.0
 
 func _ready() -> void:
 	super._ready()
+	var debug_rect := ColorRect.new()
+	debug_rect.color = Color(1, 0, 0, 0.3)
+	debug_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(debug_rect)
 	_add_background()
 	await get_tree().create_timer(SPLASH_SECONDS).timeout
 	if not is_inside_tree():
@@ -23,6 +27,7 @@ func _add_background() -> void:
 	bg.stretch_mode = TextureRect.STRETCH_KEEP
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	print('SPLASH: texture=%s size=%s' % [bg.texture, bg.texture.get_size() if bg.texture else 'NULL'])
 	add_child(bg)
 
 func _is_first_time() -> bool:
