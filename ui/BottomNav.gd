@@ -115,16 +115,14 @@ class NavTab:
 			return
 		var active := index == nav.current_index
 		var icon_name := String(BottomNav.TABS[index]["icon"])
-		var suffix := "_off" if not active else ""
-		var file_name := "nav_%s%s.png" % [icon_name, suffix]
+		var file_name := "nav_%s.png" % icon_name
 		var formal_path := "res://assets/art/ui/nav/" + file_name
 		var fallback_path := BottomNav.UI_TEXTURE_PATH + file_name
 		if ResourceLoader.exists(formal_path):
 			_icon.texture = load(formal_path)
-			print("[Nav] %s → loaded formal: %s" % [icon_name, formal_path])
 		else:
 			_icon.texture = load(fallback_path)
-			print("[Nav] %s → FALLBACK: %s" % [icon_name, fallback_path])
+		_icon.modulate = Color.WHITE if active else Color(0.45, 0.45, 0.45, 1.0)
 		_active_bar.visible = active
 
 	func _gui_input(event: InputEvent) -> void:
