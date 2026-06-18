@@ -50,7 +50,11 @@ const WALK_PX_SIAMESE_UPRIGHT := 6.0
 const WALK_PX_SIAMESE_FRONT := 3.5
 
 const BOB_AMPLITUDE := 2.5  # 走路踩地弹跳幅度（视觉像素，乘以深度缩放后使用）
-const IDLE_HEIGHT_SCALE := 100.0 / 126.0  # ≈0.794
+# 按品种 idle 帧高度匹配 walk 帧高度
+# 橘猫: idle=140, walk_right=91 → 91/140; 英短: idle=96, walk_right=78 → 78/96; 暹罗: 已统一
+const IDLE_SCALE_ORANGE := 91.0 / 140.0  # ≈0.65
+const IDLE_SCALE_BRITISH := 78.0 / 96.0  # ≈0.81
+const IDLE_SCALE_SIAMESE := 1.0
 
 const ANIM_WALK_RIGHT := "walk_right"
 const ANIM_WALK_UP_RIGHT := "walk_up_right"
@@ -289,6 +293,14 @@ func _current_walk_px() -> float:
 	return _walk_px_table.get(_current_anim, WALK_PX_ORANGE)
 
 
+func _get_idle_scale() -> float:
+	if breed == "british":
+		return IDLE_SCALE_BRITISH
+	if breed == "siamese":
+		return IDLE_SCALE_SIAMESE
+	return IDLE_SCALE_ORANGE  # orange / orange_tabby / default
+
+
 func _is_walk_anim(anim_name: String) -> bool:
 	return anim_name != ANIM_IDLE and anim_name != ANIM_TURN and anim_name != ANIM_MOVE_TURN
 
@@ -397,8 +409,9 @@ func _apply_visual_motion(_delta: float) -> void:
 		sy *= 0.93
 
 	if _current_anim == ANIM_IDLE:
-		sx *= IDLE_HEIGHT_SCALE
-		sy *= IDLE_HEIGHT_SCALE
+		var iscale := _get_idle_scale()
+		sx *= iscale
+		sy *= iscale
 
 	z_index = int(position.y)
 

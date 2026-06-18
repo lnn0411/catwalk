@@ -1,5 +1,5 @@
 {
-  "texture_path": "res://assets/art/cats/siamese/siamese_32frame_green_fixed.png",
+  "texture_path": "res://assets/art/cats/siamese/siamese_32frame_green_redraw.png",
   "species": "siamese",
   "frame_size": {
     "width": 100,
