@@ -165,6 +165,8 @@ func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, la
 	layer.add_child(background)
 
 func _build_hud() -> void:
+	if get_node_or_null("steps_capsule"):
+		return  # 已构建，防重入
 	var root := Control.new()
 	root.name = "HUD"
 	# 全屏 HUD 容器放行：只让真正的按钮/导航(子控件)拦截点击，
@@ -198,6 +200,7 @@ func _build_hud() -> void:
 	# 顶栏：三个独立胶囊（每胶囊 PNG 做底 + 内层控件叠上），胶囊不阻挡触摸
 	# 胶囊 1 — 步数胶囊
 	var steps_capsule := Control.new()
+	steps_capsule.name = "steps_capsule"
 	steps_capsule.position = Vector2(19.0, 29.0)
 	steps_capsule.size = Vector2(214.0, 78.0)
 	steps_capsule.mouse_filter = Control.MOUSE_FILTER_IGNORE
