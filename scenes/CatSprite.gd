@@ -37,6 +37,19 @@ const FOOT_Y := 131
 const WALK_PX_BRITISH := 4.0
 const WALK_PX_ORANGE := 6.5
 const WALK_PX_SIAMESE := 7.0
+
+# 方向差异化步幅：side（侧面，脚位移大）/ up_right（斜向，中）/ front（正背面，小）
+const WALK_PX_ORANGE_SIDE := 5.0
+const WALK_PX_ORANGE_UPRIGHT := 4.0
+const WALK_PX_ORANGE_FRONT := 2.0
+const WALK_PX_BRITISH_SIDE := 4.0
+const WALK_PX_BRITISH_UPRIGHT := 3.0
+const WALK_PX_BRITISH_FRONT := 2.0
+const WALK_PX_SIAMESE_SIDE := 3.5
+const WALK_PX_SIAMESE_UPRIGHT := 3.0
+const WALK_PX_SIAMESE_FRONT := 1.5
+
+const BOB_AMPLITUDE := 2.5  # 走路踩地弹跳幅度（视觉像素，乘以深度缩放后使用）
 const IDLE_HEIGHT_SCALE := 100.0 / 126.0  # ≈0.794
 
 const ANIM_WALK_RIGHT := "walk_right"
@@ -93,7 +106,7 @@ var _cur_speed := 0.0
 var _idle_phase := 0.0
 var _stuck_time := 0.0
 var _walk_accum := 0.0
-var _walk_px_per_frame := 6.5
+var _walk_px_table: Dictionary = {}
 var _last_frame_pos := Vector2.ZERO
 var _turn_cooldown := 0.0
 
@@ -115,8 +128,8 @@ func _ready() -> void:
 	add_child(_wander_timer)
 	_wander_timer.timeout.connect(_on_wander_tick)
 
-	# 位移驱动帧：品种步幅 + 初始位置
-	_walk_px_per_frame = _get_walk_px_per_frame()
+	# 位移驱动帧：品种 + 方向差异化步幅 + 初始位置
+	_walk_px_table = _get_walk_px_per_frame()
 	_last_frame_pos = global_position
 
 	set_process(true)
@@ -247,12 +260,33 @@ func _process(delta: float) -> void:
 		queue_redraw()
 
 
-func _get_walk_px_per_frame() -> float:
+func _get_walk_px_per_frame() -> Dictionary:
+	var side: float
+	var up_right: float
+	var front: float
 	if breed == "british":
-		return WALK_PX_BRITISH
-	if breed == "orange" or breed == "orange_tabby":
-		return WALK_PX_ORANGE
-	return WALK_PX_SIAMESE
+		side = WALK_PX_BRITISH_SIDE
+		up_right = WALK_PX_BRITISH_UPRIGHT
+		front = WALK_PX_BRITISH_FRONT
+	elif breed == "orange" or breed == "orange_tabby":
+		side = WALK_PX_ORANGE_SIDE
+		up_right = WALK_PX_ORANGE_UPRIGHT
+		front = WALK_PX_ORANGE_FRONT
+	else:
+		side = WALK_PX_SIAMESE_SIDE
+		up_right = WALK_PX_SIAMESE_UPRIGHT
+		front = WALK_PX_SIAMESE_FRONT
+	return {
+		ANIM_WALK_RIGHT: side,
+		ANIM_WALK_DOWN_RIGHT: side,
+		ANIM_WALK_UP_RIGHT: up_right,
+		ANIM_WALK_UP: front,
+		ANIM_WALK_DOWN: front,
+	}
+
+
+func _current_walk_px() -> float:
+	return _walk_px_table.get(_current_anim, WALK_PX_ORANGE)
 
 
 func _is_walk_anim(anim_name: String) -> bool:
@@ -263,9 +297,10 @@ func _advance_walk_by_distance() -> void:
 	var moved := global_position.distance_to(_last_frame_pos)
 	_walk_accum += moved
 
+	var px_per_frame := _current_walk_px()
 	var max_frames: int = ANIM_FRAME_COUNT.get(_current_anim, 4)
-	while _walk_accum >= _walk_px_per_frame:
-		_walk_accum -= _walk_px_per_frame
+	while _walk_accum >= px_per_frame:
+		_walk_accum -= px_per_frame
 		_current_col += 1
 		if _current_col >= max_frames:
 			_current_col = 0
@@ -370,6 +405,12 @@ func _apply_visual_motion(_delta: float) -> void:
 	_sprite.rotation = 0.0
 	_sprite.scale = Vector2(sx, sy)
 	_apply_sprite_anchor(sx, sy)
+
+	# 走路弹跳：每个位移帧内做一次半正弦踩地，只偏移 sprite 的 y，不动根节点
+	if _is_walk_anim(_current_anim):
+		var px := _current_walk_px()
+		var phase := _walk_accum / px * PI
+		_sprite.position.y += sin(phase) * BOB_AMPLITUDE * sy
 
 
 func _apply_sprite_anchor(sx: float, sy: float) -> void:
