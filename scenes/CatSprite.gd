@@ -20,8 +20,8 @@ signal cat_clicked(cat_data)
 @export_group("Animation")
 @export var walk_fps: float = 8.0
 @export var idle_fps: float = 4.0
-@export var turn_fps: float = 10.0
-@export var move_turn_fps: float = 10.0
+@export var turn_fps: float = 4.0
+@export var move_turn_fps: float = 5.0
 @export var sprite_scale: float = 1.0
 @export var depth_scale_enabled: bool = true
 @export var shadow_enabled: bool = true
