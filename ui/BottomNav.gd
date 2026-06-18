@@ -45,15 +45,11 @@ func _build_tabs() -> void:
 		child.queue_free()
 	_buttons.clear()
 
-	# 导航底：程序绘制圆角浮岛 + 纸纹理底（深暖棕配色不变）
+	# 导航底：nav_bg.png 整图缩放铺底
 	var nav_paper := TextureRect.new()
-	var paper_formal := "res://assets/art/ui/panels/paper_texture.png"
-	var paper_fallback := "res://assets/temp/ui/paper_texture.png"
-	if ResourceLoader.exists(paper_formal):
-		nav_paper.texture = load(paper_formal)
-	else:
-		nav_paper.texture = load(paper_fallback)
-	nav_paper.stretch_mode = TextureRect.STRETCH_TILE
+	nav_paper.texture = load("res://assets/art/ui/nav/nav_bg.png")
+	nav_paper.stretch_mode = TextureRect.STRETCH_SCALE
+	nav_paper.custom_minimum_size = Vector2(720.0, 56.0)
 	nav_paper.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	nav_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(nav_paper)

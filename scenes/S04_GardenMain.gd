@@ -238,23 +238,27 @@ func _build_hud() -> void:
 	debug_btn.pressed.connect(_toggle_debug_panel)
 	root.add_child(debug_btn)
 
-	var top_row := HBoxContainer.new()
-	# 核心修复：顶栏内容 HBoxContainer 采用左右等比拉伸锚点，彻底解决在真机/高分辨率下顶栏“左右短了”或偏离的问题
-	top_row.anchor_left = 0.0
-	top_row.anchor_right = 1.0
-	top_row.anchor_top = 0.0
-	top_row.anchor_bottom = 0.0
-	top_row.offset_left = 24.0
-	top_row.offset_right = -24.0
-	top_row.offset_top = 30.0
-	top_row.offset_bottom = 90.0
-	top_row.add_theme_constant_override("separation", 16)
-	root.add_child(top_row)
+	# 顶栏：三个独立胶囊（每胶囊 PNG 做底 + 内层控件叠上），胶囊不阻挡触摸
+	# 胶囊 1 — 步数胶囊
+	var steps_capsule := Control.new()
+	steps_capsule.position = Vector2(19.0, 29.0)
+	steps_capsule.size = Vector2(214.0, 78.0)
+	steps_capsule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(steps_capsule)
+
+	var steps_capsule_bg := TextureRect.new()
+	steps_capsule_bg.texture = load("res://assets/art/ui/capsules/step_capsule.png")
+	steps_capsule_bg.stretch_mode = TextureRect.STRETCH_SCALE
+	steps_capsule_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	steps_capsule_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	steps_capsule.add_child(steps_capsule_bg)
 
 	var steps_box := HBoxContainer.new()
-	steps_box.custom_minimum_size = Vector2(150.0, 50.0)
+	steps_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	steps_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	steps_box.add_theme_constant_override("separation", 5)
-	top_row.add_child(steps_box)
+	steps_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	steps_capsule.add_child(steps_box)
 
 	var steps_icon := TextureRect.new()
 	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
@@ -264,16 +268,33 @@ func _build_hud() -> void:
 	steps_box.add_child(steps_icon)
 
 	_steps_label = Label.new()
+	_steps_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_steps_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	_steps_label.add_theme_font_size_override("font_size", 18)
 	_steps_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_steps_label.gui_input.connect(_on_steps_label_input)
 	steps_box.add_child(_steps_label)
 
+	# 胶囊 2 — 能量胶囊
+	var energy_capsule := Control.new()
+	energy_capsule.position = Vector2(253.0, 42.0)
+	energy_capsule.size = Vector2(222.0, 57.0)
+	energy_capsule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(energy_capsule)
+
+	var energy_capsule_bg := TextureRect.new()
+	energy_capsule_bg.texture = load("res://assets/art/ui/capsules/energy_capsule.png")
+	energy_capsule_bg.stretch_mode = TextureRect.STRETCH_SCALE
+	energy_capsule_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	energy_capsule_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	energy_capsule.add_child(energy_capsule_bg)
+
 	var energy_box := HBoxContainer.new()
-	energy_box.custom_minimum_size = Vector2(248.0, 50.0)
+	energy_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	energy_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	energy_box.add_theme_constant_override("separation", 5)
-	top_row.add_child(energy_box)
+	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	energy_capsule.add_child(energy_box)
 
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
@@ -284,16 +305,33 @@ func _build_hud() -> void:
 
 	_energy_bar = EnergyMeter.new()
 	_energy_bar.custom_minimum_size = Vector2(200.0, 36.0)
+	_energy_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	energy_box.add_child(_energy_bar)
 
+	# 胶囊 3 — 货币胶囊
+	var currency_capsule := Control.new()
+	currency_capsule.position = Vector2(491.0, 42.0)
+	currency_capsule.size = Vector2(247.0, 57.0)
+	currency_capsule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(currency_capsule)
+
+	var currency_capsule_bg := TextureRect.new()
+	currency_capsule_bg.texture = load("res://assets/art/ui/capsules/currency_capsule.png")
+	currency_capsule_bg.stretch_mode = TextureRect.STRETCH_SCALE
+	currency_capsule_bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	currency_capsule_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	currency_capsule.add_child(currency_capsule_bg)
+
 	var currency_box := HBoxContainer.new()
-	currency_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	currency_box.alignment = BoxContainer.ALIGNMENT_END
+	currency_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	currency_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	currency_box.add_theme_constant_override("separation", 9)
-	top_row.add_child(currency_box)
+	currency_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	currency_capsule.add_child(currency_box)
 	for entry in [{"icon": "icon_coin.png", "value": "0"}, {"icon": "icon_gem.png", "value": "0"}, {"icon": "icon_petal.png", "value": "0"}]:
 		var item_box := HBoxContainer.new()
 		item_box.add_theme_constant_override("separation", 9)
+		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item_icon := TextureRect.new()
 		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
 		item_icon.custom_minimum_size = Vector2(30.0, 30.0)
@@ -302,6 +340,7 @@ func _build_hud() -> void:
 		item_box.add_child(item_icon)
 		var label := Label.new()
 		label.text = String(entry["value"])
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 16)
 		label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 		item_box.add_child(label)
