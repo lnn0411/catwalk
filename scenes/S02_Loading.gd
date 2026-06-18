@@ -3,7 +3,7 @@ extends "res://ui/UIPage.gd"
 const LOAD_DELAY_SECONDS := 1.5
 const LOAD_TIMEOUT_SECONDS := 5.0
 const BAR_WIDTH := 400.0
-const BAR_HEIGHT := 6.0
+const BAR_HEIGHT := 10.0
 
 var _progress := 0.0
 var _spinner_angle := 0.0
@@ -80,7 +80,7 @@ func _add_foreground() -> void:
 	add_child(_spinner)
 
 	var bar_bg := ColorRect.new()
-	bar_bg.color = Color.WHITE * 0.4
+	bar_bg.color = Color.BLACK * 0.25
 	bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar_bg.anchor_left = 0.5
 	bar_bg.anchor_right = 0.5
