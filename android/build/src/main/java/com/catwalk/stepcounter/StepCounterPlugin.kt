@@ -2,7 +2,10 @@ package com.catwalk.stepcounter
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
+import android.provider.Settings
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
@@ -115,5 +118,13 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 
     companion object {
         private const val ACTIVITY_RECOGNITION_REQUEST_CODE = 2101
+    }
+
+    @UsedByGodot
+    fun openAppSettings() {
+        val hostActivity = activity ?: return
+        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+        intent.data = Uri.parse("package:" + hostActivity.packageName)
+        hostActivity.startActivity(intent)
     }
 }
