@@ -25,7 +25,7 @@ var _dragging := false
 var _drag_start := Vector2.ZERO
 var _cam_zoom: float = CONTENT_SCALE  # 运行时按真实视口尺寸重算
 var _steps_label: Label
-var _energy_bar: EnergyMeter
+var _energy_label: Label
 var _hatch_row: HBoxContainer
 var _action_buttons: Array[TextureButton] = []
 var _slot_views: Array[HatchSlotView] = []
@@ -235,24 +235,12 @@ func _build_hud() -> void:
 	energy_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	energy_box.add_child(energy_icon)
-	_energy_bar = EnergyMeter.new()
-	_energy_bar.custom_minimum_size = Vector2(200.0, 28.0)
-	_energy_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var energy_frame := Panel.new()
-	var energy_style := StyleBoxFlat.new()
-	energy_style.bg_color = Color(0xFA, 0xF5, 0xEB, 0.85)
-	energy_style.corner_radius_top_left = 12
-	energy_style.corner_radius_top_right = 12
-	energy_style.corner_radius_bottom_left = 12
-	energy_style.corner_radius_bottom_right = 12
-	energy_style.border_width_left = 1
-	energy_style.border_width_right = 1
-	energy_style.border_width_top = 1
-	energy_style.border_width_bottom = 1
-	energy_style.border_color = Color("#8B7355")
-	energy_frame.add_theme_stylebox_override("panel", energy_style)
-	energy_frame.add_child(_energy_bar)
-	energy_box.add_child(energy_frame)
+	_energy_label = Label.new()
+	_energy_label.add_theme_font_size_override("font_size", 16)
+	_energy_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+	_energy_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_energy_label.text = "0/0"
+	energy_box.add_child(_energy_label)
 
 	# spacer-left：steps 贴左，推 energy 居中
 	top_row.add_child(steps_box)
@@ -433,7 +421,7 @@ func _refresh_energy() -> void:
 		current = EnergyEngine.energy_pool
 		max_value = EnergyEngine.MAX_ENERGY_POOL
 	print("[Refresh] energy bar set: %.0f/%.0f" % [current, max_value])
-	_energy_bar.set_energy(current, max_value)
+	_energy_label.text = "%d/%d" % [int(current), int(max_value)]
 
 func _refresh_slots() -> void:
 	var slots := []
