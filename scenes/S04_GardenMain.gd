@@ -309,7 +309,7 @@ func _build_hud() -> void:
 	_empty_label.position = Vector2(0.0, 499.0)
 	_empty_label.size = Vector2(720.0, 56.0)
 	_empty_label.add_theme_font_size_override("font_size", 18)
-	_empty_label.add_theme_color_override("font_color", Color.WHITE * 0.85)
+	_empty_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	root.add_child(_empty_label)
 
 	# 互动按钮：右竖排（不挡花园视线）
