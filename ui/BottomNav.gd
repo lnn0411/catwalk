@@ -122,7 +122,7 @@ class NavTab:
 			_icon.texture = load(formal_path)
 		else:
 			_icon.texture = load(fallback_path)
-		_icon.modulate = Color.WHITE if active else Color(0.45, 0.45, 0.45, 1.0)
+		_icon.modulate = Color.WHITE
 		_active_bar.visible = active
 
 	func _gui_input(event: InputEvent) -> void:
