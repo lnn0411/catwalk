@@ -7,11 +7,11 @@ const BAR_HEIGHT := 56.0
 const MIN_TOUCH := 48.0
 const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 const TABS := [
-	{"icon": "garden"},
-	{"icon": "book"},
-	{"icon": "shop"},
-	{"icon": "friends"},
-	{"icon": "settings"},
+	{"icon": "garden", "page": "res://scenes/S04_GardenMain.tscn"},
+	{"icon": "book", "page": "res://scenes/S10_Album.tscn"},
+	{"icon": "shop", "page": ""},
+	{"icon": "friends", "page": ""},
+	{"icon": "settings", "page": "res://scenes/S11_Settings.tscn"},
 ]
 
 var current_index := 0
