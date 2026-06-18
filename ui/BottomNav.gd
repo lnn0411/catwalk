@@ -7,11 +7,11 @@ const BAR_HEIGHT := 56.0
 const MIN_TOUCH := 48.0
 const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 const TABS := [
-	{"label": "花园", "page": "res://scenes/S04_GardenMain.tscn", "icon": "home"},
-	{"label": "图鉴", "page": "res://scenes/S10_Album.tscn", "icon": "album"},
-	{"label": "商店", "page": "", "icon": "shop"},
-	{"label": "好友", "page": "", "icon": "friend"},
-	{"label": "设置", "page": "res://scenes/S11_Settings.tscn", "icon": "settings"},
+	{"icon": "garden"},
+	{"icon": "book"},
+	{"icon": "shop"},
+	{"icon": "friends"},
+	{"icon": "settings"},
 ]
 
 var current_index := 0
@@ -134,7 +134,7 @@ class NavTab:
 			return
 		var active := index == nav.current_index
 		var icon_name := String(BottomNav.TABS[index]["icon"])
-		var suffix := "_active" if active else ""
+		var suffix := "_off" if not active else ""
 		var file_name := "nav_%s%s.png" % [icon_name, suffix]
 		var formal_path := "res://assets/art/ui/nav/" + file_name
 		var fallback_path := BottomNav.UI_TEXTURE_PATH + file_name
