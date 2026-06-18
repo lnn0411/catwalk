@@ -27,7 +27,7 @@ var _cam_zoom: float = CONTENT_SCALE  # 运行时按真实视口尺寸重算
 var _steps_label: Label
 var _energy_bar: EnergyMeter
 var _hatch_row: HBoxContainer
-var _action_buttons: Array[GardenActionButton] = []
+var _action_buttons: Array[TextureButton] = []
 var _slot_views: Array[HatchSlotView] = []
 var _empty_label: Label
 var _debug_panel: PanelContainer
@@ -257,9 +257,7 @@ func _build_hud() -> void:
 	top_row.add_child(steps_box)
 
 	var steps_icon := TextureRect.new()
-	var steps_icon_path := "res://assets/art/ui/icons/icon_steps.png"
-	if not ResourceLoader.exists(steps_icon_path): steps_icon_path = "res://assets/temp/ui/icon_steps.png"
-	steps_icon.texture = load(steps_icon_path)
+	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
 	steps_icon.custom_minimum_size = Vector2(30.0, 30.0)
 	steps_icon.stretch_mode = TextureRect.STRETCH_SCALE
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -278,9 +276,7 @@ func _build_hud() -> void:
 	top_row.add_child(energy_box)
 
 	var energy_icon := TextureRect.new()
-	var energy_icon_path := "res://assets/art/ui/icons/icon_energy.png"
-	if not ResourceLoader.exists(energy_icon_path): energy_icon_path = "res://assets/temp/ui/icon_energy.png"
-	energy_icon.texture = load(energy_icon_path)
+	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
 	energy_icon.custom_minimum_size = Vector2(30.0, 30.0)
 	energy_icon.stretch_mode = TextureRect.STRETCH_SCALE
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -295,12 +291,21 @@ func _build_hud() -> void:
 	currency_box.alignment = BoxContainer.ALIGNMENT_END
 	currency_box.add_theme_constant_override("separation", 9)
 	top_row.add_child(currency_box)
-	for entry in ["💰 0", "💎 0", "🌸 0"]:
+	for entry in [{"icon": "icon_coin.png", "value": "0"}, {"icon": "icon_gem.png", "value": "0"}, {"icon": "icon_petal.png", "value": "0"}]:
+		var item_box := HBoxContainer.new()
+		item_box.add_theme_constant_override("separation", 9)
+		var item_icon := TextureRect.new()
+		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
+		item_icon.custom_minimum_size = Vector2(20.0, 20.0)
+		item_icon.stretch_mode = TextureRect.STRETCH_SCALE
+		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		item_box.add_child(item_icon)
 		var label := Label.new()
-		label.text = entry
+		label.text = String(entry["value"])
 		label.add_theme_font_size_override("font_size", 16)
 		label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
-		currency_box.add_child(label)
+		item_box.add_child(label)
+		currency_box.add_child(item_box)
 
 	_empty_label = Label.new()
 	_empty_label.text = "多走几步，猫咪就来了"
@@ -316,7 +321,7 @@ func _build_hud() -> void:
 	var action_col := VBoxContainer.new()
 	action_col.position = Vector2(620.0, 380.0)
 	action_col.size = Vector2(80.0, 320.0)
-	action_col.add_theme_constant_override("separation", 8)
+	action_col.add_theme_constant_override("separation", 12)
 	root.add_child(action_col)
 	var action_data := [
 		{"title": "喂食", "texture": "btn_feed.png", "state": SubState.INTERACT_FEED},
@@ -325,9 +330,10 @@ func _build_hud() -> void:
 		{"title": "拍照", "texture": "btn_photo.png", "state": SubState.INTERACT_PHOTO},
 	]
 	for data in action_data:
-		var button := GardenActionButton.new()
-		button.text = String(data["title"])
-		button.custom_minimum_size = Vector2(78.0, 48.0)
+		var button := TextureButton.new()
+		button.texture_normal = load("res://assets/art/ui/buttons/" + String(data["texture"]))
+		button.custom_minimum_size = Vector2(72.0, 72.0)
+		button.stretch_mode = TextureButton.STRETCH_KEEP_CENTERED
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.pressed.connect(_on_action_pressed.bind(int(data["state"])))
 		action_col.add_child(button)
@@ -460,7 +466,7 @@ func _refresh_cat_state() -> void:
 		cat_count = HatchEngine.get_cats().size()
 	_empty_label.visible = cat_count == 0
 	for button in _action_buttons:
-		button.set_enabled(cat_count > 0)
+		button.disabled = cat_count <= 0
 
 func _on_steps_updated(_delta: int, _total: int) -> void:
 	_refresh_steps()
