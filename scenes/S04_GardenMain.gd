@@ -259,7 +259,7 @@ func _build_hud() -> void:
 	var steps_icon := TextureRect.new()
 	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
 	steps_icon.custom_minimum_size = Vector2(30.0, 30.0)
-	steps_icon.stretch_mode = TextureRect.STRETCH_SCALE
+	steps_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	steps_box.add_child(steps_icon)
 
@@ -278,7 +278,7 @@ func _build_hud() -> void:
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
 	energy_icon.custom_minimum_size = Vector2(30.0, 30.0)
-	energy_icon.stretch_mode = TextureRect.STRETCH_SCALE
+	energy_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	energy_box.add_child(energy_icon)
 
@@ -296,8 +296,8 @@ func _build_hud() -> void:
 		item_box.add_theme_constant_override("separation", 9)
 		var item_icon := TextureRect.new()
 		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
-		item_icon.custom_minimum_size = Vector2(20.0, 20.0)
-		item_icon.stretch_mode = TextureRect.STRETCH_SCALE
+		item_icon.custom_minimum_size = Vector2(24.0, 24.0)
+		item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		item_box.add_child(item_icon)
 		var label := Label.new()
