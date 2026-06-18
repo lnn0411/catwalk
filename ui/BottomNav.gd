@@ -54,21 +54,6 @@ func _build_tabs() -> void:
 	nav_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(nav_paper)
 
-	var bg := Panel.new()
-	var bg_style := StyleBoxFlat.new()
-	bg_style.bg_color = Color(Palette.BG_CEMENT, 0.97)
-	bg_style.corner_radius_top_left = 24
-	bg_style.corner_radius_top_right = 24
-	bg_style.border_width_top = 1
-	bg_style.border_color = Palette.BORDER_DEFAULT
-	bg_style.shadow_color = Palette.UI_SHADOW
-	bg_style.shadow_size = 10
-	bg_style.shadow_offset = Vector2(0.0, -3.0)
-	bg.add_theme_stylebox_override("panel", bg_style)
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-
 	var box := HBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.add_theme_constant_override("separation", 0)
@@ -136,8 +121,10 @@ class NavTab:
 		var fallback_path := BottomNav.UI_TEXTURE_PATH + file_name
 		if ResourceLoader.exists(formal_path):
 			_icon.texture = load(formal_path)
+			print("[Nav] %s → loaded formal: %s" % [icon_name, formal_path])
 		else:
 			_icon.texture = load(fallback_path)
+			print("[Nav] %s → FALLBACK: %s" % [icon_name, fallback_path])
 		_active_bar.visible = active
 
 	func _gui_input(event: InputEvent) -> void:
