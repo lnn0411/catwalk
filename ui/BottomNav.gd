@@ -3,7 +3,7 @@ extends Control
 
 signal tab_selected(index: int)
 
-const BAR_HEIGHT := 56.0
+const BAR_HEIGHT := 72.0
 const MIN_TOUCH := 48.0
 const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 const TABS := [
@@ -49,7 +49,7 @@ func _build_tabs() -> void:
 	var nav_paper := TextureRect.new()
 	nav_paper.texture = load("res://assets/art/ui/nav/nav_bg.png")
 	nav_paper.stretch_mode = TextureRect.STRETCH_SCALE
-	nav_paper.custom_minimum_size = Vector2(720.0, 56.0)
+	nav_paper.custom_minimum_size = Vector2(720.0, BAR_HEIGHT)
 	nav_paper.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	nav_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(nav_paper)
@@ -105,8 +105,8 @@ class NavTab:
 		_icon.anchor_right = 0.5
 		_icon.offset_left = -25.0
 		_icon.offset_right = 25.0
-		_icon.offset_top = 6.0
-		_icon.offset_bottom = 56.0
+		_icon.offset_top = 11.0
+		_icon.offset_bottom = 61.0
 		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_icon)
 
