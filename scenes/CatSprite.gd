@@ -432,6 +432,9 @@ func _select_anim_from_direction(dir: Vector2) -> Dictionary:
 
 	var deg := rad_to_deg(dir.angle())
 	if deg >= -22.5 and deg < 22.5:
+		# 英短 walk_right 帧无交替迈步，用斜向帧代替
+		if breed.begins_with("british"):
+			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": false}
 		return {"anim": ANIM_WALK_RIGHT, "flip": false}
 	elif deg >= 22.5 and deg < 67.5:
 		return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": false}
@@ -443,12 +446,21 @@ func _select_anim_from_direction(dir: Vector2) -> Dictionary:
 	elif deg >= 112.5 and deg < 157.5:
 		return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": true}
 	elif deg >= 157.5 or deg < -157.5:
+		# 英短 walk_left 帧无交替迈步，用斜向帧代替
+		if breed.begins_with("british"):
+			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": true}
 		return {"anim": ANIM_WALK_RIGHT, "flip": true}
 	elif deg >= -157.5 and deg < -112.5:
+		# 英短 walk_up_left 帧无交替迈步，用斜向帧代替
+		if breed.begins_with("british"):
+			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": true}
 		return {"anim": ANIM_WALK_UP_RIGHT, "flip": true}
 	elif deg >= -112.5 and deg < -67.5:
 		return {"anim": ANIM_WALK_UP, "flip": false}
 	else:
+		# 英短 walk_up_right 帧无交替迈步，用斜向帧代替
+		if breed.begins_with("british"):
+			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": false}
 		return {"anim": ANIM_WALK_UP_RIGHT, "flip": false}
 
 
