@@ -267,7 +267,7 @@ func _build_hud() -> void:
 		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item_icon := TextureRect.new()
 		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
-		item_icon.custom_minimum_size = Vector2(22.0, 22.0)
+		item_icon.custom_minimum_size = Vector2(18.0, 18.0)
 		item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		item_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -293,7 +293,7 @@ func _build_hud() -> void:
 	# 互动按钮：右竖排（不挡花园视线）
 	var action_col := VBoxContainer.new()
 	action_col.position = Vector2(640.0, 380.0)
-	action_col.size = Vector2(56.0, 328.0)
+	action_col.size = Vector2(46.0, 280.0)
 	action_col.add_theme_constant_override("separation", 20)
 	root.add_child(action_col)
 	var action_data := [
@@ -305,7 +305,7 @@ func _build_hud() -> void:
 	for data in action_data:
 		var button := TextureButton.new()
 		button.texture_normal = load("res://assets/art/ui/buttons/" + String(data["texture"]))
-		button.custom_minimum_size = Vector2(52.0, 67.0)
+		button.custom_minimum_size = Vector2(42.0, 54.0)
 		button.stretch_mode = TextureButton.STRETCH_KEEP_CENTERED
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.pressed.connect(_on_action_pressed.bind(int(data["state"])))
