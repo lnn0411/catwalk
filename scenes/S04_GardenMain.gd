@@ -386,6 +386,7 @@ func _build_debug_panel() -> void:
 		["Reset Save", func() -> void: _reset_save()],
 		["清空数据", func() -> void: _clear_cache()],
 		["Show/Hide stats", func() -> void: _toggle_stats()],
+		["重播Onboarding", func() -> void: _replay_onboarding()],
 	]:
 		var button := Button.new()
 		button.text = String(item[0])
@@ -529,6 +530,13 @@ func _add_mock_steps(amount: int) -> void:
 		StepEngine.add_mock_steps(amount)
 	if SaveManager:
 		SaveManager.save_all()
+
+func _replay_onboarding() -> void:
+	# 关闭DBG面板，跳转到Onboarding引导页
+	if _debug_panel:
+		_debug_panel.visible = false
+	UIManager.replace("res://scenes/S01_Onboarding.tscn")
+
 
 func _reset_save() -> void:
 	print("[Reset] before: steps=%d energy=%.0f" % [StepEngine.get_today_steps(), EnergyEngine.energy_pool])
