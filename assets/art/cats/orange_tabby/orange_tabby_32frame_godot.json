@@ -1,5 +1,5 @@
 {
-  "texture_path": "res://assets/art/cats/orange_tabby/orange_tabby_32frame_green_redraw.png",
+  "texture_path": "res://assets/art/cats/orange_tabby/orange_tabby_32frame_green_fixed.png",
   "species": "orange_tabby",
   "frame_size": {
     "width": 100,
