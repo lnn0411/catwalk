@@ -39,15 +39,15 @@ const WALK_PX_ORANGE := 6.5
 const WALK_PX_SIAMESE := 7.0
 
 # 方向差异化步幅：side（侧面，脚位移大）/ up_right（斜向，中）/ front（正背面，小）
-const WALK_PX_ORANGE_SIDE := 5.0
-const WALK_PX_ORANGE_UPRIGHT := 4.0
-const WALK_PX_ORANGE_FRONT := 2.0
-const WALK_PX_BRITISH_SIDE := 4.0
-const WALK_PX_BRITISH_UPRIGHT := 3.0
-const WALK_PX_BRITISH_FRONT := 2.0
-const WALK_PX_SIAMESE_SIDE := 3.5
-const WALK_PX_SIAMESE_UPRIGHT := 3.0
-const WALK_PX_SIAMESE_FRONT := 1.5
+const WALK_PX_ORANGE_SIDE := 8.0
+const WALK_PX_ORANGE_UPRIGHT := 7.0
+const WALK_PX_ORANGE_FRONT := 4.0
+const WALK_PX_BRITISH_SIDE := 7.0
+const WALK_PX_BRITISH_UPRIGHT := 6.0
+const WALK_PX_BRITISH_FRONT := 4.0
+const WALK_PX_SIAMESE_SIDE := 7.0
+const WALK_PX_SIAMESE_UPRIGHT := 6.0
+const WALK_PX_SIAMESE_FRONT := 3.5
 
 const BOB_AMPLITUDE := 2.5  # 走路踩地弹跳幅度（视觉像素，乘以深度缩放后使用）
 const IDLE_HEIGHT_SCALE := 100.0 / 126.0  # ≈0.794
