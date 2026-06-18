@@ -859,7 +859,9 @@ class HatchSlotView:
 
 	func _refresh() -> void:
 		if _frame == null:
+			print("[HatchSlot %d] _frame is null!" % slot_index)
 			return
+		print("[HatchSlot %d] _refresh called, type=%s" % [slot_index, _frame.get_class()])
 		var unlocked := bool(slot_data.get("unlocked", slot_index == 0))
 		var status := String(slot_data.get("status", "empty" if slot_index == 0 else "locked"))
 		var energy := float(slot_data.get("energy", 0.0))
