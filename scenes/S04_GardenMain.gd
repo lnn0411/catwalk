@@ -8,7 +8,7 @@ const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const HUD_HEIGHT := 0.0  # HUD关闭，图标由top_row直接挂root不受裁切
 const GARDEN_HEIGHT := 1280.0  # 1280 - HUD_HEIGHT
 const ACTION_HEIGHT := 64.0
-const HATCH_HEIGHT := 56.0
+const HATCH_HEIGHT := 98.0
 const NAV_HEIGHT := 56.0
 const CONTENT_SCALE := 0.48  # 仅作相机缩放兜底；实际缩放按真实视口在 _setup_camera 里算
 # 花园世界尺寸（与 GardenBackground 美术绘制范围一致；改美术需同步这两个值，真机核对）
@@ -313,7 +313,7 @@ func _build_hud() -> void:
 		_action_buttons.append(button)
 
 	_hatch_row = HBoxContainer.new()
-	_hatch_row.position = Vector2(32.0, 1168.0)
+	_hatch_row.position = Vector2(32.0, 1126.0)
 	_hatch_row.size = Vector2(656.0, HATCH_HEIGHT)
 	_hatch_row.add_theme_constant_override("separation", 12)
 	root.add_child(_hatch_row)
@@ -820,13 +820,13 @@ class HatchSlotView:
 		# 槽位底框：临时贴图 → 程序绘制（按状态换样式），不再依赖 slot_frame_*.png
 		_frame = TextureRect.new()
 		_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		_frame.stretch_mode = TextureRect.STRETCH_SCALE
+		_frame.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		_frame.texture = load("res://assets/art/ui/panels/slot_frame_empty.png")
 		_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_frame)
 
 		_icon = TextureRect.new()
-		_icon.position = Vector2(11.0, 5.0)
+		_icon.position = Vector2(11.0, 35.0)
 		_icon.size = Vector2(36.0, 28.0)
 		_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
 		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -834,7 +834,7 @@ class HatchSlotView:
 		add_child(_icon)
 
 		_detail_label = Label.new()
-		_detail_label.position = Vector2(39.0, 5.0)
+		_detail_label.position = Vector2(39.0, 37.0)
 		_detail_label.size = Vector2(105.0, 24.0)
 		_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_detail_label.add_theme_font_size_override("font_size", 12)
