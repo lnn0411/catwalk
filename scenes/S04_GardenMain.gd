@@ -532,10 +532,11 @@ func _add_mock_steps(amount: int) -> void:
 		SaveManager.save_all()
 
 func _replay_onboarding() -> void:
-	# 关闭DBG面板，跳转到Onboarding引导页
+	# 模拟首次启动：重置created_at → 跳Splash → 自动进入Onboarding
 	if _debug_panel:
 		_debug_panel.visible = false
-	UIManager.replace("res://scenes/S01_Onboarding.tscn")
+	EnergyEngine.created_at = "0"
+	UIManager.replace("res://scenes/S00_Splash.tscn")
 
 
 func _reset_save() -> void:
