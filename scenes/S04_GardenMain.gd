@@ -174,50 +174,7 @@ func _build_hud() -> void:
 	# 核心修复：必须先 add_child 进场景树，再设置全屏锚点，否则在不同真机分辨率下无法拉伸对齐宽度！
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# 顶栏：程序绘制悬浮卡（暖白圆角+柔影），底垫纸纹理模拟手绘纸张感
-	var top_paper := TextureRect.new()
-	var paper_path := "res://assets/art/ui/panels/paper_texture.png"
-	if not ResourceLoader.exists(paper_path): paper_path = "res://assets/temp/ui/paper_texture.png"
-	top_paper.texture = load(paper_path)
-	top_paper.stretch_mode = TextureRect.STRETCH_TILE
-	top_paper.expand_mode = TextureRect.EXPAND_IGNORE_SIZE # 核心修复：防止 Godot 4 默认按纹理大尺寸（768px高）拉伸覆盖上半屏幕！
-	top_paper.anchor_left = 0.0
-	top_paper.anchor_right = 1.0
-	top_paper.anchor_top = 0.0
-	top_paper.anchor_bottom = 0.0
-	top_paper.offset_left = 0.0
-	top_paper.offset_right = 0.0
-	top_paper.offset_top = 0.0
-	top_paper.offset_bottom = HUD_HEIGHT
-	top_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(top_paper)
-
-	var top_bar := Panel.new()
-	var top_style := StyleBoxFlat.new()
-	top_style.bg_color = Color(Palette.BG_CEMENT, 0.94)
-	# 核心适配：与底部 UI 对齐（左右满边，底部带优雅圆角，顶部 flat）
-	top_style.corner_radius_bottom_left = 24
-	top_style.corner_radius_bottom_right = 24
-	top_style.corner_radius_top_left = 0
-	top_style.corner_radius_top_right = 0
-	top_style.border_width_bottom = 1
-	top_style.border_color = Palette.BORDER_DEFAULT
-	top_style.shadow_color = Palette.UI_SHADOW
-	top_style.shadow_size = 8
-	top_style.shadow_offset = Vector2(0.0, 2.0)
-	top_bar.add_theme_stylebox_override("panel", top_style)
-	top_bar.anchor_left = 0.0
-	top_bar.anchor_right = 1.0
-	top_bar.anchor_top = 0.0
-	top_bar.anchor_bottom = 0.0
-	top_bar.offset_left = 0.0
-	top_bar.offset_right = 0.0
-	top_bar.offset_top = 0.0
-	top_bar.offset_bottom = HUD_HEIGHT
-	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(top_bar)
-
-	var debug_btn := Button.new()
+\tvar debug_btn := Button.new()
 	debug_btn.text = "DBG"
 	debug_btn.flat = true
 	# 核心修复：DBG 按钮采用右对齐锚点，动态适应不同真机/模拟器屏幕宽度
