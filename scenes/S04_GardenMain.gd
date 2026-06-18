@@ -550,7 +550,7 @@ func _replay_onboarding() -> void:
 		var dir := DirAccess.open("user://")
 		if dir:
 			dir.remove("save.cfg")
-	EnergyEngine.created_at = ""
+	EnergyEngine.created_at = 0.0
 	UIManager.replace("res://scenes/S00_Splash.tscn")
 
 
@@ -558,6 +558,10 @@ func _reset_save() -> void:
 	print("[Reset] before: steps=%d energy=%.0f" % [StepEngine.get_today_steps(), EnergyEngine.energy_pool])
 	if SaveManager:
 		SaveManager.reset_all()
+	# 重置后补时间戳+存盘，防止下次启动误判为首次
+	EnergyEngine.created_at = Time.get_unix_time_from_system()
+	if SaveManager:
+		SaveManager.save_all()
 	print("[Reset] after: steps=%d energy=%.0f" % [StepEngine.get_today_steps(), EnergyEngine.energy_pool])
 	# 清除画面上的猫
 	if cat_container:

@@ -31,11 +31,7 @@ func _add_background() -> void:
 	add_child(bg)
 
 func _is_first_time() -> bool:
-	# 仅当从未保存过 created_at（空字符串）时才判为首次
-	# 0.0 是重置/初始化后的值，不作为首次
-	if EnergyEngine.created_at == "":
-		return true
 	var created_at := float(EnergyEngine.created_at)
 	if created_at <= 0.0:
-		return false
+		return true
 	return Time.get_unix_time_from_system() - created_at < FIRST_TIME_SECONDS
