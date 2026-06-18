@@ -544,7 +544,7 @@ func _inject_data() -> void:
 
 
 func _replay_onboarding() -> void:
-		_debug_panel.visible = false
+	_debug_panel.visible = false
 	if SaveManager:
 		SaveManager.reset_all()
 		var dir := DirAccess.open("user://")
