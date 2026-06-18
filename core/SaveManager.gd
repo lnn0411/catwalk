@@ -245,7 +245,7 @@ func _write_relinquish() -> void:
 	# 送养周计数与幂等键由 RelinquishSystem 管理
 	var _rs2 := get_node_or_null("/root/RelinquishSystem")
 	if _rs2 and _rs2.has_method("get_save_data"):
-		var rd := _rs2.get_save_data()
+		var rd: Dictionary = _rs2.get_save_data()
 		_config.set_value("relinquish", "this_week_petals_gained", int(rd.get("this_week_petals_gained", 0)))
 		_config.set_value("relinquish", "week_reset_timestamp", int(rd.get("week_reset_timestamp", 0)))
 		_config.set_value("relinquish", "relinquished_event_ids", Array(rd.get("relinquished_event_ids", [])))
