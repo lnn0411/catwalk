@@ -550,7 +550,7 @@ func _replay_onboarding() -> void:
 		var dir := DirAccess.open("user://")
 		if dir:
 			dir.remove("save.cfg")
-	EnergyEngine.created_at = 0.0
+	EnergyEngine.created_at = ""
 	UIManager.replace("res://scenes/S00_Splash.tscn")
 
 
