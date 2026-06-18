@@ -22,7 +22,7 @@ func _ready() -> void:
 
 func _add_background() -> void:
 	var bg := TextureRect.new()
-	bg.texture = preload("res://assets/art/ui/splash.png")
+	bg.texture = load("res://assets/art/ui/splash.png")
 	bg.expand_mode = TextureRect.EXPAND_FIT_WIDTH
 	bg.stretch_mode = TextureRect.STRETCH_KEEP
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
