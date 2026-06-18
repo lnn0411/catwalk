@@ -538,7 +538,7 @@ func _inject_data() -> void:
 		StepEngine.add_mock_steps(10000)
 	if EnergyEngine:
 		EnergyEngine.energy_pool = EnergyEngine.MAX_ENERGY
-		print("[Inject] steps=10000 energy=%.0f" % EnergyEngine.energy_pool)
+		EnergyEngine.created_at = str(Time.get_unix_time_from_system())
 	if SaveManager:
 		SaveManager.save_all()
 
