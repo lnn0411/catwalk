@@ -226,7 +226,7 @@ func _build_hud() -> void:
 
 	# 能量
 	var energy_box := HBoxContainer.new()
-	energy_box.add_theme_constant_override("separation", 6)
+	energy_box.add_theme_constant_override("separation", 2)
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
