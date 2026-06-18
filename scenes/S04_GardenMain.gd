@@ -8,6 +8,9 @@ const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const HUD_HEIGHT := 0.0  # HUD关闭，图标由top_row直接挂root不受裁切
 const GARDEN_HEIGHT := 1280.0  # 1280 - HUD_HEIGHT
 const ACTION_HEIGHT := 64.0
+const FRAME_EMPTY = preload("res://assets/art/ui/panels/slot_frame_empty.png")
+const FRAME_FILLING = preload("res://assets/art/ui/panels/slot_frame_filling.png")
+const FRAME_READY = preload("res://assets/art/ui/panels/slot_frame_ready.png")
 const HATCH_HEIGHT := 98.0
 const NAV_HEIGHT := 56.0
 const CONTENT_SCALE := 0.48  # 仅作相机缩放兜底；实际缩放按真实视口在 _setup_camera 里算
@@ -879,18 +882,16 @@ class HatchSlotView:
 			_icon.modulate = Color.WHITE
 			detail = "等待能量填充"
 
-		var frame_tex := "empty"
+		var frame_tex := FRAME_EMPTY
 		if not unlocked:
 			_frame.modulate = Color(0.4, 0.4, 0.4, 1.0)
-			frame_tex = "empty"
 		elif status == "ready" or (status == "incubating" and progress >= 1.0):
 			_frame.modulate = Color.WHITE
-			frame_tex = "ready"
+			frame_tex = FRAME_READY
 		elif status == "incubating":
 			_frame.modulate = Color.WHITE
-			frame_tex = "filling"
+			frame_tex = FRAME_FILLING
 		else:
 			_frame.modulate = Color.WHITE
-			frame_tex = "empty"
-		_frame.texture = load("res://assets/art/ui/panels/slot_frame_%s.png" % frame_tex)
+		_frame.texture = frame_tex
 		_detail_label.text = detail
