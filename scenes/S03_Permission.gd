@@ -14,6 +14,8 @@ func _ready() -> void:
 	super._ready()
 	_add_background()
 	_layout_hotspots()
+	# 进页面立即触发权限请求
+	call_deferred("_on_allow_pressed")
 
 func _add_background() -> void:
 	var bg := TextureRect.new()
