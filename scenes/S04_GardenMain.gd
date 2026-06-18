@@ -195,19 +195,18 @@ func _build_hud() -> void:
 	debug_btn.pressed.connect(_toggle_debug_panel)
 	root.add_child(debug_btn)
 
-	# 顶栏：图标直排 HBox
-	var top_row := HBoxContainer.new()
-	top_row.position = Vector2(12.0, 30.0)
-	top_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	top_row.add_theme_constant_override("separation", 16)
-	top_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(top_row)
+	# 顶栏：全宽 Control 容器
+	var top_bar := Control.new()
+	top_bar.anchor_right = 1.0
+	top_bar.offset_top = 30.0
+	top_bar.offset_bottom = 70.0
+	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(top_bar)
 
 	# 步数
 	var steps_box := HBoxContainer.new()
 	steps_box.add_theme_constant_override("separation", 6)
 	steps_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_row.add_child(steps_box)
 	var steps_icon := TextureRect.new()
 	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
 	steps_icon.custom_minimum_size = Vector2(36.0, 36.0)
@@ -227,7 +226,6 @@ func _build_hud() -> void:
 	var energy_box := HBoxContainer.new()
 	energy_box.add_theme_constant_override("separation", 6)
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_row.add_child(energy_box)
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
 	energy_icon.custom_minimum_size = Vector2(28.0, 28.0)
@@ -254,11 +252,28 @@ func _build_hud() -> void:
 	energy_frame.add_child(_energy_bar)
 	energy_box.add_child(energy_frame)
 
-	# 货币
+	# 中间组：步数 + 能量居中
+	var center_group := HBoxContainer.new()
+	center_group.anchor_left = 0.5
+	center_group.anchor_right = 0.5
+	center_group.anchor_bottom = 1.0
+	center_group.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	center_group.add_theme_constant_override("separation", 16)
+	center_group.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_bar.add_child(center_group)
+	center_group.add_child(steps_box)
+	center_group.add_child(energy_box)
+
+	# 货币：锚定右边，留 12px 边距
 	var currency_box := HBoxContainer.new()
+	currency_box.anchor_left = 1.0
+	currency_box.anchor_right = 1.0
+	currency_box.anchor_bottom = 1.0
+	currency_box.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	currency_box.offset_right = -12.0
 	currency_box.add_theme_constant_override("separation", 6)
 	currency_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_row.add_child(currency_box)
+	top_bar.add_child(currency_box)
 	for entry in [{"icon": "icon_coin.png", "value": "0"}, {"icon": "icon_gem.png", "value": "0"}, {"icon": "icon_petal.png", "value": "0"}]:
 		var item_box := HBoxContainer.new()
 		item_box.add_theme_constant_override("separation", 3)
