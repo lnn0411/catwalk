@@ -811,15 +811,17 @@ class HatchSlotView:
 
 	var slot_index := 0
 	var slot_data: Dictionary = {}
-	var _frame: Panel
+	var _frame: TextureRect
 	var _icon: TextureRect
 	var _detail_label: Label
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
 		# 槽位底框：临时贴图 → 程序绘制（按状态换样式），不再依赖 slot_frame_*.png
-		_frame = Panel.new()
+		_frame = TextureRect.new()
 		_frame.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_frame.stretch_mode = TextureRect.STRETCH_SCALE
+		_frame.texture = load("res://assets/art/ui/panels/slot_frame_empty.png")
 		_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_frame)
 
@@ -877,31 +879,18 @@ class HatchSlotView:
 			_icon.modulate = Color.WHITE
 			detail = "等待能量填充"
 
-		var fs := StyleBoxFlat.new()
-		fs.set_corner_radius_all(24)
+		var frame_tex := "empty"
 		if not unlocked:
-			fs.bg_color = Color(Palette.CITY_GRAY, 0.30)
-			fs.border_color = Color(Palette.BORDER_DEFAULT, 0.6)
-			fs.border_width_left = 1
-			fs.border_width_right = 1
-			fs.border_width_top = 1
+			_frame.modulate = Color(0.4, 0.4, 0.4, 1.0)
+			frame_tex = "empty"
 		elif status == "ready" or (status == "incubating" and progress >= 1.0):
-			fs.bg_color = Color(Palette.AMBER, 0.22)
-			fs.border_color = Palette.AMBER
-			fs.border_width_left = 2
-			fs.border_width_right = 2
-			fs.border_width_top = 2
+			_frame.modulate = Color.WHITE
+			frame_tex = "ready"
 		elif status == "incubating":
-			fs.bg_color = Color(Palette.BG_WARM_WHITE, 0.90)
-			fs.border_color = Color(Palette.AMBER, 0.55)
-			fs.border_width_left = 1
-			fs.border_width_right = 1
-			fs.border_width_top = 1
+			_frame.modulate = Color.WHITE
+			frame_tex = "filling"
 		else:
-			fs.bg_color = Color(Palette.BG_WARM_WHITE, 0.75)
-			fs.border_color = Color(Palette.BORDER_DEFAULT, 0.8)
-			fs.border_width_left = 1
-			fs.border_width_right = 1
-			fs.border_width_top = 1
-		_frame.add_theme_stylebox_override("panel", fs)
+			_frame.modulate = Color.WHITE
+			frame_tex = "empty"
+		_frame.texture = load("res://assets/art/ui/panels/slot_frame_%s.png" % frame_tex)
 		_detail_label.text = detail
