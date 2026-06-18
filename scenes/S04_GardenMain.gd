@@ -884,9 +884,10 @@ class HatchSlotView:
 			_icon.modulate = Color.WHITE
 			detail = "等待能量填充"
 
-		var frame_tex := FRAME_EMPTY
+		var frame_tex := FRAME_FILLING
 		if not unlocked:
 			_frame.modulate = Color(0.4, 0.4, 0.4, 1.0)
+			frame_tex = FRAME_EMPTY
 		elif status == "ready" or (status == "incubating" and progress >= 1.0):
 			_frame.modulate = Color.WHITE
 			frame_tex = FRAME_READY
