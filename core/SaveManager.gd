@@ -35,12 +35,15 @@ func load_and_apply() -> void:
 	var currency_data := _read_currency()
 	currency_data["love_petals"] = int(_config.get_value("relinquish", "love_petals", 0))
 	CurrencyManager.apply_save(currency_data)
-	if RelinquishSystem:
-		RelinquishSystem.apply_save(_read_relinquish())
-	if PackageSystem:
-		PackageSystem.apply_save(_read_relinquish())
-	if MailSystem:
-		MailSystem.apply_save(_read_relinquish())
+	var rs := get_node_or_null("/root/RelinquishSystem")
+	var ps := get_node_or_null("/root/PackageSystem")
+	var ms := get_node_or_null("/root/MailSystem")
+	if rs and rs.has_method("apply_save"):
+		rs.apply_save(_read_relinquish())
+	if ps and ps.has_method("apply_save"):
+		ps.apply_save(_read_relinquish())
+	if ms and ms.has_method("apply_save"):
+		ms.apply_save(_read_relinquish())
 	AchievementSystem.apply_save(_read_achievements())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
@@ -230,8 +233,9 @@ func _write_relinquish() -> void:
 	if CurrencyManager:
 		_config.set_value("relinquish", "love_petals", CurrencyManager.flower_petals)
 	# 背包容量由 PackageSystem 管理
-	if PackageSystem:
-		_config.set_value("relinquish", "backpack_max_capacity", PackageSystem.get_capacity())
+	var _ps := get_node_or_null("/root/PackageSystem")
+	if _ps and _ps.has_method("get_capacity"):
+		_config.set_value("relinquish", "backpack_max_capacity", _ps.get_capacity())
 	elif not _config.has_section_key("relinquish", "backpack_max_capacity"):
 		_config.set_value("relinquish", "backpack_max_capacity", 24)
 	# 工坊缓存由 HatchEngine 管理
@@ -239,8 +243,9 @@ func _write_relinquish() -> void:
 		_config.set_value("relinquish", "workshop_cached_energy", int(HatchEngine.workshop_cached_energy))
 		_config.set_value("relinquish", "surprise_box_ready", HatchEngine.surprise_box_ready)
 	# 送养周计数与幂等键由 RelinquishSystem 管理
-	if RelinquishSystem:
-		var rd := RelinquishSystem.get_save_data()
+	var _rs2 := get_node_or_null("/root/RelinquishSystem")
+	if _rs2 and _rs2.has_method("get_save_data"):
+		var rd := _rs2.get_save_data()
 		_config.set_value("relinquish", "this_week_petals_gained", int(rd.get("this_week_petals_gained", 0)))
 		_config.set_value("relinquish", "week_reset_timestamp", int(rd.get("week_reset_timestamp", 0)))
 		_config.set_value("relinquish", "relinquished_event_ids", Array(rd.get("relinquished_event_ids", [])))
