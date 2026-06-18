@@ -11,7 +11,7 @@ const ACTION_HEIGHT := 64.0
 const FRAME_EMPTY = preload("res://assets/art/ui/panels/slot_frame_empty.png")
 const FRAME_FILLING = preload("res://assets/art/ui/panels/slot_frame_filling.png")
 const FRAME_READY = preload("res://assets/art/ui/panels/slot_frame_ready.png")
-const HATCH_HEIGHT := 98.0
+const HATCH_HEIGHT := 80.0
 const NAV_HEIGHT := 56.0
 const CONTENT_SCALE := 0.48  # 仅作相机缩放兜底；实际缩放按真实视口在 _setup_camera 里算
 # 花园世界尺寸（与 GardenBackground 美术绘制范围一致；改美术需同步这两个值，真机核对）
@@ -316,7 +316,7 @@ func _build_hud() -> void:
 		_action_buttons.append(button)
 
 	_hatch_row = HBoxContainer.new()
-	_hatch_row.position = Vector2(32.0, 1126.0)
+	_hatch_row.position = Vector2(32.0, 1144.0)
 	_hatch_row.size = Vector2(656.0, HATCH_HEIGHT)
 	_hatch_row.add_theme_constant_override("separation", 12)
 	root.add_child(_hatch_row)
@@ -829,7 +829,7 @@ class HatchSlotView:
 		add_child(_frame)
 
 		_icon = TextureRect.new()
-		_icon.position = Vector2(11.0, 35.0)
+		_icon.position = Vector2(11.0, 26.0)
 		_icon.size = Vector2(36.0, 28.0)
 		_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
 		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -837,7 +837,7 @@ class HatchSlotView:
 		add_child(_icon)
 
 		_detail_label = Label.new()
-		_detail_label.position = Vector2(39.0, 37.0)
+		_detail_label.position = Vector2(39.0, 28.0)
 		_detail_label.size = Vector2(105.0, 24.0)
 		_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_detail_label.add_theme_font_size_override("font_size", 12)
