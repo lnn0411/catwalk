@@ -252,23 +252,21 @@ func _build_hud() -> void:
 	energy_frame.add_child(_energy_bar)
 	energy_box.add_child(energy_frame)
 
-	# 中间组：步数 + 能量居中
+	# 中间组：步数 + 能量居中（CenterContainer 自动居中）
+	var center_wrapper := CenterContainer.new()
+	center_wrapper.anchor_right = 1.0
+	center_wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_bar.add_child(center_wrapper)
 	var center_group := HBoxContainer.new()
-	center_group.anchor_left = 0.5
-	center_group.anchor_right = 0.5
-	center_group.anchor_bottom = 1.0
-	center_group.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	center_group.add_theme_constant_override("separation", 16)
 	center_group.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_bar.add_child(center_group)
 	center_group.add_child(steps_box)
 	center_group.add_child(energy_box)
+	center_wrapper.add_child(center_group)
 
 	# 货币：锚定右边，留 12px 边距
 	var currency_box := HBoxContainer.new()
-	currency_box.anchor_left = 1.0
 	currency_box.anchor_right = 1.0
-	currency_box.anchor_bottom = 1.0
 	currency_box.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	currency_box.offset_right = -12.0
 	currency_box.add_theme_constant_override("separation", 6)
