@@ -2,9 +2,12 @@ extends "res://ui/UIPage.gd"
 
 const ALLOW_BUTTON_SIZE := Vector2(480.0, 56.0)
 const LATER_BUTTON_SIZE := Vector2(220.0, 56.0)
+const SETTINGS_BUTTON_SIZE := Vector2(480.0, 56.0)
 
 var _allow_rect := Rect2()
 var _later_rect := Rect2()
+var _settings_rect := Rect2()
+var _show_settings := false
 var _requesting := false
 
 func _ready() -> void:
@@ -26,6 +29,7 @@ func _layout_hotspots() -> void:
 	var screen := get_viewport_rect().size
 	_allow_rect = Rect2(Vector2((screen.x - ALLOW_BUTTON_SIZE.x) * 0.5, 980.0), ALLOW_BUTTON_SIZE)
 	_later_rect = Rect2(Vector2((screen.x - LATER_BUTTON_SIZE.x) * 0.5, screen.y - 250.0), LATER_BUTTON_SIZE)
+	_settings_rect = Rect2(Vector2((screen.x - SETTINGS_BUTTON_SIZE.x) * 0.5, 900.0), SETTINGS_BUTTON_SIZE)
 
 func handle_back() -> bool:
 	return true
@@ -43,7 +47,9 @@ func _gui_input(event: InputEvent) -> void:
 		pos = event.position
 	if not released:
 		return
-	if _allow_rect.has_point(pos):
+	if _show_settings and _settings_rect.has_point(pos):
+		_open_app_settings()
+	elif _allow_rect.has_point(pos):
 		_on_allow_pressed()
 	elif _later_rect.has_point(pos):
 		UIManager.replace("res://scenes/S02_Loading.tscn")
@@ -73,6 +79,7 @@ func _on_permission_result(granted: bool) -> void:
 		SaveManager.save_all()
 		UIManager.replace("res://scenes/S02_Loading.tscn")
 		return
+	_show_settings = true
 	var step_counter := Engine.get_singleton("StepCounter")
 	if step_counter != null:
 		if step_counter.has_method("isPermissionDeniedPermanently") and bool(step_counter.call("isPermissionDeniedPermanently")):
@@ -81,4 +88,8 @@ func _on_permission_result(granted: bool) -> void:
 		if step_counter.has_method("is_permission_denied_permanently") and bool(step_counter.call("is_permission_denied_permanently")):
 			UIManager.replace("res://scenes/S91_PermDenied.tscn")
 			return
-	UIManager.replace("res://scenes/S05_ReadOnlyGarden.tscn")
+
+func _open_app_settings() -> void:
+	var sc := Engine.get_singleton("StepCounter")
+	if sc and sc.has_method("openAppSettings"):
+		sc.call("openAppSettings")
