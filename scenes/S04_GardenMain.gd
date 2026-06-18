@@ -825,7 +825,7 @@ class HatchSlotView:
 
 		_icon = TextureRect.new()
 		_icon.position = Vector2(11.0, 5.0)
-		_icon.size = Vector2(28.0, 24.0)
+		_icon.size = Vector2(36.0, 28.0)
 		_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
 		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
