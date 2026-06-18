@@ -28,6 +28,7 @@ func _ready() -> void:
 	offset_top = -BAR_HEIGHT
 	offset_bottom = 0.0
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	clip_contents = true
 	_build_tabs()
 
 func set_current_tab(index: int) -> void:
