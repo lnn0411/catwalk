@@ -220,13 +220,6 @@ func _build_hud() -> void:
 	steps_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	steps_capsule.add_child(steps_box)
 
-	var steps_icon := TextureRect.new()
-	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
-	steps_icon.custom_minimum_size = Vector2(40.0, 40.0)
-	steps_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	steps_box.add_child(steps_icon)
-
 	_steps_label = Label.new()
 	_steps_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_steps_label.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -255,13 +248,6 @@ func _build_hud() -> void:
 	energy_box.add_theme_constant_override("separation", 5)
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	energy_capsule.add_child(energy_box)
-
-	var energy_icon := TextureRect.new()
-	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
-	energy_icon.custom_minimum_size = Vector2(30.0, 30.0)
-	energy_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	energy_box.add_child(energy_icon)
 
 	_energy_bar = EnergyMeter.new()
 	_energy_bar.custom_minimum_size = Vector2(200.0, 36.0)
@@ -292,12 +278,6 @@ func _build_hud() -> void:
 		var item_box := HBoxContainer.new()
 		item_box.add_theme_constant_override("separation", 9)
 		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		var item_icon := TextureRect.new()
-		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
-		item_icon.custom_minimum_size = Vector2(30.0, 30.0)
-		item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		item_box.add_child(item_icon)
 		var label := Label.new()
 		label.text = String(entry["value"])
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
