@@ -238,7 +238,21 @@ func _build_hud() -> void:
 	_energy_bar = EnergyMeter.new()
 	_energy_bar.custom_minimum_size = Vector2(200.0, 28.0)
 	_energy_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	energy_box.add_child(_energy_bar)
+	var energy_frame := Panel.new()
+	var energy_style := StyleBoxFlat.new()
+	energy_style.bg_color = Color(0xFA, 0xF5, 0xEB, 0.85)
+	energy_style.corner_radius_top_left = 12
+	energy_style.corner_radius_top_right = 12
+	energy_style.corner_radius_bottom_left = 12
+	energy_style.corner_radius_bottom_right = 12
+	energy_style.border_width_left = 1
+	energy_style.border_width_right = 1
+	energy_style.border_width_top = 1
+	energy_style.border_width_bottom = 1
+	energy_style.border_color = Color("#8B7355")
+	energy_frame.add_theme_stylebox_override("panel", energy_style)
+	energy_frame.add_child(_energy_bar)
+	energy_box.add_child(energy_frame)
 
 	# 货币
 	var currency_box := HBoxContainer.new()
@@ -276,9 +290,9 @@ func _build_hud() -> void:
 
 	# 互动按钮：右竖排（不挡花园视线）
 	var action_col := VBoxContainer.new()
-	action_col.position = Vector2(620.0, 380.0)
-	action_col.size = Vector2(80.0, 320.0)
-	action_col.add_theme_constant_override("separation", 12)
+	action_col.position = Vector2(640.0, 380.0)
+	action_col.size = Vector2(56.0, 328.0)
+	action_col.add_theme_constant_override("separation", 20)
 	root.add_child(action_col)
 	var action_data := [
 		{"title": "喂食", "texture": "btn_feed.png", "state": SubState.INTERACT_FEED},
@@ -289,7 +303,7 @@ func _build_hud() -> void:
 	for data in action_data:
 		var button := TextureButton.new()
 		button.texture_normal = load("res://assets/art/ui/buttons/" + String(data["texture"]))
-		button.custom_minimum_size = Vector2(80.0, 103.0)
+		button.custom_minimum_size = Vector2(52.0, 67.0)
 		button.stretch_mode = TextureButton.STRETCH_KEEP_CENTERED
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.pressed.connect(_on_action_pressed.bind(int(data["state"])))
