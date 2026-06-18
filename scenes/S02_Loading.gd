@@ -37,7 +37,7 @@ func _add_background() -> void:
 
 func _draw() -> void:
 	var screen := get_viewport_rect().size
-	_draw_centered_text("花园正在等你回来……", screen.y * 0.60, 28, Color.WHITE)
+	_draw_centered_text("花园正在等你回来……", screen.y * 0.72, 28, Color.WHITE)
 	draw_arc(screen / 2.0 + Vector2(0.0, 40.0), 42.0, _spinner_angle, _spinner_angle + PI * 1.45, 36, Color.WHITE, 6.0)
 
 	var bar_pos := Vector2((screen.x - LOADING_BAR_SIZE.x) * 0.5, screen.y - 260.0)
