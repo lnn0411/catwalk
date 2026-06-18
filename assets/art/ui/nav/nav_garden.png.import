@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b2ff805da6dd3"
-path="res://.godot/imported/permission.png-89a20dc8771d19252c745e356de00e37.ctex"
+uid="uid://b4tsmb8mvsmxs"
+path="res://.godot/imported/nav_garden.png-ccbedb2ac6d497b7a6fa028ce7941415.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/permission.png"
-dest_files=["res://.godot/imported/permission.png-89a20dc8771d19252c745e356de00e37.ctex"]
+source_file="res://assets/art/ui/nav/nav_garden.png"
+dest_files=["res://.godot/imported/nav_garden.png-ccbedb2ac6d497b7a6fa028ce7941415.ctex"]
 
 [params]
 

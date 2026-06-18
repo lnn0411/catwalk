@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b2ff805da6dd3"
-path="res://.godot/imported/permission.png-89a20dc8771d19252c745e356de00e37.ctex"
+uid="uid://c386dvoyq2yb5"
+path="res://.godot/imported/icon_petal.png-82b2d6320d63e1b46211947430ac5a99.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/art/ui/permission.png"
-dest_files=["res://.godot/imported/permission.png-89a20dc8771d19252c745e356de00e37.ctex"]
+source_file="res://assets/art/ui/icons/icon_petal.png"
+dest_files=["res://.godot/imported/icon_petal.png-82b2d6320d63e1b46211947430ac5a99.ctex"]
 
 [params]
 
