@@ -22,6 +22,10 @@ func get_max_capacity() -> int:
 	return backpack_max_capacity
 
 
+func get_capacity() -> int:
+	return get_max_capacity()
+
+
 func check_expansion(total_steps: int, postcard_count: int) -> void:
 	if backpack_max_capacity >= _HARD_CAP:
 		return
