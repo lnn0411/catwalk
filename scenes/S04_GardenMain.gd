@@ -258,7 +258,7 @@ func _build_hud() -> void:
 
 	var steps_icon := TextureRect.new()
 	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
-	steps_icon.custom_minimum_size = Vector2(30.0, 30.0)
+	steps_icon.custom_minimum_size = Vector2(40.0, 40.0)
 	steps_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	steps_box.add_child(steps_icon)
@@ -296,7 +296,7 @@ func _build_hud() -> void:
 		item_box.add_theme_constant_override("separation", 9)
 		var item_icon := TextureRect.new()
 		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
-		item_icon.custom_minimum_size = Vector2(24.0, 24.0)
+		item_icon.custom_minimum_size = Vector2(30.0, 30.0)
 		item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		item_box.add_child(item_icon)
@@ -332,7 +332,7 @@ func _build_hud() -> void:
 	for data in action_data:
 		var button := TextureButton.new()
 		button.texture_normal = load("res://assets/art/ui/buttons/" + String(data["texture"]))
-		button.custom_minimum_size = Vector2(72.0, 72.0)
+		button.custom_minimum_size = Vector2(80.0, 103.0)
 		button.stretch_mode = TextureButton.STRETCH_KEEP_CENTERED
 		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		button.pressed.connect(_on_action_pressed.bind(int(data["state"])))
