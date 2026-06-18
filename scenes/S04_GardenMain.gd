@@ -197,20 +197,22 @@ func _build_hud() -> void:
 
 	# 顶栏：图标直排 HBox
 	var top_row := HBoxContainer.new()
-	top_row.position = Vector2(12.0, 32.0)
-	top_row.add_theme_constant_override("separation", 20)
+	top_row.position = Vector2(12.0, 30.0)
+	top_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	top_row.add_theme_constant_override("separation", 16)
 	top_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_row)
 
 	# 步数
 	var steps_box := HBoxContainer.new()
-	steps_box.add_theme_constant_override("separation", 5)
+	steps_box.add_theme_constant_override("separation", 6)
 	steps_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(steps_box)
 	var steps_icon := TextureRect.new()
 	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
-	steps_icon.custom_minimum_size = Vector2(40.0, 40.0)
+	steps_icon.custom_minimum_size = Vector2(36.0, 36.0)
 	steps_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	steps_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	steps_box.add_child(steps_icon)
 	_steps_label = Label.new()
@@ -223,33 +225,35 @@ func _build_hud() -> void:
 
 	# 能量
 	var energy_box := HBoxContainer.new()
-	energy_box.add_theme_constant_override("separation", 5)
+	energy_box.add_theme_constant_override("separation", 6)
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(energy_box)
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
-	energy_icon.custom_minimum_size = Vector2(30.0, 30.0)
+	energy_icon.custom_minimum_size = Vector2(28.0, 28.0)
 	energy_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	energy_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	energy_box.add_child(energy_icon)
 	_energy_bar = EnergyMeter.new()
-	_energy_bar.custom_minimum_size = Vector2(200.0, 36.0)
+	_energy_bar.custom_minimum_size = Vector2(200.0, 28.0)
 	_energy_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	energy_box.add_child(_energy_bar)
 
 	# 货币
 	var currency_box := HBoxContainer.new()
-	currency_box.add_theme_constant_override("separation", 9)
+	currency_box.add_theme_constant_override("separation", 6)
 	currency_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(currency_box)
 	for entry in [{"icon": "icon_coin.png", "value": "0"}, {"icon": "icon_gem.png", "value": "0"}, {"icon": "icon_petal.png", "value": "0"}]:
 		var item_box := HBoxContainer.new()
-		item_box.add_theme_constant_override("separation", 4)
+		item_box.add_theme_constant_override("separation", 3)
 		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item_icon := TextureRect.new()
 		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
-		item_icon.custom_minimum_size = Vector2(24.0, 24.0)
+		item_icon.custom_minimum_size = Vector2(22.0, 22.0)
 		item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		item_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		item_box.add_child(item_icon)
 		var label := Label.new()
