@@ -812,7 +812,7 @@ class HatchSlotView:
 	var slot_index := 0
 	var slot_data: Dictionary = {}
 	var _frame: Panel
-	var _icon_label: Label
+	var _icon: TextureRect
 	var _detail_label: Label
 
 	func _ready() -> void:
@@ -823,12 +823,13 @@ class HatchSlotView:
 		_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_frame)
 
-		_icon_label = Label.new()
-		_icon_label.position = Vector2(11.0, 5.0)
-		_icon_label.size = Vector2(28.0, 24.0)
-		_icon_label.add_theme_font_size_override("font_size", 16)
-		_icon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(_icon_label)
+		_icon = TextureRect.new()
+		_icon.position = Vector2(11.0, 5.0)
+		_icon.size = Vector2(28.0, 24.0)
+		_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
+		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(_icon)
 
 		_detail_label = Label.new()
 		_detail_label.position = Vector2(41.0, 5.0)
@@ -861,16 +862,18 @@ class HatchSlotView:
 		if max_energy > 0.0:
 			progress = clamp(energy / max_energy, 0.0, 1.0)
 
-		var icon := "🔒"
 		var detail := ""
-		if unlocked and status == "ready":
-			icon = "🥚"
+		if not unlocked:
+			_icon.modulate = Color(0.35, 0.35, 0.35, 1.0)
+			detail = ""
+		elif status == "ready":
+			_icon.modulate = Color.WHITE
 			detail = "点击孵化"
-		elif unlocked and status == "incubating":
-			icon = "🥚"
+		elif status == "incubating":
+			_icon.modulate = Color.WHITE
 			detail = "等待能量填充" if progress <= 0.0 else "%d%%" % int(progress * 100.0)
-		elif unlocked:
-			icon = "🥚"
+		else:
+			_icon.modulate = Color.WHITE
 			detail = "等待能量填充"
 
 		var fs := StyleBoxFlat.new()
@@ -892,6 +895,4 @@ class HatchSlotView:
 			fs.border_color = Color(Palette.BORDER_DEFAULT, 0.8)
 			fs.set_border_width_all(1)
 		_frame.add_theme_stylebox_override("panel", fs)
-		_icon_label.text = icon
-		_icon_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY if unlocked else Palette.TEXT_SECONDARY)
 		_detail_label.text = detail
