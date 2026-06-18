@@ -100,7 +100,6 @@ class NavTab:
 	var index := 0
 	var nav: BottomNav
 	var _icon: TextureRect
-	var _label: Label
 	var _active_bar: ColorRect
 
 	func _ready() -> void:
@@ -118,30 +117,20 @@ class NavTab:
 		add_child(_active_bar)
 
 		_icon = TextureRect.new()
-		_icon.custom_minimum_size = Vector2(40.0, 40.0)
+		_icon.custom_minimum_size = Vector2(50.0, 50.0)
 		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		_icon.anchor_left = 0.5
 		_icon.anchor_right = 0.5
-		_icon.offset_left = -20.0
-		_icon.offset_right = 20.0
-		_icon.offset_top = 8.0
-		_icon.offset_bottom = 36.0
+		_icon.offset_left = -25.0
+		_icon.offset_right = 25.0
+		_icon.offset_top = 6.0
+		_icon.offset_bottom = 56.0
 		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(_icon)
 
-		_label = Label.new()
-		_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		_label.add_theme_font_size_override("font_size", 13)
-		_label.anchor_right = 1.0
-		_label.offset_top = 36.0
-		_label.offset_bottom = BottomNav.BAR_HEIGHT
-		_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(_label)
-
 	func update_state() -> void:
-		if _icon == null or _label == null:
+		if _icon == null:
 			return
 		var active := index == nav.current_index
 		var icon_name := String(BottomNav.TABS[index]["icon"])
@@ -153,8 +142,6 @@ class NavTab:
 			_icon.texture = load(formal_path)
 		else:
 			_icon.texture = load(fallback_path)
-		_label.text = String(BottomNav.TABS[index]["label"])
-		_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY if active else Color("#6B6B6B"))
 		_active_bar.visible = active
 
 	func _gui_input(event: InputEvent) -> void:
