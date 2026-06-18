@@ -832,8 +832,9 @@ class HatchSlotView:
 		add_child(_icon)
 
 		_detail_label = Label.new()
-		_detail_label.position = Vector2(41.0, 5.0)
-		_detail_label.size = Vector2(104.0, 24.0)
+		_detail_label.position = Vector2(0.0, 28.0)
+		_detail_label.size = Vector2(144.0, 20.0)
+		_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		_detail_label.add_theme_font_size_override("font_size", 12)
 		_detail_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
 		_detail_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
