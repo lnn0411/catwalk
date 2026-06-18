@@ -99,7 +99,7 @@ class NavTab:
 
 		_icon = TextureRect.new()
 		_icon.custom_minimum_size = Vector2(50.0, 50.0)
-		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_icon.stretch_mode = TextureRect.STRETCH_SCALE
 		_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		_icon.anchor_left = 0.5
 		_icon.anchor_right = 0.5
