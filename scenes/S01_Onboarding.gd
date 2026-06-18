@@ -2,6 +2,7 @@ extends "res://ui/UIPage.gd"
 
 const PAGE_COUNT := 3
 const SWIPE_THRESHOLD := 100.0
+const AUTO_ADVANCE_INTERVAL := 3.0
 const START_BUTTON_SIZE := Vector2(360.0, 48.0)
 const SKIP_BUTTON_SIZE := Vector2(180.0, 56.0)
 
@@ -16,12 +17,19 @@ var _touch_start := Vector2.ZERO
 var _tracking_touch := false
 var _pages: Array[TextureRect] = []
 var _start_button: Button
+var _auto_timer: Timer
 
 func _ready() -> void:
 	super._ready()
 	_build_pages()
 	_build_buttons()
 	_update_page_visibility()
+	_auto_timer = Timer.new()
+	_auto_timer.one_shot = true
+	_auto_timer.wait_time = AUTO_ADVANCE_INTERVAL
+	_auto_timer.timeout.connect(_on_auto_advance)
+	add_child(_auto_timer)
+	_auto_timer.start()
 
 func handle_back() -> bool:
 	return true
@@ -81,9 +89,19 @@ func _handle_release(position: Vector2) -> void:
 	if dx < -SWIPE_THRESHOLD and _current_page < PAGE_COUNT - 1:
 		_current_page += 1
 		_update_page_visibility()
+		_auto_timer.start()
 	elif dx > SWIPE_THRESHOLD and _current_page > 0:
 		_current_page -= 1
 		_update_page_visibility()
+		_auto_timer.start()
+
+func _on_auto_advance() -> void:
+	if _current_page >= PAGE_COUNT - 1:
+		return
+	_current_page += 1
+	_update_page_visibility()
+	if _current_page < PAGE_COUNT - 1:
+		_auto_timer.start()
 
 func _update_page_visibility() -> void:
 	for i in range(_pages.size()):
