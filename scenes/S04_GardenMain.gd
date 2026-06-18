@@ -174,7 +174,7 @@ func _build_hud() -> void:
 	# 核心修复：必须先 add_child 进场景树，再设置全屏锚点，否则在不同真机分辨率下无法拉伸对齐宽度！
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-\tvar debug_btn := Button.new()
+	var debug_btn := Button.new()
 	debug_btn.text = "DBG"
 	debug_btn.flat = true
 	# 核心修复：DBG 按钮采用右对齐锚点，动态适应不同真机/模拟器屏幕宽度
