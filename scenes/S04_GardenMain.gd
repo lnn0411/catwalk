@@ -195,13 +195,15 @@ func _build_hud() -> void:
 	debug_btn.pressed.connect(_toggle_debug_panel)
 	root.add_child(debug_btn)
 
-	# 顶栏：全宽 Control 容器
-	var top_bar := Control.new()
-	top_bar.anchor_right = 1.0
-	top_bar.offset_top = 30.0
-	top_bar.offset_bottom = 70.0
-	top_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(top_bar)
+	# 顶栏：HBoxContainer，用两个 spacer 实现 左|中|右 布局
+	var top_row := HBoxContainer.new()
+	top_row.anchor_right = 1.0
+	top_row.offset_top = 30.0
+	top_row.offset_bottom = 70.0
+	top_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	top_row.add_theme_constant_override("separation", 0)
+	top_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(top_row)
 
 	# 步数
 	var steps_box := HBoxContainer.new()
@@ -252,25 +254,25 @@ func _build_hud() -> void:
 	energy_frame.add_child(_energy_bar)
 	energy_box.add_child(energy_frame)
 
-	# 步数：左对齐
-	steps_box.position = Vector2(12, 0)
-	top_bar.add_child(steps_box)
+	# spacer-left：steps 贴左，推 energy 居中
+	top_row.add_child(steps_box)
 
-	# 能量：单独居中
-	var energy_wrapper := CenterContainer.new()
-	energy_wrapper.anchor_right = 1.0
-	energy_wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_bar.add_child(energy_wrapper)
-	energy_wrapper.add_child(energy_box)
+	var spacer_mid := Control.new()
+	spacer_mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer_mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_row.add_child(spacer_mid)
 
-	# 货币：锚定右边，留 12px 边距
+	top_row.add_child(energy_box)
+
+	# spacer-right：推 currency 贴右
+	var spacer_right := Control.new()
+	spacer_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	spacer_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_row.add_child(spacer_right)
 	var currency_box := HBoxContainer.new()
-	currency_box.anchor_right = 1.0
-	currency_box.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	currency_box.offset_right = -12.0
 	currency_box.add_theme_constant_override("separation", 6)
 	currency_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_bar.add_child(currency_box)
+	top_row.add_child(currency_box)
 	for entry in [{"icon": "icon_coin.png", "value": "0"}, {"icon": "icon_gem.png", "value": "0"}, {"icon": "icon_petal.png", "value": "0"}]:
 		var item_box := HBoxContainer.new()
 		item_box.add_theme_constant_override("separation", 3)
