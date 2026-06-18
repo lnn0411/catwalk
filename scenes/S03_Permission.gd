@@ -9,6 +9,23 @@ var _requesting := false
 
 func _ready() -> void:
 	super._ready()
+	_add_background()
+	_layout_hotspots()
+
+func _add_background() -> void:
+	var bg := TextureRect.new()
+	bg.texture = preload("res://assets/art/ui/permission.png")
+	bg.expand_mode = TextureRect.EXPAND_FIT_WIDTH
+	bg.stretch_mode = TextureRect.STRETCH_KEEP
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bg.show_behind_parent = true
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+
+func _layout_hotspots() -> void:
+	var screen := get_viewport_rect().size
+	_allow_rect = Rect2(Vector2((screen.x - ALLOW_BUTTON_SIZE.x) * 0.5, 980.0), ALLOW_BUTTON_SIZE)
+	_later_rect = Rect2(Vector2((screen.x - LATER_BUTTON_SIZE.x) * 0.5, screen.y - 250.0), LATER_BUTTON_SIZE)
 
 func handle_back() -> bool:
 	return true
@@ -30,15 +47,6 @@ func _gui_input(event: InputEvent) -> void:
 		_on_allow_pressed()
 	elif _later_rect.has_point(pos):
 		UIManager.replace("res://scenes/S04_GardenMain.tscn")
-
-func _draw() -> void:
-	var screen := get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_WARM_WHITE)
-	_draw_paw(Vector2(screen.x * 0.5, 330.0), 1.75)
-	_draw_centered_text("允许访问步数数据", 690.0, 32, Palette.TEXT_PRIMARY)
-	_draw_centered_text("我们用它来计算能量，帮你孵化猫咪", 760.0, 22, Palette.TEXT_SECONDARY)
-	_draw_allow_button(screen)
-	_draw_later_button(screen)
 
 func _on_allow_pressed() -> void:
 	_requesting = true
@@ -74,32 +82,3 @@ func _on_permission_result(granted: bool) -> void:
 			UIManager.replace("res://scenes/S91_PermDenied.tscn")
 			return
 	UIManager.replace("res://scenes/S05_ReadOnlyGarden.tscn")
-
-func _draw_paw(center: Vector2, scale_value: float) -> void:
-	draw_ellipse(center + Vector2(0.0, 24.0) * scale_value, 48.0 * scale_value, 38.0 * scale_value, Palette.AMBER)
-	for offset in [
-		Vector2(-36.0, -14.0),
-		Vector2(-14.0, -34.0),
-		Vector2(14.0, -34.0),
-		Vector2(36.0, -14.0),
-	]:
-		draw_circle(center + offset * scale_value, 12.0 * scale_value, Palette.AMBER)
-
-func _draw_allow_button(screen: Vector2) -> void:
-	_allow_rect = Rect2(Vector2((screen.x - ALLOW_BUTTON_SIZE.x) * 0.5, 980.0), ALLOW_BUTTON_SIZE)
-	draw_rect(_allow_rect, Palette.AMBER)
-	_draw_text_in_rect("允许", _allow_rect, 26, Palette.TEXT_ON_AMBER)
-
-func _draw_later_button(screen: Vector2) -> void:
-	_later_rect = Rect2(Vector2((screen.x - LATER_BUTTON_SIZE.x) * 0.5, screen.y - 250.0), LATER_BUTTON_SIZE)
-	_draw_text_in_rect("先不了", _later_rect, 24, Palette.TEXT_SECONDARY)
-
-func _draw_centered_text(text: String, y: float, font_size: int, color: Color) -> void:
-	var font := get_theme_default_font()
-	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x
-	draw_string(font, Vector2((get_viewport_rect().size.x - width) * 0.5, y), text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, color)
-
-func _draw_text_in_rect(text: String, rect: Rect2, font_size: int, color: Color) -> void:
-	var font := get_theme_default_font()
-	var size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size)
-	draw_string(font, rect.position + Vector2((rect.size.x - size.x) * 0.5, (rect.size.y + size.y) * 0.5 - 4.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, color)
