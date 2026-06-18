@@ -488,10 +488,25 @@ func _on_action_pressed(state: int) -> void:
 	# 没有猫时按钮本就 disabled，这里双保险
 	if _empty_label.visible:
 		return
-	var prev := _sub_state
+	# SubState 枚举 → InteractionSystem 类型字符串
+	var type := ""
+	match state:
+		SubState.INTERACT_FEED:
+			type = "feed"
+		SubState.INTERACT_PET:
+			type = "pet"
+		SubState.INTERACT_PLAY:
+			type = "play"
+		SubState.INTERACT_PHOTO:
+			type = "photo"
+	var cat_id := _get_first_cat_id()
+	if type != "" and cat_id != "":
+		if not InteractionSystem.can_interact(cat_id, type):
+			print("[Interact] %s 冷却中：%s" % [type, _get_cooldown_remaining_text(cat_id, type)])
+			return
+		var gain := InteractionSystem.do_interact(cat_id, type)
+		print("[Interact] %s +%d 好感（总 %d）" % [type, gain, InteractionSystem.get_affection(cat_id)])
 	_sub_state = state
-	print("[Interact] %s → %s" % [SubState.keys()[prev], SubState.keys()[_sub_state]])
-	# TODO: 在此触发对应猫咪动画 / 反馈表现
 	_interact_reset_timer.start()
 
 func _on_interact_reset() -> void:
@@ -499,6 +514,31 @@ func _on_interact_reset() -> void:
 	_sub_state = SubState.IDLE
 	if prev != SubState.IDLE:
 		print("[Interact] %s → IDLE" % SubState.keys()[prev])
+
+func _get_first_cat_id() -> String:
+	var cats := []
+	if HatchEngine:
+		cats = HatchEngine.get_cats()
+	if cats.is_empty():
+		return ""
+	return String(cats[0].id)
+
+func _get_cooldown_remaining_text(cat_id: String, type: String) -> String:
+	var cfg := ConfigFile.new()
+	cfg.load(InteractionSystem.SAVE_PATH)
+	var last: float = cfg.get_value("last", cat_id + "_" + type, -1.0)
+	if last < 0.0:
+		return "可互动"
+	var cooldown: float = InteractionSystem.get_cooldown_minutes(type) * 60.0
+	var remaining: float = cooldown - (Time.get_unix_time_from_system() - last)
+	if remaining <= 0.0:
+		return "可互动"
+	var total_min := int(remaining / 60.0)
+	var hours := total_min / 60
+	var minutes := total_min % 60
+	if hours > 0:
+		return "冷却中：%d小时%d分" % [hours, minutes]
+	return "冷却中：%d分" % minutes
 
 func _on_bottom_nav_tab_selected(index: int) -> void:
 	if index < 0 or index >= BottomNav.TABS.size():
