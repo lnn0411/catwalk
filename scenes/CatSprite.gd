@@ -37,6 +37,7 @@ const FOOT_Y := 131
 const WALK_PX_BRITISH := 4.0
 const WALK_PX_ORANGE := 6.5
 const WALK_PX_SIAMESE := 7.0
+const IDLE_HEIGHT_SCALE := 100.0 / 126.0  # ≈0.794
 
 const ANIM_WALK_RIGHT := "walk_right"
 const ANIM_WALK_UP_RIGHT := "walk_up_right"
@@ -359,6 +360,10 @@ func _apply_visual_motion(_delta: float) -> void:
 	if breed == "orange" or breed == "orange_tabby":
 		sx *= 0.93
 		sy *= 0.93
+
+	if _current_anim == ANIM_IDLE:
+		sx *= IDLE_HEIGHT_SCALE
+		sy *= IDLE_HEIGHT_SCALE
 
 	z_index = int(position.y)
 
