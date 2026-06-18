@@ -438,7 +438,7 @@ func _select_anim_from_direction(dir: Vector2) -> Dictionary:
 	elif deg >= 67.5 and deg < 112.5:
 		# 橘猫 walk_down 帧无迈步动画，用斜向帧代替
 		if breed.begins_with("orange"):
-			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": false}
+			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": _facing_left}
 		return {"anim": ANIM_WALK_DOWN, "flip": false}
 	elif deg >= 112.5 and deg < 157.5:
 		return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": true}
