@@ -60,7 +60,7 @@ func _build_buttons() -> void:
 	_start_button = TextureButton.new()
 	_start_button.texture_normal = BTN_START_TEX
 	_start_button.size = BTN_START_TEX.get_size()
-	_start_button.position = Vector2((screen.x - _start_button.size.x) * 0.5, screen.y - 150.0)
+	_start_button.position = Vector2((screen.x - _start_button.size.x) * 0.5, screen.y - 100.0)
 	_start_button.pressed.connect(_on_start_pressed)
 	add_child(_start_button)
 
