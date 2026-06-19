@@ -18,8 +18,8 @@ func _ready() -> void:
 
 	var btn_skip := TextureButton.new()
 	btn_skip.texture_normal = BTN_SKIP
-	btn_skip.position = Vector2(260, 1030)
-	btn_skip.size = Vector2(200, 100)
+	btn_skip.position = Vector2(210, 1030)
+	btn_skip.size = Vector2(300, 150)
 	btn_skip.pressed.connect(handle_skip)
 	add_child(btn_skip)
 
