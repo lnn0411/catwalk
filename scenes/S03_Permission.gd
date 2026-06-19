@@ -12,14 +12,14 @@ func _ready() -> void:
 	var btn_permission := TextureButton.new()
 	btn_permission.texture_normal = BTN_PERMISSION
 	btn_permission.position = Vector2(210, 900)
-	btn_permission.size = Vector2(300, 100)
+	btn_permission.size = Vector2(300, 82)
 	btn_permission.pressed.connect(handle_authorize)
 	add_child(btn_permission)
 
 	var btn_skip := TextureButton.new()
 	btn_skip.texture_normal = BTN_SKIP
 	btn_skip.position = Vector2(210, 1030)
-	btn_skip.size = Vector2(300, 150)
+	btn_skip.size = Vector2(300, 82)
 	btn_skip.pressed.connect(handle_skip)
 	add_child(btn_skip)
 
