@@ -4,18 +4,26 @@ const SLEEP_RETURN_BG := preload("res://assets/art/ui/sleep_return_bg.png")
 
 var _continue_rect := Rect2()
 var _days := 0
+var _have_gui := false
 
 func _ready() -> void:
 	super._ready()
 	var screen := get_viewport_rect().size
-	var btn_continue := TextureButton.new()
-	btn_continue.texture_normal = load("res://assets/art/ui/btn_continue.png")
-	btn_continue.ignore_texture_size = true
-	btn_continue.stretch_mode = TextureButton.STRETCH_SCALE
-	btn_continue.position = Vector2((screen.x - 480.0) * 0.5, 990.0)
-	btn_continue.size = Vector2(480.0, 70.0)
-	btn_continue.pressed.connect(_on_continue_pressed)
-	add_child(btn_continue)
+	
+	# 美术按钮就位时用 TextureButton，否则 fallback 到 _draw()
+	if ResourceLoader.exists("res://assets/art/ui/btn_continue.png"):
+		var btn_continue := TextureButton.new()
+		btn_continue.texture_normal = load("res://assets/art/ui/btn_continue.png")
+		btn_continue.ignore_texture_size = true
+		btn_continue.stretch_mode = TextureButton.STRETCH_SCALE
+		btn_continue.position = Vector2((screen.x - 480.0) * 0.5, 990.0)
+		btn_continue.size = Vector2(480.0, 70.0)
+		btn_continue.pressed.connect(_on_continue_pressed)
+		add_child(btn_continue)
+	else:
+		# 无美术图时用代码绘制按钮
+		_continue_rect = Rect2(Vector2((screen.x - 480.0) * 0.5, 990.0), Vector2(480.0, 70.0))
+		_have_gui = true
 
 func _on_continue_pressed() -> void:
 	UIManager.replace("res://scenes/S04_GardenMain.tscn")
@@ -31,7 +39,14 @@ func _draw() -> void:
 	_draw_centered_text("你离开了 %d 天" % _days, 730.0, 28, Palette.TEXT_SECONDARY)
 	_draw_centered_text("花园还在等你", 790.0, 24, Palette.TEXT_SECONDARY)
 	_continue_rect = Rect2(Vector2((screen.x - 480.0) * 0.5, 990.0), Vector2(480.0, 70.0))
-#	_draw_button(_continue_rect, "继续")
+	if _have_gui:
+		_draw_button(_continue_rect, "继续")
+
+func _gui_input(event: InputEvent) -> void:
+	if _have_gui and event is InputEventMouseButton and event.pressed:
+		if _continue_rect.has_point(event.position):
+			_on_continue_pressed()
+			accept_event()
 
 func _days_since_last_open() -> int:
 	if EnergyEngine == null:
