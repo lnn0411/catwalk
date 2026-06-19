@@ -35,6 +35,11 @@ func _draw() -> void:
 	if _have_gui:
 		_draw_button(_continue_rect, "继续")
 
+func _draw_button(rect: Rect2, text: String, fill: Color = Palette.BG_WARM_WHITE, 
+		border: Color = Palette.BORDER_DEFAULT, text_color: Color = Palette.TEXT_PRIMARY) -> void:
+	_draw_round_rect(rect, 8.0, fill, border, 1.5)
+	_draw_centered_in_rect(text, rect, 18, text_color)
+
 func _gui_input(event: InputEvent) -> void:
 	if _have_gui and event is InputEventMouseButton and event.pressed:
 		if _continue_rect.has_point(event.position):

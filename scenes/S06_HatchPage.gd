@@ -12,6 +12,11 @@ var _slot_rects: Array[Rect2] = []
 var _slots: Array = []
 var _last_cat_count := 0
 
+# _draw_bottom_button 用的变量
+var _ad_rect := Rect2()
+var _art_hatch_btn := false
+var _art_hatch_node: TextureButton = null
+
 # Bg/BackBtn/HatchBtn 现由 .tscn 提供（unique_name）；缺贴图时 _draw() 回退代码绘制
 var _bg_has_texture := false
 var _back_has_texture := false
