@@ -5,13 +5,23 @@ const SLEEP_RETURN_BG := preload("res://assets/art/ui/sleep_return_bg.png")
 var _continue_rect := Rect2()
 var _days := 0
 
+func _ready() -> void:
+	super._ready()
+	var screen := get_viewport_rect().size
+	var btn_continue := TextureButton.new()
+	btn_continue.texture_normal = load("res://assets/art/ui/btn_continue.png")
+	btn_continue.ignore_texture_size = true
+	btn_continue.stretch_mode = TextureButton.STRETCH_SCALE
+	btn_continue.position = Vector2((screen.x - 480.0) * 0.5, 990.0)
+	btn_continue.size = Vector2(480.0, 70.0)
+	btn_continue.pressed.connect(_on_continue_pressed)
+	add_child(btn_continue)
+
+func _on_continue_pressed() -> void:
+	UIManager.replace("res://scenes/S04_GardenMain.tscn")
+
 func _on_page_setup(data: Dictionary) -> void:
 	_days = int(data.get("days", _days_since_last_open()))
-
-func _gui_input(event: InputEvent) -> void:
-	var pos: Variant = _released_position(event)
-	if pos != null and _continue_rect.has_point(pos):
-		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 func _draw() -> void:
 	var screen := get_viewport_rect().size
@@ -21,7 +31,7 @@ func _draw() -> void:
 	_draw_centered_text("你离开了 %d 天" % _days, 730.0, 28, Palette.TEXT_SECONDARY)
 	_draw_centered_text("花园还在等你", 790.0, 24, Palette.TEXT_SECONDARY)
 	_continue_rect = Rect2(Vector2((screen.x - 480.0) * 0.5, 990.0), Vector2(480.0, 70.0))
-	_draw_button(_continue_rect, "继续")
+#	_draw_button(_continue_rect, "继续")
 
 func _days_since_last_open() -> int:
 	if EnergyEngine == null:
@@ -35,10 +45,6 @@ func _released_position(event: InputEvent) -> Variant:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not event.pressed:
 		return event.position
 	return null
-
-func _draw_button(rect: Rect2, text: String) -> void:
-	draw_rect(rect, Palette.AMBER)
-	_draw_text_in_rect(text, rect, 26, Palette.TEXT_ON_AMBER)
 
 func _draw_centered_text(text: String, y: float, font_size: int, color: Color) -> void:
 	var font := get_theme_default_font()

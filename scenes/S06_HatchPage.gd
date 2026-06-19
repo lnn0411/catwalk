@@ -14,13 +14,59 @@ var _slot_rects: Array[Rect2] = []
 var _slots: Array = []
 var _last_cat_count := 0
 
+# 美术图占位框架：art 就位则显示 TextureRect/TextureButton 层，否则回退到 _draw() 代码绘制
+const ART_BG_PATH := "res://assets/art/ui/panels/hatch_bg.png"
+const ART_BACK_BTN_PATH := "res://assets/art/ui/buttons/btn_back.png"
+const ART_HATCH_BTN_PATH := "res://assets/art/ui/buttons/btn_speedup.png"
+
+var _art_bg := false
+var _art_back_btn := false
+var _art_hatch_btn := false
+var _art_back_node: TextureButton = null
+var _art_hatch_node: TextureButton = null
+
 func _ready() -> void:
 	super._ready()
+	_build_art_layers()
 	_connect_data()
 	_refresh_slots()
 	if HatchEngine:
 		_last_cat_count = HatchEngine.get_cats().size()
 	set_process(true)  # ready 蛋震动/光晕需要持续重绘
+
+# 用 load() 而非 preload()：美术图可能尚未就位，preload 缺文件会编译失败。
+# 命中判定仍由 _gui_input 的 rect 负责，按钮层 mouse_filter=IGNORE 不拦截输入。
+func _build_art_layers() -> void:
+	if ResourceLoader.exists(ART_BG_PATH):
+		var bg := TextureRect.new()
+		bg.name = "ArtBg"
+		bg.texture = load(ART_BG_PATH)
+		bg.stretch_mode = TextureRect.STRETCH_SCALE
+		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bg.show_behind_parent = true
+		add_child(bg)
+		_art_bg = true
+
+	if ResourceLoader.exists(ART_BACK_BTN_PATH):
+		_art_back_node = _make_art_button("ArtBackBtn", ART_BACK_BTN_PATH)
+		_art_back_btn = true
+
+	if ResourceLoader.exists(ART_HATCH_BTN_PATH):
+		_art_hatch_node = _make_art_button("ArtHatchBtn", ART_HATCH_BTN_PATH)
+		_art_hatch_btn = true
+
+func _make_art_button(node_name: String, path: String) -> TextureButton:
+	var btn := TextureButton.new()
+	btn.name = node_name
+	btn.texture_normal = load(path)
+	btn.texture_pressed = btn.texture_normal
+	btn.texture_hover = btn.texture_normal
+	btn.stretch_mode = TextureButton.STRETCH_SCALE
+	btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn.show_behind_parent = true
+	add_child(btn)
+	return btn
 
 var _anim_time := 0.0
 
@@ -70,7 +116,8 @@ func _gui_input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var screen := get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_WARM_WHITE)
+	if not _art_bg:  # 背景美术未就位时才用代码铺底色
+		draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_WARM_WHITE)
 	_draw_top_bar()
 	_draw_energy_panel()
 	_draw_slot_grid()
@@ -91,7 +138,12 @@ func _refresh_slots() -> void:
 
 func _draw_top_bar() -> void:
 	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
-	_draw_button(_back_rect, "返回", Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
+	if _art_back_btn and _art_back_node:
+		_art_back_node.position = _back_rect.position
+		_art_back_node.size = _back_rect.size
+		_draw_centered_in_rect("返回", _back_rect, 16, Palette.TEXT_PRIMARY)
+	else:
+		_draw_button(_back_rect, "返回", Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
 	_draw_centered_text("孵化室", 91.0, 24, Palette.TEXT_PRIMARY)
 
 func _draw_energy_panel() -> void:
@@ -159,7 +211,13 @@ func _draw_bottom_button() -> void:
 	# 按钮文案保持简洁「看广告加速 X/Y」；GDD v2.14 的「补充3000能量（≈30分钟步行）」
 	# 说明文案放在点击提示/旁注，不挤在按钮上。
 	var label: String = "看广告加速 %d/%d" % [remaining, limit]
-	if remaining <= 0:
+	if _art_hatch_btn and _art_hatch_node:
+		# 美术按钮就位：定位贴图层，仅在其上叠动态文案（次数随状态变化）
+		_art_hatch_node.position = _ad_rect.position
+		_art_hatch_node.size = _ad_rect.size
+		var text_color := Palette.TEXT_SECONDARY if remaining <= 0 else Palette.TEXT_PRIMARY
+		_draw_centered_in_rect(label, _ad_rect, 16, text_color)
+	elif remaining <= 0:
 		# 用完置灰（仍可点，点了提示"今日已用完"）
 		_draw_button(_ad_rect, label, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_SECONDARY)
 	else:

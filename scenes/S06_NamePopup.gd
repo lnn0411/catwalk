@@ -20,9 +20,17 @@ var _panel: PanelContainer
 var _name_input: LineEdit
 var _rng := RandomNumberGenerator.new()
 
+# 美术图占位框架：art 就位则用 TextureRect/StyleBoxTexture，否则保持现有绘制
+const ART_OVERLAY_PATH := "res://assets/art/ui/panels/overlay_mask.png"
+const ART_PANEL_PATH := "res://assets/art/ui/panels/popup_bg.png"
+const ART_CAT_DIR := "res://assets/art/ui/cats/"
+
+var _art_overlay := false
+
 func _ready() -> void:
 	super._ready()
 	_rng.randomize()
+	_build_art_layers()
 	_build_ui()
 	_apply_cat()
 	# M5：弹窗从底部滑入（300ms ease-out，GDD §3.8 同款节奏）
@@ -38,14 +46,32 @@ func _on_page_setup(data: Dictionary) -> void:
 func handle_back() -> bool:
 	return true
 
+# 用 load() 而非 preload()：遮罩图可能尚未就位，缺文件不应导致编译失败
+func _build_art_layers() -> void:
+	if ResourceLoader.exists(ART_OVERLAY_PATH):
+		var overlay := TextureRect.new()
+		overlay.name = "ArtOverlay"
+		overlay.texture = load(ART_OVERLAY_PATH)
+		overlay.stretch_mode = TextureRect.STRETCH_SCALE
+		overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(overlay)
+		_art_overlay = true
+
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(Palette.BG_NIGHT_OVERLAY, 0.72))
+	if not _art_overlay:  # 遮罩美术未就位时才用代码绘制暗化层
+		draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(Palette.BG_NIGHT_OVERLAY, 0.72))
 
 func _build_ui() -> void:
 	_panel = PanelContainer.new()
 	_panel.position = Vector2(80.0, 273.0)
 	_panel.size = Vector2(560.0, 607.0)
-	_panel.add_theme_stylebox_override("panel", _style(Palette.BG_WARM_WHITE, Palette.BORDER_ACTIVE, 8))
+	if ResourceLoader.exists(ART_PANEL_PATH):
+		var sb := StyleBoxTexture.new()
+		sb.texture = load(ART_PANEL_PATH)
+		_panel.add_theme_stylebox_override("panel", sb)
+	else:
+		_panel.add_theme_stylebox_override("panel", _style(Palette.BG_WARM_WHITE, Palette.BORDER_ACTIVE, 8))
 	add_child(_panel)
 
 	var box := VBoxContainer.new()
@@ -72,8 +98,17 @@ func _build_ui() -> void:
 	subtitle.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
 	box.add_child(subtitle)
 
-	var image := ColorRect.new()
-	image.color = _cat_color()
+	var image: Control
+	var portrait_path := ART_CAT_DIR + _species() + "_portrait.png"
+	if ResourceLoader.exists(portrait_path):
+		var tex := TextureRect.new()
+		tex.texture = load(portrait_path)
+		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		image = tex
+	else:
+		var rect := ColorRect.new()
+		rect.color = _cat_color()
+		image = rect
 	image.custom_minimum_size = Vector2(200.0, 200.0)
 	image.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	box.add_child(image)

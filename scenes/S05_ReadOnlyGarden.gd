@@ -17,11 +17,35 @@ var garden_layer: Node2D
 var cat_container: Node2D
 var _back_rect := Rect2()
 
+# 美术图占位框架：art 就位则用 TextureRect/TextureButton，否则回退到代码绘制的视差花园。
+const ART_BG_PATH := "res://assets/art/ui/readonly_bg.png"
+const ART_BACK_BTN_PATH := "res://assets/art/ui/buttons/btn_back.png"
+
+var _art_bg := false
+var _art_back_btn := false
+
 func _ready() -> void:
 	super()
+	_build_art_layers()
 	_build_garden_layer()
 	_restore_read_only_cats()
 	_build_hud()
+
+# 用 load() 而非 preload()：美术图可能尚未就位，preload 缺文件会编译失败。
+# bg 作为首个子节点加入，绘制顺序在最底，覆盖在其下的视差花园按 _art_bg 跳过。
+func _build_art_layers() -> void:
+	if ResourceLoader.exists(ART_BG_PATH):
+		var bg := TextureRect.new()
+		bg.name = "ArtBg"
+		bg.texture = load(ART_BG_PATH)
+		bg.stretch_mode = TextureRect.STRETCH_SCALE
+		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		bg.show_behind_parent = true
+		add_child(bg)
+		_art_bg = true
+	if ResourceLoader.exists(ART_BACK_BTN_PATH):
+		_art_back_btn = true
 
 func _gui_input(event: InputEvent) -> void:
 	if _is_back_event(event):
@@ -42,11 +66,12 @@ func _build_garden_layer() -> void:
 	garden_layer.position = Vector2(0.0, HUD_HEIGHT)
 	add_child(garden_layer)
 
-	var parallax := ParallaxBackground.new()
-	garden_layer.add_child(parallax)
-	_add_background_layer(parallax, Vector2(0.05, 0.0), GardenBackground.LAYER_FAR)
-	_add_background_layer(parallax, Vector2(0.3, 0.0), GardenBackground.LAYER_MID)
-	_add_background_layer(parallax, Vector2(0.8, 0.0), GardenBackground.LAYER_NEAR)
+	if not _art_bg:  # 背景美术未就位时才铺代码绘制的视差花园
+		var parallax := ParallaxBackground.new()
+		garden_layer.add_child(parallax)
+		_add_background_layer(parallax, Vector2(0.05, 0.0), GardenBackground.LAYER_FAR)
+		_add_background_layer(parallax, Vector2(0.3, 0.0), GardenBackground.LAYER_MID)
+		_add_background_layer(parallax, Vector2(0.8, 0.0), GardenBackground.LAYER_NEAR)
 
 	cat_container = Node2D.new()
 	cat_container.name = "CatContainer"
@@ -100,15 +125,27 @@ func _build_hud() -> void:
 	root.add_child(top_bar)
 
 	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
-	var back := Button.new()
-	back.text = "返回"
-	back.flat = true
-	back.position = _back_rect.position
-	back.size = _back_rect.size
-	back.add_theme_font_size_override("font_size", 16)
-	back.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
-	back.pressed.connect(UIManager.go_back)
-	root.add_child(back)
+	if _art_back_btn:
+		var back_art := TextureButton.new()
+		back_art.name = "ArtBackBtn"
+		back_art.texture_normal = load(ART_BACK_BTN_PATH)
+		back_art.texture_pressed = back_art.texture_normal
+		back_art.texture_hover = back_art.texture_normal
+		back_art.stretch_mode = TextureButton.STRETCH_SCALE
+		back_art.position = _back_rect.position
+		back_art.size = _back_rect.size
+		back_art.pressed.connect(UIManager.go_back)
+		root.add_child(back_art)
+	else:
+		var back := Button.new()
+		back.text = "返回"
+		back.flat = true
+		back.position = _back_rect.position
+		back.size = _back_rect.size
+		back.add_theme_font_size_override("font_size", 16)
+		back.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+		back.pressed.connect(UIManager.go_back)
+		root.add_child(back)
 
 	var top_row := HBoxContainer.new()
 	top_row.position = Vector2(113.0, 63.0)
