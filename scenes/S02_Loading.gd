@@ -17,7 +17,7 @@ class SpinnerArc extends Control:
 	var angle := 0.0
 
 	func _draw() -> void:
-		draw_arc(Vector2(64.0, 60.0), 42.0, angle, angle + PI * 1.45, 36, Palette.TEXT_PRIMARY, 6.0)
+		draw_arc(Vector2(64.0, 60.0), 42.0, angle, angle + PI * 1.45, 36, Color("#5C4A3A"), 6.0)
 
 func _ready() -> void:
 	super._ready()
@@ -55,7 +55,7 @@ func _add_foreground() -> void:
 	label.text = "花园正在等你回来……"
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_font_size_override("font_size", 28)
-	label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+	label.add_theme_color_override("font_color", Color("#5C4A3A"))
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	label.anchor_left = 0.5
 	label.anchor_right = 0.5
@@ -93,7 +93,7 @@ func _add_foreground() -> void:
 	add_child(bar_bg)
 
 	_bar_fill = ColorRect.new()
-	_bar_fill.color = Palette.TEXT_PRIMARY
+	_bar_fill.color = Color("#5C4A3A")
 	_bar_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_bar_fill.anchor_left = 0.5
 	_bar_fill.anchor_right = 0.5
