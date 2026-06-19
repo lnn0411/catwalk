@@ -24,47 +24,45 @@ var _art_back_node: TextureButton = null
 var _art_feed_node: TextureButton = null
 var _art_play_node: TextureButton = null
 
-func _ready() -> void:
-	super._ready()
-	_build_art_layers()
-
 # 用 load() 而非 preload()：美术图可能尚未就位，preload 缺文件会编译失败。
 # 命中判定仍由 _gui_input 的 rect 负责，按钮层 mouse_filter=IGNORE 不拦截输入。
-func _build_art_layers() -> void:
+func _ready() -> void:
+	super._ready()
+	# 美术背景和按钮已在 .tscn 定义，按图片就位控制显隐
 	if ResourceLoader.exists(ART_BG_PATH):
-		var bg := TextureRect.new()
-		bg.name = "ArtBg"
-		bg.texture = load(ART_BG_PATH)
-		bg.stretch_mode = TextureRect.STRETCH_SCALE
-		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		bg.show_behind_parent = true
-		add_child(bg)
+		%Bg.texture = load(ART_BG_PATH)
+		%Bg.visible = true
 		_art_bg = true
-
+	else:
+		%Bg.visible = false
+	
 	if ResourceLoader.exists(ART_BACK_BTN_PATH):
-		_art_back_node = _make_art_button("ArtBackBtn", ART_BACK_BTN_PATH)
+		%BackBtn.texture_normal = load(ART_BACK_BTN_PATH)
+		%BackBtn.pressed.connect(func(): UIManager.replace("res://scenes/S10_Album.tscn"))
 		_art_back_btn = true
-
+	else:
+		%BackBtn.visible = false
+	
 	if ResourceLoader.exists(ART_FEED_BTN_PATH):
-		_art_feed_node = _make_art_button("ArtFeedBtn", ART_FEED_BTN_PATH)
+		%FeedBtn.texture_normal = load(ART_FEED_BTN_PATH)
+		%FeedBtn.pressed.connect(func(): _emit_action("feed"))
 		_art_feed_btn = true
-
+	else:
+		%FeedBtn.visible = false
+	
 	if ResourceLoader.exists(ART_PLAY_BTN_PATH):
-		_art_play_node = _make_art_button("ArtPlayBtn", ART_PLAY_BTN_PATH)
+		%PlayBtn.texture_normal = load(ART_PLAY_BTN_PATH)
+		%PlayBtn.pressed.connect(func(): _emit_action("play"))
 		_art_play_btn = true
+	else:
+		%PlayBtn.visible = false
 
-func _make_art_button(node_name: String, path: String) -> TextureButton:
-	var btn := TextureButton.new()
-	btn.name = node_name
-	btn.texture_normal = load(path)
-	btn.texture_pressed = btn.texture_normal
-	btn.texture_hover = btn.texture_normal
-	btn.stretch_mode = TextureButton.STRETCH_SCALE
-	btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	btn.show_behind_parent = true
-	add_child(btn)
-	return btn
+func _emit_action(kind: String) -> void:
+	if EnergyEngine and EnergyEngine.energy > 0:
+		EnergyEngine.spend(1)
+		Popups.show_toast("互动成功!")
+	else:
+		Popups.show_toast("能量不足")
 
 func _on_page_setup(data: Dictionary) -> void:
 	_cat = data.get("cat", null)

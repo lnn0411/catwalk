@@ -7,66 +7,28 @@ const SLOT_SIZE := 173.0
 const SLOT_GAP := 24.0
 const GRID_ORIGIN := Vector2(168.0, 374.0)
 
-var _back_rect := Rect2()
 var _inject_rect := Rect2()
-var _ad_rect := Rect2()
 var _slot_rects: Array[Rect2] = []
 var _slots: Array = []
 var _last_cat_count := 0
 
-# 美术图占位框架：art 就位则显示 TextureRect/TextureButton 层，否则回退到 _draw() 代码绘制
-const ART_BG_PATH := "res://assets/art/ui/panels/hatch_bg.png"
-const ART_BACK_BTN_PATH := "res://assets/art/ui/buttons/btn_back.png"
-const ART_HATCH_BTN_PATH := "res://assets/art/ui/buttons/btn_speedup.png"
-
-var _art_bg := false
-var _art_back_btn := false
-var _art_hatch_btn := false
-var _art_back_node: TextureButton = null
-var _art_hatch_node: TextureButton = null
+# Bg/BackBtn/HatchBtn 现由 .tscn 提供（unique_name）；缺贴图时 _draw() 回退代码绘制
+var _bg_has_texture := false
+var _back_has_texture := false
+var _hatch_has_texture := false
 
 func _ready() -> void:
 	super._ready()
-	_build_art_layers()
+	_bg_has_texture = %Bg.texture != null
+	_back_has_texture = %BackBtn.texture_normal != null
+	_hatch_has_texture = %HatchBtn.texture_normal != null
+	%BackBtn.pressed.connect(_on_back_pressed)
+	%HatchBtn.pressed.connect(_on_hatch_pressed)
 	_connect_data()
 	_refresh_slots()
 	if HatchEngine:
 		_last_cat_count = HatchEngine.get_cats().size()
 	set_process(true)  # ready 蛋震动/光晕需要持续重绘
-
-# 用 load() 而非 preload()：美术图可能尚未就位，preload 缺文件会编译失败。
-# 命中判定仍由 _gui_input 的 rect 负责，按钮层 mouse_filter=IGNORE 不拦截输入。
-func _build_art_layers() -> void:
-	if ResourceLoader.exists(ART_BG_PATH):
-		var bg := TextureRect.new()
-		bg.name = "ArtBg"
-		bg.texture = load(ART_BG_PATH)
-		bg.stretch_mode = TextureRect.STRETCH_SCALE
-		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		bg.show_behind_parent = true
-		add_child(bg)
-		_art_bg = true
-
-	if ResourceLoader.exists(ART_BACK_BTN_PATH):
-		_art_back_node = _make_art_button("ArtBackBtn", ART_BACK_BTN_PATH)
-		_art_back_btn = true
-
-	if ResourceLoader.exists(ART_HATCH_BTN_PATH):
-		_art_hatch_node = _make_art_button("ArtHatchBtn", ART_HATCH_BTN_PATH)
-		_art_hatch_btn = true
-
-func _make_art_button(node_name: String, path: String) -> TextureButton:
-	var btn := TextureButton.new()
-	btn.name = node_name
-	btn.texture_normal = load(path)
-	btn.texture_pressed = btn.texture_normal
-	btn.texture_hover = btn.texture_normal
-	btn.stretch_mode = TextureButton.STRETCH_SCALE
-	btn.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	btn.show_behind_parent = true
-	add_child(btn)
-	return btn
 
 var _anim_time := 0.0
 
@@ -90,6 +52,12 @@ func _exit_tree() -> void:
 	if EnergyEngine and EnergyEngine.energy_changed.is_connected(_on_energy_changed):
 		EnergyEngine.energy_changed.disconnect(_on_energy_changed)
 
+func _on_back_pressed() -> void:
+	UIManager.replace("res://scenes/S04_GardenMain.tscn")
+
+func _on_hatch_pressed() -> void:
+	_speed_up()
+
 func _gui_input(event: InputEvent) -> void:
 	if _is_back_event(event):
 		UIManager.replace("res://scenes/S04_GardenMain.tscn")
@@ -100,14 +68,8 @@ func _gui_input(event: InputEvent) -> void:
 	pos = _released_position(event)
 	if pos == null:
 		return
-	if _back_rect.has_point(pos):
-		UIManager.replace("res://scenes/S04_GardenMain.tscn")
-		return
 	if _inject_rect.has_point(pos):
 		_inject_energy()
-		return
-	if _ad_rect.has_point(pos):
-		_speed_up()
 		return
 	for i in range(_slot_rects.size()):
 		if _slot_rects[i].has_point(pos):
@@ -116,7 +78,7 @@ func _gui_input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var screen := get_viewport_rect().size
-	if not _art_bg:  # 背景美术未就位时才用代码铺底色
+	if not _bg_has_texture:  # 背景美术未就位时才用代码铺底色
 		draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_WARM_WHITE)
 	_draw_top_bar()
 	_draw_energy_panel()
@@ -137,13 +99,12 @@ func _refresh_slots() -> void:
 	queue_redraw()
 
 func _draw_top_bar() -> void:
-	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
-	if _art_back_btn and _art_back_node:
-		_art_back_node.position = _back_rect.position
-		_art_back_node.size = _back_rect.size
-		_draw_centered_in_rect("返回", _back_rect, 16, Palette.TEXT_PRIMARY)
+	# BackBtn 由 .tscn 提供（60x48 左上角）；有贴图只叠文案，无贴图回退画按钮框
+	var back_rect := Rect2(Vector2(28.0, 59.0), Vector2(60.0, 48.0))
+	if _back_has_texture:
+		_draw_centered_in_rect("返回", back_rect, 16, Palette.TEXT_PRIMARY)
 	else:
-		_draw_button(_back_rect, "返回", Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
+		_draw_button(back_rect, "返回", Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
 	_draw_centered_text("孵化室", 91.0, 24, Palette.TEXT_PRIMARY)
 
 func _draw_energy_panel() -> void:
