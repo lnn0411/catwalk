@@ -3,20 +3,20 @@ extends "res://ui/UIPage.gd"
 const PAGE_COUNT := 3
 const SWIPE_THRESHOLD := 100.0
 const AUTO_ADVANCE_INTERVAL := 2.0
-const START_BUTTON_SIZE := Vector2(360.0, 48.0)
-const SKIP_BUTTON_SIZE := Vector2(180.0, 56.0)
 
 const PAGE_TEXTURES := [
 	preload("res://assets/art/ui/onboarding_1.png"),
 	preload("res://assets/art/ui/onboarding_2.png"),
 	preload("res://assets/art/ui/onboarding_3.png"),
 ]
+const BTN_SKIP_TEX := preload("res://assets/art/ui/btn_onboarding_skip.png")
+const BTN_START_TEX := preload("res://assets/art/ui/btn_onboarding_start.png")
 
 var _current_page := 0
 var _touch_start := Vector2.ZERO
 var _tracking_touch := false
 var _pages: Array[TextureRect] = []
-var _start_button: Button
+var _start_button: TextureButton
 var _auto_timer: Timer
 var _page_tween: Tween
 var _first_update := true
@@ -50,17 +50,17 @@ func _build_pages() -> void:
 func _build_buttons() -> void:
 	var screen := get_viewport_rect().size
 
-	var skip := Button.new()
-	skip.text = "跳过"
-	skip.size = SKIP_BUTTON_SIZE
-	skip.position = Vector2(screen.x - SKIP_BUTTON_SIZE.x - 24.0, 48.0)
+	var skip := TextureButton.new()
+	skip.texture_normal = BTN_SKIP_TEX
+	skip.size = BTN_SKIP_TEX.get_size()
+	skip.position = Vector2(screen.x - skip.size.x - 24.0, 48.0)
 	skip.pressed.connect(_on_skip_pressed)
 	add_child(skip)
 
-	_start_button = Button.new()
-	_start_button.text = "🐾 开始"
-	_start_button.size = START_BUTTON_SIZE
-	_start_button.position = Vector2((screen.x - START_BUTTON_SIZE.x) * 0.5, screen.y - 150.0)
+	_start_button = TextureButton.new()
+	_start_button.texture_normal = BTN_START_TEX
+	_start_button.size = BTN_START_TEX.get_size()
+	_start_button.position = Vector2((screen.x - _start_button.size.x) * 0.5, screen.y - 150.0)
 	_start_button.pressed.connect(_on_start_pressed)
 	add_child(_start_button)
 
