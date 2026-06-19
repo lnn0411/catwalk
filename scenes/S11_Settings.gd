@@ -16,23 +16,19 @@ func _ready() -> void:
 	super._ready()
 	_build_texture_layers()
 	_load_settings()
+	%BackBtn.gui_input.connect(func(event): 
+		if event is InputEventMouseButton and event.pressed:
+			UIManager.replace("res://scenes/S04_GardenMain.tscn")
+	)
 
 func on_enter(_data: Dictionary = {}) -> void:
 	_load_settings()
 
 func _gui_input(event: InputEvent) -> void:
-	if _is_back_event(event):
-		UIManager.replace("res://scenes/S04_GardenMain.tscn")
-		accept_event()
-		return
-
 	var pos: Variant = _released_position(event)
 	if pos == null:
 		return
 	var point: Vector2 = pos
-	if _back_rect.has_point(point):
-		UIManager.replace("res://scenes/S04_GardenMain.tscn")
-		return
 	for i in range(_toggle_rects.size()):
 		if _toggle_rects[i].has_point(point):
 			_toggle_setting(i)
@@ -47,27 +43,12 @@ func _gui_input(event: InputEvent) -> void:
 		)
 
 func _draw() -> void:
-	var screen: Vector2 = get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_WARM_WHITE, true)
 	_draw_top_bar()
 	_draw_toggles()
 	_draw_rows()
 	_draw_clear_cache()
 
 func _build_texture_layers() -> void:
-	var back := TextureRect.new()
-	back.name = "BackTexture"
-	var back_formal := "res://assets/art/ui/buttons/btn_settings.png"
-	var back_fallback := UI_TEXTURE_PATH + "btn_settings.png"
-	if ResourceLoader.exists(back_formal):
-		back.texture = load(back_formal)
-	else:
-		back.texture = load(back_fallback)
-	back.stretch_mode = TextureRect.STRETCH_SCALE
-	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	back.show_behind_parent = true
-	add_child(back)
-
 	for name in ["TogglePanelTexture", "RowsPanelTexture", "ClearTexture"]:
 		var panel := TextureRect.new()
 		panel.name = name
@@ -100,11 +81,8 @@ func _build_texture_layers() -> void:
 		_toggle_buttons.append(toggle)
 
 func _draw_top_bar() -> void:
+	# BackBtn 位置由 .tscn 定义，命中区与之对齐
 	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
-	var back := get_node_or_null("BackTexture") as TextureRect
-	if back:
-		back.position = _back_rect.position
-		back.size = _back_rect.size
 	_draw_centered_in_rect("返回", _back_rect, 16, Palette.TEXT_PRIMARY)
 	_draw_centered_text("设置", 91.0, 24, Palette.TEXT_PRIMARY)
 

@@ -27,7 +27,6 @@ var _tab_rects: Array[Rect2] = []
 
 func _ready() -> void:
 	super._ready()
-	_build_texture_layers()
 	_refresh_cats()
 	set_process(true)
 
@@ -89,45 +88,14 @@ func _draw() -> void:
 	_draw_tabs()
 	_draw_content()
 
-func _build_texture_layers() -> void:
-	var bg := TextureRect.new()
-	var bg_formal := "res://assets/art/ui/panels/grid_album_bg.png"
-	var bg_fallback := UI_TEXTURE_PATH + "grid_album_bg.png"
-	if ResourceLoader.exists(bg_formal):
-		bg.texture = load(bg_formal)
-	else:
-		bg.texture = load(bg_fallback)
-	bg.stretch_mode = TextureRect.STRETCH_SCALE
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg.show_behind_parent = true
-	add_child(bg)
-
-	var back := TextureRect.new()
-	back.name = "BackTexture"
-	var back_formal := "res://assets/art/ui/buttons/btn_album.png"
-	var back_fallback := UI_TEXTURE_PATH + "btn_album.png"
-	if ResourceLoader.exists(back_formal):
-		back.texture = load(back_formal)
-	else:
-		back.texture = load(back_fallback)
-	back.stretch_mode = TextureRect.STRETCH_SCALE
-	back.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	back.show_behind_parent = true
-	add_child(back)
-
 func _refresh_cats() -> void:
 	_cats = HatchEngine.get_cats() if HatchEngine else []
 	queue_redraw()
 
 func _draw_top_bar() -> void:
+	# BackBtn 与 TitleLabel 由 .tscn 定义，命中区与之对齐
 	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
-	var back := get_node_or_null("BackTexture") as TextureRect
-	if back:
-		back.position = _back_rect.position
-		back.size = _back_rect.size
 	_draw_centered_in_rect("返回", _back_rect, 16, Palette.TEXT_PRIMARY)
-	_draw_centered_text("图鉴", 91.0, 24, Palette.TEXT_PRIMARY)
 
 func _draw_tabs() -> void:
 	var labels: Array[String] = ["猫咪", "明信片", "成就"]
