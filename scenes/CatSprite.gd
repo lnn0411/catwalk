@@ -12,10 +12,13 @@ signal cat_clicked(cat_data)
 @export var arrive_distance: float = 12.0
 @export var wander_min_distance: float = 80.0
 @export var wander_max_distance: float = 260.0
-@export var wander_x_min: float = 150.0
-@export var wander_x_max: float = 1950.0
-@export var wander_y_min: float = 440.0
-@export var wander_y_max: float = 780.0
+# 游荡范围必须与 CatSpawner 出生范围一致（X:350-1700, Y:380-640）。
+# 否则猫出生在草坪却会自己走到 y=780 的泥土区 → 泥潭 bug 复发。
+# 改这里务必同步 CatSpawner._pick_spawn_position / _setup_entrance 的同名数值。
+@export var wander_x_min: float = 350.0
+@export var wander_x_max: float = 1700.0
+@export var wander_y_min: float = 380.0
+@export var wander_y_max: float = 640.0
 
 @export_group("Animation")
 @export var walk_fps: float = 8.0
@@ -23,7 +26,9 @@ signal cat_clicked(cat_data)
 @export var turn_fps: float = 5.7
 @export var move_turn_fps: float = 5.0
 @export var sprite_scale: float = 1.0
-@export var depth_scale_enabled: bool = true
+# 整图背景（garden_master.png）无透视梯度，景深缩放会让猫忽大忽小却与平铺草坪脱节。
+# 故关闭，让猫在草坪任意位置保持稳定体型。换成带透视的分层背景时再开回 true。
+@export var depth_scale_enabled: bool = false
 @export var shadow_enabled: bool = true
 @export var idle_breath_enabled: bool = true
 
