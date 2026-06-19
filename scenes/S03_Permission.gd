@@ -7,37 +7,14 @@ var _returning_from_settings := false
 
 func _ready() -> void:
 	super._ready()
-	_add_background()
-
-	var btn_permission := TextureButton.new()
-	btn_permission.texture_normal = BTN_PERMISSION
-	btn_permission.position = Vector2(210, 900)
-	btn_permission.size = Vector2(300, 82)
-	btn_permission.pressed.connect(handle_authorize)
-	add_child(btn_permission)
-
-	var btn_skip := TextureButton.new()
-	btn_skip.texture_normal = BTN_SKIP
-	btn_skip.position = Vector2(210, 1030)
-	btn_skip.size = Vector2(300, 82)
-	btn_skip.pressed.connect(handle_skip)
-	add_child(btn_skip)
+	%AuthBtn.pressed.connect(handle_authorize)
+	%SkipBtn.pressed.connect(handle_skip)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_IN and _returning_from_settings:
 		_returning_from_settings = false
 		# 延迟检查，等 Android 系统刷新权限状态
 		call_deferred("_check_and_proceed")
-
-func _add_background() -> void:
-	var bg := TextureRect.new()
-	bg.texture = preload("res://assets/art/ui/permission.png")
-	bg.expand_mode = TextureRect.EXPAND_FIT_WIDTH
-	bg.stretch_mode = TextureRect.STRETCH_KEEP
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg.show_behind_parent = true
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
 
 func handle_back() -> bool:
 	return true

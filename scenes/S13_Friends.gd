@@ -8,6 +8,10 @@ var _back_rect: Rect2 = Rect2()
 func _ready() -> void:
 	super._ready()
 	_build_background()
+	%BackBtn.pressed.connect(_on_back)
+
+func _on_back() -> void:
+	UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 func _gui_input(event: InputEvent) -> void:
 	if _is_back_event(event):
@@ -24,22 +28,15 @@ func _gui_input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var screen: Vector2 = get_viewport_rect().size
-	if get_node_or_null("FriendsBackground") == null:
+	if not %Bg.visible:
 		draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_WARM_WHITE, true)
 	_draw_top_bar()
 	_draw_centered_text("好友系统即将开放", DESIGN_SIZE.y * 0.5, 22, Palette.TEXT_SECONDARY)
 
 func _build_background() -> void:
-	if not ResourceLoader.exists(FRIENDS_BG_PATH):
-		return
-	var bg := TextureRect.new()
-	bg.name = "FriendsBackground"
-	bg.texture = load(FRIENDS_BG_PATH)
-	bg.stretch_mode = TextureRect.STRETCH_SCALE
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg.show_behind_parent = true
-	add_child(bg)
+	%Bg.visible = ResourceLoader.exists(FRIENDS_BG_PATH)
+	if %Bg.visible:
+		%Bg.texture = load(FRIENDS_BG_PATH)
 
 func _draw_top_bar() -> void:
 	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))

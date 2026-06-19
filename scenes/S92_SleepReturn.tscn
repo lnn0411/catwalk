@@ -1,7 +1,30 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/S92_SleepReturn.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://fbdf799a38a7" path="res://assets/art/ui/sleep_return_bg.png" id="2"]
 
 [node name="S92_SleepReturn" type="Control"]
 script = ExtResource("1")
 
+[node name="Bg" type="TextureRect" parent="."]
+unique_name_in_owner = true
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 2
+stretch_mode = 2
+
+[node name="ContinueBtn" type="TextureButton" parent="."]
+unique_name_in_owner = true
+offset_left = 120.0
+offset_top = 990.0
+offset_right = 600.0
+offset_bottom = 1060.0
+ignore_texture_size = true
+stretch_mode = 0

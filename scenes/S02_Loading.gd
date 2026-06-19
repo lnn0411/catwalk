@@ -21,7 +21,6 @@ class SpinnerArc extends Control:
 
 func _ready() -> void:
 	super._ready()
-	_add_background()
 	_add_foreground()
 	set_process(true)
 	var tween := create_tween()
@@ -39,16 +38,6 @@ func _process(delta: float) -> void:
 		_spinner.queue_redraw()
 	if _bar_fill != null:
 		_bar_fill.size.x = BAR_WIDTH * clamp(_progress, 0.0, 1.0)
-
-func _add_background() -> void:
-	var bg := TextureRect.new()
-	bg.texture = preload("res://assets/art/ui/loading_bg.png")
-	bg.expand_mode = TextureRect.EXPAND_FIT_WIDTH
-	bg.stretch_mode = TextureRect.STRETCH_KEEP
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	bg.show_behind_parent = true
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
 
 func _add_foreground() -> void:
 	var label := Label.new()

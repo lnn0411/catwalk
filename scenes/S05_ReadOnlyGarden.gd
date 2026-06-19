@@ -32,20 +32,13 @@ func _ready() -> void:
 	_build_hud()
 
 # 用 load() 而非 preload()：美术图可能尚未就位，preload 缺文件会编译失败。
-# bg 作为首个子节点加入，绘制顺序在最底，覆盖在其下的视差花园按 _art_bg 跳过。
+# %Bg 在 .tscn 里就是首个子节点（show_behind_parent），覆盖其下视差花园按 _art_bg 跳过。
 func _build_art_layers() -> void:
-	if ResourceLoader.exists(ART_BG_PATH):
-		var bg := TextureRect.new()
-		bg.name = "ArtBg"
-		bg.texture = load(ART_BG_PATH)
-		bg.stretch_mode = TextureRect.STRETCH_SCALE
-		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		bg.show_behind_parent = true
-		add_child(bg)
-		_art_bg = true
-	if ResourceLoader.exists(ART_BACK_BTN_PATH):
-		_art_back_btn = true
+	_art_bg = ResourceLoader.exists(ART_BG_PATH)
+	%Bg.visible = _art_bg
+	if _art_bg:
+		%Bg.texture = load(ART_BG_PATH)
+	_art_back_btn = ResourceLoader.exists(ART_BACK_BTN_PATH)
 
 func _gui_input(event: InputEvent) -> void:
 	if _is_back_event(event):
@@ -126,16 +119,11 @@ func _build_hud() -> void:
 
 	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
 	if _art_back_btn:
-		var back_art := TextureButton.new()
-		back_art.name = "ArtBackBtn"
-		back_art.texture_normal = load(ART_BACK_BTN_PATH)
-		back_art.texture_pressed = back_art.texture_normal
-		back_art.texture_hover = back_art.texture_normal
-		back_art.stretch_mode = TextureButton.STRETCH_SCALE
-		back_art.position = _back_rect.position
-		back_art.size = _back_rect.size
-		back_art.pressed.connect(UIManager.go_back)
-		root.add_child(back_art)
+		%BackBtn.visible = true
+		%BackBtn.texture_normal = load(ART_BACK_BTN_PATH)
+		%BackBtn.texture_pressed = %BackBtn.texture_normal
+		%BackBtn.texture_hover = %BackBtn.texture_normal
+		%BackBtn.pressed.connect(UIManager.go_back)
 	else:
 		var back := Button.new()
 		back.text = "返回"

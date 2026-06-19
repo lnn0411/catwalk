@@ -64,16 +64,10 @@ func _ready() -> void:
 
 # 用 load() 而非 preload()：美术图可能尚未就位，preload 缺文件会编译失败。
 func _build_art_layers() -> void:
-	if ResourceLoader.exists(ART_BG_PATH):
-		var bg := TextureRect.new()
-		bg.name = "ArtBg"
-		bg.texture = load(ART_BG_PATH)
-		bg.stretch_mode = TextureRect.STRETCH_SCALE
-		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		bg.show_behind_parent = true
-		add_child(bg)
-		_art_bg = true
+	_art_bg = ResourceLoader.exists(ART_BG_PATH)
+	%Bg.visible = _art_bg
+	if _art_bg:
+		%Bg.texture = load(ART_BG_PATH)
 	if ResourceLoader.exists(ART_EGG_CRACK_SHEET):
 		_art_crack_sheet = load(ART_EGG_CRACK_SHEET)
 

@@ -9,9 +9,6 @@ const PAGE_TEXTURES := [
 	preload("res://assets/art/ui/onboarding_2.png"),
 	preload("res://assets/art/ui/onboarding_3.png"),
 ]
-const BTN_SKIP_TEX := preload("res://assets/art/ui/btn_onboarding_skip.png")
-const BTN_START_TEX := preload("res://assets/art/ui/btn_onboarding_start.png")
-
 var _current_page := 0
 var _touch_start := Vector2.ZERO
 var _tracking_touch := false
@@ -23,8 +20,8 @@ var _first_update := true
 
 func _ready() -> void:
 	super._ready()
+	_start_button = %StartBtn
 	_build_pages()
-	_build_buttons()
 	_update_page_visibility()
 	_auto_timer = Timer.new()
 	_auto_timer.one_shot = true
@@ -37,32 +34,16 @@ func handle_back() -> bool:
 	return true
 
 func _build_pages() -> void:
-	for tex in PAGE_TEXTURES:
+	for i in range(PAGE_TEXTURES.size()):
 		var page := TextureRect.new()
-		page.texture = tex
+		page.texture = PAGE_TEXTURES[i]
 		page.expand_mode = TextureRect.EXPAND_FIT_WIDTH
 		page.stretch_mode = TextureRect.STRETCH_KEEP
 		page.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		add_child(page)
+		move_child(page, i)  # keep dynamic pages behind the scene-defined buttons
 		_pages.append(page)
-
-func _build_buttons() -> void:
-	var screen := get_viewport_rect().size
-
-	var skip := TextureButton.new()
-	skip.texture_normal = BTN_SKIP_TEX
-	skip.size = BTN_SKIP_TEX.get_size()
-	skip.position = Vector2(screen.x - skip.size.x - 24.0, 48.0)
-	skip.pressed.connect(_on_skip_pressed)
-	add_child(skip)
-
-	_start_button = TextureButton.new()
-	_start_button.texture_normal = BTN_START_TEX
-	_start_button.size = BTN_START_TEX.get_size()
-	_start_button.position = Vector2((screen.x - _start_button.size.x) * 0.5, screen.y - 100.0)
-	_start_button.pressed.connect(_on_start_pressed)
-	add_child(_start_button)
 
 func _on_skip_pressed() -> void:
 	UIManager.replace("res://scenes/S03_Permission.tscn")

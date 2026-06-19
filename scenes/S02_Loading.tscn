@@ -1,6 +1,21 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scenes/S02_Loading.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://q7kgdqo3p11u" path="res://assets/art/ui/loading_bg.png" id="2"]
 
 [node name="S02_Loading" type="Control"]
 script = ExtResource("1")
+
+[node name="Bg" type="TextureRect" parent="."]
+unique_name_in_owner = true
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 2
+stretch_mode = 2

@@ -1,6 +1,39 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scenes/S03_Permission.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://b2ff805da6dd3" path="res://assets/art/ui/permission.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://bd88f91a2c3d" path="res://assets/art/ui/btn_permission.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://cd99g82b3d4e" path="res://assets/art/ui/btn_skip.png" id="4"]
 
 [node name="S03_Permission" type="Control"]
 script = ExtResource("1")
+
+[node name="Bg" type="TextureRect" parent="."]
+unique_name_in_owner = true
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2")
+expand_mode = 2
+stretch_mode = 2
+
+[node name="AuthBtn" type="TextureButton" parent="."]
+unique_name_in_owner = true
+offset_left = 210.0
+offset_top = 900.0
+offset_right = 510.0
+offset_bottom = 982.0
+texture_normal = ExtResource("3")
+
+[node name="SkipBtn" type="TextureButton" parent="."]
+unique_name_in_owner = true
+offset_left = 210.0
+offset_top = 1030.0
+offset_right = 510.0
+offset_bottom = 1112.0
+texture_normal = ExtResource("4")

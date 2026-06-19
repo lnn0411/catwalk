@@ -8,7 +8,6 @@ const ART_RETRY_BTN_PATH := "res://assets/art/ui/buttons/btn_retry.png"
 
 var _art_bg := false
 var _art_retry_btn := false
-var _art_retry_node: TextureButton = null
 
 func _ready() -> void:
 	super._ready()
@@ -17,27 +16,16 @@ func _ready() -> void:
 # 用 load() 而非 preload()：美术图可能尚未就位，preload 缺文件会编译失败。
 # 命中判定仍由 _gui_input 的 rect 负责，按钮层 mouse_filter=IGNORE 不拦截输入。
 func _build_art_layers() -> void:
-	if ResourceLoader.exists(ART_BG_PATH):
-		var bg := TextureRect.new()
-		bg.name = "ArtBg"
-		bg.texture = load(ART_BG_PATH)
-		bg.stretch_mode = TextureRect.STRETCH_SCALE
-		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		bg.show_behind_parent = true
-		add_child(bg)
-		_art_bg = true
-	if ResourceLoader.exists(ART_RETRY_BTN_PATH):
-		_art_retry_node = TextureButton.new()
-		_art_retry_node.name = "ArtRetryBtn"
-		_art_retry_node.texture_normal = load(ART_RETRY_BTN_PATH)
-		_art_retry_node.texture_pressed = _art_retry_node.texture_normal
-		_art_retry_node.texture_hover = _art_retry_node.texture_normal
-		_art_retry_node.stretch_mode = TextureButton.STRETCH_SCALE
-		_art_retry_node.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		_art_retry_node.show_behind_parent = true
-		add_child(_art_retry_node)
-		_art_retry_btn = true
+	_art_bg = ResourceLoader.exists(ART_BG_PATH)
+	%Bg.visible = _art_bg
+	if _art_bg:
+		%Bg.texture = load(ART_BG_PATH)
+	_art_retry_btn = ResourceLoader.exists(ART_RETRY_BTN_PATH)
+	if _art_retry_btn:
+		%RetryBtn.visible = true
+		%RetryBtn.texture_normal = load(ART_RETRY_BTN_PATH)
+		%RetryBtn.texture_pressed = %RetryBtn.texture_normal
+		%RetryBtn.texture_hover = %RetryBtn.texture_normal
 
 func _gui_input(event: InputEvent) -> void:
 	var pos: Variant = _released_position(event)
@@ -51,9 +39,9 @@ func _draw() -> void:
 	_draw_centered_text("网络连接失败", 700.0, 34, Palette.TEXT_PRIMARY)
 	_draw_centered_text("请检查连接后重试", 770.0, 24, Palette.TEXT_SECONDARY)
 	_retry_rect = Rect2(Vector2((screen.x - 480.0) * 0.5, 980.0), Vector2(480.0, 70.0))
-	if _art_retry_btn and _art_retry_node:
-		_art_retry_node.position = _retry_rect.position
-		_art_retry_node.size = _retry_rect.size
+	if _art_retry_btn:
+		%RetryBtn.position = _retry_rect.position
+		%RetryBtn.size = _retry_rect.size
 		_draw_text_in_rect("重试", _retry_rect, 26, Palette.TEXT_ON_AMBER)
 	else:
 		_draw_button(_retry_rect, "重试")
