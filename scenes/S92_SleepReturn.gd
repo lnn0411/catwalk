@@ -1,5 +1,7 @@
 extends "res://ui/UIPage.gd"
 
+const SLEEP_RETURN_BG := preload("res://assets/art/ui/sleep_return_bg.png")
+
 var _continue_rect := Rect2()
 var _days := 0
 
@@ -13,7 +15,8 @@ func _gui_input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var screen := get_viewport_rect().size
-	draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_WARM_WHITE)
+#	draw_rect(Rect2(Vector2.ZERO, screen), Palette.BG_WARM_WHITE)
+	draw_texture_rect(SLEEP_RETURN_BG, Rect2(Vector2.ZERO, screen), false)
 	_draw_centered_text("欢迎回来", 650.0, 36, Palette.TEXT_PRIMARY)
 	_draw_centered_text("你离开了 %d 天" % _days, 730.0, 28, Palette.TEXT_SECONDARY)
 	_draw_centered_text("花园还在等你", 790.0, 24, Palette.TEXT_SECONDARY)
