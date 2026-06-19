@@ -1,7 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=3 format=3 uid="uid://catwalk_s06_hatch"]
 
 [ext_resource type="Script" path="res://scenes/S06_HatchPage.gd" id="1"]
-[ext_resource type="Texture2D" path="res://assets/art/ui/hatch_page_bg.png" id="2"]
+[ext_resource type="PackedScene" path="res://scenes/components/HatchSlot.tscn" id="2"]
 
 [node name="S06_HatchPage" type="Control"]
 layout_mode = 3
@@ -11,6 +11,17 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
+
+[node name="BgFallback" type="ColorRect" parent="."]
+show_behind_parent = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.98, 0.965, 0.941, 1)
 
 [node name="Bg" type="TextureRect" parent="."]
 unique_name_in_owner = true
@@ -22,20 +33,124 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="BackBtn" type="TextureButton" parent="."]
+[node name="BackBtn" type="Button" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 28.0
 offset_top = 59.0
 offset_right = 88.0
 offset_bottom = 107.0
+text = "返回"
 
-[node name="HatchBtn" type="TextureButton" parent="."]
+[node name="Title" type="Label" parent="."]
+layout_mode = 0
+offset_top = 62.0
+offset_right = 720.0
+offset_bottom = 102.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.172, 0.161, 0.149, 1)
+theme_override_font_sizes/font_size = 24
+text = "孵化室"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ReservePanel" type="Panel" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 48.0
+offset_top = 153.0
+offset_right = 672.0
+offset_bottom = 300.0
+mouse_filter = 2
+
+[node name="ReserveTitle" type="Label" parent="ReservePanel"]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 280.0
+offset_bottom = 52.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.172, 0.161, 0.149, 1)
+theme_override_font_sizes/font_size = 19
+text = "储备能量"
+
+[node name="ReserveBarBg" type="Panel" parent="ReservePanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 71.0
+offset_right = 424.0
+offset_bottom = 87.0
+mouse_filter = 2
+
+[node name="ReserveBarFill" type="Panel" parent="ReservePanel/ReserveBarBg"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 400.0
+offset_bottom = 16.0
+mouse_filter = 2
+
+[node name="ReserveValue" type="Label" parent="ReservePanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 100.0
+offset_right = 424.0
+offset_bottom = 124.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.478, 0.541, 0.588, 1)
+theme_override_font_sizes/font_size = 15
+text = "0 / 6000"
+
+[node name="InjectBtn" type="Button" parent="ReservePanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 460.0
+offset_top = 48.0
+offset_right = 587.0
+offset_bottom = 99.0
+text = "注入"
+
+[node name="Slot0" parent="." instance=ExtResource("2")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 168.0
+offset_top = 374.0
+offset_right = 341.0
+offset_bottom = 547.0
+
+[node name="Slot1" parent="." instance=ExtResource("2")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 365.0
+offset_top = 374.0
+offset_right = 538.0
+offset_bottom = 547.0
+
+[node name="Slot2" parent="." instance=ExtResource("2")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 168.0
+offset_top = 571.0
+offset_right = 341.0
+offset_bottom = 744.0
+
+[node name="Slot3" parent="." instance=ExtResource("2")]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 365.0
+offset_top = 571.0
+offset_right = 538.0
+offset_bottom = 744.0
+
+[node name="AdBtn" type="Button" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
 offset_left = 120.0
-offset_top = 1080.0
+offset_top = 1113.0
 offset_right = 600.0
-offset_bottom = 1150.0
+offset_bottom = 1168.0
+text = "看广告加速"

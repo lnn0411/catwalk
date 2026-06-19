@@ -1,0 +1,97 @@
+[gd_scene load_steps=2 format=3 uid="uid://catwalk_hatchslot"]
+
+[ext_resource type="Script" path="res://scenes/components/HatchSlot.gd" id="1"]
+
+[node name="HatchSlot" type="Control"]
+custom_minimum_size = Vector2(173, 173)
+offset_right = 173.0
+offset_bottom = 173.0
+script = ExtResource("1")
+
+[node name="FramePanel" type="Panel" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 173.0
+offset_bottom = 173.0
+mouse_filter = 2
+
+[node name="FrameArt" type="TextureRect" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 173.0
+offset_bottom = 173.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Glow" type="Panel" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 4.0
+offset_right = 165.0
+offset_bottom = 150.0
+mouse_filter = 2
+
+[node name="Egg" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 42.0
+offset_top = 18.0
+offset_right = 131.0
+offset_bottom = 132.0
+mouse_filter = 2
+
+[node name="EggFallback" type="Panel" parent="Egg"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 89.0
+offset_bottom = 114.0
+mouse_filter = 2
+
+[node name="EggArt" type="TextureRect" parent="Egg"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 89.0
+offset_bottom = 114.0
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Title" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 12.0
+offset_right = 173.0
+offset_bottom = 45.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProgressBg" type="Panel" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 24.0
+offset_top = 141.0
+offset_right = 149.0
+offset_bottom = 150.0
+mouse_filter = 2
+
+[node name="ProgressFill" type="Panel" parent="ProgressBg"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_right = 125.0
+offset_bottom = 9.0
+mouse_filter = 2
+
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_top = 114.0
+offset_right = 173.0
+offset_bottom = 135.0
+mouse_filter = 2
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+vertical_alignment = 1
