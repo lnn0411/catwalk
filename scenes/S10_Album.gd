@@ -76,12 +76,17 @@ func _gui_input(event: InputEvent) -> void:
 			accept_event()
 			return
 	# 猫卡片仅在猫咪 Tab 下可点
-	if _active_tab != 0:
-		return
-	for i in range(_card_rects.size()):
-		if _card_rects[i].has_point(point):
-			_open_cat(i)
-			return
+	if _active_tab == 0:
+		for i in range(_card_rects.size()):
+			if _card_rects[i].has_point(point):
+				_open_cat(i)
+				return
+	# 明信片 Tab 点击
+	if _active_tab == 1:
+		for i in range(_card_rects.size()):
+			if _card_rects[i].has_point(point):
+				_open_postcard_detail(i)
+				return
 
 func _draw() -> void:
 	_draw_top_bar()
@@ -111,7 +116,12 @@ func _draw_tabs() -> void:
 
 func _draw_content() -> void:
 	_card_rects.clear()
-	# 明信片 / 成就 Tab：占位空状态（数据系统在 P1，文案走世界观语言）
+	# 明信片 Tab：绘制明信片网格
+	if _active_tab == 1:
+		_sync_card_textures(0)
+		_collect_unlocked_postcards()
+		_draw_postcard_grid()
+		return
 	if _active_tab != 0:
 		_sync_card_textures(0)  # 藏掉猫卡底图
 		var tip := ""
@@ -186,7 +196,64 @@ func _open_cat(index: int) -> void:
 		return
 	UIManager.push("res://scenes/S10_CatDetail.tscn", {"cat": _cats[index]})
 
-func _cat_level(cat) -> int:
+
+func _open_postcard_detail(index: int) -> void:
+	if index < 0 or index >= POSTCARDS.size():
+		return
+	var name := POSTCARDS[index]
+	var is_unlocked := _postcard_unlocked.has(name)
+	var d := AcceptDialog.new()
+	d.title = "💌 明信片"
+	if is_unlocked:
+		d.dialog_text = "地点：%s\n\n来自猫猫旅途中的一张明信片，\n背面写着温暖的问候……" % name
+	else:
+		d.dialog_text = "地点：%s\n\n还没有收到这张明信片。\n派猫咪出门探索，或许就能带回来。" % name
+	d.ok_button_text = "关闭"
+	add_child(d)
+	d.popup_centered()
+
+
+# —— 明信片图鉴数据 ——
+const POSTCARDS := [
+	"城市广场","阳光沙滩","森林小路","山顶日出",
+	"湖边码头","老城街区","花园迷宫","星光穹顶",
+	"彩虹瀑布","薰衣草田","雪地小镇","火山温泉",
+]
+var _postcard_unlocked: Dictionary = {}
+
+func _collect_unlocked_postcards() -> void:
+	_postcard_unlocked.clear()
+	# 从 PostcardPlaceholder 获取收集状态
+	var pp := get_node_or_null("/root/PostcardPlaceholder")
+	if pp and pp.has_method("get_collected_postcards"):
+		for pc in Array(pp.get_collected_postcards()):
+			_postcard_unlocked[String(pc)] = true
+
+# —— 明信片图鉴渲染 ——
+func _draw_postcard_grid() -> void:
+	var card_width: float = (GRID_WIDTH - CARD_GAP * 3.0) * 0.5
+	_card_rects.clear()
+	var cols := 2
+	for i in range(POSTCARDS.size()):
+		var col: int = i % cols
+		var row: int = i / cols
+		var rect: Rect2 = Rect2(Vector2(GRID_LEFT + float(col) * (card_width + CARD_GAP), GRID_TOP + float(row) * (CARD_HEIGHT + CARD_GAP)), Vector2(card_width, CARD_HEIGHT))
+		_card_rects.append(rect)
+		var is_unlocked := _postcard_unlocked.has(POSTCARDS[i])
+		_draw_round_rect(rect, 6.0, Palette.BG_CEMENT if is_unlocked else Color(0.15, 0.15, 0.18, 1.0), _rarity_color_by_index(i), 2.0)
+		var label := POSTCARDS[i]
+		if is_unlocked:
+			_draw_centered_in_rect("💌 " + label, rect, 16, Palette.TEXT_PRIMARY)
+		else:
+			_draw_centered_in_rect("? " + label, rect, 16, Color(0.5, 0.5, 0.5, 1.0))
+
+func _rarity_color_by_index(i: int) -> Color:
+	match i % 4:
+		0: return Color(0.69, 0.69, 0.69)
+		1: return Color(0.29, 0.56, 0.85)
+		2: return Color(0.61, 0.35, 0.71)
+		3: return Color(0.95, 0.77, 0.06)
+	_: return Color(0.69, 0.69, 0.69)
 	return int(cat.level) if cat != null else 1
 
 func _cat_friendship(cat) -> int:
