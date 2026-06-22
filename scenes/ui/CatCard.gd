@@ -158,8 +158,9 @@ func update_explore_button_state() -> void:
 		return
 
 	_explore_button.visible = true
-	_explore_button.text = "🧭 探索"
-	_set_button_disabled(_explore_button, not _has_explore_slot_available())
+	var has_explore_slot := _has_explore_slot_available()
+	_explore_button.text = "🧭 探索" if has_explore_slot else "探索名额已满"
+	_set_button_disabled(_explore_button, not has_explore_slot)
 
 
 func _check_explore_state() -> bool:
@@ -237,29 +238,31 @@ func _update_explore_labels() -> void:
 func _show_duration_picker() -> void:
 	var packed := load("res://scenes/ui/explore_duration_picker.tscn")
 	var picker = packed.instantiate()
-	picker.duration_selected.connect(_on_explore_duration_selected)
+	picker.duration_selected.connect(func(duration_hours: int) -> void:
+		_on_explore_duration_selected(duration_hours, picker)
+	)
 	picker.canceled.connect(func() -> void:
 		picker.queue_free()
 	)
 	_add_overlay(picker)
 
 
-func _on_explore_duration_selected(duration_hours: int) -> void:
-	var picker := get_tree().current_scene.find_child("ExploreDurationPicker", true, false)
+func _on_explore_duration_selected(duration_hours: int, picker: Node) -> void:
 	if picker != null:
 		picker.queue_free()
 	var packed := load("res://scenes/ui/explore_confirm_dialog.tscn")
 	var dialog = packed.instantiate()
 	dialog.setup(_get_cat_display_name(), duration_hours)
-	dialog.confirmed.connect(_on_explore_confirmed)
+	dialog.confirmed.connect(func(confirmed_duration_hours: int) -> void:
+		_on_explore_confirmed(confirmed_duration_hours, dialog)
+	)
 	dialog.canceled.connect(func() -> void:
 		dialog.queue_free()
 	)
 	_add_overlay(dialog)
 
 
-func _on_explore_confirmed(duration_hours: int) -> void:
-	var dialog := get_tree().current_scene.find_child("ExploreConfirmDialog", true, false)
+func _on_explore_confirmed(duration_hours: int, dialog: Node) -> void:
 	if dialog != null:
 		dialog.queue_free()
 	if cat_id == "":
