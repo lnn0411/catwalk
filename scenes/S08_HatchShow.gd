@@ -30,6 +30,8 @@ var _crack_vibrated := false     # 蛋裂震动只触发一次
 var _reveal_vibrated := false    # 揭晓震动只触发一次
 var _leg_hold := 0.0             # legendary 揭晓前的"憋"时长（秒）
 var _star_seeds: Array = []      # rare 星光粒子的随机相位（确定性）
+var _common_seeds: Array = []    # common 白光粒子的固定位置/相位（确定性）
+var _crack_seeds: Array = []     # 蛋壳裂纹折线偏移（确定性）
 # —— M6 演出 P1 ——
 var _gold_seeds: Array = []      # 金色汇聚粒子的起始方位/速度相位
 var _shards: Array = []          # 蛋壳碎片 [{pos, vel, rot, rot_speed}]
@@ -53,6 +55,26 @@ func _ready() -> void:
 	rng.seed = 20260612
 	for i in range(10):
 		_star_seeds.append(rng.randf_range(0.0, TAU))
+	# common 白光粒子 + 裂纹折线偏移（固定种子，每次演出一致）
+	var detail_rng := RandomNumberGenerator.new()
+	detail_rng.seed = 20260617
+	for i in range(7):
+		_common_seeds.append({
+			"offset": Vector2(detail_rng.randf_range(-170.0, 170.0), detail_rng.randf_range(-170.0, 150.0)),
+			"phase": detail_rng.randf_range(0.0, TAU),
+			"radius": detail_rng.randf_range(2.0, 4.0),
+			"alpha": detail_rng.randf_range(0.5, 0.7),
+			"float": detail_rng.randf_range(5.0, 12.0),
+			"breath": detail_rng.randf_range(0.7, 1.2),
+		})
+	for i in range(4):
+		var offsets: Array = []
+		for j in range(1, 5):
+			var mag := detail_rng.randf_range(15.0, 25.0)
+			if detail_rng.randf() < 0.5:
+				mag = -mag
+			offsets.append(mag)
+		_crack_seeds.append(offsets)
 	# M6：金色汇聚粒子（16颗，从屏幕四周向蛋汇聚）
 	for i in range(16):
 		_gold_seeds.append({
@@ -206,6 +228,7 @@ func _show_name_popup_once() -> void:
 		return
 	_overlay_shown = true
 	_waiting_for_name = true
+	# S06_NamePopup 衔接已验证：接收 cat/hatch_show，确认后 deferred 恢复 S08 并关闭 overlay。
 	UIManager.show_overlay("res://scenes/S06_NamePopup.tscn", {"cat": _cat, "hatch_show": self})
 
 func resume_after_name_popup() -> void:
@@ -240,11 +263,14 @@ func _draw_cracking_egg(center: Vector2) -> void:
 	# 裂纹随蛋一起抖
 	for i in range(4):
 		var x := egg_center.x - 36.0 + i * 24.0
-		draw_line(
-			Vector2(x, egg_center.y - 100.0 + i * 28.0),
-			Vector2(x + 28.0 * crack, egg_center.y - 68.0 + i * 28.0),
-			Palette.TEXT_PRIMARY, 5.0
-		)
+		var start := Vector2(x, egg_center.y - 100.0 + i * 28.0)
+		var points := PackedVector2Array([start])
+		var offsets: Array = _crack_seeds[i] if i < _crack_seeds.size() else []
+		for j in range(1, 5):
+			var t := float(j) / 4.0
+			var zigzag := float(offsets[j - 1]) if j - 1 < offsets.size() else 0.0
+			points.append(start + Vector2(28.0 * t, -32.0 * t + zigzag) * crack)
+		draw_polyline(points, Palette.TEXT_PRIMARY, 5.0)
 	# 末段：蛋底部透出稀有度光（预告，憋张力）
 	if crack > 0.75:
 		var leak := (crack - 0.75) / 0.25
@@ -286,7 +312,20 @@ func _draw_rarity_fx(center: Vector2, zoom: float) -> void:
 		CatData.RARITY_LEGENDARY:
 			_fx_legendary_rings(center, zoom)
 		_:
-			pass  # common：无特效，对比才有惊喜
+			_fx_common_glow(center, zoom)
+
+# common：7 颗白色柔光点在猫身附近轻微漂浮
+func _fx_common_glow(center: Vector2, zoom: float) -> void:
+	for i in range(_common_seeds.size()):
+		var s: Dictionary = _common_seeds[i]
+		var phase := float(s["phase"])
+		var breath := (sin(_elapsed * float(s["breath"]) + phase) + 1.0) * 0.5
+		var radius := (float(s["radius"]) + breath * 0.45) * zoom
+		var alpha := (float(s["alpha"]) + (breath - 0.5) * 0.12) * 0.85
+		var pos := center + Vector2(s["offset"]) * zoom
+		pos.y += sin(_elapsed * 1.2 + phase) * float(s["float"]) * zoom
+		draw_circle(pos, maxf(radius * 2.4, 1.0), Color(1.0, 1.0, 1.0, alpha * 0.16))
+		draw_circle(pos, maxf(radius, 1.0), Color(1.0, 1.0, 1.0, alpha))
 
 # rare：10 颗蓝色星光绕猫旋转
 func _fx_rare_stars(center: Vector2, zoom: float) -> void:
