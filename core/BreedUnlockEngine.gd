@@ -2,8 +2,6 @@ extends Node
 
 const CatData := preload("res://core/CatData.gd")
 
-const SAVE_PATH := "user://breed_unlock.cfg"
-const SECTION := "breed_unlock"
 const UNLOCK_CHAIN_COUNT := 2
 const PITY_THRESHOLD := 5
 const BREED_ORDER: Array[String] = [
@@ -23,7 +21,6 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.randomize()
 	_reset_counts()
-	_load()
 	_normalize_state()
 	_new_breed_unlocked = false
 
@@ -36,7 +33,9 @@ func get_unlocked_breeds() -> Array[String]:
 
 
 func determine_breed() -> String:
+	var saved_flag: bool = _new_breed_unlocked
 	_normalize_state()
+	_new_breed_unlocked = saved_flag
 	if _unlocked.is_empty():
 		return CatData.BREED_ORANGE
 	if _unlocked.size() == 1:
@@ -69,7 +68,6 @@ func record_hatch(breed: String) -> void:
 	_last_pity_breed = ""
 
 	_update_unlocks()
-	_save()
 
 
 func get_hatch_count(breed: String) -> int:
@@ -82,6 +80,44 @@ func get_pity_counter(breed: String) -> int:
 
 func is_new_breed_unlocked() -> bool:
 	return _new_breed_unlocked
+
+
+func get_save_data() -> Dictionary:
+	var saved_flag: bool = _new_breed_unlocked
+	_normalize_state()
+	_new_breed_unlocked = saved_flag
+	return {
+		"unlocked": _unlocked.duplicate(),
+		"hatch_counts": _hatch_counts.duplicate(true),
+		"pity_counters": _pity_counters.duplicate(true),
+	}
+
+
+func apply_save(data: Dictionary) -> void:
+	_unlocked = []
+	for breed in Array(data.get("unlocked", [CatData.BREED_ORANGE])):
+		var normalized_breed := _normalize_breed(String(breed))
+		if not _unlocked.has(normalized_breed):
+			_unlocked.append(normalized_breed)
+
+	_hatch_counts.clear()
+	for breed in BREED_ORDER:
+		_hatch_counts[breed] = 0
+	var saved_counts: Dictionary = Dictionary(data.get("hatch_counts", {}))
+	for breed in saved_counts.keys():
+		var normalized_count_breed := _normalize_breed(String(breed))
+		_hatch_counts[normalized_count_breed] = max(int(saved_counts[breed]), 0)
+
+	_pity_counters.clear()
+	for breed in BREED_ORDER:
+		_pity_counters[breed] = 0
+	var saved_pity: Dictionary = Dictionary(data.get("pity_counters", {}))
+	for breed in saved_pity.keys():
+		var normalized_pity_breed := _normalize_breed(String(breed))
+		_pity_counters[normalized_pity_breed] = max(int(saved_pity[breed]), 0)
+
+	_normalize_state()
+	_new_breed_unlocked = false
 
 
 func _update_unlocks() -> void:
@@ -144,26 +180,3 @@ func _sort_unlocked() -> void:
 		if _unlocked.has(breed):
 			sorted.append(breed)
 	_unlocked = sorted
-
-
-func _load() -> void:
-	var cfg := ConfigFile.new()
-	var err := cfg.load(SAVE_PATH)
-	if err != OK:
-		return
-
-	_unlocked.clear()
-	for breed in Array(cfg.get_value(SECTION, "unlocked", [CatData.BREED_ORANGE])):
-		_unlocked.append(String(breed))
-
-	_hatch_counts = Dictionary(cfg.get_value(SECTION, "hatch_counts", {}))
-	_pity_counters = Dictionary(cfg.get_value(SECTION, "pity_counters", {}))
-
-
-func _save() -> void:
-	var cfg := ConfigFile.new()
-	cfg.set_value(SECTION, "unlocked", _unlocked.duplicate())
-	cfg.set_value(SECTION, "hatch_counts", _hatch_counts.duplicate(true))
-	cfg.set_value(SECTION, "pity_counters", _pity_counters.duplicate(true))
-	if cfg.save(SAVE_PATH) != OK:
-		push_error("[BreedUnlockEngine] Save failed: %s" % SAVE_PATH)

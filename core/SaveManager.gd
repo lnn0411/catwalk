@@ -13,6 +13,7 @@ func _ready() -> void:
 func save_all() -> void:
 	_write_steps()
 	_write_energy()
+	_write_breed_unlock()
 	_write_hatch()
 	_write_currency()
 	_write_achievements()
@@ -31,6 +32,7 @@ func load_and_apply() -> void:
 	_is_applying = true
 	StepEngine.apply_save(_read_steps())
 	EnergyEngine.apply_save(_read_energy())
+	BreedUnlockEngine.apply_save(_read_breed_unlock())
 	HatchEngine.apply_save(_read_hatch())
 	var currency_data := _read_currency()
 	currency_data["love_petals"] = int(_config.get_value("relinquish", "love_petals", 0))
@@ -58,6 +60,7 @@ func reset_all() -> void:
 	_is_applying = true
 	StepEngine.apply_save({})
 	EnergyEngine.apply_save({})
+	BreedUnlockEngine.apply_save({})
 	HatchEngine.apply_save({})
 	CurrencyManager.apply_save({})
 	AchievementSystem.reset_all()
@@ -122,6 +125,19 @@ func _write_energy() -> void:
 	_config.set_value("energy", "today_steps_processed", int(data.get("today_steps_processed", 0)))
 	_config.set_value("energy", "created_at", float(data.get("created_at", Time.get_unix_time_from_system())))
 	_config.set_value("energy", "last_energy_date", String(data.get("last_energy_date", "")))
+
+func _read_breed_unlock() -> Dictionary:
+	return {
+		"unlocked": Array(_config.get_value("breed_unlock", "unlocked", ["orange"])),
+		"hatch_counts": Dictionary(_config.get_value("breed_unlock", "hatch_counts", {})),
+		"pity_counters": Dictionary(_config.get_value("breed_unlock", "pity_counters", {})),
+	}
+
+func _write_breed_unlock() -> void:
+	var data = BreedUnlockEngine.get_save_data()
+	_config.set_value("breed_unlock", "unlocked", Array(data.get("unlocked", ["orange"])))
+	_config.set_value("breed_unlock", "hatch_counts", Dictionary(data.get("hatch_counts", {})))
+	_config.set_value("breed_unlock", "pity_counters", Dictionary(data.get("pity_counters", {})))
 
 func _read_currency() -> Dictionary:
 	return {
