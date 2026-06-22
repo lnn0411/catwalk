@@ -9,6 +9,8 @@ var _have_gui := false
 
 func _ready() -> void:
 	super._ready()
+	get_viewport().size_changed.connect(_on_viewport_size_changed)
+	_on_viewport_size_changed()
 	%ContinueBtn.pressed.connect(_on_continue_pressed)
 	# 美术按钮就位时显示 TextureButton，否则隐藏并 fallback 到 _draw()
 	if ResourceLoader.exists(BTN_CONTINUE_PATH):
@@ -17,6 +19,13 @@ func _ready() -> void:
 	else:
 		%ContinueBtn.visible = false
 		_have_gui = true
+
+func _on_viewport_size_changed() -> void:
+	var vp_size := get_viewport().get_visible_rect().size
+	if vp_size.x > 0 and vp_size.y > 0:
+		await get_tree().process_frame
+		size = vp_size
+		queue_redraw()
 
 func _on_continue_pressed() -> void:
 	UIManager.replace("res://scenes/S04_GardenMain.tscn")
