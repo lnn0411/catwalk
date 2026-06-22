@@ -5,9 +5,11 @@ enum WeatherType { CLEAR, RAIN, SNOW }
 
 signal period_changed(period: int)
 signal weather_changed(weather: int)
+signal weather_bonus_changed(bonus_data: Dictionary)
 
 const SAVE_PATH := "user://weather_time.cfg"
 const RAIN_PROBABILITY := 0.15
+const SNOW_PROBABILITY := 0.30
 const TRANSITION_DURATION := 2.0
 
 var current_period: int = TimePeriod.DAY
@@ -20,6 +22,7 @@ var _blend_tween: Tween
 
 
 func _ready() -> void:
+	_weather_rng.randomize()
 	_load_state()
 	_update_period()
 	_update_weather()
@@ -58,6 +61,7 @@ func _update_period() -> void:
 	_blend_tween.tween_property(self, "_period_blend_value", _period_to_blend(current_period), TRANSITION_DURATION) \
 		.from(from_blend)
 	period_changed.emit(current_period)
+	weather_bonus_changed.emit(get_weather_bonus_data())
 
 
 func _update_weather() -> void:
@@ -69,9 +73,8 @@ func _update_weather() -> void:
 	var previous_weather := current_weather
 	var dd := Time.get_date_dict_from_system()
 	var month: int = dd.month
-	_weather_rng.randomize()
 	if month >= 12 or month <= 2:
-		if _weather_rng.randf() < RAIN_PROBABILITY:
+		if _weather_rng.randf() < SNOW_PROBABILITY:
 			current_weather = WeatherType.SNOW
 		else:
 			current_weather = WeatherType.CLEAR
@@ -83,14 +86,31 @@ func _update_weather() -> void:
 	_save_state()
 	if current_weather != previous_weather:
 		weather_changed.emit(current_weather)
+		weather_bonus_changed.emit(get_weather_bonus_data())
 
 
 func get_weather_bonus_data() -> Dictionary:
 	return {
+		"explore_postcard_bonus": 0.1 if current_weather == WeatherType.RAIN else 0.0,
+		"snow_postcard_unlocked": current_weather == WeatherType.SNOW,
+		"season_type": "winter" if _is_winter() else "normal",
 		"period": current_period,
 		"weather": current_weather,
-		"description": _get_description()
 	}
+
+func get_period_name() -> String:
+	match current_period:
+		TimePeriod.SUNSET:
+			return "傍晚"
+		TimePeriod.NIGHT:
+			return "夜晚"
+		_:
+			return "白天"
+
+func _is_winter() -> bool:
+	var dd := Time.get_date_dict_from_system()
+	var m: int = dd.month
+	return m >= 12 or m <= 2
 
 
 func get_period_tint_color(period: int = current_period) -> Color:
@@ -126,6 +146,9 @@ func _get_description() -> String:
 		WeatherType.SNOW: w = "雪"
 	return p + " · " + w
 
+
+func get_current_blend() -> float:
+	return _period_blend_value
 
 func _period_to_blend(period: int) -> float:
 	match period:

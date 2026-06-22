@@ -56,6 +56,7 @@ var _weather_material: ShaderMaterial
 var _rain_particles: CPUParticles2D
 var _snow_particles: CPUParticles2D
 var _weather_tween: Tween
+var _last_blend := -1.0
 var _stats_visible := false
 var _hatch_navigating := false
 var _sub_state: int = SubState.IDLE
@@ -172,13 +173,13 @@ func _setup_weather_layer() -> void:
 	_weather_overlay = ColorRect.new()
 	_weather_overlay.name = "WeatherOverlay"
 	_weather_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_weather_overlay.color = Color.WHITE
+	_weather_overlay.color = Color(1, 1, 1, 0)
 	_weather_overlay.z_index = 2
 	add_child(_weather_overlay)
 	_weather_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
 	var shader := load("res://shaders/weather_color_grade.gdshader") as Shader
-	if shader != null:
+	if shader:
 		_weather_material = ShaderMaterial.new()
 		_weather_material.shader = shader
 		_weather_overlay.material = _weather_material
@@ -195,6 +196,13 @@ func _setup_weather_layer() -> void:
 			WeatherTimeManager.weather_changed.connect(_on_weather_changed)
 		_apply_weather_period(WeatherTimeManager.current_period, true)
 		_apply_weather_particles(WeatherTimeManager.current_weather)
+
+func _process(delta: float) -> void:
+	if _weather_material and WeatherTimeManager:
+		var blend := WeatherTimeManager.get_current_blend()
+		if blend != _last_blend:
+			_last_blend = blend
+			_weather_material.set_shader_parameter("blend", blend)
 
 func _create_rain_particles() -> CPUParticles2D:
 	var particles := CPUParticles2D.new()
@@ -245,26 +253,7 @@ func _on_weather_changed(weather: int) -> void:
 func _apply_weather_period(period: int, immediate := false) -> void:
 	if _weather_material == null or not WeatherTimeManager:
 		return
-	var tint_color: Color = WeatherTimeManager.get_period_tint_color(period)
-	var tint_strength: float = WeatherTimeManager.get_period_tint_strength(period)
-	if immediate:
-		_weather_material.set_shader_parameter("tint_color", tint_color)
-		_weather_material.set_shader_parameter("tint_strength", tint_strength)
-		return
-	if _weather_tween != null and _weather_tween.is_running():
-		_weather_tween.kill()
-	_weather_tween = create_tween()
-	_weather_tween.set_parallel(true)
-	_weather_tween.tween_method(_set_weather_tint_color, _weather_material.get_shader_parameter("tint_color"), tint_color, 2.0)
-	_weather_tween.tween_method(_set_weather_tint_strength, float(_weather_material.get_shader_parameter("tint_strength")), tint_strength, 2.0)
-
-func _set_weather_tint_color(value: Color) -> void:
-	if _weather_material != null:
-		_weather_material.set_shader_parameter("tint_color", value)
-
-func _set_weather_tint_strength(value: float) -> void:
-	if _weather_material != null:
-		_weather_material.set_shader_parameter("tint_strength", value)
+	_last_blend = -1.0
 
 func _apply_weather_particles(weather: int) -> void:
 	if _rain_particles != null:
