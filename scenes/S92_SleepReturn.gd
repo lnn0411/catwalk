@@ -38,7 +38,12 @@ func _draw() -> void:
 func _draw_button(rect: Rect2, text: String, fill: Color = Palette.BG_WARM_WHITE, 
 		border: Color = Palette.BORDER_DEFAULT, text_color: Color = Palette.TEXT_PRIMARY) -> void:
 	_draw_round_rect(rect, 8.0, fill, border, 1.5)
-	_draw_centered_in_rect(text, rect, 18, text_color)
+	_draw_text_in_rect(text, rect, 18, text_color)
+
+func _draw_round_rect(rect: Rect2, _radius: float, bg: Color, border: Color, border_width: float) -> void:
+	draw_rect(rect, bg, true)
+	if border_width > 0.0:
+		draw_rect(rect, border, false, border_width)
 
 func _gui_input(event: InputEvent) -> void:
 	if _have_gui and event is InputEventMouseButton and event.pressed:
