@@ -830,7 +830,7 @@ func _toggle_stats() -> void:
 		]
 		Popups.show_info(text if _stats_visible else "stats hidden")
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if TutorialManager and TutorialManager.is_blocking_garden_input():
 		_dragging = false
 		return
