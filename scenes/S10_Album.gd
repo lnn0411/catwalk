@@ -200,8 +200,8 @@ func _open_cat(index: int) -> void:
 func _open_postcard_detail(index: int) -> void:
 	if index < 0 or index >= POSTCARDS.size():
 		return
-	var name := POSTCARDS[index]
-	var is_unlocked := _postcard_unlocked.has(name)
+	var card_name: String = String(POSTCARDS[index])
+	var is_unlocked := _postcard_unlocked.has(card_name)
 	var d := AcceptDialog.new()
 	d.title = "💌 明信片"
 	if is_unlocked:
@@ -241,7 +241,7 @@ func _draw_postcard_grid() -> void:
 		_card_rects.append(rect)
 		var is_unlocked := _postcard_unlocked.has(POSTCARDS[i])
 		_draw_round_rect(rect, 6.0, Palette.BG_CEMENT if is_unlocked else Color(0.15, 0.15, 0.18, 1.0), _rarity_color_by_index(i), 2.0)
-		var label := POSTCARDS[i]
+		var label: String = String(POSTCARDS[i])
 		if is_unlocked:
 			_draw_centered_in_rect("💌 " + label, rect, 16, Palette.TEXT_PRIMARY)
 		else:
@@ -253,7 +253,7 @@ func _rarity_color_by_index(i: int) -> Color:
 		1: return Color(0.29, 0.56, 0.85)
 		2: return Color(0.61, 0.35, 0.71)
 		3: return Color(0.95, 0.77, 0.06)
-	_: return Color(0.69, 0.69, 0.69)
+		_: return Color(0.69, 0.69, 0.69)
 
 func _cat_level(cat) -> int:
 	return int(cat.level) if cat != null else 1

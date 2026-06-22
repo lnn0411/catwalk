@@ -69,7 +69,7 @@ func _build_ui() -> void:
 	var pdesc := String(product.get("desc", ""))
 	var price := int(product.get("price", 0))
 	var cur := String(product.get("cur", "gold"))
-	var cur_icon := {"diamonds": "💎", "gold": "💰", "petals": "🌸"}.get(cur, "💎")
+	var cur_icon: String = String({"diamonds": "💎", "gold": "💰", "petals": "🌸"}.get(cur, "💎"))
 
 	var info := VBoxContainer.new()
 	info.alignment = BoxContainer.ALIGNMENT_CENTER

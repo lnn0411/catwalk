@@ -53,20 +53,20 @@ class ChartControl:
 		var max_steps := 1
 		for e in entries:
 			max_steps = max(max_steps, int(e.get("steps", 0)))
-		var y_max := float(max_steps) * 1.2
-		var gap := 14.0
-		var n := entries.size()
-		var bar_w := min(54.0, (chart_rect.size.x - gap * float(n + 1)) / float(n))
-		var start_x := chart_rect.position.x + (chart_rect.size.x - (bar_w * float(n) + gap * float(n - 1))) * 0.5
+		var y_max: float = float(max_steps) * 1.2
+		var gap: float = 14.0
+		var n: int = entries.size()
+		var bar_w: float = min(54.0, (chart_rect.size.x - gap * float(n + 1)) / float(n))
+		var start_x: float = chart_rect.position.x + (chart_rect.size.x - (bar_w * float(n) + gap * float(n - 1))) * 0.5
 
 		for i in range(n):
-			var e := entries[i]
-			var steps := int(e.get("steps", 0))
-			var ratio := clamp(float(steps) / y_max, 0.0, 1.0)
-			var bar_h := max(chart_rect.size.y * ratio, 2.0)
-			var x := start_x + float(i) * (bar_w + gap)
+			var e: Dictionary = entries[i]
+			var steps: int = int(e.get("steps", 0))
+			var ratio: float = clamp(float(steps) / y_max, 0.0, 1.0)
+			var bar_h: float = max(chart_rect.size.y * ratio, 2.0)
+			var x: float = start_x + float(i) * (bar_w + gap)
 			var bar_rect := Rect2(Vector2(x, chart_rect.position.y + chart_rect.size.y - bar_h), Vector2(bar_w, bar_h))
-			var col := Palette.AMBER if bool(e.get("self", false)) else CHART_COLORS[i % CHART_COLORS.size()]
+			var col: Color = Palette.AMBER if bool(e.get("self", false)) else CHART_COLORS[i % CHART_COLORS.size()]
 			draw_rect(bar_rect, col, true)
 
 			var sl := str(steps)
@@ -414,7 +414,7 @@ func _seed_gifts_if_needed(_is_init: bool) -> void:
 	if _friends.is_empty():
 		return
 	_rng.seed = hash(_today_key() + _invite_code)
-	var count := min(_rng.randi_range(1, 2), _friends.size())
+	var count: int = min(_rng.randi_range(1, 2), _friends.size())
 	var codes: Array[String] = []
 	while codes.size() < count:
 		var idx := _rng.randi_range(0, _friends.size() - 1)

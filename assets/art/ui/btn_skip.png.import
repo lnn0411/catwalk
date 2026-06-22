@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cd99g82b3d4e"
-path="res://.godot/imported/btn_skip.png-cd99g82b3d4e5f6b7c8d9e0f1a2b3c4d.ctex"
+uid="uid://cebag82b3d4e"
+path="res://.godot/imported/btn_skip.png-2c25e9a9dccb709758f550500c157fef.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/btn_skip.png"
-dest_files=["res://.godot/imported/btn_skip.png-cd99g82b3d4e5f6b7c8d9e0f1a2b3c4d.ctex"]
+dest_files=["res://.godot/imported/btn_skip.png-2c25e9a9dccb709758f550500c157fef.ctex"]
 
 [params]
 

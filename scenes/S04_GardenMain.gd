@@ -8,9 +8,9 @@ const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const HUD_HEIGHT := 0.0  # HUD关闭，图标由top_row直接挂root不受裁切
 const GARDEN_HEIGHT := 1280.0  # 1280 - HUD_HEIGHT
 const ACTION_HEIGHT := 64.0
-const FRAME_EMPTY = preload("res://assets/art/ui/panels/slot_frame_empty.png")
-const FRAME_FILLING = preload("res://assets/art/ui/panels/slot_frame_filling.png")
-const FRAME_READY = preload("res://assets/art/ui/panels/slot_frame_ready.png")
+const FRAME_EMPTY_PATH := "res://assets/art/ui/panels/slot_frame_empty.png"
+const FRAME_FILLING_PATH := "res://assets/art/ui/panels/slot_frame_filling.png"
+const FRAME_READY_PATH := "res://assets/art/ui/panels/slot_frame_ready.png"
 const HATCH_HEIGHT := 98.0
 const NAV_HEIGHT := 56.0
 const CONTENT_SCALE := 0.48  # 仅作相机缩放兜底；实际缩放按真实视口在 _setup_camera 里算
@@ -31,6 +31,11 @@ const CAT_HIT_RADIUS := 92.0
 
 # T4-03 输出给 T4-04 的唯一接口：点击猫咪时发射（仅 L2+），T4-04 监听此信号弹出 CatCard
 signal cat_clicked(cat_id: String, screen_position: Vector2)
+
+# slot_frame 纹理缓存（运行时动态加载，文件不存在返回 null）
+var _frame_empty: Texture2D
+var _frame_filling: Texture2D
+var _frame_ready: Texture2D
 
 enum SubState { IDLE, INTERACT_FEED, INTERACT_PET, INTERACT_PLAY, INTERACT_PHOTO }
 
@@ -64,6 +69,7 @@ var _interact_reset_timer: Timer
 
 func _ready() -> void:
 	super()
+	_load_frame_textures()
 	# 核心修复：监听视口大小改变，手动强制缩放本页面以对齐屏幕物理宽度（解决 CanvasLayer 下 Control 锚点失效、顶栏短一截的问题）
 	get_viewport().size_changed.connect(_on_viewport_size_changed)
 	_on_viewport_size_changed()
@@ -113,10 +119,22 @@ func on_enter(_data: Dictionary = {}) -> void:
 			if cat_node != null and cat_node.has_method("_play_click_feedback"):
 				cat_node.call_deferred("_play_click_feedback")
 
+func _load_frame_textures() -> void:
+	_frame_empty = _try_load("res://assets/art/ui/panels/slot_frame_empty.png")
+	_frame_filling = _try_load("res://assets/art/ui/panels/slot_frame_filling.png")
+	_frame_ready = _try_load("res://assets/art/ui/panels/slot_frame_ready.png")
+
+func _try_load(p: String) -> Texture2D:
+	if ResourceLoader.exists(p):
+		var r: Resource = load(p)
+		if r is Texture2D:
+			return r
+	return null
+
 func _exit_tree() -> void:
 	if CatSpawner:
-		# 根因修复：queue_free 是延迟的，老页面 _exit_tree 可能在
-		# 新页面 _ready 之后执行。无条件置 null 会把新页面刚设好的
+		if CatSpawner.cat_container == cat_container:
+			CatSpawner.set_cat_container(null)
 		# 容器抹掉 → 后续 hatch_complete 全部丢弃 → "猫不马上出来"。
 		# 仅当容器仍指向本页时才清空。
 		if CatSpawner.cat_container == cat_container:
@@ -1158,6 +1176,21 @@ class HatchSlotView:
 	var _icon: TextureRect
 	var _detail_label: Label
 
+	# slot_frame 纹理缓存（动态加载，文件不存在返回 null）
+	static var _frame_tex_cache: Dictionary = {}
+
+	func _get_frame_tex(key: String) -> Texture2D:
+		if _frame_tex_cache.has(key):
+			return _frame_tex_cache[key]
+		var p := "res://assets/art/ui/panels/slot_frame_%s.png" % key
+		var tex: Texture2D = null
+		if ResourceLoader.exists(p):
+			var r: Resource = load(p)
+			if r is Texture2D:
+				tex = r
+		_frame_tex_cache[key] = tex
+		return tex
+
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
 		# 槽位底框：临时贴图 → 程序绘制（按状态换样式），不再依赖 slot_frame_*.png
@@ -1231,16 +1264,16 @@ class HatchSlotView:
 			_icon.modulate = Color.WHITE
 			detail = "等待能量填充"
 
-		var frame_tex := FRAME_FILLING
+		var frame_tex := _get_frame_tex("filling")
 		if not unlocked:
 			_frame.modulate = Color(0.4, 0.4, 0.4, 1.0)
-			frame_tex = FRAME_EMPTY
+			frame_tex = _get_frame_tex("empty")
 		elif status == "ready" or (status == "incubating" and progress >= 1.0):
 			_frame.modulate = Color.WHITE
-			frame_tex = FRAME_READY
+			frame_tex = _get_frame_tex("ready")
 		elif status == "incubating":
 			_frame.modulate = Color.WHITE
-			frame_tex = FRAME_FILLING
+			frame_tex = _get_frame_tex("filling")
 		else:
 			_frame.modulate = Color.WHITE
 		_frame.texture = frame_tex

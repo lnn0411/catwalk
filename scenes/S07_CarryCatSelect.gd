@@ -50,7 +50,7 @@ func _build_ui() -> void:
 	_drawer.add_child(title_bar)
 
 	var title := Label.new()
-	title.text = "\u{1F4CB} \u9009\u62E9\u968F\u884C\u732B\u5496"
+	title.text = "📋 选择随行猫咪"
 	title.add_theme_color_override("font_color", Color.WHITE)
 	title.add_theme_font_size_override("font_size", 20)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -152,7 +152,7 @@ func _build_cat_row(cat_data, companion_id: String) -> Control:
 
 	var name_label := Label.new()
 	name_label.text = cat_data.display_name
-	name_label.add_theme_color_override("font_color", Color.WHITE if not is_companion else Color.AMBER)
+	name_label.add_theme_color_override("font_color", Color.WHITE if not is_companion else Palette.AMBER)
 	name_label.add_theme_font_size_override("font_size", 18)
 	info.add_child(name_label)
 

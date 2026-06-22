@@ -371,7 +371,7 @@ func _grant_product(p: Dictionary) -> void:
 	match ptype:
 		"consume_energy":
 			if EnergyEngine:
-				var add_amt := min(float(amt), EnergyEngine.MAX_ENERGY_POOL - EnergyEngine.energy_pool)
+				var add_amt: float = min(float(amt), EnergyEngine.MAX_ENERGY_POOL - EnergyEngine.energy_pool)
 				EnergyEngine.energy_pool += add_amt
 				EnergyEngine._emit_energy_changed()
 		"hatch_boost":

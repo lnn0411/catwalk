@@ -200,7 +200,7 @@ func _on_slot_pressed(slot_index: int) -> void:
 	if wm == null:
 		return
 
-	var slot := wm.get_slot_data(slot_index)
+	var slot: Dictionary = wm.get_slot_data(slot_index) if wm.has_method("get_slot_data") else {}
 	if slot.is_empty():
 		return
 
@@ -296,7 +296,7 @@ func _refresh_all() -> void:
 		var sv := _slot_views[i]
 		if sv == null:
 			continue
-		var slot := wm.get_slot_data(i)
+		var slot: Dictionary = wm.get_slot_data(i) if wm.has_method("get_slot_data") else {}
 		var status := String(slot.get("status", "filling"))
 		var energy := float(slot.get("energy", 0.0))
 		sv.set_energy(energy, 3000.0)
@@ -319,7 +319,7 @@ func _refresh_status_text() -> void:
 	var all_ready := true
 
 	for i in range(3):
-		var slot := wm.get_slot_data(i)
+		var slot: Dictionary = wm.get_slot_data(i) if wm.has_method("get_slot_data") else {}
 		var status := String(slot.get("status", "filling"))
 		if status == "box_ready":
 			any_ready = true
@@ -348,12 +348,12 @@ func _refresh_energy_flow() -> void:
 	if ee == null:
 		return
 
-	var pool := ee.get("energy_pool")
-	var reserve := ee.get("reserve_tank")
+	var pool: Variant = ee.get("energy_pool")
+	var reserve: Variant = ee.get("reserve_tank")
 	var pool_val := float(pool) if pool != null else 0.0
 	var reserve_val := float(reserve) if reserve != null else 0.0
 
-	var label := _get_flow_label()
+	var label := _get_flow_label() as Label
 	if label != null:
 		label.text = "主池: %d  |  备用: %d  |  →  工坊" % [int(pool_val), int(reserve_val)]
 
@@ -376,5 +376,5 @@ func _get_flow_label() -> Label:
 func _pop_self() -> void:
 	var tree := get_tree()
 	if tree != null:
-		tree.current_scene = load("res://scenes/S04_GardenMain.tscn")
+		tree.current_scene = load("res://scenes/S04_GardenMain.tscn").instantiate()
 		tree.change_scene_to_file("res://scenes/S04_GardenMain.tscn")

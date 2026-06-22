@@ -1,0 +1,329 @@
+extends Node
+# ============================================================
+# T4 全系列自检（深度版）—— 基于 2026-06-22 提交（T4-01 ~ T4-15）
+#
+# 与现有 tests/t4_self_check.gd（浅检：仅查文件/方法存在）互补：
+# 本脚本额外做两件事——
+#   1) 加载今天新增的每个脚本/场景 → 捕获“编译错误”类问题
+#      （例如 20:26 那次 BottomNav.TABS NotFound 编译错误，浅检抓不到）。
+#   2) 对各引擎跑真实行为断言（数值/逻辑），而非只看 has_method。
+#
+# 运行方式（headless，退出码=失败数，可接 CI）：
+#   godot --headless res://tests/t4_full_self_check.tscn
+#
+# 注意：少数行为用例会以独立 dummy id 写入并在用例结束后 reset，
+#   尽量不污染真实存档；建议在干净 profile 上跑最干净。
+# ============================================================
+
+const CatData := preload("res://core/CatData.gd")
+
+var _pass := 0
+var _fail := 0
+var _fail_tags: Array[String] = []
+
+
+func _ready() -> void:
+	print("==================================================")
+	print("  T4 全系列自检（深度版） 2026-06-22")
+	print("==================================================")
+
+	_section_compile_guard()   # 编译错误总闸（最高价值）
+	_t4_01_naming_carry()
+	_t4_02_tutorial()
+	_t4_03_garden_zoom()
+	_t4_04_cat_interact()
+	_t4_05_annoyed()
+	_t4_06_explore()
+	_t4_07_hatch_show()
+	_t4_08_shop()
+	_t4_09_friends()
+	_t4_10_workshop()
+	_t4_11_relinquish()
+	_t4_12_album_postcard()
+	_t4_13_weather_time()
+	_t4_14_cat_screen()
+	_t4_15_breed_unlock()
+
+	_summary()
+
+
+# ── 测试原语 ──────────────────────────────────────────────
+
+func _ok(tag: String, msg: String) -> void:
+	_pass += 1
+	print("  [OK] %s — %s" % [tag, msg])
+
+func _xx(tag: String, msg: String) -> void:
+	_fail += 1
+	_fail_tags.append(tag)
+	print("  [XX] %s — %s" % [tag, msg])
+
+func _check(tag: String, cond: bool, msg: String) -> void:
+	if cond:
+		_ok(tag, msg)
+	else:
+		_xx(tag, msg)
+
+# 资源能否加载（.gd/.tscn/.gdshader）——load 失败=编译错误/缺失
+func _loadable(path: String) -> bool:
+	if not ResourceLoader.exists(path):
+		return false
+	return load(path) != null
+
+func _check_load(tag: String, path: String) -> void:
+	_check(tag, _loadable(path), "load %s" % path.get_file())
+
+# 安全取 autoload 单例（不存在返回 null，不崩）
+func _node(singleton_name: String) -> Node:
+	return get_node_or_null("/root/" + singleton_name)
+
+
+# ── 编译错误总闸：加载今天新增的全部脚本/场景 ──────────────
+
+func _section_compile_guard() -> void:
+	print("-- [编译总闸] 今天新增脚本/场景能否全部加载 --")
+	var paths := [
+		"res://autoload/cat_screen_manager.gd",
+		"res://core/BreedUnlockEngine.gd",
+		"res://core/GiftInventory.gd",
+		"res://core/TutorialManager.gd",
+		"res://core/WeatherTimeManager.gd",
+		"res://core/WorkshopData.gd",
+		"res://core/WorkshopManager.gd",
+		"res://scenes/S07_CarryCatSelect.gd",
+		"res://scenes/WorkshopPage.gd",
+		"res://scenes/ui/AngrySymbol.gd",
+		"res://scenes/ui/CatCard.gd",
+		"res://scenes/ui/explore_confirm_dialog.gd",
+		"res://scenes/ui/explore_duration_picker.gd",
+		"res://scenes/ui/explore_return_animation.gd",
+		"res://scenes/ui/postcard_reveal.gd",
+		"res://scenes/ui/relinquish_confirm_dialog.gd",
+		"res://scenes/ui/shop_confirm_dialog.gd",
+		"res://shaders/weather_color_grade.gdshader",
+		"res://ui/BoxOpenAnimation.gd",
+		"res://ui/GiftInventoryGrid.gd",
+		"res://ui/GiftItemView.gd",
+		"res://ui/WorkshopSlotView.gd",
+		# 今天被改动的关键场景脚本（捕获改坏的编译错误）
+		"res://scenes/S04_GardenMain.gd",
+		"res://scenes/S08_HatchShow.gd",
+		"res://scenes/S10_Album.gd",
+		"res://scenes/S10_CatDetail.gd",
+		"res://scenes/S12_Shop.gd",
+		"res://scenes/S13_Friends.gd",
+		"res://core/HatchEngine.gd",
+	]
+	var bad := 0
+	for p in paths:
+		if not _loadable(p):
+			bad += 1
+			_xx("COMPILE", "无法加载 " + p)
+	if bad == 0:
+		_ok("COMPILE", "全部 %d 个脚本/场景加载通过（无编译错误）" % paths.size())
+
+
+# ── T4-01 命名链 + S07 携带猫选择页 ──────────────────────
+
+func _t4_01_naming_carry() -> void:
+	print("-- T4-01 命名链 + S07 携带猫 --")
+	_check_load("T4-01", "res://scenes/S07_CarryCatSelect.gd")
+	# 命名链：HatchEngine 应能产出待命名猫
+	_check("T4-01", HatchEngine.has_method("collect_ready_slot"), "孵化→命名链入口 collect_ready_slot 存在")
+
+
+# ── T4-02 首次花园引导（五步）TutorialManager ─────────────
+
+func _t4_02_tutorial() -> void:
+	print("-- T4-02 新手引导 TutorialManager --")
+	var tm := _node("TutorialManager")
+	if tm == null:
+		_xx("T4-02", "TutorialManager 未注册为 autoload")
+		return
+	_check("T4-02", tm.has_method("start") and tm.has_method("is_running") and tm.has_method("is_blocking_garden_input"), "核心 API 完整")
+	# 五步枚举 OFF=-1 … DONE=5
+	_check("T4-02", int(TutorialManager.Step.SCAN) == 0 and int(TutorialManager.Step.EXPLORE) == 4 and int(TutorialManager.Step.DONE) == 5, "Step 枚举（SCAN0…EXPLORE4…DONE5）")
+	_check("T4-02", not tm.is_running(), "未启动时 is_running=false")
+
+
+# ── T4-03 花园三级缩放 ───────────────────────────────────
+
+func _t4_03_garden_zoom() -> void:
+	print("-- T4-03 花园缩放 --")
+	_check_load("T4-03", "res://scenes/S04_GardenMain.gd")
+
+
+# ── T4-04 猫咪互动 CatCard ───────────────────────────────
+
+func _t4_04_cat_interact() -> void:
+	print("-- T4-04 猫咪互动 CatCard --")
+	_check_load("T4-04", "res://scenes/ui/CatCard.gd")
+	# 互动加好感/冷却仍由 InteractionSystem 提供
+	_check("T4-04", InteractionSystem.has_method("do_interact"), "InteractionSystem.do_interact 存在")
+
+
+# ── T4-05 annoyed 情绪状态机 ─────────────────────────────
+
+func _t4_05_annoyed() -> void:
+	print("-- T4-05 annoyed 情绪状态机 --")
+	var esm := _node("EmotionStateMachine")
+	if esm == null:
+		_xx("T4-05", "EmotionStateMachine 未注册")
+		return
+	_check("T4-05", int(EmotionStateMachine.INTERACTION_THRESHOLD) == 5, "阈值=5（GDD：1h 内累计≥4 触发，实现取 5 次注册）")
+	# 行为：dummy 猫连续注册到阈值 → 应进入 annoyed
+	var cid := "selfcheck_emotion_dummy"
+	EmotionStateMachine.reset_cat(cid)
+	for i in range(int(EmotionStateMachine.INTERACTION_THRESHOLD)):
+		EmotionStateMachine.register_interaction(cid)
+	_check("T4-05", EmotionStateMachine.is_annoyed(cid), "连续 %d 次互动 → annoyed" % int(EmotionStateMachine.INTERACTION_THRESHOLD))
+	EmotionStateMachine.reset_cat(cid)
+	_check("T4-05", not EmotionStateMachine.is_annoyed(cid), "reset 后退出 annoyed")
+
+
+# ── T4-06 探索派遣 ExploreEngine ─────────────────────────
+
+func _t4_06_explore() -> void:
+	print("-- T4-06 探索派遣 --")
+	var ee := _node("ExploreEngine")
+	if ee == null:
+		_xx("T4-06", "ExploreEngine 未注册")
+		return
+	_check("T4-06", ExploreEngine.get_slot_count() == 2, "探索槽=2")
+	_check("T4-06", ExploreEngine.VALID_DURATIONS == [1, 2, 4], "时长选项 1/2/4h")
+	_check("T4-06", int(ExploreEngine.SLOT1_HATCH_REQ) == 5, "slot1 解锁=累计孵化5只")
+	_check_load("T4-06", "res://scenes/ui/explore_duration_picker.gd")
+	_check_load("T4-06", "res://scenes/ui/explore_return_animation.gd")
+
+
+# ── T4-07 S08 孵化演出修复 ───────────────────────────────
+
+func _t4_07_hatch_show() -> void:
+	print("-- T4-07 孵化演出 --")
+	_check_load("T4-07", "res://scenes/S08_HatchShow.gd")
+
+
+# ── T4-08 商店页 + HatchEngine 新增 ──────────────────────
+
+func _t4_08_shop() -> void:
+	print("-- T4-08 商店页 --")
+	_check_load("T4-08", "res://scenes/S12_Shop.gd")
+	_check_load("T4-08", "res://scenes/ui/shop_confirm_dialog.gd")
+	_check("T4-08", HatchEngine.has_method("reduce_hatch_time"), "reduce_hatch_time 存在（能量加速器）")
+	_check("T4-08", HatchEngine.has_method("_force_hatch_complete"), "_force_hatch_complete 存在")
+	_check("T4-08", "garden_expand_purchased" in HatchEngine, "garden_expand_purchased 字段持久化")
+
+
+# ── T4-09 好友邀请页 ─────────────────────────────────────
+
+func _t4_09_friends() -> void:
+	print("-- T4-09 好友邀请页 --")
+	_check_load("T4-09", "res://scenes/S13_Friends.gd")
+
+
+# ── T4-10 爱意工坊 WorkshopData/Manager ──────────────────
+
+func _t4_10_workshop() -> void:
+	print("-- T4-10 爱意工坊 --")
+	var wd := _node("WorkshopData")
+	var wm := _node("WorkshopManager")
+	_check("T4-10", wd != null and wm != null, "WorkshopData/Manager 已注册")
+	if wd == null or wm == null:
+		return
+	_check("T4-10", int(WorkshopManager.MAX_SLOTS) == 3 and float(WorkshopManager.ENERGY_PER_SLOT) == 3000.0, "3槽 × 3000能量")
+	# 礼物目录非空 + roll 命中目录
+	var ids: Array = WorkshopData.get_all_gift_ids()
+	_check("T4-10", ids.size() > 0, "礼物目录 %d 项" % ids.size())
+	var g: String = WorkshopData.roll_gift()
+	_check("T4-10", WorkshopData.has_gift(g), "roll_gift → %s（命中目录）" % g)
+	WorkshopData.reset_pity()  # 清掉自检产生的保底计数
+	_check("T4-10", typeof(WorkshopManager.get_slots()) == TYPE_ARRAY, "get_slots 返回数组")
+	_check("T4-10", typeof(WorkshopManager.is_workshop_active()) == TYPE_BOOL, "is_workshop_active 返回 bool")
+	_check_load("T4-10", "res://scenes/WorkshopPage.gd")
+
+
+# ── T4-11 爱心送养 RelinquishSystem ──────────────────────
+
+func _t4_11_relinquish() -> void:
+	print("-- T4-11 爱心送养 --")
+	var rs := _node("RelinquishSystem")
+	if rs == null:
+		_xx("T4-11", "RelinquishSystem 未注册")
+		return
+	_check("T4-11", rs.has_method("relinquish_cat"), "relinquish_cat 存在")
+	var rf: Dictionary = RelinquishSystem.RARITY_FACTOR
+	_check("T4-11", float(rf.get("common", -1)) == 0.0 and float(rf.get("rare", -1)) == 1.0 \
+		and float(rf.get("epic", -1)) == 2.0 and float(rf.get("legendary", -1)) == 5.0, \
+		"稀有度系数 0/1/2/5")
+	_check("T4-11", int(RelinquishSystem.WEEKLY_PETAL_CAP) == 500, "周花瓣上限=500")
+	_check_load("T4-11", "res://scenes/ui/relinquish_confirm_dialog.gd")
+
+
+# ── T4-12 图鉴：明信片 Tab ───────────────────────────────
+
+func _t4_12_album_postcard() -> void:
+	print("-- T4-12 明信片图鉴 --")
+	_check_load("T4-12", "res://scenes/S10_Album.gd")
+	_check_load("T4-12", "res://scenes/S10_CatDetail.gd")
+	_check_load("T4-12", "res://scenes/ui/postcard_reveal.gd")
+
+
+# ── T4-13 天气/时段 WeatherTimeManager + shader ──────────
+
+func _t4_13_weather_time() -> void:
+	print("-- T4-13 天气/时段 --")
+	var wt := _node("WeatherTimeManager")
+	if wt == null:
+		_xx("T4-13", "WeatherTimeManager 未注册")
+		return
+	_check("T4-13", wt.has_method("get_weather_bonus_data"), "get_weather_bonus_data 存在")
+	_check("T4-13", typeof(WeatherTimeManager.get_weather_bonus_data()) == TYPE_DICTIONARY, "天气加成返回字典")
+	_check("T4-13", WeatherTimeManager.get_period_name() != "", "时段名非空（%s）" % WeatherTimeManager.get_period_name())
+	_check("T4-13", abs(float(WeatherTimeManager.RAIN_PROBABILITY) - 0.15) < 0.001, "雨天概率=15%（GDD一致）")
+	_check_load("T4-13", "res://shaders/weather_color_grade.gdshader")
+
+
+# ── T4-14 屏显猫筛选 CatScreenManager（+14b CatSpawner）──
+
+func _t4_14_cat_screen() -> void:
+	print("-- T4-14 屏显猫筛选 --")
+	var csm := _node("CatScreenManager")
+	if csm == null:
+		_xx("T4-14", "CatScreenManager 未注册")
+		return
+	_check("T4-14", int(CatScreenManager.MAX_PINNED) == 4 and int(CatScreenManager.MAX_ROTATING_BASE) == 2, "固定4 + 轮换2")
+	_check("T4-14", typeof(CatScreenManager.get_visible_cats()) == TYPE_ARRAY, "get_visible_cats 返回数组")
+	_check("T4-14", csm.has_method("pin_cat") and csm.has_method("unpin_cat") and csm.has_method("force_debut"), "pin/unpin/force_debut 完整")
+	# T4-14b
+	_check_load("T4-14b", "res://core/CatSpawner.gd")
+
+
+# ── T4-15 品种解锁 BreedUnlockEngine ─────────────────────
+
+func _t4_15_breed_unlock() -> void:
+	print("-- T4-15 品种解锁 --")
+	var be := _node("BreedUnlockEngine")
+	if be == null:
+		_xx("T4-15", "BreedUnlockEngine 未注册")
+		return
+	_check("T4-15", int(BreedUnlockEngine.UNLOCK_CHAIN_COUNT) == 2 and int(BreedUnlockEngine.PITY_THRESHOLD) == 5, "解锁链=每品种3只(chain2) + 保底5")
+	var b: String = BreedUnlockEngine.determine_breed()
+	var valid := [CatData.BREED_ORANGE, CatData.BREED_BRITISH, CatData.BREED_SIAMESE]
+	_check("T4-15", b in valid, "determine_breed → %s（合法品种）" % b)
+	var unlocked: Array = BreedUnlockEngine.get_unlocked_breeds()
+	_check("T4-15", unlocked.has(CatData.BREED_ORANGE), "初始已解锁橘猫")
+
+
+# ── 汇总 ─────────────────────────────────────────────────
+
+func _summary() -> void:
+	var total := _pass + _fail
+	print("==================================================")
+	print("  T4 全系列自检结果： %d/%d PASS，%d FAIL" % [_pass, total, _fail])
+	if _fail == 0:
+		print("  ✅ ALL PASS")
+	else:
+		print("  ❌ FAIL 项： " + ", ".join(_fail_tags))
+	print("==================================================")
+	await get_tree().create_timer(0.2).timeout
+	get_tree().quit(_fail)

@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bd88f91a2c3d"
-path="res://.godot/imported/btn_permission.png-bd88f91a2c3d4e7a9f1b2c3d4e5f6a7b.ctex"
+uid="uid://bd88ga1a2c3d"
+path="res://.godot/imported/btn_permission.png-8231e7c4838777b6397cb1c18da6f46f.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/btn_permission.png"
-dest_files=["res://.godot/imported/btn_permission.png-bd88f91a2c3d4e7a9f1b2c3d4e5f6a7b.ctex"]
+dest_files=["res://.godot/imported/btn_permission.png-8231e7c4838777b6397cb1c18da6f46f.ctex"]
 
 [params]
 

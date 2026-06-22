@@ -33,11 +33,11 @@ func populate(gifts: Array[Dictionary]) -> void:
 		item.gift_selected.connect(_on_item_selected)
 		add_child(item)
 
-func show() -> void:
+func refresh() -> void:
 	visible = true
 	populate(_load_inventory_gifts())
 
-func hide() -> void:
+func clear() -> void:
 	visible = false
 	_clear_grid()
 	_gifts.clear()
