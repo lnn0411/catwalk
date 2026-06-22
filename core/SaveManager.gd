@@ -48,12 +48,6 @@ func load_and_apply() -> void:
 	if ms and ms.has_method("apply_save"):
 		ms.apply_save(_read_relinquish())
 	AchievementSystem.apply_save(_read_achievements())
-	if has_node("/root/WorkshopManager"):
-		get_node("/root/WorkshopManager").apply_save(_read_workshop())
-	if has_node("/root/WorkshopData"):
-		get_node("/root/WorkshopData").apply_save(_read_workshop())
-	if has_node("/root/GiftInventory"):
-		get_node("/root/GiftInventory").apply_save(_read_workshop())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
 	# 避免冷启动时"应用关闭期间累积的步数"在首帧丢失。
@@ -331,9 +325,4 @@ func _read_workshop() -> Dictionary:
 	}
 
 func _write_workshop() -> void:
-	if has_node("/root/WorkshopManager") and WorkshopManager.has_method("get_save_data"):
-		_config.set_value("workshop", "manager_data", WorkshopManager.get_save_data())
-	if has_node("/root/WorkshopData") and WorkshopData.has_method("get_save_data"):
-		_config.set_value("workshop", "workshop_data", WorkshopData.get_save_data())
-	if has_node("/root/GiftInventory") and GiftInventory.has_method("get_save_data"):
-		_config.set_value("workshop", "inventory_data", GiftInventory.get_save_data())
+	pass

@@ -18,6 +18,7 @@ var interaction_system
 @onready var _pet_button: Button = %PetButton
 @onready var _play_button: Button = %PlayButton
 @onready var _explore_button: Button = %ExploreButton
+var _relinquish_button: Button
 @onready var _explore_state_panel: Control = %ExploreStatePanel
 @onready var _exploring_label: Label = %ExploringLabel
 @onready var _countdown_label: Label = %CountdownLabel
@@ -39,6 +40,12 @@ func _ready() -> void:
 	_setup_cooldown_timer()
 	_style_button(_explore_button)
 	_setup_explore_countdown_timer()
+	# 送养按钮
+	_relinquish_button = Button.new()
+	_relinquish_button.text = "💕 送养"
+	_relinquish_button.pressed.connect(_on_relinquish_pressed)
+	if _explore_button and _explore_button.get_parent():
+		_explore_button.get_parent().add_child(_relinquish_button)
 	_resolve_interaction_system()
 	_refresh_cat_info()
 	_check_explore_state()
@@ -130,6 +137,25 @@ func _on_play_pressed() -> void:
 	_do_interaction("play")
 	_show_feedback("🎾 玩得好开心！")
 
+
+func _on_relinquish_pressed() -> void:
+	var cat_id := _get_cat_property("id", "")
+	var cat_data = _get_full_cat_data()
+	if cat_id == "":
+		return
+	var rs := get_node_or_null("/root/RelinquishSystem")
+	if rs == null:
+		return
+	if HatchEngine and HatchEngine.get_cats().size() <= 1:
+		_show_feedback("至少要留一只猫陪着你哦～")
+		return
+	var uuid := "rel_%d_%s" % [Time.get_unix_time_from_system(), cat_id]
+	var result = rs.relinquish_cat(cat_data, uuid)
+	if result.get("love_petals", 0) > 0 or result.get("gold_coins", 0) > 0:
+		_show_feedback("送养成功 +%d花瓣 %d金币" % [result.get("love_petals",0), result.get("gold_coins",0)])
+		_close()
+	else:
+		_show_feedback(result.get("reason", "操作被阻止"))
 
 func _on_explore_button_pressed() -> void:
 	if _explore_button == null or _explore_button.disabled:
@@ -403,6 +429,8 @@ func _apply_theme() -> void:
 	_style_button(_pet_button)
 	_style_button(_play_button)
 	_style_button(_explore_button)
+	if _relinquish_button:
+		_style_button(_relinquish_button)
 
 
 func _style_label(label: Label, font_size: int) -> void:
@@ -586,6 +614,20 @@ func _get_cat_property(property_name: String, default_value: String) -> String:
 		return String(cat_data.get(property_name, default_value))
 	var value = cat_data.get(property_name)
 	return default_value if value == null else String(value)
+
+
+func _get_full_cat_data() -> Dictionary:
+	if cat_data is Dictionary:
+		return cat_data.duplicate(true)
+	if cat_data != null and cat_data.has_method("serialize"):
+		return CatData.serialize(cat_data)
+	return {
+		"id": cat_id,
+		"species": _get_cat_property("species", "orange"),
+		"rarity": _get_cat_property("rarity", "common"),
+		"level": int(_get_cat_property("level", "1")),
+		"friendship": int(_get_cat_property("friendship", "0")),
+	}
 
 
 func _draw_round_rect(rect: Rect2, radius: float, color: Color) -> void:
