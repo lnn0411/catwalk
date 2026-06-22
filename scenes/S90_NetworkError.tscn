@@ -16,8 +16,8 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-expand_mode = 2
-stretch_mode = 2
+expand_mode = 0
+stretch_mode = 0
 
 [node name="RetryBtn" type="TextureButton" parent="."]
 unique_name_in_owner = true
