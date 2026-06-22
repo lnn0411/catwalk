@@ -151,6 +151,7 @@ func _read_hatch() -> Dictionary:
 		"ad_speedup_count": int(_config.get_value("hatch", "ad_speedup_count", 0)),
 		"ad_speedup_date": String(_config.get_value("hatch", "ad_speedup_date", "")),
 		"has_tutorial_first_egg": bool(_config.get_value("hatch", "has_tutorial_first_egg", false)),
+		"current_companion_cat_id": String(_config.get_value("hatch", "current_companion_cat_id", "")),
 	}
 
 func _write_hatch() -> void:
@@ -164,6 +165,7 @@ func _write_hatch() -> void:
 	_config.set_value("hatch", "ad_speedup_count", int(data.get("ad_speedup_count", 0)))
 	_config.set_value("hatch", "ad_speedup_date", String(data.get("ad_speedup_date", "")))
 	_config.set_value("hatch", "has_tutorial_first_egg", bool(data.get("has_tutorial_first_egg", false)))
+	_config.set_value("hatch", "current_companion_cat_id", String(data.get("current_companion_cat_id", "")))
 	_config.set_value("hatch", "cat_count", cats.size())
 	for i in range(cats.size()):
 		_write_cat("cat_%d" % i, cats[i])

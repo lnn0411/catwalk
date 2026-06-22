@@ -329,6 +329,28 @@ func _build_hud() -> void:
 		_hatch_row.add_child(slot_view)
 		_slot_views.append(slot_view)
 
+	# 「随行猫」按钮 — 底部栏左侧，常驻可见
+	var companion_btn := Button.new()
+	companion_btn.name = "CompanionBtn"
+	companion_btn.text = "🐱 随行猫"
+	companion_btn.flat = true
+	companion_btn.anchor_left = 0.0
+	companion_btn.anchor_right = 0.0
+	companion_btn.anchor_top = 1.0
+	companion_btn.anchor_bottom = 1.0
+	companion_btn.offset_left = 12.0
+	companion_btn.offset_right = 130.0
+	companion_btn.offset_top = -116.0
+	companion_btn.offset_bottom = -76.0
+	companion_btn.add_theme_font_size_override("font_size", 15)
+	companion_btn.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+	var comp_bg := StyleBoxFlat.new()
+	comp_bg.bg_color = Color(0.0, 0.0, 0.0, 0.35)
+	comp_bg.set_corner_radius_all(12)
+	companion_btn.add_theme_stylebox_override("normal", comp_bg)
+	companion_btn.pressed.connect(_on_companion_pressed)
+	root.add_child(companion_btn)
+
 	var nav = BottomNavScene.instantiate()
 	nav.set_current_tab(0)
 	nav.tab_selected.connect(_on_bottom_nav_tab_selected)
@@ -530,6 +552,9 @@ func _on_bottom_nav_tab_selected(index: int) -> void:
 		return
 	if page != "":
 		UIManager.replace(page)
+
+func _on_companion_pressed() -> void:
+	UIManager.push("res://scenes/S07_CarryCatSelect.tscn")
 
 func _on_steps_label_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:

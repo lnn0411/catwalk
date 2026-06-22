@@ -75,6 +75,9 @@ func _confirm_name() -> void:
 	_cat.display_name = value
 	if SaveManager:
 		SaveManager.save_all()
+	if HatchEngine and HatchEngine.current_companion_cat_id == "":
+		HatchEngine.current_companion_cat_id = _cat.id
+		SaveManager.save_all()
 	# M5：确认瞬间——触觉 + 面板弹一下（"这是我的猫了"的时刻），再继续
 	var j := get_node_or_null("/root/Juice")
 	if j: j.hit()

@@ -29,6 +29,7 @@ var workshop_cached_energy: float = 0.0   # 工坊态半满能量冻结缓存（
 var surprise_box_ready: bool = false      # 惊喜礼盒是否 Ready（工坊缓存灌满触发）
 var backpack_max_capacity: int = 24       # 当前猫包上限
 var has_tutorial_first_egg: bool = false  # 是否已触发新手首蛋
+var current_companion_cat_id: String = ""
 
 # 看广告加速（GDD v2.14 §3.7/§12.2）：每次补 3000 能量（≈30分钟步行），每日 3 次。
 # v1.0 纯客户端计数器，跨天按本地日期重置。
@@ -168,6 +169,7 @@ func apply_save(data: Dictionary) -> void:
 	surprise_box_ready = bool(data.get("surprise_box_ready", false))
 	backpack_max_capacity = max(int(data.get("backpack_max_capacity", backpack_max_capacity)), 1)
 	has_tutorial_first_egg = bool(data.get("has_tutorial_first_egg", false))
+	current_companion_cat_id = String(data.get("current_companion_cat_id", ""))
 	_ensure_slots()
 	_update_unlocks()
 	_was_workshop_mode = is_workshop_mode()
@@ -196,6 +198,7 @@ func get_save_data() -> Dictionary:
 		"surprise_box_ready": surprise_box_ready,
 		"backpack_max_capacity": backpack_max_capacity,
 		"has_tutorial_first_egg": has_tutorial_first_egg,
+		"current_companion_cat_id": current_companion_cat_id,
 	}
 
 func get_unlocked_species() -> Array:
