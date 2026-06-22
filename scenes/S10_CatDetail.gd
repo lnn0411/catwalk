@@ -58,8 +58,8 @@ func _ready() -> void:
 		%PlayBtn.visible = false
 
 func _emit_action(kind: String) -> void:
-	if EnergyEngine and EnergyEngine.energy > 0:
-		EnergyEngine.spend(1)
+	if EnergyEngine and EnergyEngine.energy_pool > 0:
+		EnergyEngine.spend_pool(1)
 		Popups.show_toast("互动成功!")
 	else:
 		Popups.show_toast("能量不足")
