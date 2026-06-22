@@ -202,13 +202,9 @@ func get_save_data() -> Dictionary:
 	}
 
 func get_unlocked_species() -> Array:
-	var total: float = _get_total_energy_produced()
-	var species: Array = [CatData.BREED_ORANGE]
-	if total >= 15000.0:
-		species.append(CatData.BREED_BRITISH)
-	if total >= 30000.0:
-		species.append(CatData.BREED_SIAMESE)
-	return species
+	if BreedUnlockEngine:
+		return BreedUnlockEngine.get_unlocked_breeds()
+	return [CatData.BREED_ORANGE]
 
 func _on_steps_updated(delta: int, _total: int) -> void:
 	if EnergyEngine == null:
@@ -311,6 +307,8 @@ func _complete_hatch(slot_id: int):
 	hatched_count += 1
 	var cat = CatData.create("cat_%d" % hatched_count, species, rarity, hatched_count)
 	cats.append(cat)
+	if BreedUnlockEngine:
+		BreedUnlockEngine.record_hatch(species)
 
 	slot["status"] = "empty"
 	slot["energy"] = 0.0
@@ -323,10 +321,9 @@ func _complete_hatch(slot_id: int):
 	return cat
 
 func _roll_next_species() -> String:
-	var species: Array = get_unlocked_species()
-	if hatched_count == 0:
-		return CatData.BREED_ORANGE
-	return String(species[rng.randi_range(0, species.size() - 1)])
+	if BreedUnlockEngine:
+		return BreedUnlockEngine.determine_breed()
+	return CatData.BREED_ORANGE
 
 func _roll_rarity() -> String:
 	var result: String = _base_roll_rarity()
