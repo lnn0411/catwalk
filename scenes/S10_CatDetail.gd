@@ -13,16 +13,10 @@ var _release_rect: Rect2 = Rect2()
 # 美术图占位框架：art 就位则显示 TextureRect/TextureButton 层，否则回退到 _draw() 代码绘制
 const ART_BG_PATH := "res://assets/art/ui/cat_detail_bg.png"
 const ART_BACK_BTN_PATH := "res://assets/art/ui/buttons/btn_back.png"
-const ART_FEED_BTN_PATH := "res://assets/art/ui/buttons/btn_feed.png"
-const ART_PLAY_BTN_PATH := "res://assets/art/ui/buttons/btn_play.png"
 
 var _art_bg := false
 var _art_back_btn := false
-var _art_feed_btn := false
-var _art_play_btn := false
 var _art_back_node: TextureButton = null
-var _art_feed_node: TextureButton = null
-var _art_play_node: TextureButton = null
 
 # 用 load() 而非 preload()：美术图可能尚未就位，preload 缺文件会编译失败。
 # 命中判定仍由 _gui_input 的 rect 负责，按钮层 mouse_filter=IGNORE 不拦截输入。
@@ -43,26 +37,15 @@ func _ready() -> void:
 	else:
 		%BackBtn.visible = false
 	
-	if ResourceLoader.exists(ART_FEED_BTN_PATH):
-		%FeedBtn.texture_normal = load(ART_FEED_BTN_PATH)
-		%FeedBtn.pressed.connect(func(): _emit_action("feed"))
-		_art_feed_btn = true
-	else:
-		%FeedBtn.visible = false
-	
-	if ResourceLoader.exists(ART_PLAY_BTN_PATH):
-		%PlayBtn.texture_normal = load(ART_PLAY_BTN_PATH)
-		%PlayBtn.pressed.connect(func(): _emit_action("play"))
-		_art_play_btn = true
-	else:
-		%PlayBtn.visible = false
+	# 隐藏不相关的互动按钮（这些属于 CatCard 花园交互，不在图鉴详情页使用）
+	%FeedBtn.visible = false
+	%PlayBtn.visible = false
 
-func _emit_action(kind: String) -> void:
-	if EnergyEngine and EnergyEngine.energy_pool > 0:
-		EnergyEngine.spend_pool(1)
-		Popups.show_toast("互动成功!")
-	else:
-		Popups.show_toast("能量不足")
+
+func on_enter(data: Dictionary = {}) -> void:
+	_cat = data.get("cat", null)
+	queue_redraw()
+
 
 func _on_page_setup(data: Dictionary) -> void:
 	_cat = data.get("cat", null)
@@ -146,18 +129,8 @@ func _draw_buttons() -> void:
 	_diary_rect = Rect2(Vector2(269.0, 891.0), Vector2(181.0, 52.0))
 	_release_rect = Rect2(Vector2(475.0, 891.0), Vector2(181.0, 52.0))
 	# 底部互动按钮：美术（btn_feed/btn_play）就位则贴图替换，否则代码绘制
-	if _art_feed_btn and _art_feed_node:
-		_art_feed_node.position = _rename_rect.position
-		_art_feed_node.size = _rename_rect.size
-		_draw_centered_in_rect("改名", _rename_rect, 16, Palette.TEXT_PRIMARY)
-	else:
-		_draw_button(_rename_rect, "改名", Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
-	if _art_play_btn and _art_play_node:
-		_art_play_node.position = _diary_rect.position
-		_art_play_node.size = _diary_rect.size
-		_draw_centered_in_rect("日记", _diary_rect, 16, Palette.TEXT_PRIMARY)
-	else:
-		_draw_button(_diary_rect, "日记", Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
+	_draw_button(_rename_rect, "改名", Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
+	_draw_button(_diary_rect, "日记", Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
 	_draw_button(_release_rect, "让它出来", Palette.AMBER, Palette.AMBER, Palette.TEXT_ON_AMBER)
 
 func _draw_diary() -> void:
