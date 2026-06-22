@@ -3,6 +3,7 @@ extends "res://ui/UIPage.gd"
 const GardenBackground := preload("res://scenes/GardenBackground.gd")
 const BottomNavScene := preload("res://ui/BottomNav.tscn")
 const BottomNav := preload("res://ui/BottomNav.gd")
+const CatCard := preload("res://scenes/ui/CatCard.gd")
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const HUD_HEIGHT := 0.0  # HUD关闭，图标由top_row直接挂root不受裁切
@@ -19,16 +20,30 @@ const WORLD_WIDTH := 2048.0
 const WORLD_HEIGHT := 1536.0
 
 # 互动子状态（喂食/抚摸/玩耍/拍照），对应测试 C6-C9
-enum SubState { IDLE, INTERACT_FEED, INTERACT_PET, INTERACT_PLAY, INTERACT_PHOTO }
+# 三级缩放：L1(1.0x) -> L2(2.0x) -> L3(3.5x)，引自 GDD x4.2
+const ZOOM_L1 := 1.0
+const ZOOM_L2 := 2.0
+const ZOOM_L3 := 3.5
+const GARDEN_ZOOM_LEVELS := [ZOOM_L1, ZOOM_L2, ZOOM_L3]
+const DOUBLE_TAP_TIME := 0.3       # 双击间隔阈值（秒）
+const ZOOM_TWEEN_DURATION := 0.3  # 双击平滑过渡时长（秒）
+const PINCH_ZOOM_THRESHOLD := 0.08
+const CAT_HIT_RADIUS := 92.0
 
-signal cat_clicked(cat_data)
+# T4-03 输出给 T4-04 的唯一接口：点击猫咪时发射（仅 L2+），T4-04 监听此信号弹出 CatCard
+signal cat_clicked(cat_id: String, screen_position: Vector2)
+
+enum SubState { IDLE, INTERACT_FEED, INTERACT_PET, INTERACT_PLAY, INTERACT_PHOTO }
 
 var garden_layer: Node2D
 var cat_container: Node2D
 var _camera: Camera2D
 var _dragging := false
 var _drag_start := Vector2.ZERO
-var _cam_zoom: float = CONTENT_SCALE  # 运行时按真实视口尺寸重算
+var _cam_zoom: float = CONTENT_SCALE
+var _zoom_factor: float = ZOOM_L1
+var _last_tap_time: float = -DOUBLE_TAP_TIME
+var _zoom_tween: Tween
 var _steps_label: Label
 var _energy_label: Label
 var _hatch_row: HBoxContainer
@@ -41,10 +56,7 @@ var _stats_visible := false
 var _hatch_navigating := false
 var _sub_state: int = SubState.IDLE
 var _interact_reset_timer: Timer
-var _garden_zoom_level := 0
-var _garden_zoom_levels: Array[float] = [1.0, 2.0, 3.5]
-var _pinch_zoom_threshold := 0.08
-var _cat_hit_radius := 92.0
+var _cat_card: Control
 
 func _ready() -> void:
 	super()
@@ -96,10 +108,31 @@ func on_enter(_data: Dictionary = {}) -> void:
 			var cat_node = CatSpawner.get_cat_node(focus_cat)
 			if cat_node != null and cat_node.has_method("_play_click_feedback"):
 				cat_node.call_deferred("_play_click_feedback")
-	if focus_cat != null:
-		call_deferred("_reset_garden_zoom_after_focus")
-	else:
-		_reset_garden_zoom()
+	if not cat_clicked.is_connected(_on_cat_clicked):
+		cat_clicked.connect(_on_cat_clicked)
+
+func _on_cat_clicked(cat_id: String, screen_position: Vector2) -> void:
+	if _cat_card != null and is_instance_valid(_cat_card):
+		_cat_card.queue_free()
+
+	var card := CatCard.new()
+	_cat_card = card
+	add_child(card)
+	card.set_data(_get_cat_card_data(cat_id), screen_position)
+
+func _get_cat_card_data(cat_id: String) -> Dictionary:
+	if HatchEngine != null:
+		for cat_data in HatchEngine.get_cats():
+			var id := ""
+			if cat_data is Dictionary:
+				id = String(cat_data.get("id", ""))
+			elif cat_data != null:
+				id = String(cat_data.get("id"))
+			if id == cat_id:
+				if cat_data is Dictionary:
+					return cat_data.duplicate(true)
+				return CatData.serialize(cat_data)
+	return {"id": cat_id, "display_name": cat_id}
 
 func _exit_tree() -> void:
 	if CatSpawner:
@@ -668,18 +701,25 @@ func _input(event: InputEvent) -> void:
 	if TutorialManager and TutorialManager.is_blocking_garden_input():
 		_dragging = false
 		return
+	# 捏合缩放
 	if event is InputEventMagnifyGesture:
 		if _is_in_garden(event.position):
 			_handle_magnify_gesture(event)
 		return
+	# 鼠标左键
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed and _is_in_garden(event.position):
 			get_viewport().set_input_as_handled()
-			if event.double_click:
+			# 双击检测
+			var now := Time.get_ticks_msec() / 1000.0
+			var is_double_tap := event.double_click or now - _last_tap_time < DOUBLE_TAP_TIME
+			_last_tap_time = now
+			if is_double_tap:
 				_cycle_garden_zoom(event.position)
 				_dragging = false
 				return
-			if _garden_zoom_level >= 1 and _emit_cat_click_at(event.position):
+			# L2+ 检测猫咪点击
+			if _zoom_factor >= ZOOM_L2 and _emit_cat_click_at(event.position):
 				_dragging = false
 				return
 			_dragging = true
@@ -694,6 +734,34 @@ func _input(event: InputEvent) -> void:
 			_camera.position.x -= drag_delta.x / _get_camera_zoom()
 			_clamp_camera_to_world()
 			_drag_start = event.position
+	# 触摸事件（移动端）
+	elif event is InputEventScreenTouch:
+		if event.pressed and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			return
+		if event.pressed and _is_in_garden(event.position):
+			get_viewport().set_input_as_handled()
+			var now := Time.get_ticks_msec() / 1000.0
+			var is_double_tap := now - _last_tap_time < DOUBLE_TAP_TIME
+			_last_tap_time = now
+			if is_double_tap:
+				_cycle_garden_zoom(event.position)
+				_dragging = false
+				return
+			if _zoom_factor >= ZOOM_L2 and _emit_cat_click_at(event.position):
+				_dragging = false
+				return
+			_dragging = true
+			_drag_start = event.position
+		else:
+			_dragging = false
+	elif event is InputEventScreenDrag and _dragging and _camera:
+		if _is_in_garden(event.position):
+			var drag_delta: Vector2 = event.position - _drag_start
+			_camera.position.x -= drag_delta.x / _get_camera_zoom()
+			_clamp_camera_to_world()
+			_drag_start = event.position
+		else:
+			_dragging = false
 
 func _is_in_garden(pos: Vector2) -> bool:
 	return pos.y >= HUD_HEIGHT and pos.y <= HUD_HEIGHT + GARDEN_HEIGHT
@@ -701,41 +769,60 @@ func _is_in_garden(pos: Vector2) -> bool:
 func _handle_magnify_gesture(event: InputEventMagnifyGesture) -> void:
 	if _camera == null:
 		return
-	if event.factor >= 1.0 + _pinch_zoom_threshold:
-		_set_garden_zoom_level(_garden_zoom_level + 1, event.position)
-	elif event.factor <= 1.0 - _pinch_zoom_threshold:
-		_set_garden_zoom_level(_garden_zoom_level - 1, event.position)
+	var cur_level := _get_garden_zoom_level()
+	if event.factor >= 1.0 + PINCH_ZOOM_THRESHOLD:
+		_set_garden_zoom_level(cur_level + 1, event.position)
+	elif event.factor <= 1.0 - PINCH_ZOOM_THRESHOLD:
+		_set_garden_zoom_level(cur_level - 1, event.position)
 
+# 双击切换 L1<->L2（0.3s 平滑 Tween）
 func _cycle_garden_zoom(anchor_screen_pos: Vector2) -> void:
-	_set_garden_zoom_level((_garden_zoom_level + 1) % _garden_zoom_levels.size(), anchor_screen_pos)
+	var target := ZOOM_L2 if _zoom_factor < 1.5 else ZOOM_L1
+	_smooth_zoom_to(target)
 
-func _reset_garden_zoom_after_focus() -> void:
-	await get_tree().process_frame
-	_reset_garden_zoom()
-
-func _reset_garden_zoom() -> void:
-	_set_garden_zoom_level(0)
+# 平滑缩放过渡（双击专用）
+func _smooth_zoom_to(target_factor: float) -> void:
+	target_factor = clampf(target_factor, ZOOM_L1, ZOOM_L3)
+	if _zoom_tween and _zoom_tween.is_valid():
+		_zoom_tween.kill()
+	_zoom_tween = create_tween()
+	_zoom_tween.tween_method(_set_garden_zoom_factor, _zoom_factor, target_factor, ZOOM_TWEEN_DURATION).set_ease(Tween.EASE_OUT)
 
 func _set_garden_zoom_level(level: int, anchor_screen_pos: Vector2 = Vector2.ZERO) -> void:
-	if _camera == null or _garden_zoom_levels.is_empty():
+	if GARDEN_ZOOM_LEVELS.is_empty():
 		return
-	var clamped_level: int = clampi(level, 0, _garden_zoom_levels.size() - 1)
-	if clamped_level == _garden_zoom_level and is_equal_approx(_camera.zoom.x, _get_camera_zoom()):
+	var clamped_level: int = clampi(level, 0, GARDEN_ZOOM_LEVELS.size() - 1)
+	_set_garden_zoom_factor(float(GARDEN_ZOOM_LEVELS[clamped_level]), anchor_screen_pos)
+
+# 核心缩放方法：设 _zoom_factor，保持锚点位置
+func _set_garden_zoom_factor(factor: float, anchor_screen_pos: Vector2 = Vector2.ZERO) -> void:
+	if _camera == null:
+		return
+	var clamped_factor := clampf(factor, ZOOM_L1, ZOOM_L3)
+	if is_equal_approx(clamped_factor, _zoom_factor) and is_equal_approx(_camera.zoom.x, _get_camera_zoom()):
 		return
 	var keep_anchor := anchor_screen_pos != Vector2.ZERO and _is_in_garden(anchor_screen_pos)
 	var before_world := _screen_to_garden_world(anchor_screen_pos) if keep_anchor else Vector2.ZERO
-	_garden_zoom_level = clamped_level
-	var zoom := _get_camera_zoom()
-	_camera.zoom = Vector2(zoom, zoom)
+	_zoom_factor = clamped_factor
+	_camera.zoom = Vector2(_get_camera_zoom(), _get_camera_zoom())
 	if keep_anchor:
 		var after_world := _screen_to_garden_world(anchor_screen_pos)
 		_camera.position.x += before_world.x - after_world.x
 	_clamp_camera_to_world()
 
+# 找最接近当前 _zoom_factor 的级别索引
+func _get_garden_zoom_level() -> int:
+	var closest_level := 0
+	var closest_delta := INF
+	for i in range(GARDEN_ZOOM_LEVELS.size()):
+		var delta := absf(_zoom_factor - float(GARDEN_ZOOM_LEVELS[i]))
+		if delta < closest_delta:
+			closest_delta = delta
+			closest_level = i
+	return closest_level
+
 func _get_camera_zoom() -> float:
-	if _garden_zoom_levels.is_empty():
-		return _cam_zoom
-	return _cam_zoom * float(_garden_zoom_levels[_garden_zoom_level])
+	return _cam_zoom * _zoom_factor
 
 func _screen_to_garden_world(screen_pos: Vector2) -> Vector2:
 	if _camera == null:
@@ -758,7 +845,7 @@ func _emit_cat_click_at(screen_pos: Vector2) -> bool:
 		if cat_world_pos == Vector2.ZERO:
 			continue
 		var dist := world_pos.distance_to(cat_world_pos)
-		if dist <= _cat_hit_radius and dist < best_dist:
+		if dist <= CAT_HIT_RADIUS and dist < best_dist:
 			best_dist = dist
 			best_cat = cat_data
 	if best_cat == null:
@@ -766,7 +853,8 @@ func _emit_cat_click_at(screen_pos: Vector2) -> bool:
 	var cat_node = CatSpawner.get_cat_node(best_cat)
 	if cat_node != null and cat_node.has_method("_play_click_feedback"):
 		cat_node.call_deferred("_play_click_feedback")
-	cat_clicked.emit(best_cat)
+	var cid := str(best_cat.id) if best_cat != null else ""
+	cat_clicked.emit(cid, screen_pos)
 	return true
 
 # 横版花园相机：按真实视口尺寸算缩放，让世界高度恰好填满可视高度（消除上下黑边）；
