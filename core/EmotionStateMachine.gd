@@ -1,172 +1,154 @@
 extends Node
 
-# Emotion state machine for cats.
-# 5 emotions: idle (default), happy (30min post-interaction),
-# sleepy (schedule), curious (10min), annoyed (>=4 unique interaction
-# types within a sliding 1h window).
-# Static API; persistence is independent (user://emotion.cfg).
+signal state_changed(cat_id: String, old_state: int, new_state: int)
+signal annoyed_entered(cat_id: String)
+signal annoyed_exited(cat_id: String)
 
-const SAVE_PATH := "user://emotion.cfg"
-const WINDOW_SECONDS := 3600.0
-const ANNOYED_THRESHOLD := 4
+enum EmotionState { IDLE, COUNTING, ANNOYED, RECOVERY }
 
-static var _emotions := {}        # cat_id -> emotion String
-static var _starts := {}          # cat_id -> emotion start (virtual seconds)
-static var _history := {}         # cat_id -> Array of {time, type}
-static var _affection := {}       # cat_id -> int
-static var _schedule_override := ""
-static var _clock_offset := 0.0   # virtual clock shift
-static var _loaded := false
-static var _rng := RandomNumberGenerator.new()
+const INTERACTION_THRESHOLD := 5
+const COUNTING_WINDOW_SEC := 3600.0
+const ANNOYED_DURATION_SEC := 600.0
+
+static var _cat_states: Dictionary = {}
+
+
+func _ready() -> void:
+	reset_all()
 
 
 static func _now() -> float:
-	return Time.get_unix_time_from_system() + _clock_offset
+	return Time.get_unix_time_from_system()
 
 
-static func _ensure_loaded() -> void:
-	if _loaded:
+static func _default_state() -> Dictionary:
+	return {
+		"state": EmotionState.IDLE,
+		"count": 0,
+		"window_start": 0.0,
+		"annoyed_end": 0.0,
+	}
+
+
+static func _get_node() -> Node:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return null
+	return tree.root.get_node_or_null("/root/EmotionStateMachine")
+
+
+static func _emit_state_changed(cat_id: String, old_state: int, new_state: int) -> void:
+	if old_state == new_state:
 		return
-	_loaded = true
-	_rng.randomize()
-	var cfg := ConfigFile.new()
-	if cfg.load(SAVE_PATH) == OK:
-		_emotions = cfg.get_value("state", "emotions", {})
-		_starts = cfg.get_value("state", "starts", {})
-		_history = cfg.get_value("state", "history", {})
-		_affection = cfg.get_value("state", "affection", {})
-		_schedule_override = cfg.get_value("state", "schedule", "")
+	var node := _get_node()
+	if node == null:
+		return
+	node.state_changed.emit(cat_id, old_state, new_state)
+	if new_state == EmotionState.ANNOYED:
+		node.annoyed_entered.emit(cat_id)
+	elif old_state == EmotionState.ANNOYED:
+		node.annoyed_exited.emit(cat_id)
 
 
-static func _save() -> void:
-	var cfg := ConfigFile.new()
-	cfg.set_value("state", "emotions", _emotions)
-	cfg.set_value("state", "starts", _starts)
-	cfg.set_value("state", "history", _history)
-	cfg.set_value("state", "affection", _affection)
-	cfg.set_value("state", "schedule", _schedule_override)
-	cfg.save(SAVE_PATH)
+static func _set_state(cat_id: String, data: Dictionary, new_state: int) -> void:
+	var old_state := int(data.get("state", EmotionState.IDLE))
+	data["state"] = new_state
+	_cat_states[cat_id] = data
+	_emit_state_changed(cat_id, old_state, new_state)
 
 
-static func _ensure(cat_id: String) -> void:
-	_ensure_loaded()
-	if not _emotions.has(cat_id):
-		_history[cat_id] = []
-		if not _affection.has(cat_id):
-			_affection[cat_id] = 0
-		if _schedule_override == "sleep":
-			_emotions[cat_id] = "sleepy"
+static func _expire_if_needed(cat_id: String, now: float = -1.0) -> void:
+	if not _cat_states.has(cat_id):
+		return
+	if now < 0.0:
+		now = _now()
+	var data: Dictionary = _cat_states[cat_id]
+	var state := int(data.get("state", EmotionState.IDLE))
+	if state == EmotionState.COUNTING:
+		var window_start := float(data.get("window_start", now))
+		if now - window_start >= COUNTING_WINDOW_SEC:
+			_cat_states.erase(cat_id)
+			_emit_state_changed(cat_id, EmotionState.COUNTING, EmotionState.IDLE)
+	elif state == EmotionState.ANNOYED:
+		var annoyed_end := float(data.get("annoyed_end", 0.0))
+		if now >= annoyed_end:
+			_cat_states.erase(cat_id)
+			_emit_state_changed(cat_id, EmotionState.ANNOYED, EmotionState.IDLE)
+
+
+static func register_interaction(cat_id: String) -> bool:
+	var now := _now()
+	var data: Dictionary = _cat_states.get(cat_id, _default_state())
+	var state := int(data.get("state", EmotionState.IDLE))
+	if state == EmotionState.ANNOYED:
+		if now >= float(data.get("annoyed_end", 0.0)):
+			_cat_states.erase(cat_id)
+			_emit_state_changed(cat_id, EmotionState.ANNOYED, EmotionState.IDLE)
+			data = _default_state()
+			state = EmotionState.IDLE
 		else:
-			_emotions[cat_id] = "idle"
-		_starts[cat_id] = _now()
+			return false
+	if state == EmotionState.IDLE:
+		data["count"] = 1
+		data["window_start"] = now
+		data["annoyed_end"] = 0.0
+		_set_state(cat_id, data, EmotionState.COUNTING)
+		return true
+	if state == EmotionState.COUNTING:
+		var window_start := float(data.get("window_start", now))
+		if now - window_start >= COUNTING_WINDOW_SEC:
+			data["count"] = 1
+			data["window_start"] = now
+			data["annoyed_end"] = 0.0
+			_cat_states[cat_id] = data
+			return true
+		data["count"] = int(data.get("count", 0)) + 1
+		if int(data["count"]) >= INTERACTION_THRESHOLD:
+			data["annoyed_end"] = now + ANNOYED_DURATION_SEC
+			_set_state(cat_id, data, EmotionState.ANNOYED)
+			return true
+		_cat_states[cat_id] = data
+		return true
+	return true
 
 
-static func _set_emotion(cat_id: String, emotion: String) -> void:
-	_emotions[cat_id] = emotion
-	_starts[cat_id] = _now()
-	_save()
+static func get_state(cat_id: String) -> EmotionState:
+	_expire_if_needed(cat_id)
+	var data: Dictionary = _cat_states.get(cat_id, _default_state())
+	return data.get("state", EmotionState.IDLE)
 
 
-static func _prune(cat_id: String) -> void:
-	if not _history.has(cat_id):
-		return
-	var cutoff := _now() - WINDOW_SECONDS
-	var kept := []
-	for h in _history[cat_id]:
-		if float(h["time"]) >= cutoff:
-			kept.append(h)
-	_history[cat_id] = kept
-
-
-static func _unique_type_count(cat_id: String) -> int:
-	if not _history.has(cat_id):
-		return 0
-	var seen := {}
-	for h in _history[cat_id]:
-		seen[h["type"]] = true
-	return seen.size()
-
-
-static func reset_all() -> void:
-	_loaded = true
-	_emotions = {}
-	_starts = {}
-	_history = {}
-	_affection = {}
-	_schedule_override = ""
-	_clock_offset = 0.0
-	_rng.randomize()
-	_save()
-
-
-static func get_emotion(cat_id: String) -> String:
-	_ensure(cat_id)
-	_prune(cat_id)
-	var e: String = _emotions[cat_id]
-	if e == "happy" and is_expired(cat_id, "happy", 30.0):
-		_set_emotion(cat_id, "idle")
-		e = "idle"
-	elif e == "curious" and is_expired(cat_id, "curious", 10.0):
-		_set_emotion(cat_id, "idle")
-		e = "idle"
-	elif e == "annoyed" and is_expired(cat_id, "annoyed", 60.0):
-		_set_emotion(cat_id, "idle")
-		e = "idle"
-	return e
-
-
-static func record_interaction(cat_id: String, type: String) -> void:
-	_ensure(cat_id)
-	_history[cat_id].append({"time": _now(), "type": type})
-	_prune(cat_id)
-	if _unique_type_count(cat_id) >= ANNOYED_THRESHOLD:
-		_set_emotion(cat_id, "annoyed")
-	else:
-		_set_emotion(cat_id, "happy")
-
-
-static func is_expired(cat_id: String, emotion: String, minutes: float) -> bool:
-	_ensure(cat_id)
-	var elapsed := _now() - float(_starts.get(cat_id, _now()))
-	return elapsed >= minutes * 60.0
-
-
-static func _override_elapsed(cat_id: String, seconds: float) -> void:
-	_ensure(cat_id)
-	_starts[cat_id] = _now() - seconds
-	_save()
+static func get_interaction_count(cat_id: String) -> int:
+	_expire_if_needed(cat_id)
+	var data: Dictionary = _cat_states.get(cat_id, _default_state())
+	return int(data.get("count", 0))
 
 
 static func is_annoyed(cat_id: String) -> bool:
-	return get_emotion(cat_id) == "annoyed"
+	return get_state(cat_id) == EmotionState.ANNOYED
 
 
-static func trigger_curious(cat_id: String, reason: String) -> void:
-	_ensure(cat_id)
-	_set_emotion(cat_id, "curious")
+static func reset_cat(cat_id: String) -> void:
+	if not _cat_states.has(cat_id):
+		return
+	var old_state := int(_cat_states[cat_id].get("state", EmotionState.IDLE))
+	_cat_states.erase(cat_id)
+	_emit_state_changed(cat_id, old_state, EmotionState.IDLE)
 
 
-static func set_schedule_override(state: String) -> void:
-	_ensure_loaded()
-	_schedule_override = state
-	for cat_id in _emotions:
-		if _emotions[cat_id] == "idle" and state == "sleep":
-			_emotions[cat_id] = "sleepy"
-			_starts[cat_id] = _now()
-		elif _emotions[cat_id] == "sleepy" and state != "sleep":
-			_emotions[cat_id] = "idle"
-			_starts[cat_id] = _now()
-	_save()
+static func reset_all() -> void:
+	_cat_states.clear()
 
 
-static func wake_up(cat_id: String) -> void:
-	_ensure(cat_id)
-	if _emotions[cat_id] == "sleepy":
-		_set_emotion(cat_id, "idle")
-		_affection[cat_id] = int(_affection.get(cat_id, 0)) + 1
-		_save()
+static func get_emotion(cat_id: String) -> String:
+	if get_state(cat_id) == EmotionState.ANNOYED:
+		return "annoyed"
+	return "idle"
 
 
-static func _advance_window(seconds: float) -> void:
-	_ensure_loaded()
-	_clock_offset += seconds
+static func is_sleeping(cat_id: String) -> bool:
+	return false
+
+
+static func record_interaction(cat_id: String, type: String = "") -> void:
+	register_interaction(cat_id)
