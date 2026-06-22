@@ -21,6 +21,7 @@ var _rng := RandomNumberGenerator.new()
 func _ready() -> void:
 	_rng.randomize()
 	_reset_counts()
+	_load()
 	_normalize_state()
 	_new_breed_unlocked = false
 
@@ -57,17 +58,16 @@ func record_hatch(breed: String) -> void:
 	_ensure_breed_keys(normalized_breed)
 	_hatch_counts[normalized_breed] = get_hatch_count(normalized_breed) + 1
 
-	var was_pity: bool = _last_pity_breed != ""
+	# 保底：被排除的品种归零，被选中的品种+1，其余不变
 	for known_breed in BREED_ORDER:
-		if was_pity and known_breed == _last_pity_breed:
+		if _last_pity_breed != "" and known_breed == _last_pity_breed:
 			_pity_counters[known_breed] = 0
-		elif known_breed == normalized_breed:
+		elif known_breed == normalized_breed and _last_pity_breed != normalized_breed:
 			_pity_counters[known_breed] = get_pity_counter(known_breed) + 1
-		else:
-			_pity_counters[known_breed] = 0
 	_last_pity_breed = ""
 
 	_update_unlocks()
+	_save()
 
 
 func get_hatch_count(breed: String) -> int:
@@ -80,6 +80,29 @@ func get_pity_counter(breed: String) -> int:
 
 func is_new_breed_unlocked() -> bool:
 	return _new_breed_unlocked
+
+
+func _save() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("breed", "unlocked", _unlocked.duplicate())
+	cfg.set_value("breed", "hatch_counts", _hatch_counts.duplicate(true))
+	cfg.set_value("breed", "pity_counters", _pity_counters.duplicate(true))
+	cfg.save("user://breed_unlock.cfg")
+
+
+func _load() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load("user://breed_unlock.cfg") != OK:
+		return
+	_unlocked = []
+	for breed in Array(cfg.get_value("breed", "unlocked", [CatData.BREED_ORANGE])):
+		_unlocked.append(_normalize_breed(String(breed)))
+	var hc: Dictionary = Dictionary(cfg.get_value("breed", "hatch_counts", {}))
+	for breed in hc.keys():
+		_hatch_counts[_normalize_breed(String(breed))] = max(int(hc[breed]), 0)
+	var pc: Dictionary = Dictionary(cfg.get_value("breed", "pity_counters", {}))
+	for breed in pc.keys():
+		_pity_counters[_normalize_breed(String(breed))] = max(int(pc[breed]), 0)
 
 
 func get_save_data() -> Dictionary:
