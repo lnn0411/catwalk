@@ -209,6 +209,36 @@ func get_cats() -> Array:
 func get_hatched_count() -> int:
 	return hatched_count
 
+# 送养移除猫咪（T4-11）
+# 返回 true 表示移除成功
+func remove_cat(cat_id: String) -> bool:
+	var idx := -1
+	for i in range(cats.size()):
+		var c = cats[i]
+		var cid = c.id if c is CatData else (c.get("id", "") if c is Dictionary else "")
+		if cid == cat_id:
+			idx = i
+			break
+	if idx == -1:
+		return false
+	# 不能移除最后一只猫
+	if cats.size() <= 1:
+		return false
+	cats.remove_at(idx)
+	# 如果移除了随行猫，自动切换到另一只
+	if current_companion_cat_id == cat_id and cats.size() > 0:
+		var new_companion = cats[0]
+		current_companion_cat_id = new_companion.id if new_companion is CatData else (new_companion.get("id", "") if new_companion is Dictionary else "")
+	_update_unlocks()
+	return true
+
+func get_cat_by_id(cat_id: String) -> Variant:
+	for c in cats:
+		var cid = c.id if c is CatData else (c.get("id", "") if c is Dictionary else "")
+		if cid == cat_id:
+			return c
+	return null
+
 func get_save_data() -> Dictionary:
 	return {
 		"slots": slots.duplicate(true),

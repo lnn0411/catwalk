@@ -5,6 +5,7 @@ const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const CARD_COLOR := Color("#3C2A1C")
 const TEXT_COLOR := Color("#FFFFFF")
 const DISABLED_ALPHA := 0.4
+const CatData := preload("res://core/CatData.gd")
 
 var cat_id: String = ""
 var cat_data
@@ -24,6 +25,7 @@ var _relinquish_button: Button
 @onready var _countdown_label: Label = %CountdownLabel
 @onready var _return_time_label: Label = %ReturnTimeLabel
 @onready var _status_label: Label = %StatusLabel
+@onready var _adopt_button: Button = %AdoptButton
 
 var _cooldown_timer: Timer
 var _explore_countdown_timer: Timer
@@ -44,6 +46,7 @@ func _ready() -> void:
 	_relinquish_button = Button.new()
 	_relinquish_button.text = "💕 送养"
 	_relinquish_button.pressed.connect(_on_relinquish_pressed)
+	_style_button(_relinquish_button)
 	if _explore_button and _explore_button.get_parent():
 		_explore_button.get_parent().add_child(_relinquish_button)
 	_resolve_interaction_system()
@@ -115,6 +118,12 @@ func refresh_interaction_buttons() -> void:
 	if Time.get_unix_time_from_system() >= _feedback_until:
 		_status_label.text = status_text
 	_update_cooldown_timer(any_cooldown)
+	# 送养按钮状态：最后一只或探索中禁用
+	if _relinquish_button:
+		var is_last := HatchEngine and HatchEngine.get_cats().size() <= 1
+		var is_exploring := cat_id != "" and ExploreEngine and ExploreEngine.is_exploring(cat_id)
+		_set_button_disabled(_relinquish_button, is_last or is_exploring)
+		_relinquish_button.text = "💕 送养" if not is_last else "最后一只"
 
 
 func _on_feed_pressed() -> void:
@@ -139,23 +148,63 @@ func _on_play_pressed() -> void:
 
 
 func _on_relinquish_pressed() -> void:
-	var cat_id := _get_cat_property("id", "")
-	var cat_data = _get_full_cat_data()
-	if cat_id == "":
+	var cid := _get_cat_property("id", "")
+	if cid == "":
 		return
-	var rs := get_node_or_null("/root/RelinquishSystem")
-	if rs == null:
-		return
+	# 检查是否为最后一只猫
 	if HatchEngine and HatchEngine.get_cats().size() <= 1:
 		_show_feedback("至少要留一只猫陪着你哦～")
 		return
-	var uuid := "rel_%d_%s" % [Time.get_unix_time_from_system(), cat_id]
-	var result = rs.relinquish_cat(cat_data, uuid)
-	if result.get("love_petals", 0) > 0 or result.get("gold_coins", 0) > 0:
-		_show_feedback("送养成功 +%d花瓣 %d金币" % [result.get("love_petals",0), result.get("gold_coins",0)])
-		_close()
-	else:
-		_show_feedback(result.get("reason", "操作被阻止"))
+	# 探索中不能送养
+	if ExploreEngine and ExploreEngine.is_exploring(cid):
+		_show_feedback("探索中，不能送养")
+		return
+	# 显示确认弹窗
+	_show_relinquish_confirm_dialog()
+
+
+func _show_relinquish_confirm_dialog() -> void:
+	var packed := load("res://scenes/ui/relinquish_confirm_dialog.tscn")
+	var dialog = packed.instantiate()
+	var c_data := _get_full_cat_data()
+	dialog.setup(c_data)
+	dialog.confirmed.connect(func() -> void:
+		_on_relinquish_confirmed(dialog)
+	)
+	dialog.canceled.connect(func() -> void:
+		dialog.queue_free()
+	)
+	_add_overlay(dialog)
+
+
+func _on_relinquish_confirmed(dialog: Node) -> void:
+	if dialog != null:
+		dialog.queue_free()
+	var cid := _get_cat_property("id", "")
+	if cid == "":
+		return
+	var c_data := _get_full_cat_data()
+	var event_id := "%s_rel_%d" % [cid, Time.get_unix_time_from_system()]
+	var result = RelinquishSystem.relinquish_cat(c_data, event_id)
+	if result.get("blocked", false):
+		_show_feedback(result.get("reason", "送养失败"))
+		return
+	# 先移除猫咪，再发币（防止 remove 失败后金币已发出）
+	if not HatchEngine.remove_cat(cid):
+		_show_feedback("送养失败")
+		return
+	# 发放金币（RelinquishSystem 已发花瓣，金币由这里发）
+	var gold: int = int(result.get("gold_coins", 0))
+	if gold > 0 and CurrencyManager:
+		CurrencyManager.add_gold(gold, "relinquish")
+	# 存档
+	if SaveManager:
+		SaveManager.save_all()
+	# 通知 EventBus
+	if EventBus:
+		EventBus.emit_relinquish_completed(cid, result.get("love_petals", 0), gold)
+	_show_feedback("💕 %s 已找到新家" % _get_cat_display_name())
+	_play_close_animation()
 
 func _on_explore_button_pressed() -> void:
 	if _explore_button == null or _explore_button.disabled:

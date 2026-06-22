@@ -60,7 +60,6 @@ func relinquish_cat(cat_data: Dictionary, relinquish_event_id: String) -> Dictio
 	if CurrencyManager:
 		if allowed > 0:
 			CurrencyManager.add_petals(allowed, "relinquish")
-		CurrencyManager.add_gold(100, "relinquish_gold")
 
 	return { "love_petals": allowed, "gold_coins": 100, "blocked": false, "reason": "" }
 
