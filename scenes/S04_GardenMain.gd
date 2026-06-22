@@ -448,6 +448,27 @@ func _build_hud() -> void:
 		_hatch_row.add_child(slot_view)
 		_slot_views.append(slot_view)
 
+	# 「爱意工坊」入口按钮 — 工坊态时显示
+	var workshop_btn := Button.new()
+	workshop_btn.name = "WorkshopBtn"
+	workshop_btn.text = "🌸 爱意工坊"
+	workshop_btn.flat = true
+	workshop_btn.anchor_left = 0.0
+	workshop_btn.anchor_right = 0.0
+	workshop_btn.anchor_top = 1.0
+	workshop_btn.anchor_bottom = 1.0
+	workshop_btn.offset_left = 152.0
+	workshop_btn.offset_right = 310.0
+	workshop_btn.offset_top = -116.0
+	workshop_btn.offset_bottom = -76.0
+	workshop_btn.add_theme_font_size_override("font_size", 15)
+	workshop_btn.visible = false
+	root.add_child(workshop_btn)
+	if workshop_btn.pressed.is_connected(_on_workshop_button):
+		pass
+	else:
+		workshop_btn.pressed.connect(_on_workshop_button)
+
 	# 「随行猫」按钮 — 底部栏左侧，常驻可见
 	var companion_btn := Button.new()
 	companion_btn.name = "CompanionBtn"
@@ -545,6 +566,11 @@ func _connect_data() -> void:
 			HatchEngine.hatch_progress.connect(_on_hatch_progress)
 		if not HatchEngine.hatch_complete.is_connected(_on_hatch_complete):
 			HatchEngine.hatch_complete.connect(_on_hatch_complete)
+	if EventBus:
+		if not EventBus.workshop_activated.is_connected(_on_workshop_activated):
+			EventBus.workshop_activated.connect(_on_workshop_activated)
+		if not EventBus.hatch_activated.is_connected(_on_hatched_activated):
+			EventBus.hatch_activated.connect(_on_hatched_activated)
 
 func _refresh_all() -> void:
 	_refresh_steps()
@@ -686,6 +712,21 @@ func _on_companion_pressed() -> void:
 	if TutorialManager and TutorialManager.is_running():
 		return
 	UIManager.push("res://scenes/S07_CarryCatSelect.tscn")
+
+func _on_workshop_button() -> void:
+	if TutorialManager and TutorialManager.is_running():
+		return
+	UIManager.push("res://scenes/WorkshopPage.gd")
+
+func _on_workshop_activated() -> void:
+	var btn := get_node_or_null("WorkshopBtn")
+	if btn != null:
+		btn.visible = true
+
+func _on_hatched_activated() -> void:
+	var btn := get_node_or_null("WorkshopBtn")
+	if btn != null:
+		btn.visible = false
 
 func _on_steps_label_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
