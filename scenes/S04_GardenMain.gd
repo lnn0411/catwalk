@@ -3,7 +3,6 @@ extends "res://ui/UIPage.gd"
 const GardenBackground := preload("res://scenes/GardenBackground.gd")
 const BottomNavScene := preload("res://ui/BottomNav.tscn")
 const BottomNav := preload("res://ui/BottomNav.gd")
-const CatCard := preload("res://scenes/ui/CatCard.gd")
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const HUD_HEIGHT := 0.0  # HUD关闭，图标由top_row直接挂root不受裁切
@@ -56,7 +55,6 @@ var _stats_visible := false
 var _hatch_navigating := false
 var _sub_state: int = SubState.IDLE
 var _interact_reset_timer: Timer
-var _cat_card: Control
 
 func _ready() -> void:
 	super()
@@ -108,31 +106,6 @@ func on_enter(_data: Dictionary = {}) -> void:
 			var cat_node = CatSpawner.get_cat_node(focus_cat)
 			if cat_node != null and cat_node.has_method("_play_click_feedback"):
 				cat_node.call_deferred("_play_click_feedback")
-	if not cat_clicked.is_connected(_on_cat_clicked):
-		cat_clicked.connect(_on_cat_clicked)
-
-func _on_cat_clicked(cat_id: String, screen_position: Vector2) -> void:
-	if _cat_card != null and is_instance_valid(_cat_card):
-		_cat_card.queue_free()
-
-	var card := CatCard.new()
-	_cat_card = card
-	add_child(card)
-	card.set_data(_get_cat_card_data(cat_id), screen_position)
-
-func _get_cat_card_data(cat_id: String) -> Dictionary:
-	if HatchEngine != null:
-		for cat_data in HatchEngine.get_cats():
-			var id := ""
-			if cat_data is Dictionary:
-				id = String(cat_data.get("id", ""))
-			elif cat_data != null:
-				id = String(cat_data.get("id"))
-			if id == cat_id:
-				if cat_data is Dictionary:
-					return cat_data.duplicate(true)
-				return CatData.serialize(cat_data)
-	return {"id": cat_id, "display_name": cat_id}
 
 func _exit_tree() -> void:
 	if CatSpawner:
