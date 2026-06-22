@@ -21,6 +21,8 @@ const WORLD_HEIGHT := 1536.0
 # 互动子状态（喂食/抚摸/玩耍/拍照），对应测试 C6-C9
 enum SubState { IDLE, INTERACT_FEED, INTERACT_PET, INTERACT_PLAY, INTERACT_PHOTO }
 
+signal cat_clicked(cat_data)
+
 var garden_layer: Node2D
 var cat_container: Node2D
 var _camera: Camera2D
@@ -39,6 +41,10 @@ var _stats_visible := false
 var _hatch_navigating := false
 var _sub_state: int = SubState.IDLE
 var _interact_reset_timer: Timer
+var _garden_zoom_level := 0
+var _garden_zoom_levels: Array[float] = [1.0, 2.0, 3.5]
+var _pinch_zoom_threshold := 0.08
+var _cat_hit_radius := 92.0
 
 func _ready() -> void:
 	super()
@@ -90,6 +96,10 @@ func on_enter(_data: Dictionary = {}) -> void:
 			var cat_node = CatSpawner.get_cat_node(focus_cat)
 			if cat_node != null and cat_node.has_method("_play_click_feedback"):
 				cat_node.call_deferred("_play_click_feedback")
+	if focus_cat != null:
+		call_deferred("_reset_garden_zoom_after_focus")
+	else:
+		_reset_garden_zoom()
 
 func _exit_tree() -> void:
 	if CatSpawner:
@@ -658,8 +668,20 @@ func _input(event: InputEvent) -> void:
 	if TutorialManager and TutorialManager.is_blocking_garden_input():
 		_dragging = false
 		return
+	if event is InputEventMagnifyGesture:
+		if _is_in_garden(event.position):
+			_handle_magnify_gesture(event)
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed and _is_in_garden(event.position):
+			get_viewport().set_input_as_handled()
+			if event.double_click:
+				_cycle_garden_zoom(event.position)
+				_dragging = false
+				return
+			if _garden_zoom_level >= 1 and _emit_cat_click_at(event.position):
+				_dragging = false
+				return
 			_dragging = true
 			_drag_start = event.position
 		else:
@@ -669,12 +691,83 @@ func _input(event: InputEvent) -> void:
 			_dragging = false
 		else:
 			var drag_delta: Vector2 = event.position - _drag_start
-			_camera.position.x -= drag_delta.x / _cam_zoom
+			_camera.position.x -= drag_delta.x / _get_camera_zoom()
 			_clamp_camera_to_world()
 			_drag_start = event.position
 
 func _is_in_garden(pos: Vector2) -> bool:
 	return pos.y >= HUD_HEIGHT and pos.y <= HUD_HEIGHT + GARDEN_HEIGHT
+
+func _handle_magnify_gesture(event: InputEventMagnifyGesture) -> void:
+	if _camera == null:
+		return
+	if event.factor >= 1.0 + _pinch_zoom_threshold:
+		_set_garden_zoom_level(_garden_zoom_level + 1, event.position)
+	elif event.factor <= 1.0 - _pinch_zoom_threshold:
+		_set_garden_zoom_level(_garden_zoom_level - 1, event.position)
+
+func _cycle_garden_zoom(anchor_screen_pos: Vector2) -> void:
+	_set_garden_zoom_level((_garden_zoom_level + 1) % _garden_zoom_levels.size(), anchor_screen_pos)
+
+func _reset_garden_zoom_after_focus() -> void:
+	await get_tree().process_frame
+	_reset_garden_zoom()
+
+func _reset_garden_zoom() -> void:
+	_set_garden_zoom_level(0)
+
+func _set_garden_zoom_level(level: int, anchor_screen_pos: Vector2 = Vector2.ZERO) -> void:
+	if _camera == null or _garden_zoom_levels.is_empty():
+		return
+	var clamped_level: int = clampi(level, 0, _garden_zoom_levels.size() - 1)
+	if clamped_level == _garden_zoom_level and is_equal_approx(_camera.zoom.x, _get_camera_zoom()):
+		return
+	var keep_anchor := anchor_screen_pos != Vector2.ZERO and _is_in_garden(anchor_screen_pos)
+	var before_world := _screen_to_garden_world(anchor_screen_pos) if keep_anchor else Vector2.ZERO
+	_garden_zoom_level = clamped_level
+	var zoom := _get_camera_zoom()
+	_camera.zoom = Vector2(zoom, zoom)
+	if keep_anchor:
+		var after_world := _screen_to_garden_world(anchor_screen_pos)
+		_camera.position.x += before_world.x - after_world.x
+	_clamp_camera_to_world()
+
+func _get_camera_zoom() -> float:
+	if _garden_zoom_levels.is_empty():
+		return _cam_zoom
+	return _cam_zoom * float(_garden_zoom_levels[_garden_zoom_level])
+
+func _screen_to_garden_world(screen_pos: Vector2) -> Vector2:
+	if _camera == null:
+		return Vector2.ZERO
+	var vp := _camera.get_viewport()
+	var view := Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
+	if vp != null and vp.get_visible_rect().size.y > 0.0:
+		view = vp.get_visible_rect().size
+	var zoom := maxf(_get_camera_zoom(), 0.0001)
+	return _camera.position + (screen_pos - view * 0.5) / zoom
+
+func _emit_cat_click_at(screen_pos: Vector2) -> bool:
+	if HatchEngine == null or CatSpawner == null:
+		return false
+	var world_pos := _screen_to_garden_world(screen_pos)
+	var best_cat = null
+	var best_dist := INF
+	for cat_data in HatchEngine.get_cats():
+		var cat_world_pos: Vector2 = CatSpawner.get_cat_world_position(cat_data)
+		if cat_world_pos == Vector2.ZERO:
+			continue
+		var dist := world_pos.distance_to(cat_world_pos)
+		if dist <= _cat_hit_radius and dist < best_dist:
+			best_dist = dist
+			best_cat = cat_data
+	if best_cat == null:
+		return false
+	var cat_node = CatSpawner.get_cat_node(best_cat)
+	if cat_node != null and cat_node.has_method("_play_click_feedback"):
+		cat_node.call_deferred("_play_click_feedback")
+	cat_clicked.emit(best_cat)
+	return true
 
 # 横版花园相机：按真实视口尺寸算缩放，让世界高度恰好填满可视高度（消除上下黑边）；
 # 世界比屏幕宽 → 只支持左右滚动，竖直居中锁定。aspect=expand 下视口尺寸随设备变化，
@@ -698,9 +791,10 @@ func _setup_camera() -> void:
 		_cam_zoom = view.y / WORLD_HEIGHT
 	else:
 		_cam_zoom = CONTENT_SCALE
-	_camera.zoom = Vector2(_cam_zoom, _cam_zoom)
+	var zoom := _get_camera_zoom()
+	_camera.zoom = Vector2(zoom, zoom)
 	# 初始显示花园左半部分（从 x=0 开始）
-	var half_visible_w: float = (view.x * 0.5) / max(_cam_zoom, 0.0001)
+	var half_visible_w: float = (view.x * 0.5) / max(zoom, 0.0001)
 	_camera.position = Vector2(half_visible_w, WORLD_HEIGHT * 0.5)
 	_clamp_camera_to_world()
 
@@ -713,7 +807,7 @@ func _clamp_camera_to_world() -> void:
 	if vp != null and vp.get_visible_rect().size.y > 0.0:
 		view = vp.get_visible_rect().size
 		
-	var half_w: float = (view.x * 0.5) / max(_cam_zoom, 0.0001)
+	var half_w: float = (view.x * 0.5) / max(_get_camera_zoom(), 0.0001)
 	var min_x: float = half_w
 	var max_x: float = WORLD_WIDTH - half_w
 	if min_x > max_x:
