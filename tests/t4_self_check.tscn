@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://t4selfcheck"]
+
+[ext_resource type="Script" path="res://tests/t4_self_check.gd" id="1_t4sc"]
+
+[node name="T4SelfCheck" type="Node"]
+script = ExtResource("1_t4sc")

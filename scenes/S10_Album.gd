@@ -254,6 +254,8 @@ func _rarity_color_by_index(i: int) -> Color:
 		2: return Color(0.61, 0.35, 0.71)
 		3: return Color(0.95, 0.77, 0.06)
 	_: return Color(0.69, 0.69, 0.69)
+
+func _cat_level(cat) -> int:
 	return int(cat.level) if cat != null else 1
 
 func _cat_friendship(cat) -> int:

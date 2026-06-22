@@ -302,7 +302,7 @@ func _on_buy_pressed(pid: String) -> void:
 
 	# 弹出确认窗
 	_is_purchasing = true
-	var dialog := load("res://scenes/ui/shop_confirm_dialog.tscn").instantiate()
+	var dialog = load("res://scenes/ui/shop_confirm_dialog.tscn").instantiate()
 	dialog.setup(p, func(): _execute_purchase(p), func(): _is_purchasing = false)
 	add_child(dialog)
 
