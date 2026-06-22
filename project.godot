@@ -45,6 +45,7 @@ SigninSystem="*res://core/SigninSystem.gd"
 AchievementSystem="*res://core/AchievementSystem.gd"
 TutorialManager="*res://core/TutorialManager.gd"
 WeatherTimeManager="*res://core/WeatherTimeManager.gd"
+CatScreenManager="*res://autoload/cat_screen_manager.gd"
 
 [display]
 

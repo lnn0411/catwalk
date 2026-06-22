@@ -217,11 +217,23 @@ func _restore_cats() -> void:
 	if HatchEngine == null:
 		return
 
-	# 恢复的猫散布全花园（它们一直住在这里）；仅第一只保底出生在镜头内，
-	# 避免"只有一只猫的新手重启后首屏空空"被误认为 BUG。
+	# T4-14b: 用 CatScreenManager 筛选可见猫
+	var visible_ids: Array = []
+	if CatScreenManager:
+		visible_ids = CatScreenManager.get_visible_cats()
+
 	var first := true
 	for cat_data in HatchEngine.get_cats():
-		var was_new: bool = not spawned_cat_ids.has(_get_cat_id(cat_data))
+		var cat_id := _get_cat_id(cat_data)
+		if visible_ids.size() > 0 and not visible_ids.has(cat_id):
+			# 不在可见列表 → 移除已存在的节点
+			if spawned_cat_ids.has(cat_id):
+				var old = spawned_cat_ids[cat_id]
+				if is_instance_valid(old):
+					old.queue_free()
+				spawned_cat_ids.erase(cat_id)
+			continue
+		var was_new: bool = not spawned_cat_ids.has(cat_id)
 		instance_cat(cat_data, false, first)
 		if was_new:
 			first = false
