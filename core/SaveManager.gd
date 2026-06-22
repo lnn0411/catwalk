@@ -19,6 +19,7 @@ func save_all() -> void:
 	_write_achievements()
 	_write_relinquish()
 	_write_workshop()
+	_write_cat_screen()
 	_config.save(SAVE_PATH)
 
 func load_and_apply() -> void:
@@ -48,6 +49,9 @@ func load_and_apply() -> void:
 	if ms and ms.has_method("apply_save"):
 		ms.apply_save(_read_relinquish())
 	AchievementSystem.apply_save(_read_achievements())
+	var cs := get_node_or_null("/root/CatScreenManager")
+	if cs and cs.has_method("apply_save"):
+		cs.apply_save(_read_cat_screen())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
 	# 避免冷启动时"应用关闭期间累积的步数"在首帧丢失。
@@ -65,6 +69,9 @@ func reset_all() -> void:
 	HatchEngine.apply_save({})
 	CurrencyManager.apply_save({})
 	AchievementSystem.reset_all()
+	var cs2 := get_node_or_null("/root/CatScreenManager")
+	if cs2 and cs2.has_method("apply_save"):
+		cs2.apply_save({})
 	_is_applying = false
 	save_all()
 
@@ -326,3 +333,33 @@ func _read_workshop() -> Dictionary:
 
 func _write_workshop() -> void:
 	pass
+
+# ── CatScreenManager section ──
+
+func _read_cat_screen() -> Dictionary:
+	return {
+		"max_cats": int(_config.get_value("cat_screen", "max_cats", 6)),
+		"max_rotating": int(_config.get_value("cat_screen", "max_rotating", 2)),
+		"pinned_cats": Array(_config.get_value("cat_screen", "pinned_cats", [])),
+		"rotating_cats": Array(_config.get_value("cat_screen", "rotating_cats", [])),
+		"last_rotation_time": int(_config.get_value("cat_screen", "last_rotation_time", 0)),
+		"next_rotation_time": int(_config.get_value("cat_screen", "next_rotation_time", 0)),
+		"cat_debut_times": Dictionary(_config.get_value("cat_screen", "cat_debut_times", {})),
+		"cat_cooldowns": Dictionary(_config.get_value("cat_screen", "cat_cooldowns", {})),
+		"cat_weight_bonus": Dictionary(_config.get_value("cat_screen", "cat_weight_bonus", {})),
+	}
+
+func _write_cat_screen() -> void:
+	var cs := get_node_or_null("/root/CatScreenManager")
+	if cs == null or not cs.has_method("get_save_data"):
+		return
+	var data: Dictionary = cs.get_save_data()
+	_config.set_value("cat_screen", "max_cats", int(data.get("max_cats", 6)))
+	_config.set_value("cat_screen", "max_rotating", int(data.get("max_rotating", 2)))
+	_config.set_value("cat_screen", "pinned_cats", Array(data.get("pinned_cats", [])))
+	_config.set_value("cat_screen", "rotating_cats", Array(data.get("rotating_cats", [])))
+	_config.set_value("cat_screen", "last_rotation_time", int(data.get("last_rotation_time", 0)))
+	_config.set_value("cat_screen", "next_rotation_time", int(data.get("next_rotation_time", 0)))
+	_config.set_value("cat_screen", "cat_debut_times", Dictionary(data.get("cat_debut_times", {})))
+	_config.set_value("cat_screen", "cat_cooldowns", Dictionary(data.get("cat_cooldowns", {})))
+	_config.set_value("cat_screen", "cat_weight_bonus", Dictionary(data.get("cat_weight_bonus", {})))

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://testcatscrman"]
+
+[ext_resource type="Script" path="res://tests/test_cat_screen_manager.gd" id="1_testcatscrman"]
+
+[node name="TestRunner" type="Node"]
+script = ExtResource("1_testcatscrman")
