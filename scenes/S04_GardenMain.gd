@@ -51,6 +51,11 @@ var _slot_views: Array[HatchSlotView] = []
 var _empty_label: Label
 var _debug_panel: PanelContainer
 var _steps_hold_timer: Timer
+var _weather_overlay: ColorRect
+var _weather_material: ShaderMaterial
+var _rain_particles: CPUParticles2D
+var _snow_particles: CPUParticles2D
+var _weather_tween: Tween
 var _stats_visible := false
 var _hatch_navigating := false
 var _sub_state: int = SubState.IDLE
@@ -156,11 +161,118 @@ func _build_garden_layer() -> void:
 	garden_display.anchor_bottom = 1.0
 	garden_display.offset_top = HUD_HEIGHT
 	add_child(garden_display)
+	_setup_weather_layer()
 
 	if CatSpawner:
 		CatSpawner.set_cat_container(cat_container)
 		if not CatSpawner.cat_count_changed.is_connected(_on_cat_count_changed):
 			CatSpawner.cat_count_changed.connect(_on_cat_count_changed)
+
+func _setup_weather_layer() -> void:
+	_weather_overlay = ColorRect.new()
+	_weather_overlay.name = "WeatherOverlay"
+	_weather_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_weather_overlay.color = Color.WHITE
+	_weather_overlay.z_index = 2
+	add_child(_weather_overlay)
+	_weather_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var shader := load("res://shaders/weather_color_grade.gdshader") as Shader
+	if shader != null:
+		_weather_material = ShaderMaterial.new()
+		_weather_material.shader = shader
+		_weather_overlay.material = _weather_material
+
+	_rain_particles = _create_rain_particles()
+	_weather_overlay.add_child(_rain_particles)
+	_snow_particles = _create_snow_particles()
+	_weather_overlay.add_child(_snow_particles)
+
+	if WeatherTimeManager:
+		if not WeatherTimeManager.period_changed.is_connected(_on_weather_period_changed):
+			WeatherTimeManager.period_changed.connect(_on_weather_period_changed)
+		if not WeatherTimeManager.weather_changed.is_connected(_on_weather_changed):
+			WeatherTimeManager.weather_changed.connect(_on_weather_changed)
+		_apply_weather_period(WeatherTimeManager.current_period, true)
+		_apply_weather_particles(WeatherTimeManager.current_weather)
+
+func _create_rain_particles() -> CPUParticles2D:
+	var particles := CPUParticles2D.new()
+	particles.name = "RainParticles"
+	particles.amount = 200
+	particles.lifetime = 1.0
+	particles.preprocess = 1.0
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	particles.emission_rect_extents = Vector2(420.0, 24.0)
+	particles.position = Vector2(360.0, -24.0)
+	particles.direction = Vector2(-0.3, 1.0).normalized()
+	particles.spread = 8.0
+	particles.gravity = Vector2(0.0, 1200.0)
+	particles.initial_velocity_min = 800.0
+	particles.initial_velocity_max = 1000.0
+	particles.scale_amount_min = 1.0
+	particles.scale_amount_max = 1.5
+	particles.texture = load("res://assets/weather/rain_drop.png")
+	particles.emitting = false
+	return particles
+
+func _create_snow_particles() -> CPUParticles2D:
+	var particles := CPUParticles2D.new()
+	particles.name = "SnowParticles"
+	particles.amount = 100
+	particles.lifetime = 4.0
+	particles.preprocess = 4.0
+	particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	particles.emission_rect_extents = Vector2(420.0, 24.0)
+	particles.position = Vector2(360.0, -24.0)
+	particles.direction = Vector2(0.1, 1.0).normalized()
+	particles.spread = 25.0
+	particles.gravity = Vector2(0.0, 50.0)
+	particles.initial_velocity_min = 60.0
+	particles.initial_velocity_max = 120.0
+	particles.scale_amount_min = 0.7
+	particles.scale_amount_max = 1.4
+	particles.texture = load("res://assets/weather/snow_flake.png")
+	particles.emitting = false
+	return particles
+
+func _on_weather_period_changed(period: int) -> void:
+	_apply_weather_period(period)
+
+func _on_weather_changed(weather: int) -> void:
+	_apply_weather_particles(weather)
+
+func _apply_weather_period(period: int, immediate := false) -> void:
+	if _weather_material == null or not WeatherTimeManager:
+		return
+	var tint_color: Color = WeatherTimeManager.get_period_tint_color(period)
+	var tint_strength: float = WeatherTimeManager.get_period_tint_strength(period)
+	if immediate:
+		_weather_material.set_shader_parameter("tint_color", tint_color)
+		_weather_material.set_shader_parameter("tint_strength", tint_strength)
+		return
+	if _weather_tween != null and _weather_tween.is_running():
+		_weather_tween.kill()
+	_weather_tween = create_tween()
+	_weather_tween.set_parallel(true)
+	_weather_tween.tween_method(_set_weather_tint_color, _weather_material.get_shader_parameter("tint_color"), tint_color, 2.0)
+	_weather_tween.tween_method(_set_weather_tint_strength, float(_weather_material.get_shader_parameter("tint_strength")), tint_strength, 2.0)
+
+func _set_weather_tint_color(value: Color) -> void:
+	if _weather_material != null:
+		_weather_material.set_shader_parameter("tint_color", value)
+
+func _set_weather_tint_strength(value: float) -> void:
+	if _weather_material != null:
+		_weather_material.set_shader_parameter("tint_strength", value)
+
+func _apply_weather_particles(weather: int) -> void:
+	if _rain_particles != null:
+		_rain_particles.emitting = weather == WeatherTimeManager.WeatherType.RAIN
+		_rain_particles.visible = _rain_particles.emitting
+	if _snow_particles != null:
+		_snow_particles.emitting = weather == WeatherTimeManager.WeatherType.SNOW
+		_snow_particles.visible = _snow_particles.emitting
 
 func _build_parallax_background() -> void:
 	# 花园背景用整图 garden_master.png（2048×1536，无透明区）。
