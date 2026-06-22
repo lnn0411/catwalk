@@ -485,13 +485,11 @@ func _get_explore_nav_global_rect() -> Rect2:
 	if not _garden_ok():
 		return Rect2()
 	var nav := _find_node_by_name(_garden_page, "BottomNav")
-	if nav != null and ("_buttons" in nav):
-		var tabs: Array = BottomNav.TABS
-		for i in range(tabs.size()):
-			var tab: Dictionary = Dictionary(tabs[i])
-			var icon := String(tab.get("icon", "")).to_lower()
-			var page := String(tab.get("page", "")).to_lower()
-			if icon.find("explore") != -1 or page.find("explore") != -1:
+	if nav != null and ("_buttons" in nav) and nav.has_method("get_target_page"):
+		var tab_count = nav._buttons.size()
+		for i in range(tab_count):
+			var page := String(nav.get_target_page(i)).to_lower()
+			if page.find("explore") != -1:
 				return _get_bottom_nav_global_rect(i)
 		var buttons: Array = nav._buttons
 		if buttons.size() > 3:
