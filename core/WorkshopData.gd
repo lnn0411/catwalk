@@ -1,6 +1,6 @@
 extends Node
 
-class_name WorkshopData
+const CatData := preload("res://core/CatData.gd")
 
 const RARITY_COMMON := CatData.RARITY_COMMON
 const RARITY_RARE := CatData.RARITY_RARE

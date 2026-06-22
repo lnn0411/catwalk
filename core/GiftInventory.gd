@@ -1,8 +1,8 @@
 extends Node
 
-class_name GiftInventory
-
 signal inventory_changed(gift_id: String, count: int)
+
+const CatData := preload("res://core/CatData.gd")
 
 var gifts: Dictionary = {}
 
