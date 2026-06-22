@@ -37,6 +37,11 @@ func start(garden_page: Node) -> void:
 	var save_manager := _save_manager()
 	if save_manager != null and bool(save_manager._config.get_value("tutorial", "has_completed_garden_tutorial", false)):
 		return
+	# 迁移：已有历史孵化数据的用户自动完成引导
+	var hatch_engine := _hatch_engine()
+	if hatch_engine != null and hatch_engine.get_hatched_count() > 0:
+		_complete()
+		return
 	if garden_page == null or not is_instance_valid(garden_page):
 		return
 	var was_running := current_step != Step.OFF and current_step != Step.DONE
