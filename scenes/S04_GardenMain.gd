@@ -65,6 +65,8 @@ func _on_viewport_size_changed() -> void:
 		size = vp_size
 
 func on_enter(_data: Dictionary = {}) -> void:
+	if TutorialManager:
+		TutorialManager.start(self)
 	_hatch_navigating = false
 	# 无条件重申容器归属（set_cat_container 已幂等：在场的猫先登记不会重复，
 	# 漏生成/生成进旧容器的猫会补到当前容器）。
@@ -478,17 +480,25 @@ func _on_hatch_progress(_slot: int, _progress: float) -> void:
 func _on_hatch_complete(_cat_data) -> void:
 	_refresh_slots()
 	_refresh_cat_state()
+	if TutorialManager and TutorialManager.current_step == TutorialManager.Step.HATCH:
+		TutorialManager._on_cat_hatched()
 
 func _on_cat_count_changed(_count: int) -> void:
 	_refresh_cat_state()
 
 func _on_hatch_slot_pressed(_slot_index: int) -> void:
+	if TutorialManager and TutorialManager.is_running():
+		if TutorialManager.current_step != TutorialManager.Step.HATCH:
+			return
+		TutorialManager.notify_hatch_requested()
 	if _hatch_navigating:
 		return
 	_hatch_navigating = true
 	UIManager.push("res://scenes/S06_HatchPage.tscn")
 
 func _on_action_pressed(state: int) -> void:
+	if TutorialManager and TutorialManager.is_running():
+		return
 	# 没有猫时按钮本就 disabled，这里双保险
 	if _empty_label.visible:
 		return
@@ -545,6 +555,8 @@ func _get_cooldown_remaining_text(cat_id: String, type: String) -> String:
 	return "冷却中：%d分" % minutes
 
 func _on_bottom_nav_tab_selected(index: int) -> void:
+	if TutorialManager and TutorialManager.is_running():
+		return
 	if index < 0 or index >= BottomNav.TABS.size():
 		return
 	var page := String(BottomNav.TABS[index]["page"])
@@ -554,6 +566,8 @@ func _on_bottom_nav_tab_selected(index: int) -> void:
 		UIManager.replace(page)
 
 func _on_companion_pressed() -> void:
+	if TutorialManager and TutorialManager.is_running():
+		return
 	UIManager.push("res://scenes/S07_CarryCatSelect.tscn")
 
 func _on_steps_label_input(event: InputEvent) -> void:
@@ -641,6 +655,9 @@ func _toggle_stats() -> void:
 		Popups.show_info(text if _stats_visible else "stats hidden")
 
 func _input(event: InputEvent) -> void:
+	if TutorialManager and TutorialManager.is_blocking_garden_input():
+		_dragging = false
+		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed and _is_in_garden(event.position):
 			_dragging = true

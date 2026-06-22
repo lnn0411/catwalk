@@ -39,6 +39,7 @@ LevelSystem="*res://core/LevelSystem.gd"
 InteractionSystem="*res://core/InteractionSystem.gd"
 SigninSystem="*res://core/SigninSystem.gd"
 AchievementSystem="*res://core/AchievementSystem.gd"
+TutorialManager="*res://core/TutorialManager.gd"
 
 [display]
 
