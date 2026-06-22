@@ -103,6 +103,23 @@ static func _roll_reward_type(cat_id: String) -> String:
 	return t
 
 # ---- 测试辅助 ----
+static func get_remaining_seconds(cat_id: String) -> int:
+	if not _explorers.has(cat_id):
+		return 0
+	var return_time := float(_explorers[cat_id].get("return_time", 0.0))
+	var remaining := return_time - Time.get_unix_time_from_system()
+	return int(ceil(max(remaining, 0.0)))
+
+static func get_exploring_count() -> int:
+	return _active_count()
+
+static func get_active_cat_ids() -> Array:
+	var ids := []
+	for cat_id in _explorers:
+		if bool(_explorers[cat_id].get("is_exploring", false)):
+			ids.append(cat_id)
+	return ids
+
 static func _override_hatched_count(count: int) -> void:
 	_hatched_count = max(count, 0)
 

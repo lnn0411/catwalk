@@ -17,9 +17,16 @@ var interaction_system
 @onready var _feed_button: Button = %FeedButton
 @onready var _pet_button: Button = %PetButton
 @onready var _play_button: Button = %PlayButton
+@onready var _explore_button: Button = %ExploreButton
+@onready var _explore_state_panel: Control = %ExploreStatePanel
+@onready var _exploring_label: Label = %ExploringLabel
+@onready var _countdown_label: Label = %CountdownLabel
+@onready var _return_time_label: Label = %ReturnTimeLabel
 @onready var _status_label: Label = %StatusLabel
 
 var _cooldown_timer: Timer
+var _explore_countdown_timer: Timer
+var _is_exploring_this_cat := false
 var _screen_pos := Vector2.ZERO
 var _closing := false
 var _feedback_until := 0.0
@@ -30,8 +37,11 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_apply_theme()
 	_setup_cooldown_timer()
+	_style_button(_explore_button)
+	_setup_explore_countdown_timer()
 	_resolve_interaction_system()
 	_refresh_cat_info()
+	_check_explore_state()
 	refresh_interaction_buttons()
 	_play_open_animation()
 
@@ -42,6 +52,7 @@ func setup(c_id: String, c_data, screen_pos: Vector2) -> void:
 	_screen_pos = screen_pos
 	_resolve_interaction_system()
 	_refresh_cat_info()
+	_check_explore_state()
 	refresh_interaction_buttons()
 
 
@@ -50,6 +61,9 @@ func refresh_interaction_buttons() -> void:
 		return
 	if _feed_button == null or _pet_button == null or _play_button == null:
 		return
+	if _check_explore_state():
+		return
+	update_explore_button_state()
 
 	_resolve_interaction_system()
 	_reset_button(_feed_button)
@@ -117,6 +131,230 @@ func _on_play_pressed() -> void:
 	_show_feedback("🎾 玩得好开心！")
 
 
+func _on_explore_button_pressed() -> void:
+	if _explore_button == null or _explore_button.disabled:
+		return
+	if cat_id == "" and cat_data != null:
+		cat_id = _get_cat_property("id", "")
+	if cat_id == "":
+		_show_feedback("暂时找不到这只猫")
+		return
+	if ExploreEngine.is_exploring(cat_id):
+		if ExploreEngine.is_returned(cat_id):
+			_collect_explore_return()
+		return
+	_show_duration_picker()
+
+
+func update_explore_button_state() -> void:
+	if _explore_button == null:
+		return
+	if cat_id == "" and cat_data != null:
+		cat_id = _get_cat_property("id", "")
+	if cat_id != "" and ExploreEngine.is_exploring(cat_id):
+		_explore_button.visible = true
+		_explore_button.text = "🎁 领取" if ExploreEngine.is_returned(cat_id) else "🧭 探索中"
+		_set_button_disabled(_explore_button, not ExploreEngine.is_returned(cat_id))
+		return
+
+	_explore_button.visible = true
+	_explore_button.text = "🧭 探索"
+	_set_button_disabled(_explore_button, not _has_explore_slot_available())
+
+
+func _check_explore_state() -> bool:
+	if _explore_state_panel == null:
+		return false
+	if cat_id == "" and cat_data != null:
+		cat_id = _get_cat_property("id", "")
+
+	_is_exploring_this_cat = cat_id != "" and ExploreEngine.is_exploring(cat_id)
+	_explore_state_panel.visible = _is_exploring_this_cat
+	if not _is_exploring_this_cat:
+		_update_explore_countdown_timer(false)
+		if _feed_button != null:
+			_feed_button.visible = true
+		if _pet_button != null:
+			_pet_button.visible = true
+		if _play_button != null:
+			_play_button.visible = true
+		update_explore_button_state()
+		return false
+
+	if _feed_button != null:
+		_feed_button.visible = false
+	if _pet_button != null:
+		_pet_button.visible = false
+	if _play_button != null:
+		_play_button.visible = false
+
+	_update_explore_labels()
+	update_explore_button_state()
+	_update_explore_countdown_timer(not ExploreEngine.is_returned(cat_id))
+	return true
+
+
+func _setup_explore_countdown_timer() -> void:
+	_explore_countdown_timer = Timer.new()
+	_explore_countdown_timer.name = "ExploreCountdownTimer"
+	_explore_countdown_timer.wait_time = 1.0
+	_explore_countdown_timer.one_shot = false
+	_explore_countdown_timer.timeout.connect(_on_explore_countdown_timeout)
+	add_child(_explore_countdown_timer)
+
+
+func _on_explore_countdown_timeout() -> void:
+	_check_explore_state()
+
+
+func _update_explore_countdown_timer(should_run: bool) -> void:
+	if _explore_countdown_timer == null:
+		return
+	if should_run and _explore_countdown_timer.is_stopped():
+		_explore_countdown_timer.start()
+	elif not should_run and not _explore_countdown_timer.is_stopped():
+		_explore_countdown_timer.stop()
+
+
+func _update_explore_labels() -> void:
+	if cat_id == "":
+		return
+	var remaining := ExploreEngine.get_remaining_seconds(cat_id)
+	var cat_name := _get_cat_display_name()
+	if ExploreEngine.is_returned(cat_id):
+		_exploring_label.text = "%s 回来了" % cat_name
+		_countdown_label.text = "探索完成"
+		_return_time_label.text = "带回了新的发现"
+		return
+
+	_exploring_label.text = "%s 正在探索" % cat_name
+	_countdown_label.text = "返回倒计时 %s" % _format_duration(remaining)
+	var return_unix := Time.get_unix_time_from_system() + remaining
+	var dt := Time.get_datetime_dict_from_unix_time(return_unix)
+	_return_time_label.text = "预计返回 %02d:%02d" % [int(dt.get("hour", 0)), int(dt.get("minute", 0))]
+
+
+func _show_duration_picker() -> void:
+	var packed := load("res://scenes/ui/explore_duration_picker.tscn")
+	var picker = packed.instantiate()
+	picker.duration_selected.connect(_on_explore_duration_selected)
+	picker.canceled.connect(func() -> void:
+		picker.queue_free()
+	)
+	_add_overlay(picker)
+
+
+func _on_explore_duration_selected(duration_hours: int) -> void:
+	var picker := get_tree().current_scene.find_child("ExploreDurationPicker", true, false)
+	if picker != null:
+		picker.queue_free()
+	var packed := load("res://scenes/ui/explore_confirm_dialog.tscn")
+	var dialog = packed.instantiate()
+	dialog.setup(_get_cat_display_name(), duration_hours)
+	dialog.confirmed.connect(_on_explore_confirmed)
+	dialog.canceled.connect(func() -> void:
+		dialog.queue_free()
+	)
+	_add_overlay(dialog)
+
+
+func _on_explore_confirmed(duration_hours: int) -> void:
+	var dialog := get_tree().current_scene.find_child("ExploreConfirmDialog", true, false)
+	if dialog != null:
+		dialog.queue_free()
+	if cat_id == "":
+		return
+	if ExploreEngine.dispatch(cat_id, duration_hours):
+		var remaining := ExploreEngine.get_remaining_seconds(cat_id)
+		if EventBus:
+			EventBus.emit_explore_dispatched(cat_id, Time.get_unix_time_from_system() + remaining)
+		_show_feedback("🧭 已出发探索")
+		_check_explore_state()
+		refresh_interaction_buttons()
+	else:
+		_show_feedback("探索名额已满")
+
+
+func _collect_explore_return() -> void:
+	var entry := ExploreEngine.collect(cat_id)
+	if entry.is_empty():
+		return
+	var reward_type := ExploreEngine._roll_reward_type(cat_id)
+	if EventBus:
+		EventBus.emit_explore_returned(cat_id, reward_type)
+		if reward_type == "postcard":
+			EventBus.emit_postcard_obtained("pc_%s_%d" % [cat_id, Time.get_unix_time_from_system()], "city")
+	_show_return_animation(reward_type)
+	_show_feedback("探索奖励已领取")
+	_check_explore_state()
+	refresh_interaction_buttons()
+
+
+func _show_return_animation(reward_type: String) -> void:
+	var packed := load("res://scenes/ui/explore_return_animation.tscn")
+	var animation = packed.instantiate()
+	animation.finished.connect(func() -> void:
+		animation.queue_free()
+		_show_postcard_reveal(reward_type)
+	)
+	_add_overlay(animation)
+	animation.play(_get_cat_display_name(), reward_type)
+
+
+func _show_postcard_reveal(reward_type: String) -> void:
+	var packed := load("res://scenes/ui/postcard_reveal.tscn")
+	var reveal = packed.instantiate()
+	reveal.closed.connect(func() -> void:
+		reveal.queue_free()
+	)
+	_add_overlay(reveal)
+	reveal.reveal(_get_cat_display_name(), reward_type)
+
+
+func _add_overlay(node: Control) -> void:
+	var parent := get_tree().current_scene
+	if parent == null:
+		parent = get_tree().root
+	parent.add_child(node)
+
+
+func _has_explore_slot_available() -> bool:
+	var available := 0
+	for i in range(ExploreEngine.get_slot_count()):
+		if ExploreEngine.is_slot_available(i):
+			available += 1
+	return ExploreEngine.get_exploring_count() < available
+
+
+func _get_cat_display_name() -> String:
+	var local_name := _get_cat_property("display_name", _get_cat_property("name", "猫咪"))
+	if local_name != "猫咪" or cat_id == "":
+		return local_name
+	if HatchEngine:
+		for cat in HatchEngine.get_cats():
+			var found_id := ""
+			var found_name := ""
+			if cat is Dictionary:
+				found_id = String(cat.get("id", ""))
+				found_name = String(cat.get("display_name", cat.get("name", "猫咪")))
+			else:
+				found_id = String(cat.get("id"))
+				found_name = String(cat.get("display_name")) if cat.get("display_name") != null else String(cat.get("name"))
+			if found_id == cat_id and found_name != "":
+				return found_name
+	return local_name
+
+
+func _format_duration(total_seconds: int) -> String:
+	var seconds: int = maxi(total_seconds, 0)
+	var hours: int = seconds / 3600
+	var minutes: int = (seconds % 3600) / 60
+	var secs: int = seconds % 60
+	if hours > 0:
+		return "%02d:%02d:%02d" % [hours, minutes, secs]
+	return "%02d:%02d" % [minutes, secs]
+
+
 func _play_open_animation() -> void:
 	modulate.a = 1.0
 	scale = Vector2.ZERO
@@ -161,6 +399,7 @@ func _apply_theme() -> void:
 	_style_button(_feed_button)
 	_style_button(_pet_button)
 	_style_button(_play_button)
+	_style_button(_explore_button)
 
 
 func _style_label(label: Label, font_size: int) -> void:
