@@ -643,11 +643,7 @@ func _update_companion_icon() -> void:
 		return
 	var is_companion: bool = false
 	if HatchEngine and cat_data != null:
-		var cid: String = ""
-		if cat_data is Dictionary:
-			cid = String(cat_data.get("id", ""))
-		elif "id" in cat_data:
-			cid = String(cat_data.id)
+		var cid: String = String(cat_data.id)
 		is_companion = cid != "" and cid == HatchEngine.current_companion_cat_id
 	icon.visible = is_companion
 
