@@ -657,21 +657,12 @@ func _on_screen_cats_changed(_visible_cats: Array) -> void:
 # 按 CatScreenManager 的可见列表刷新场上猫节点的显隐。
 # CatScreenManager 不存在时所有猫保持可见（向后兼容）。
 func _apply_cat_visibility() -> void:
+	# 场上的猫全部可见，不过滤（CatScreenManager的可见性仅用于图鉴/截图系统）
 	if cat_container == null or not is_instance_valid(cat_container):
 		return
-	var has_manager := CatScreenManager != null
-	var visible_ids: Array = []
-	if has_manager:
-		visible_ids = CatScreenManager.get_visible_cats()
-	# 防御：管理器返回空列表但容器有猫 → 全显示（防止启动时轮换未填充导致猫消失）
-	var show_all := has_manager and visible_ids.is_empty() and cat_container.get_child_count() > 0
 	for child in cat_container.get_children():
-		if not ("cat_data" in child) or child.cat_data == null:
-			continue
-		if not has_manager or show_all:
+		if "cat_data" in child and child.cat_data != null:
 			child.visible = true
-			continue
-		child.visible = visible_ids.has(String(child.cat_data.id))
 
 func _on_hatch_slot_pressed(_slot_index: int) -> void:
 	if TutorialManager and TutorialManager.is_running():
