@@ -36,8 +36,8 @@ func set_cat_container(container) -> void:
 					spawned_cat_ids[cid] = child
 					child.modulate.a = 1.0  # 在场的猫绝不允许隐形
 		_restore_cats()
-		if HatchEngine:
-			print("[CatSpawner] 同步完成: 引擎猫数=%d 场上猫数=%d" % [HatchEngine.get_cats().size(), spawned_cat_ids.size()])
+	if HatchEngine:
+		print("[CatSpawner] 同步完成: 引擎猫数=%d 场上猫数=%d" % [HatchEngine.get_cats().size(), spawned_cat_ids.size()])
 	_restoring = false
 
 func _on_hatch_complete(cat_data) -> void:
@@ -232,7 +232,11 @@ func _restore_cats() -> void:
 	# 延迟3秒再查一次，看是否被其他系统移除
 	var t := get_tree().create_timer(3.0)
 	await t.timeout
-	print("[CatSpawner] DELAYED_CHECK 3s后: spawned=%d container子节点=%d" % [spawned_cat_ids.size(), cat_container.get_child_count() if cat_container else -1])
+	print("[CatSpawner] DELAYED_CHECK 3s后: spawned=%d container子节点=%d" % [spawned_cat_ids.size(), cat_container.get_child_count() if cat_container and is_instance_valid(cat_container) else -1])
+	if cat_container and is_instance_valid(cat_container):
+		for child in cat_container.get_children():
+			if child is Node2D and "cat_data" in child:
+				print("  猫: pos=(%.0f,%.0f) alpha=%.2f name=%s" % [child.position.x, child.position.y, child.modulate.a, child.name])
 
 func _emit_cat_count() -> void:
 	if HatchEngine:
