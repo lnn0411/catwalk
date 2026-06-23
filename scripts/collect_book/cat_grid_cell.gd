@@ -7,6 +7,8 @@ signal cell_pressed(cat_data)
 
 var _cat_data: Variant = null
 var _rarity_color: Color = Color.WHITE
+var _is_placeholder: bool = false
+var _species: String = ""
 
 var _time: float = 0.0
 
@@ -18,8 +20,17 @@ func _ready() -> void:
 
 
 func setup(cat_data: Variant) -> void:
+	_is_placeholder = false
 	_cat_data = cat_data
+	_species = _field("species", "")
 	_rarity_color = _get_rarity_color()
+	queue_redraw()
+
+
+func set_placeholder(species: String) -> void:
+	_is_placeholder = true
+	_species = species
+	_cat_data = null
 	queue_redraw()
 
 
@@ -31,6 +42,10 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var font: Font = ThemeDB.fallback_font
 	var rect: Rect2 = Rect2(Vector2.ZERO, custom_minimum_size)
+
+	if _is_placeholder:
+		_draw_placeholder(font, rect)
+		return
 
 	# 背景
 	draw_rect(rect, Palette.BG_CEMENT, true)
@@ -54,6 +69,23 @@ func _draw() -> void:
 	draw_rect(badge, gold, true)
 	draw_string(font, Vector2(badge.position.x, badge.position.y + 20),
 		"NEW", HORIZONTAL_ALIGNMENT_CENTER, badge.size.x, 18, Color.BLACK)
+
+
+func _draw_placeholder(font: Font, rect: Rect2) -> void:
+	var bg: Color = Color(0.16, 0.17, 0.16)
+	var head_modulate: Color = Color(0.35, 0.39, 0.36)
+	var label_color: Color = Color(0.50, 0.62, 0.52)
+	var bottom_color: Color = Color(0.45, 0.48, 0.45)
+
+	draw_rect(rect, bg, true)
+	_draw_cat_head(rect, head_modulate)
+	draw_rect(rect.grow(2), Color(0.30, 0.34, 0.31), false, 2.0)
+	draw_string(font, Vector2(0, rect.size.y - 48),
+		_species_label(_species), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 22,
+		label_color)
+	draw_string(font, Vector2(0, rect.size.y - 18),
+		"未发现", HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 20,
+		bottom_color)
 
 
 func _draw_cat_head(rect: Rect2, mod: Color) -> void:
@@ -114,6 +146,18 @@ func _get_rarity_color() -> Color:
 					return Palette.AMBER
 
 
+func _species_label(species: String) -> String:
+	match species:
+		"orange":
+			return "橘猫"
+		"british":
+			return "英短"
+		"siamese":
+			return "暹罗"
+		_:
+			return species
+
+
 func _field(key: String, default: String) -> String:
 	var value: Variant = _field_raw(key, null)
 	return String(value) if value != null else default
@@ -132,4 +176,6 @@ func _field_raw(key: String, default: Variant) -> Variant:
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		accept_event()
+		if _is_placeholder:
+			return
 		cell_pressed.emit(_cat_data)

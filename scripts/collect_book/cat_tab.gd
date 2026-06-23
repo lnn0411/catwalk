@@ -32,7 +32,7 @@ func _build_layout() -> void:
 	_scroll.add_child(_grid)
 
 
-func set_data(cats: Array) -> void:
+func set_data(cats: Array, all_species: Array) -> void:
 	if _grid == null:
 		_build_layout()
 
@@ -40,13 +40,38 @@ func set_data(cats: Array) -> void:
 	for child in _grid.get_children():
 		child.queue_free()
 
-	for cat_data in cats:
+	var species_to_cat: Dictionary = {}
+	for cat_data: Variant in cats:
+		var species: String = _cat_species(cat_data)
+		if species != "" and not species_to_cat.has(species):
+			species_to_cat[species] = cat_data
+
+	for species_value: Variant in all_species:
+		var species_name: String = String(species_value)
 		var cell: Control = CatGridCellScript.new()
 		cell.custom_minimum_size = CELL_SIZE
 		_grid.add_child(cell)
-		cell.setup(cat_data)
+		if species_to_cat.has(species_name):
+			cell.setup(species_to_cat[species_name])
+		else:
+			cell.set_placeholder(species_name)
 		cell.cell_pressed.connect(_on_cell_pressed)
 
 
 func _on_cell_pressed(cat_data: Variant) -> void:
 	cat_cell_pressed.emit(cat_data)
+
+
+func _cat_species(cat_data: Variant) -> String:
+	var value: Variant = _cat_field_raw(cat_data, "species", "")
+	return String(value)
+
+
+func _cat_field_raw(cat_data: Variant, key: String, default: Variant) -> Variant:
+	if cat_data == null:
+		return default
+	if typeof(cat_data) == TYPE_DICTIONARY:
+		return cat_data.get(key, default)
+	if key in cat_data:
+		return cat_data.get(key)
+	return default

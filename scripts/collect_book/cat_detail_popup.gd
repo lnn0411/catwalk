@@ -3,11 +3,16 @@ extends Control
 ## 点击遮罩或关闭按钮 → queue_free()。
 ## （美术待补）
 
-const POPUP_SIZE := Vector2(520, 680)
-const CLOSE_BTN_LOCAL := Rect2(POPUP_SIZE.x - 150, POPUP_SIZE.y - 78, 120, 52)
-const RELEASE_BTN_LOCAL := Rect2(30, POPUP_SIZE.y - 78, 180, 52)
+const POPUP_SIZE: Vector2 = Vector2(520, 680)
+const CLOSE_BTN_LOCAL: Rect2 = Rect2(POPUP_SIZE.x - 150, POPUP_SIZE.y - 78, 120, 52)
+const RELEASE_BTN_LOCAL: Rect2 = Rect2(30, POPUP_SIZE.y - 78, 180, 52)
+const BREED_LABELS: Dictionary = {
+	"orange": "橘猫",
+	"british": "英短",
+	"siamese": "暹罗",
+}
 
-var _cat_data = null
+var _cat_data: Variant = null
 var _time: float = 0.0
 var _popup_rect: Rect2
 
@@ -20,7 +25,7 @@ func _ready() -> void:
 	set_process(true)
 
 	# 遮罩层：真实 ColorRect 节点全屏拦截点击
-	var mask := ColorRect.new()
+	var mask: ColorRect = ColorRect.new()
 	mask.color = Color(0, 0, 0, 0.3)
 	mask.mouse_filter = Control.MOUSE_FILTER_STOP
 	mask.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -36,7 +41,7 @@ func _ready() -> void:
 	_panel.gui_input.connect(_on_panel_input)
 
 
-func setup(cat_data) -> void:
+func setup(cat_data: Variant) -> void:
 	_cat_data = cat_data
 	queue_redraw()
 
@@ -51,21 +56,21 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
-	var font := ThemeDB.fallback_font
-	var origin := _popup_rect.position
+	var font: Font = ThemeDB.fallback_font
+	var origin: Vector2 = _popup_rect.position
 
 	# 背景 + 边框
 	draw_rect(_popup_rect, Palette.BG_CEMENT, true)
 	draw_rect(_popup_rect, Palette.BORDER_DEFAULT, false, 3.0)
 
-	var species := _species()
+	var species: String = _species()
 
 	# 大猫头像
-	var head_center := origin + Vector2(POPUP_SIZE.x * 0.5, 150)
+	var head_center: Vector2 = origin + Vector2(POPUP_SIZE.x * 0.5, 150)
 	_draw_big_head(head_center)
 
 	# 猫名
-	var cat_name := _cat_name()
+	var cat_name: String = _cat_name()
 	draw_string(font, origin + Vector2(0, 300), cat_name,
 		HORIZONTAL_ALIGNMENT_CENTER, POPUP_SIZE.x, 40, Palette.AMBER)
 
@@ -77,27 +82,46 @@ func _draw() -> void:
 	draw_string(font, origin + Vector2(0, 392), "稀有度: " + _rarity_label(species),
 		HORIZONTAL_ALIGNMENT_CENTER, POPUP_SIZE.x, 26, _rarity_color(species))
 
+	# 等级与经验条
+	var exp: int = int(_field_raw("exp", 0))
+	var level: int = LevelSystem.get_level(exp)
+	var progress: float = 1.0
+	var exp_text: String = "满级"
+	if level < 10:
+		var next_exp: int = LevelSystem.get_exp_to_next(exp)
+		var step: int = int(LevelSystem.THRESHOLDS[level]) - int(LevelSystem.THRESHOLDS[level - 1])
+		progress = clamp((float(step) - float(next_exp)) / float(step), 0.0, 1.0)
+		exp_text = "%d / %d" % [step - next_exp, step]
+	draw_string(font, origin + Vector2(0, 420), "Lv.%d" % level,
+		HORIZONTAL_ALIGNMENT_CENTER, POPUP_SIZE.x, 28, Palette.AMBER)
+	var exp_bar_bg: Rect2 = Rect2(origin + Vector2(60, 440), Vector2(400, 16))
+	var exp_bar_fill: Rect2 = Rect2(exp_bar_bg.position, Vector2(400.0 * progress, exp_bar_bg.size.y))
+	draw_rect(exp_bar_bg, Color(0.20, 0.20, 0.20), true)
+	draw_rect(exp_bar_fill, Palette.AMBER, true)
+	draw_string(font, origin + Vector2(0, 468), exp_text,
+		HORIZONTAL_ALIGNMENT_CENTER, POPUP_SIZE.x, 16, Palette.BORDER_DEFAULT)
+
 	# 描述文字
-	draw_string(font, origin + Vector2(40, 450), cat_description(species),
+	draw_string(font, origin + Vector2(40, 500), cat_description(species),
 		HORIZONTAL_ALIGNMENT_LEFT, POPUP_SIZE.x - 80, 22, Palette.BORDER_DEFAULT)
 
 	# 已邂逅次数
-	draw_string(font, origin + Vector2(0, 540), "已邂逅: %d 次" % _encounter(),
+	draw_string(font, origin + Vector2(0, 552), "已邂逅: %d 次" % _encounter(),
 		HORIZONTAL_ALIGNMENT_CENTER, POPUP_SIZE.x, 24, Palette.AMBER)
 
 	# 美术待补标记
-	draw_string(font, origin + Vector2(0, 575), "（美术待补）",
+	draw_string(font, origin + Vector2(0, 582), "（美术待补）",
 		HORIZONTAL_ALIGNMENT_CENTER, POPUP_SIZE.x, 18, Color(0.5, 0.5, 0.5))
 
 	# 关闭按钮
-	var close_rect := Rect2(origin + CLOSE_BTN_LOCAL.position, CLOSE_BTN_LOCAL.size)
+	var close_rect: Rect2 = Rect2(origin + CLOSE_BTN_LOCAL.position, CLOSE_BTN_LOCAL.size)
 	draw_rect(close_rect, Palette.AMBER, true)
 	draw_rect(close_rect, Palette.BORDER_DEFAULT, false, 2.0)
 	draw_string(font, Vector2(close_rect.position.x, close_rect.position.y + 35),
 		"关闭", HORIZONTAL_ALIGNMENT_CENTER, close_rect.size.x, 26, Palette.BG_CEMENT)
 
 	# 让它出来按钮
-	var release_rect := Rect2(origin + RELEASE_BTN_LOCAL.position, RELEASE_BTN_LOCAL.size)
+	var release_rect: Rect2 = Rect2(origin + RELEASE_BTN_LOCAL.position, RELEASE_BTN_LOCAL.size)
 	draw_rect(release_rect, Palette.AMBER, true)
 	draw_rect(release_rect, Palette.BORDER_DEFAULT, false, 2.0)
 	draw_string(font, Vector2(release_rect.position.x, release_rect.position.y + 35),
@@ -105,7 +129,7 @@ func _draw() -> void:
 
 
 func _draw_big_head(center: Vector2) -> void:
-	var body_col := Color(0.95, 0.7, 0.4)
+	var body_col: Color = Color(0.95, 0.7, 0.4)
 	_draw_ellipse(center, Vector2(92, 76), body_col)
 	_draw_ellipse(center + Vector2(0, 28), Vector2(60, 44), body_col)
 	_draw_ellipse(center + Vector2(-68, -60), Vector2(28, 32), body_col)
@@ -113,10 +137,10 @@ func _draw_big_head(center: Vector2) -> void:
 
 
 func _draw_ellipse(center: Vector2, radii: Vector2, color: Color) -> void:
-	var pts := PackedVector2Array()
-	var seg := 32
+	var pts: PackedVector2Array = PackedVector2Array()
+	var seg: int = 32
 	for i in range(seg):
-		var a := TAU * float(i) / float(seg)
+		var a: float = TAU * float(i) / float(seg)
 		pts.append(center + Vector2(cos(a) * radii.x, sin(a) * radii.y))
 	draw_colored_polygon(pts, color)
 
@@ -129,23 +153,23 @@ func _species() -> String:
 
 
 func _cat_name() -> String:
-	var n := _field("name", "")
+	var n: String = _field("name", "")
 	return n if n != "" else breed_label(_species())
 
 
 func _encounter() -> int:
-	var e = _field_raw("encounter", null)
+	var e: Variant = _field_raw("encounter", null)
 	if e == null:
 		return 1
 	return int(e)
 
 
 func _field(key: String, default: String) -> String:
-	var v = _field_raw(key, null)
+	var v: Variant = _field_raw(key, null)
 	return String(v) if v != null else default
 
 
-func _field_raw(key: String, default):
+func _field_raw(key: String, default: Variant) -> Variant:
 	if _cat_data == null:
 		return default
 	if typeof(_cat_data) == TYPE_DICTIONARY:
@@ -176,15 +200,7 @@ func _rarity_label(species: String) -> String:
 
 
 func breed_label(species_name: String) -> String:
-	match species_name:
-		"orange":
-			return "橘猫"
-		"british":
-			return "英短"
-		"siamese":
-			return "暹罗"
-		_:
-			return species_name
+	return String(BREED_LABELS.get(species_name, species_name))
 
 
 func cat_description(species_name: String) -> String:
@@ -223,13 +239,13 @@ func _on_panel_input(event: InputEvent) -> void:
 
 
 func _release_to_garden() -> void:
-	var data = _cat_data
+	var data: Variant = _cat_data
 	queue_free()
 	if data == null:
 		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 		return
 	# 检查是否有合法 id（CatData 实例有 .id，纯品种字典没有）
-	var has_id := false
+	var has_id: bool = false
 	if typeof(data) == TYPE_DICTIONARY:
 		has_id = data.has("id")
 	else:

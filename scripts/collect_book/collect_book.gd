@@ -10,6 +10,7 @@ const CatTabScript: GDScript = preload("res://scripts/collect_book/cat_tab.gd")
 const PostcardTabScript: GDScript = preload("res://scripts/collect_book/postcard_tab.gd")
 const DetailPopupScript: GDScript = preload("res://scripts/collect_book/cat_detail_popup.gd")
 const PostcardPopupScript: GDScript = preload("res://scripts/collect_book/postcard_detail_popup.gd")
+const CatDataScript: GDScript = preload("res://core/CatData.gd")
 
 # 点击热区（设计坐标系）
 const BACK_BTN_RECT: Rect2 = Rect2(28, 59, 85, 48)
@@ -62,10 +63,16 @@ func on_enter(_data: Dictionary = {}) -> void:
 
 func _refresh() -> void:
 	var cats: Array = HatchEngine.get_cats()
-	_discovered = cats.size()
-	_total = cats.size()
+	var discovered_species: Dictionary = {}
+	for cat_data: Variant in cats:
+		var species: String = _cat_species(cat_data)
+		if species != "":
+			discovered_species[species] = true
+	var all_species: Array = CatDataScript.BREED_COSTS.keys()
+	_discovered = discovered_species.size()
+	_total = all_species.size()
 
-	_cat_tab.set_data(cats)
+	_cat_tab.set_data(cats, all_species)
 
 	# 明信片数据
 	var collected_ids: Array = ExploreEngine._collected_postcards if ExploreEngine else []
@@ -148,3 +155,18 @@ func _on_postcard_cell_pressed(postcard_id: String) -> void:
 	var popup: Control = PostcardPopupScript.new()
 	add_child(popup)
 	popup.setup(postcard_id, is_collected)
+
+
+func _cat_species(cat_data: Variant) -> String:
+	var value: Variant = _cat_field_raw(cat_data, "species", "")
+	return String(value)
+
+
+func _cat_field_raw(cat_data: Variant, key: String, default: Variant) -> Variant:
+	if cat_data == null:
+		return default
+	if typeof(cat_data) == TYPE_DICTIONARY:
+		return cat_data.get(key, default)
+	if key in cat_data:
+		return cat_data.get(key)
+	return default
