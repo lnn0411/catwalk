@@ -234,6 +234,10 @@ func _restore_cats() -> void:
 		for child in cat_container.get_children():
 			if child is Node2D and "cat_data" in child:
 				print("  猫: pos=(%.0f,%.0f) alpha=%.2f name=%s" % [child.position.x, child.position.y, child.modulate.a, child.name])
+	# 打印相机位置
+	var cam := get_viewport().get_camera_2d()
+	if cam:
+		print("  相机: pos=(%.0f,%.0f) zoom=(%.2f,%.2f) limit=%s" % [cam.position.x, cam.position.y, cam.zoom.x, cam.zoom.y, cam.limit_smoothed if cam.has_method("get_limit_smoothed") else "none"])
 	# 延迟3秒再查一次，看是否被其他系统移除
 	var t := get_tree().create_timer(3.0)
 	await t.timeout
