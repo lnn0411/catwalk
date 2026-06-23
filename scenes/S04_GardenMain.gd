@@ -887,7 +887,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_dragging = false
 		else:
 			var drag_delta: Vector2 = event.position - _drag_start
-			_camera.position -= drag_delta / _get_camera_zoom()
+			_camera.position.x -= drag_delta.x / _get_camera_zoom()
 			_clamp_camera_to_world()
 			_drag_start = event.position
 	# 触摸事件（移动端）
@@ -913,7 +913,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventScreenDrag and _dragging and _camera:
 		if _is_in_garden(event.position):
 			var drag_delta: Vector2 = event.position - _drag_start
-			_camera.position -= drag_delta / _get_camera_zoom()
+			_camera.position.x -= drag_delta.x / _get_camera_zoom()
 			_clamp_camera_to_world()
 			_drag_start = event.position
 		else:
@@ -1052,19 +1052,15 @@ func _clamp_camera_to_world() -> void:
 		view = vp.get_visible_rect().size
 		
 	var half_w: float = (view.x * 0.5) / max(_get_camera_zoom(), 0.0001)
-	var half_h: float = (view.y * 0.5) / max(_get_camera_zoom(), 0.0001)
 	var min_x: float = half_w
 	var max_x: float = WORLD_WIDTH - half_w
-	var min_y: float = half_h
-	var max_y: float = WORLD_HEIGHT - half_h
 	if min_x > max_x:
+		# 世界比可视区还窄（理论上不会，保险）→ 水平居中
 		_camera.position.x = WORLD_WIDTH * 0.5
 	else:
 		_camera.position.x = clampf(_camera.position.x, min_x, max_x)
-	if min_y > max_y:
-		_camera.position.y = WORLD_HEIGHT * 0.5
-	else:
-		_camera.position.y = clampf(_camera.position.y, min_y, max_y)
+	# 竖直锁定居中（横版不上下滚动，世界高度已填满可视区）
+	_camera.position.y = WORLD_HEIGHT * 0.5
 
 func _format_int(value: int) -> String:
 	var raw: String = str(value)
