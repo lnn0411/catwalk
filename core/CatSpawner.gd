@@ -240,14 +240,17 @@ func _restore_cats() -> void:
 		print("  相机A: pos=(%.0f,%.0f) zoom=(%.2f,%.2f)" % [cam.position.x, cam.position.y, cam.zoom.x, cam.zoom.y])
 	else:
 		print("  相机A: 无")
-	# 绕道：从 garden_layer 找 _camera
-	var root := get_tree().root
-	if root:
-		var vp := root.get_node_or_null("MainScene/GardenViewport")
-		if vp:
-			var gcam = vp.get_camera_2d()
-			if gcam:
-				print("  相机B: pos=(%.0f,%.0f) zoom=(%.2f,%.2f)" % [gcam.position.x, gcam.position.y, gcam.zoom.x, gcam.zoom.y])
+	# 检查猫是否在场景树中
+	if cat_container and is_instance_valid(cat_container):
+		print("  容器: in_tree=%s visible=%s pos=(%.0f,%.0f)" % [cat_container.is_inside_tree(), cat_container.visible, cat_container.position.x, cat_container.position.y])
+		# 检查容器父链
+		var p = cat_container.get_parent()
+		while p:
+			print("  父链: %s in_tree=%s visible=%s" % [p.name, p.is_inside_tree(), p.visible])
+			p = p.get_parent()
+			if p and p.name == "GardenViewport":
+				print("  ∴ 最顶层: SubViewport size=%s transparent_bg=%s" % [str(p.size), p.transparent_bg])
+				break
 	# 延迟3秒再查一次，看是否被其他系统移除
 	var t := get_tree().create_timer(3.0)
 	await t.timeout
