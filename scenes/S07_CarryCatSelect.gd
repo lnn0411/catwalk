@@ -181,9 +181,7 @@ func _on_cat_selected(cat_id: String, is_current: bool) -> void:
 		_close()
 		return
 	if HatchEngine:
-		HatchEngine.current_companion_cat_id = cat_id
-	if SaveManager:
-		SaveManager.save_all()
+		HatchEngine.set_companion_cat_id(cat_id)
 	_close()
 
 func _on_scrim_input(event: InputEvent) -> void:

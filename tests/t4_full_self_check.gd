@@ -297,9 +297,9 @@ func _t4_11_relinquish() -> void:
 	_check("T4-11", rs.has_method("relinquish_cat"), "relinquish_cat 存在")
 	_check("T4-11", int(RelinquishSystem.WEEKLY_PETAL_CAP) == 500, "周花瓣上限=500")
 	var constants: Dictionary = _script_constants("res://core/RelinquishSystem.gd")
-	var base_values: Dictionary = Dictionary(constants.get("BASE_VALUES", {}))
+	var base_values: Dictionary = Dictionary(constants.get("SPECIES_BASE", {}))
 	_check("T4-11", int(base_values.get("orange", -1)) == 10 and int(base_values.get("british", -1)) == 20 \
-		and int(base_values.get("siamese", -1)) == 30, "BASE_VALUES orange=10 british=20 siamese=30")
+		and int(base_values.get("siamese", -1)) == 30, "SPECIES_BASE orange=10 british=20 siamese=30")
 	var rarity_factor: Dictionary = RelinquishSystem.RARITY_FACTOR
 	_check("T4-11", float(rarity_factor.get("common", -1.0)) == 0.0 and float(rarity_factor.get("rare", -1.0)) == 1.5 \
 		and float(rarity_factor.get("epic", -1.0)) == 2.0 and float(rarity_factor.get("legendary", -1.0)) == 3.0, \
@@ -409,7 +409,8 @@ func _t4_16_companion_exp() -> void:
 	he.current_companion_cat_id = ""
 	StepEngine.apply_save({})
 	StepEngine.add_mock_steps(5000)
-	he.current_companion_cat_id = second_id
+	await get_tree().process_frame
+	HatchEngine.set_companion_cat_id(second_id)
 	await get_tree().process_frame
 	var switched_cat: Variant = he.get_cat_by_id(second_id)
 	var today_steps: int = StepEngine.get_today_steps()

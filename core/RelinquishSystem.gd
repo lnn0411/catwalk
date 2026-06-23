@@ -6,12 +6,12 @@ const WEEKLY_PETAL_CAP := 500
 const GOLD_REWARD := 50
 
 const SPECIES_BASE := {
-	"orange": 5,
-	"british": 10,
-	"siamese": 15,
-	"橘猫": 5,
-	"英短": 10,
-	"暹罗": 15,
+	"orange": 10,
+	"british": 20,
+	"siamese": 30,
+	"橘猫": 10,
+	"英短": 20,
+	"暹罗": 30,
 }
 
 const RARITY_FACTOR := {
@@ -81,15 +81,14 @@ func _calculate_love_petals(cat_data: Dictionary) -> int:
 	if rarity == "common":
 		return 0
 
-	var level_factor := _level_factor(int(cat_data.get("level", 1)))
 	var affection_factor := _affection_factor(int(cat_data.get("friendship", cat_data.get("affection", 0))))
-	if level_factor <= 0.0 or affection_factor <= 0.0:
+	if affection_factor <= 0.0:
 		return 0
 
 	var species := String(cat_data.get("species", "orange"))
 	var base := int(SPECIES_BASE.get(species, SPECIES_BASE["orange"]))
 	var rarity_factor := float(RARITY_FACTOR.get(rarity, 0.0))
-	return int(round(float(base) * rarity_factor * level_factor * affection_factor))
+	return int(round(float(base) * rarity_factor * affection_factor))
 
 
 func _level_factor(level: int) -> float:

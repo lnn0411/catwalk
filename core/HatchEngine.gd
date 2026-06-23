@@ -32,6 +32,13 @@ var has_tutorial_first_egg: bool = false  # 是否已触发新手首蛋
 var current_companion_cat_id: String = ""
 var garden_expand_purchased: bool = false
 
+# GDD §2.6: 设置携带猫，继承当日步数经验
+func set_companion_cat_id(cat_id: String) -> void:
+	current_companion_cat_id = cat_id
+	_recalc_companion_exp()
+	if SaveManager:
+		SaveManager.save_all()
+
 # 看广告加速（GDD v2.14 §3.7/§12.2）：每次补 3000 能量（≈30分钟步行），每日 3 次。
 # v1.0 纯客户端计数器，跨天按本地日期重置。
 const AD_SPEEDUP_ENERGY := 3000.0
@@ -260,6 +267,49 @@ func get_unlocked_species() -> Array:
 	if BreedUnlockEngine:
 		return BreedUnlockEngine.get_unlocked_breeds()
 	return [CatData.BREED_ORANGE]
+
+func _recalc_companion_exp() -> void:
+	# GDD §2.6: 当日完整步数 × 品种系数
+	if current_companion_cat_id == "" or StepEngine == null:
+		return
+	var today_steps: int = StepEngine.get_today_steps()
+	if today_steps <= 0:
+		return
+	var companion = null
+	for c in cats:
+		var cid: String = ""
+		if typeof(c) == TYPE_DICTIONARY:
+			cid = String(c.get("id", ""))
+		elif c != null and "id" in c:
+			cid = String(c.id)
+		if cid == current_companion_cat_id:
+			companion = c
+			break
+	if companion == null:
+		return
+	var species: String = ""
+	if typeof(companion) == TYPE_DICTIONARY:
+		species = String(companion.get("species", "orange"))
+	elif companion != null and "species" in companion:
+		species = String(companion.species)
+	var multiplier: float = LevelSystem.get_breed_multiplier(species)
+	var new_exp: int = LevelSystem.calc_exp(today_steps, multiplier)
+	var old_exp: int = 0
+	if typeof(companion) == TYPE_DICTIONARY:
+		old_exp = int(companion.get("exp", 0))
+	elif companion != null and "exp" in companion:
+		old_exp = int(companion.exp)
+	if new_exp > old_exp:
+		var old_level: int = LevelSystem.get_level(old_exp)
+		var new_level: int = LevelSystem.get_level(new_exp)
+		if typeof(companion) == TYPE_DICTIONARY:
+			companion["exp"] = new_exp
+			companion["level"] = new_level
+		else:
+			companion.exp = new_exp
+			companion.level = new_level
+		if new_level > old_level and EventBus:
+			EventBus.emit_level_up(current_companion_cat_id, old_level, new_level)
 
 func _on_steps_updated(delta: int, _total: int) -> void:
 	if EnergyEngine == null:
