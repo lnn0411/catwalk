@@ -245,7 +245,7 @@ func _restore_cats() -> void:
 	if root:
 		var vp := root.get_node_or_null("MainScene/GardenViewport")
 		if vp:
-			var gcam := vp.get_camera_2d()
+			var gcam = vp.get_camera_2d()
 			if gcam:
 				print("  相机B: pos=(%.0f,%.0f) zoom=(%.2f,%.2f)" % [gcam.position.x, gcam.position.y, gcam.zoom.x, gcam.zoom.y])
 	# 延迟3秒再查一次，看是否被其他系统移除
