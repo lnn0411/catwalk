@@ -15,8 +15,8 @@ const HATCH_HEIGHT := 98.0
 const NAV_HEIGHT := 56.0
 const CONTENT_SCALE := 0.48  # 仅作相机缩放兜底；实际缩放按真实视口在 _setup_camera 里算
 # 花园世界尺寸（与 GardenBackground 美术绘制范围一致；改美术需同步这两个值，真机核对）
-const WORLD_WIDTH := 2048.0
-const WORLD_HEIGHT := 1536.0
+const WORLD_WIDTH := 3072.0
+const WORLD_HEIGHT := 1024.0
 
 # 互动子状态（喂食/抚摸/玩耍/拍照），对应测试 C6-C9
 # 三级缩放：L1(1.0x) -> L2(2.0x) -> L3(3.5x)，引自 GDD x4.2
@@ -283,12 +283,18 @@ func _apply_weather_particles(weather: int) -> void:
 		_snow_particles.visible = _snow_particles.emitting
 
 func _build_parallax_background() -> void:
-	# 花园背景用整图 garden_master.png（2048×1536，无透明区）。
-	# 不用 layers/ 下的三张分层图——near 层导出错误（棋盘格被画成实心、
-	# 100%不透明盖死下层），master 是完整干净的单图。
-	var tex := load("res://assets/art/garden/garden_master.png") as Texture2D
+	# 随机从 4 张宽幅花园背景中选一张（garden_01~04.png）
+	# 每张 3072x1024，3:1 全景
+	var rng := RandomNumberGenerator.new()
+	rng.randomize()
+	var idx := rng.randi_range(1, 4)
+	var path := "res://assets/art/garden/garden_%02d.png" % idx
+	var tex := load(path) as Texture2D
 	if tex == null:
-		push_error("[Garden] 背景图加载失败: garden_master.png")
+		# fallback 到旧背景
+		tex = load("res://assets/art/garden/garden_master.png") as Texture2D
+	if tex == null:
+		push_error("[Garden] 背景图加载失败")
 		return
 	var sprite := Sprite2D.new()
 	sprite.texture = tex

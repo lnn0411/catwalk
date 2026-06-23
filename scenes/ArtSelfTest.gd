@@ -5,6 +5,10 @@ const CAT_WORLD_POSITION := Vector2(512.0, 1050.0)
 const CAT_FRAME_INTERVAL := 0.5
 
 const ASSETS := [
+	["garden_01", "res://assets/art/garden/garden_01.png"],
+	["garden_02", "res://assets/art/garden/garden_02.png"],
+	["garden_03", "res://assets/art/garden/garden_03.png"],
+	["garden_04", "res://assets/art/garden/garden_04.png"],
 	["garden_far", "res://assets/art/garden/layers/garden_far.png"],
 	["garden_mid", "res://assets/art/garden/layers/garden_mid.png"],
 	["garden_near", "res://assets/art/garden/layers/garden_near.png"],
