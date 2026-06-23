@@ -645,7 +645,7 @@ func _update_companion_icon() -> void:
 	if HatchEngine and cat_data != null:
 		var cid: String = ""
 		if typeof(cat_data) == TYPE_DICTIONARY:
-			var d: Dictionary = cat_data
+			var d = cat_data
 			cid = String(d.get("id", ""))
 		elif "id" in cat_data:
 			cid = String(cat_data.id)
