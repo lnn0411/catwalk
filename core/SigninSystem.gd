@@ -45,16 +45,16 @@ static func _load() -> ConfigFile:
 static func _save(cfg: ConfigFile) -> void:
 	cfg.save(SAVE_PATH)
 
-static func _reward_for(day: int) -> String:
+static func _reward_for(day: int) -> Dictionary:
 	match day:
-		1: return "金币100"
-		2: return "金币200"
-		3: return "金币150"
-		4: return "金币200"
-		5: return "金币100"
-		6: return "金币150"
-		7: return "宝箱"
-		_: return "金币100"
+		1: return {"gold_coins": 100, "diamonds": 0, "has_treasure_box": false, "has_decor": false}
+		2: return {"gold_coins": 0, "diamonds": 20, "has_treasure_box": false, "has_decor": false}
+		3: return {"gold_coins": 150, "diamonds": 0, "has_treasure_box": false, "has_decor": false}
+		4: return {"gold_coins": 0, "diamonds": 30, "has_treasure_box": false, "has_decor": false}
+		5: return {"gold_coins": 100, "diamonds": 0, "has_treasure_box": false, "has_decor": false}
+		6: return {"gold_coins": 0, "diamonds": 40, "has_treasure_box": false, "has_decor": false}
+		7: return {"gold_coins": randi() % 301 + 200, "diamonds": 0, "has_treasure_box": true, "has_decor": true}
+		_: return {"gold_coins": 100, "diamonds": 0, "has_treasure_box": false, "has_decor": false}
 
 static func signin() -> Dictionary:
 	var cfg: ConfigFile = _load()
@@ -71,7 +71,8 @@ static func signin() -> Dictionary:
 	else:
 		var gap: int = _to_days(today) - _to_days(last)
 		if gap <= 0:
-			return {"day": day, "reward": _reward_for(day)}
+			var saved_reward: Dictionary = Dictionary(cfg.get_value("state", "last_reward", _reward_for(day)))
+			return {"day": day, "reward": saved_reward}
 		elif gap == 1:
 			if day >= CYCLE_LENGTH:
 				day = 1
@@ -85,11 +86,24 @@ static func signin() -> Dictionary:
 			if gap >= 3:
 				makeup_used = 0
 
-	var reward: String = _reward_for(day)
+	var reward: Dictionary = _reward_for(day)
+	var source := "signin:day%d" % day
+	var gold_coins := int(reward.get("gold_coins", 0))
+	var diamonds := int(reward.get("diamonds", 0))
+	if gold_coins > 0 and CurrencyManager:
+		CurrencyManager.add_gold(gold_coins, source)
+	if diamonds > 0 and CurrencyManager:
+		CurrencyManager.add_diamonds(diamonds, source)
+	if day == 7 and InventoryManager:
+		if bool(reward.get("has_treasure_box", false)):
+			InventoryManager.add_treasure_box(1, "signin:day7")
+		if bool(reward.get("has_decor", false)):
+			InventoryManager.add_random_decor(1, "signin:day7")
 	cfg.set_value("state", "last_date", today)
 	cfg.set_value("state", "day", day)
 	cfg.set_value("state", "streak", streak)
 	cfg.set_value("state", "makeup_used", makeup_used)
+	cfg.set_value("state", "last_reward", reward)
 	_save(cfg)
 	return {"day": day, "reward": reward}
 

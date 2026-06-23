@@ -6,7 +6,7 @@ signal annoyed_exited(cat_id: String)
 
 enum EmotionState { IDLE, COUNTING, ANNOYED, RECOVERY }
 
-const INTERACTION_THRESHOLD := 5
+const INTERACTION_THRESHOLD := 4
 const COUNTING_WINDOW_SEC := 3600.0
 const ANNOYED_DURATION_SEC := 600.0
 

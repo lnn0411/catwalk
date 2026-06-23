@@ -15,9 +15,9 @@ const ACHIEVEMENTS: Array[Dictionary] = [
 	{id = "A6", name = "永不停歇", category = "steps", type = "steps_streak", target = 7, reward = {diamonds = 50, makeup_card = 1}},
 	# B: Collection (§10.2)
 	{id = "B1", name = "猫奴入门", category = "collection", type = "hatch_count", target = 1, reward = {gold_coins = 200}},
-	{id = "B2", name = "三口之家", category = "collection", type = "hatch_count", target = 10, reward = {diamonds = 30}},
-	{id = "B3", name = "猫咪旅馆", category = "collection", type = "hatch_count", target = 50, reward = {diamonds = 50, treasure_box = 1}},
-	{id = "B4", name = "动物园园长", category = "collection", type = "hatch_count", target = 100, reward = {diamonds = 100, title = "猫院长"}},
+	{id = "B2", name = "图鉴起步", category = "collection", type = "hatch_count", target = 6, reward = {diamonds = 30}},
+	{id = "B3", name = "猫咪旅馆", category = "collection", type = "hatch_count", target = 12, reward = {diamonds = 50, treasure_box = 1}},
+	{id = "B4", name = "动物园园长", category = "collection", type = "hatch_count", target = 24, reward = {diamonds = 100, title = "猫图鉴大师"}},
 	{id = "B5", name = "全家福", category = "collection", type = "breeds_all", target = 3, reward = {diamonds = 80, garden_decor = 1}},
 	# C: Growth (§10.3)
 	{id = "C1", name = "成长快乐", category = "growth", type = "cat_level", target = 3, reward = {gold_coins = 300}},

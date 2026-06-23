@@ -11,12 +11,16 @@ const ITEM_INGREDIENT_SHARD := "ingredient_shard"   # 食材碎片（3片合成1
 const ITEM_DECORATION_SHARD := "decoration_shard"   # 装饰碎片（累计合成装饰品）
 const ITEM_SNACK := "snack"                         # 成品零食（喂食互动+10%好感加成）
 const ITEM_HIDDEN_ITEM := "hidden_item"             # 隐藏道具（稀有外观配件）
+const ITEM_TREASURE_BOX := "treasure_box"           # 签到/成就宝箱
+const ITEM_DECOR := "decor"                         # 随机装饰品
 
 const VALID_TYPES := [
 	ITEM_INGREDIENT_SHARD,
 	ITEM_DECORATION_SHARD,
 	ITEM_SNACK,
 	ITEM_HIDDEN_ITEM,
+	ITEM_TREASURE_BOX,
+	ITEM_DECOR,
 ]
 
 var _counts: Dictionary = {}
@@ -38,6 +42,12 @@ func add_item(item_type: String, quantity: int) -> int:
 	_counts[item_type] = max(_counts[item_type] + quantity, 0)
 	_after_change(item_type)
 	return _counts[item_type]
+
+func add_treasure_box(quantity: int, _source: String = "") -> int:
+	return add_item(ITEM_TREASURE_BOX, quantity)
+
+func add_random_decor(quantity: int, _source: String = "") -> int:
+	return add_item(ITEM_DECOR, quantity)
 
 func has_item(item_type: String, quantity: int) -> bool:
 	return get_count(item_type) >= max(quantity, 0)

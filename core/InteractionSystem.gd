@@ -2,15 +2,24 @@ extends Node
 
 const CAT_CARD_SCENE_PATH := "res://scenes/ui/CatCard.tscn"
 const CAT_CARD_LAYER := 100
-const FEED_COOLDOWN_SECONDS := 30.0
-const PLAY_COOLDOWN_SECONDS := 60.0
+static var DEBUG_FAST_COOLDOWN := false
+const RELEASE_FEED_COOLDOWN := 14400.0
+const RELEASE_PET_COOLDOWN := 7200.0
+const RELEASE_PLAY_COOLDOWN := 21600.0
+const RELEASE_PHOTO_COOLDOWN := 3600.0
+const DEBUG_FEED_COOLDOWN := 30.0
+const DEBUG_PLAY_COOLDOWN := 60.0
 const SAVE_PATH: String = "user://interaction.cfg"
 
 var current_cat_card: Control = null
 var feed_cooldown_active: bool = false
+var pet_cooldown_active: bool = false
 var play_cooldown_active: bool = false
+var photo_cooldown_active: bool = false
 var _feed_timer: Timer
+var _pet_timer: Timer
 var _play_timer: Timer
+var _photo_timer: Timer
 var _bound_garden: Node = null
 var _cat_card_layer: CanvasLayer = null
 var _affection: Dictionary = {}
@@ -18,16 +27,30 @@ func _ready() -> void:
 	_feed_timer = Timer.new()
 	_feed_timer.name = "FeedCooldownTimer"
 	_feed_timer.one_shot = true
-	_feed_timer.wait_time = FEED_COOLDOWN_SECONDS
+	_feed_timer.wait_time = _get_feed_cooldown()
 	_feed_timer.timeout.connect(_on_feed_cooldown_done)
 	add_child(_feed_timer)
+
+	_pet_timer = Timer.new()
+	_pet_timer.name = "PetCooldownTimer"
+	_pet_timer.one_shot = true
+	_pet_timer.wait_time = _get_pet_cooldown()
+	_pet_timer.timeout.connect(_on_pet_cooldown_done)
+	add_child(_pet_timer)
 
 	_play_timer = Timer.new()
 	_play_timer.name = "PlayCooldownTimer"
 	_play_timer.one_shot = true
-	_play_timer.wait_time = PLAY_COOLDOWN_SECONDS
+	_play_timer.wait_time = _get_play_cooldown()
 	_play_timer.timeout.connect(_on_play_cooldown_done)
 	add_child(_play_timer)
+
+	_photo_timer = Timer.new()
+	_photo_timer.name = "PhotoCooldownTimer"
+	_photo_timer.one_shot = true
+	_photo_timer.wait_time = _get_photo_cooldown()
+	_photo_timer.timeout.connect(_on_photo_cooldown_done)
+	add_child(_photo_timer)
 
 	_try_find_garden()
 	if _bound_garden == null and UIManager != null:
@@ -113,10 +136,12 @@ func is_interaction_blocked(type: String) -> bool:
 	match type:
 		"feed":
 			return feed_cooldown_active
+		"pet":
+			return pet_cooldown_active
 		"play":
 			return play_cooldown_active
-		"pet":
-			return false
+		"photo":
+			return photo_cooldown_active
 		_:
 			return false
 
@@ -125,10 +150,16 @@ func start_cooldown(type: String) -> void:
 	match type:
 		"feed":
 			feed_cooldown_active = true
-			_feed_timer.start(FEED_COOLDOWN_SECONDS)
+			_feed_timer.start(_get_feed_cooldown())
+		"pet":
+			pet_cooldown_active = true
+			_pet_timer.start(_get_pet_cooldown())
 		"play":
 			play_cooldown_active = true
-			_play_timer.start(PLAY_COOLDOWN_SECONDS)
+			_play_timer.start(_get_play_cooldown())
+		"photo":
+			photo_cooldown_active = true
+			_photo_timer.start(_get_photo_cooldown())
 		_:
 			pass
 	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
@@ -141,8 +172,20 @@ func _on_feed_cooldown_done() -> void:
 		current_cat_card.refresh_interaction_buttons()
 
 
+func _on_pet_cooldown_done() -> void:
+	pet_cooldown_active = false
+	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
+		current_cat_card.refresh_interaction_buttons()
+
+
 func _on_play_cooldown_done() -> void:
 	play_cooldown_active = false
+	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
+		current_cat_card.refresh_interaction_buttons()
+
+
+func _on_photo_cooldown_done() -> void:
+	photo_cooldown_active = false
 	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
 		current_cat_card.refresh_interaction_buttons()
 
@@ -151,8 +194,12 @@ func get_cooldown_remaining(type: String) -> float:
 	match type:
 		"feed":
 			return _feed_timer.time_left if feed_cooldown_active else 0.0
+		"pet":
+			return _pet_timer.time_left if pet_cooldown_active else 0.0
 		"play":
 			return _play_timer.time_left if play_cooldown_active else 0.0
+		"photo":
+			return _photo_timer.time_left if photo_cooldown_active else 0.0
 		_:
 			return 0.0
 
@@ -163,7 +210,7 @@ func try_interact(cat_id: String, type: String) -> bool:
 	if EmotionStateMachine != null and EmotionStateMachine.is_annoyed(cat_id):
 		return false
 
-	if type == "feed" or type == "play":
+	if type in ["feed", "pet", "play", "photo"]:
 		start_cooldown(type)
 
 	if EmotionStateMachine != null:
@@ -189,17 +236,35 @@ func can_interact(_cat_id: String, type: String) -> bool:
 
 
 static func get_cooldown_minutes(type: String) -> int:
+	if DEBUG_FAST_COOLDOWN:
+		return 0
 	match type:
 		"feed":
-			return 0
+			return int(ceil(_get_feed_cooldown() / 60.0))
 		"play":
-			return 1
+			return int(ceil(_get_play_cooldown() / 60.0))
 		"pet":
-			return 0
+			return int(ceil(_get_pet_cooldown() / 60.0))
 		"photo":
-			return 0
+			return int(ceil(_get_photo_cooldown() / 60.0))
 		_:
 			return 0
+
+
+static func _get_feed_cooldown() -> float:
+	return DEBUG_FEED_COOLDOWN if DEBUG_FAST_COOLDOWN else RELEASE_FEED_COOLDOWN
+
+
+static func _get_pet_cooldown() -> float:
+	return DEBUG_FEED_COOLDOWN if DEBUG_FAST_COOLDOWN else RELEASE_PET_COOLDOWN
+
+
+static func _get_play_cooldown() -> float:
+	return DEBUG_PLAY_COOLDOWN if DEBUG_FAST_COOLDOWN else RELEASE_PLAY_COOLDOWN
+
+
+static func _get_photo_cooldown() -> float:
+	return DEBUG_FEED_COOLDOWN if DEBUG_FAST_COOLDOWN else RELEASE_PHOTO_COOLDOWN
 
 
 func _on_page_changed(page_name: String) -> void:
