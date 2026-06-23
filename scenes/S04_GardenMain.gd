@@ -186,6 +186,7 @@ func _build_garden_layer() -> void:
 		CatSpawner.set_cat_container(cat_container)
 		if not CatSpawner.cat_count_changed.is_connected(_on_cat_count_changed):
 			CatSpawner.cat_count_changed.connect(_on_cat_count_changed)
+		_apply_cat_visibility()
 
 func _setup_weather_layer() -> void:
 	_weather_overlay = ColorRect.new()
@@ -589,6 +590,8 @@ func _connect_data() -> void:
 			EventBus.workshop_activated.connect(_on_workshop_activated)
 		if not EventBus.hatch_activated.is_connected(_on_hatched_activated):
 			EventBus.hatch_activated.connect(_on_hatched_activated)
+	if CatScreenManager and not CatScreenManager.screen_cats_changed.is_connected(_on_screen_cats_changed):
+		CatScreenManager.screen_cats_changed.connect(_on_screen_cats_changed)
 
 func _refresh_all() -> void:
 	_refresh_steps()
@@ -646,6 +649,27 @@ func _on_hatch_complete(_cat_data) -> void:
 
 func _on_cat_count_changed(_count: int) -> void:
 	_refresh_cat_state()
+	_apply_cat_visibility()
+
+func _on_screen_cats_changed(_visible_cats: Array) -> void:
+	_apply_cat_visibility()
+
+# 按 CatScreenManager 的可见列表刷新场上猫节点的显隐。
+# CatScreenManager 不存在时所有猫保持可见（向后兼容）。
+func _apply_cat_visibility() -> void:
+	if cat_container == null or not is_instance_valid(cat_container):
+		return
+	var has_manager := CatScreenManager != null
+	var visible_ids: Array = []
+	if has_manager:
+		visible_ids = CatScreenManager.get_visible_cats()
+	for child in cat_container.get_children():
+		if not ("cat_data" in child) or child.cat_data == null:
+			continue
+		if not has_manager:
+			child.visible = true
+			continue
+		child.visible = visible_ids.has(String(child.cat_data.id))
 
 func _on_hatch_slot_pressed(_slot_index: int) -> void:
 	if TutorialManager and TutorialManager.is_running():
