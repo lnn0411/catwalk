@@ -87,6 +87,7 @@ func instance_cat(cat_data, entrance: bool = false, in_view: bool = true):
 	if cat_id != "":
 		spawned_cat_ids[cat_id] = cat_node
 
+	print("[CatSpawner] instance_cat DONE: breed=%s spawned_count=%d" % [cat_data.species, spawned_cat_ids.size()])
 	cat_spawned.emit(cat_node)
 	_emit_cat_count()
 	return cat_node
@@ -222,8 +223,10 @@ func _restore_cats() -> void:
 		visible_ids = CatScreenManager.get_visible_cats()
 
 	var first := true
+	print("[CatSpawner] _restore_cats: 引擎猫数=%d, visible_ids=%s" % [HatchEngine.get_cats().size(), visible_ids])
 	for cat_data in HatchEngine.get_cats():
 		var cat_id := _get_cat_id(cat_data)
+		print("[CatSpawner] _restore_cats: cat=%s id=%s visible_ids.has=%s spawned_has=%s" % [cat_data.display_name if cat_data else "null", cat_id, visible_ids.has(cat_id) if visible_ids.size()>0 else "N/A(empty)", spawned_cat_ids.has(cat_id)])
 		if visible_ids.size() > 0 and not visible_ids.has(cat_id):
 			# 不在可见列表 → 移除已存在的节点
 			if spawned_cat_ids.has(cat_id):
@@ -236,6 +239,7 @@ func _restore_cats() -> void:
 		instance_cat(cat_data, false, first)
 		if was_new:
 			first = false
+	print("[CatSpawner] _restore_cats DONE: spawned=%d" % spawned_cat_ids.size())
 
 func _emit_cat_count() -> void:
 	if HatchEngine:
