@@ -33,3 +33,4 @@ offset_top = 59.0
 offset_right = 113.0
 offset_bottom = 107.0
 stretch_mode = 0
+mouse_filter = 2

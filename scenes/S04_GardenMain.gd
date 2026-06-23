@@ -753,7 +753,7 @@ func _on_bottom_nav_tab_selected(index: int) -> void:
 func _on_companion_pressed() -> void:
 	if TutorialManager and TutorialManager.is_running():
 		return
-	UIManager.push("res://scenes/S07_CarryCatSelect.tscn")
+	UIManager.show_overlay("res://scenes/S07_CarryCatSelect.tscn")
 
 func _on_workshop_button() -> void:
 	if TutorialManager and TutorialManager.is_running():

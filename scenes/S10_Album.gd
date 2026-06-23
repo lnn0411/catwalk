@@ -202,7 +202,7 @@ func _open_postcard_detail(index: int) -> void:
 		return
 	var card_name: String = String(POSTCARDS[index])
 	var is_unlocked := _postcard_unlocked.has(card_name)
-	var d := AcceptDialog.new()
+	var d = AcceptDialog.new()
 	d.title = "💌 明信片"
 	if is_unlocked:
 		d.dialog_text = "地点：%s\n\n来自猫猫旅途中的一张明信片，\n背面写着温暖的问候……" % name
