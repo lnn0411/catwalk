@@ -497,10 +497,10 @@ func _build_hud() -> void:
 	companion_btn.anchor_right = 0.0
 	companion_btn.anchor_top = 0.0
 	companion_btn.anchor_bottom = 0.0
-	companion_btn.offset_left = 636.0
-	companion_btn.offset_right = 750.0
-	companion_btn.offset_top = 656.0
-	companion_btn.offset_bottom = 696.0
+	companion_btn.offset_left = 620.0
+	companion_btn.offset_right = 706.0
+	companion_btn.offset_top = 672.0
+	companion_btn.offset_bottom = 712.0
 	companion_btn.add_theme_font_size_override("font_size", 15)
 	companion_btn.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	var comp_bg := StyleBoxFlat.new()
