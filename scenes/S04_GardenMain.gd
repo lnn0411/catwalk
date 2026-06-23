@@ -58,6 +58,8 @@ var _debug_panel: PanelContainer
 var _steps_hold_timer: Timer
 var _weather_overlay: ColorRect
 var _weather_material: ShaderMaterial
+var _bg_sprite: Sprite2D
+var _bg_index: int = -1
 var _rain_particles: CPUParticles2D
 var _snow_particles: CPUParticles2D
 var _weather_tween: Tween
@@ -300,6 +302,8 @@ func _build_parallax_background() -> void:
 	sprite.texture = tex
 	sprite.centered = false
 	sprite.position = Vector2.ZERO
+	_bg_sprite = sprite
+	_bg_index = idx
 	garden_layer.add_child(sprite)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
@@ -569,31 +573,22 @@ func _build_debug_panel() -> void:
 		button.pressed.connect(item[1])
 		box.add_child(button)
 	
-	# ── 场景跳转区 ──
-	var scene_label := Label.new()
-	scene_label.text = "── 场景跳转 ──"
-	scene_label.add_theme_font_size_override("font_size", 11)
-	scene_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
-	box.add_child(scene_label)
-	for item in [
-		["🌿 花园", "res://scenes/S04_GardenMain.tscn"],
-		["🥚 孵化屋", "res://scenes/S06_HatchPage.tscn"],
-		["📖 图鉴", "res://scenes/S10_Album.tscn"],
-		["🛍️ 商店", "res://scenes/S12_Shop.tscn"],
-		["👤 我的", "res://scenes/S11_Settings.tscn"],
-		["👭 好友", "res://scenes/S13_Friends.tscn"],
-	]:
-		var btn := Button.new()
-		btn.text = String(item[0])
-		btn.custom_minimum_size = Vector2(0.0, 32.0)
-		btn.add_theme_font_size_override("font_size", 11)
-		var bg2 := StyleBoxFlat.new()
-		bg2.bg_color = Color(0.85, 0.75, 0.65, 0.3)
-		bg2.set_corner_radius_all(6)
-		btn.add_theme_stylebox_override("normal", bg2)
-		var scene_path := str(item[1])
-		btn.pressed.connect(func(): _goto_scene(scene_path))
-		box.add_child(btn)
+	# ── 花园背景切换 ──
+	var bg_label := Label.new()
+	bg_label.text = "── 花园背景 ──"
+	bg_label.add_theme_font_size_override("font_size", 11)
+	bg_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	box.add_child(bg_label)
+	var bg_btn := Button.new()
+	bg_btn.text = "🖼️ 切换花园背景"
+	bg_btn.custom_minimum_size = Vector2(0.0, 32.0)
+	bg_btn.add_theme_font_size_override("font_size", 11)
+	var bg_style := StyleBoxFlat.new()
+	bg_style.bg_color = Color(0.75, 0.85, 0.65, 0.3)
+	bg_style.set_corner_radius_all(6)
+	bg_btn.add_theme_stylebox_override("normal", bg_style)
+	bg_btn.pressed.connect(_cycle_garden_bg)
+	box.add_child(bg_btn)
 	
 	# 增大面板高度
 	_debug_panel.size.y = 520
@@ -816,11 +811,17 @@ func _toggle_debug_panel() -> void:
 	_debug_panel.visible = not _debug_panel.visible
 
 
-func _goto_scene(path: String) -> void:
-	if UIManager and UIManager.has_method("replace"):
-		UIManager.replace(path)
+func _cycle_garden_bg() -> void:
+	if _bg_sprite == null or not is_instance_valid(_bg_sprite):
+		return
+	_bg_index = (_bg_index % 4) + 1
+	var path := "res://assets/art/garden/garden_%02d.png" % _bg_index
+	var tex := load(path) as Texture2D
+	if tex != null:
+		_bg_sprite.texture = tex
+		print("[DBG] 切换花园背景: garden_%02d" % _bg_index)
 	else:
-		print("[DBG] UIManager unavailable, cannot switch to: ", path)
+		print("[DBG] 加载失败: ", path)
 
 func _add_mock_steps(amount: int) -> void:
 	if StepEngine:
