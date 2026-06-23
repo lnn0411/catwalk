@@ -270,7 +270,40 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 	# 此处保留同帧填蛋（走路时即时响应）；_fill_timer 每 0.2s 兜底
 	# 覆盖步数静止的场景。函数幂等，双触发无害。
 	_fill_slots_from_pool()
-	if produced > 0.0 and SaveManager:
+	var companion_exp_changed := false
+	if delta > 0 and current_companion_cat_id != "":
+		var companion = get_cat_by_id(current_companion_cat_id)
+		if companion != null:
+			var can_apply_exp := false
+			var species := ""
+			var old_exp := 0
+			var old_level := 1
+			if companion is CatData:
+				can_apply_exp = true
+				species = companion.species
+				old_exp = companion.exp
+				old_level = companion.level
+			elif companion is Dictionary:
+				can_apply_exp = true
+				species = String(companion.get("species", ""))
+				old_exp = int(companion.get("exp", 0))
+				old_level = int(companion.get("level", 1))
+
+			var exp_gain: int = LevelSystem.calc_exp(delta, LevelSystem.get_breed_multiplier(species)) if LevelSystem else 0
+			if can_apply_exp and exp_gain > 0:
+				var new_exp: int = min(old_exp + exp_gain, LevelSystem.MAX_EXP)
+				var new_level: int = LevelSystem.get_level(new_exp)
+				if new_exp != old_exp or new_level != old_level:
+					companion_exp_changed = true
+					if companion is CatData:
+						companion.exp = new_exp
+						companion.level = new_level
+					elif companion is Dictionary:
+						companion["exp"] = new_exp
+						companion["level"] = new_level
+					if new_level > old_level and EventBus:
+						EventBus.emit_level_up(current_companion_cat_id, old_level, new_level)
+	if (produced > 0.0 or companion_exp_changed) and SaveManager:
 		SaveManager.save_all()
 
 # 把主能量池里的能量灌进正在孵化的蛋：
