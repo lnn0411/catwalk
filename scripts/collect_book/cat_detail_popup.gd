@@ -89,13 +89,6 @@ func _draw() -> void:
 	draw_string(font, origin + Vector2(0, 575), "（美术待补）",
 		HORIZONTAL_ALIGNMENT_CENTER, POPUP_SIZE.x, 18, Color(0.5, 0.5, 0.5))
 
-	# 让它出来按钮
-	var release_rect := Rect2(origin + RELEASE_BTN_LOCAL.position, RELEASE_BTN_LOCAL.size)
-	draw_rect(release_rect, Palette.AMBER, true)
-	draw_rect(release_rect, Palette.AMBER, false, 2.0)
-	draw_string(font, Vector2(release_rect.position.x + 50, release_rect.position.y + 35),
-		"让它出来", HORIZONTAL_ALIGNMENT_CENTER, release_rect.size.x - 100, 26, Palette.TEXT_ON_AMBER)
-
 	# 关闭按钮
 	var close_rect := Rect2(origin + CLOSE_BTN_LOCAL.position, CLOSE_BTN_LOCAL.size)
 	draw_rect(close_rect, Palette.AMBER, true)
@@ -108,7 +101,7 @@ func _draw() -> void:
 	draw_rect(release_rect, Palette.AMBER, true)
 	draw_rect(release_rect, Palette.BORDER_DEFAULT, false, 2.0)
 	draw_string(font, Vector2(release_rect.position.x, release_rect.position.y + 35),
-		"让它出来", HORIZONTAL_ALIGNMENT_CENTER, release_rect.size.x, 26, Palette.BG_CEMENT)
+		"让它出来", HORIZONTAL_ALIGNMENT_CENTER, release_rect.size.x, 26, Palette.TEXT_ON_AMBER)
 
 
 func _draw_big_head(center: Vector2) -> void:
