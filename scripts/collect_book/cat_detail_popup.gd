@@ -5,6 +5,7 @@ extends Control
 
 const POPUP_SIZE := Vector2(520, 680)
 const CLOSE_BTN_LOCAL := Rect2(POPUP_SIZE.x - 150, POPUP_SIZE.y - 78, 120, 52)
+const RELEASE_BTN_LOCAL := Rect2(30, POPUP_SIZE.y - 78, 180, 52)
 
 var _cat_data = null
 var _time: float = 0.0
@@ -94,6 +95,13 @@ func _draw() -> void:
 	draw_rect(close_rect, Palette.BORDER_DEFAULT, false, 2.0)
 	draw_string(font, Vector2(close_rect.position.x, close_rect.position.y + 35),
 		"关闭", HORIZONTAL_ALIGNMENT_CENTER, close_rect.size.x, 26, Palette.BG_CEMENT)
+
+	# 让它出来按钮
+	var release_rect := Rect2(origin + RELEASE_BTN_LOCAL.position, RELEASE_BTN_LOCAL.size)
+	draw_rect(release_rect, Palette.AMBER, true)
+	draw_rect(release_rect, Palette.BORDER_DEFAULT, false, 2.0)
+	draw_string(font, Vector2(release_rect.position.x, release_rect.position.y + 35),
+		"让它出来", HORIZONTAL_ALIGNMENT_CENTER, release_rect.size.x, 26, Palette.BG_CEMENT)
 
 
 func _draw_big_head(center: Vector2) -> void:
@@ -207,5 +215,15 @@ func _on_panel_input(event: InputEvent) -> void:
 		if CLOSE_BTN_LOCAL.has_point(local):
 			accept_event()
 			queue_free()
+		elif RELEASE_BTN_LOCAL.has_point(local):
+			accept_event()
+			_release_to_garden()
 		else:
 			accept_event()
+
+
+func _release_to_garden() -> void:
+	var data = _cat_data
+	queue_free()
+	if data != null:
+		UIManager.replace("res://scenes/S04_GardenMain.tscn", {"focus_cat": data})
