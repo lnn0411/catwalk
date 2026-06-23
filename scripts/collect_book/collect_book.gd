@@ -4,17 +4,17 @@ extends "res://ui/UIPage.gd"
 ## 顶部标题 + 已发现统计 + TabBar（两个 Tab 按钮）+ 返回按钮。
 ## 所有 UI 全用 _draw() 代码绘制。
 
-const DESIGN_SIZE := Vector2(720, 1280)
+const DESIGN_SIZE: Vector2 = Vector2(720, 1280)
 
-const CatTabScript := preload("res://scripts/collect_book/cat_tab.gd")
-const PostcardTabScript := preload("res://scripts/collect_book/postcard_tab.gd")
-const DetailPopupScript := preload("res://scripts/collect_book/cat_detail_popup.gd")
-const PostcardPopupScript := preload("res://scripts/collect_book/postcard_detail_popup.gd")
+const CatTabScript: GDScript = preload("res://scripts/collect_book/cat_tab.gd")
+const PostcardTabScript: GDScript = preload("res://scripts/collect_book/postcard_tab.gd")
+const DetailPopupScript: GDScript = preload("res://scripts/collect_book/cat_detail_popup.gd")
+const PostcardPopupScript: GDScript = preload("res://scripts/collect_book/postcard_detail_popup.gd")
 
 # 点击热区（设计坐标系）
-const BACK_BTN_RECT := Rect2(28, 59, 85, 48)
-const TAB_CAT_RECT := Rect2(48, 150, 300, 66)
-const TAB_POST_RECT := Rect2(372, 150, 300, 66)
+const BACK_BTN_RECT: Rect2 = Rect2(28, 59, 85, 48)
+const TAB_CAT_RECT: Rect2 = Rect2(48, 150, 300, 66)
+const TAB_POST_RECT: Rect2 = Rect2(372, 150, 300, 66)
 
 enum Tab { CAT, POSTCARD }
 
@@ -62,20 +62,10 @@ func on_enter(_data: Dictionary = {}) -> void:
 
 func _refresh() -> void:
 	var cats: Array = HatchEngine.get_cats()
-	var all_species: Array[String] = []
-	for k in CatData.BREED_COSTS.keys():
-		all_species.append(String(k))
+	_discovered = cats.size()
+	_total = cats.size()
 
-	# 统计已发现数量（去重：每个品种只要有一只即算发现）
-	var found := {}
-	for c in cats:
-		var sp := _cat_species(c)
-		if sp != "":
-			found[sp] = true
-	_discovered = found.size()
-	_total = all_species.size()
-
-	_cat_tab.set_data(cats, all_species)
+	_cat_tab.set_data(cats)
 
 	# 明信片数据
 	var collected_ids: Array = ExploreEngine._collected_postcards if ExploreEngine else []
@@ -83,23 +73,15 @@ func _refresh() -> void:
 	queue_redraw()
 
 
-func _cat_species(c) -> String:
-	if typeof(c) == TYPE_DICTIONARY:
-		return String(c.get("species", ""))
-	if c != null and "species" in c:
-		return String(c.species)
-	return ""
-
-
 # ---------------------------------------------------------------------------
 # 绘制
 # ---------------------------------------------------------------------------
 func _draw() -> void:
-	var font := ThemeDB.fallback_font
+	var font: Font = ThemeDB.fallback_font
 	# 顶部标题
 	draw_string(font, Vector2(0, 110), "图鉴", HORIZONTAL_ALIGNMENT_CENTER, DESIGN_SIZE.x, 48, Palette.AMBER)
 	# 统计
-	var stat := "已发现: %d/%d" % [_discovered, _total]
+	var stat: String = "已发现: %d/%d" % [_discovered, _total]
 	draw_string(font, Vector2(0, 200), stat, HORIZONTAL_ALIGNMENT_CENTER, DESIGN_SIZE.x, 26, Palette.BORDER_DEFAULT)
 
 	# 返回按钮
@@ -114,10 +96,10 @@ func _draw() -> void:
 
 
 func _draw_tab_button(font: Font, rect: Rect2, label: String, is_active: bool) -> void:
-	var bg := Palette.AMBER if is_active else Palette.BG_CEMENT
+	var bg: Color = Palette.AMBER if is_active else Palette.BG_CEMENT
 	draw_rect(rect, bg, true)
 	draw_rect(rect, Palette.BORDER_DEFAULT, false, 2.0)
-	var text_col := Palette.BG_CEMENT if is_active else Palette.AMBER
+	var text_col: Color = Palette.BG_CEMENT if is_active else Palette.AMBER
 	draw_string(font, Vector2(rect.position.x, rect.position.y + 44),
 		label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, 30, text_col)
 
@@ -154,23 +136,15 @@ func _apply_tab_visibility() -> void:
 		_postcard_tab.visible = active_tab == Tab.POSTCARD
 
 
-func _on_cat_cell_pressed(species_name: String) -> void:
-	# 找到对应猫数据，弹出详情
-	var cat_data = null
-	for c in HatchEngine.get_cats():
-		if _cat_species(c) == species_name:
-			cat_data = c
-			break
-	if cat_data == null:
-		cat_data = {"species": species_name}
-	var popup = DetailPopupScript.new()
+func _on_cat_cell_pressed(cat_data: Variant) -> void:
+	var popup: Control = DetailPopupScript.new()
 	add_child(popup)
 	popup.setup(cat_data)
 
 
 func _on_postcard_cell_pressed(postcard_id: String) -> void:
 	var collected_ids: Array = ExploreEngine._collected_postcards if ExploreEngine else []
-	var is_collected := collected_ids.has(postcard_id)
-	var popup = PostcardPopupScript.new()
+	var is_collected: bool = collected_ids.has(postcard_id)
+	var popup: Control = PostcardPopupScript.new()
 	add_child(popup)
 	popup.setup(postcard_id, is_collected)
