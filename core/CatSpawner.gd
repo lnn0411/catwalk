@@ -8,13 +8,18 @@ const CatData := preload("res://core/CatData.gd")
 var cat_container: Node2D
 var rng := RandomNumberGenerator.new()
 var spawned_cat_ids: Dictionary = {}
+var _restoring := false
 func _ready() -> void:
 	rng.randomize()
 	if HatchEngine and not HatchEngine.hatch_complete.is_connected(_on_hatch_complete):
 		HatchEngine.hatch_complete.connect(_on_hatch_complete)
 
 func set_cat_container(container) -> void:
-	print("[CatSpawner] set_cat_container: %s id=%s" % [container != null, container.get_instance_id() if container else -1])
+	print("[CatSpawner] set_cat_container: %s id=%s _restoring=%s" % [container != null, container.get_instance_id() if container else -1, _restoring])
+	if _restoring:
+		print("[CatSpawner]   └─ 跳过（正在恢复中，防递归）")
+		return
+	_restoring = true
 	spawned_cat_ids.clear()
 	cat_container = container
 	if container != null:
@@ -33,6 +38,7 @@ func set_cat_container(container) -> void:
 		_restore_cats()
 		if HatchEngine:
 			print("[CatSpawner] 同步完成: 引擎猫数=%d 场上猫数=%d" % [HatchEngine.get_cats().size(), spawned_cat_ids.size()])
+	_restoring = false
 
 func _on_hatch_complete(cat_data) -> void:
 	print("[CatSpawner] hatch_complete: %s, container=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_container != null, cat_container.get_instance_id() if cat_container else -1])
