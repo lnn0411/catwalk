@@ -4,6 +4,11 @@ signal cat_spawned(node)
 signal cat_count_changed(count)
 
 const CatData := preload("res://core/CatData.gd")
+const MAX_VISIBLE_CATS := 12
+
+class RestingCatPlaceholder:
+	extends Node2D
+	var cat_data: Variant = null
 
 var cat_container: Node2D
 var rng := RandomNumberGenerator.new()
@@ -29,6 +34,8 @@ func set_cat_container(container) -> void:
 			# 跳过"将死"节点（queue_free 延迟到帧末，此刻它还是子节点）——
 			# 登记它会在节点死亡后留下死引用，导致该猫永久无法再生成。
 			if child.is_queued_for_deletion():
+				continue
+			if child.has_meta("resting_cat_id"):
 				continue
 			if "cat_data" in child and child.cat_data != null:
 				var cid := _get_cat_id(child.cat_data)
@@ -206,18 +213,26 @@ func get_cat_world_position(cat_data) -> Vector2:
 	return Vector2.ZERO
 
 func _on_cat_clicked(cat_data) -> void:
-	# 方案 A：统一走 InteractionSystem 弹 CatCard，CatSpawner 不做弹窗
 	pass
 
 func _restore_cats() -> void:
 	if HatchEngine == null:
 		return
 
-	print("[CatSpawner] _restore_cats: 引擎猫数=%d spawned_has=%s" % [HatchEngine.get_cats().size(), spawned_cat_ids.keys()])
-	for cat_data in HatchEngine.get_cats():
+	var cats: Array = HatchEngine.get_cats()
+	cats.sort_custom(_compare_cats_for_restore)
+	var visible_cats: Array = cats.slice(0, MAX_VISIBLE_CATS)
+	var resting_cats: Array = cats.slice(MAX_VISIBLE_CATS)
+
+	print("[CatSpawner] _restore_cats: 引擎猫数=%d visible=%d resting=%d spawned_has=%s" % [cats.size(), visible_cats.size(), resting_cats.size(), spawned_cat_ids.keys()])
+	for cat_data in visible_cats:
 		var cat_id := _get_cat_id(cat_data)
 		print("[CatSpawner] _restore_cats: cat=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_id])
 		instance_cat(cat_data, false, true)
+	for cat_data in resting_cats:
+		var cat_id := _get_cat_id(cat_data)
+		print("[CatSpawner] _restore_cats: resting cat=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_id])
+		_instance_resting_placeholder(cat_data)
 	print("[CatSpawner] _restore_cats DONE: spawned=%d" % spawned_cat_ids.size())
 	# 立即打印每只猫的状态
 	if cat_container and is_instance_valid(cat_container):
@@ -258,3 +273,93 @@ func _get_cat_id(cat_data) -> String:
 	if typeof(cat_data) == TYPE_DICTIONARY:
 		return String(cat_data.get("id", ""))
 	return String(cat_data.id)
+
+func _get_cat_created_at(cat_data: Variant) -> float:
+	if cat_data == null:
+		return 0.0
+	if typeof(cat_data) == TYPE_DICTIONARY:
+		return float(cat_data.get("created_at", 0.0))
+	return float(cat_data.created_at)
+
+func _get_cat_hatch_index(cat_data: Variant) -> int:
+	if cat_data == null:
+		return 0
+	if typeof(cat_data) == TYPE_DICTIONARY:
+		return int(cat_data.get("hatch_index", 0))
+	return int(cat_data.hatch_index)
+
+func _compare_cats_for_restore(a: Variant, b: Variant) -> bool:
+	var created_a: float = _get_cat_created_at(a)
+	var created_b: float = _get_cat_created_at(b)
+	if not is_equal_approx(created_a, created_b):
+		return created_a > created_b
+
+	var hatch_a: int = _get_cat_hatch_index(a)
+	var hatch_b: int = _get_cat_hatch_index(b)
+	if hatch_a != hatch_b:
+		return hatch_a > hatch_b
+
+	return _get_cat_id(a) > _get_cat_id(b)
+
+func _instance_resting_placeholder(cat_data: Variant) -> Node2D:
+	if cat_data == null or cat_container == null:
+		return null
+
+	var cat_id: String = _get_cat_id(cat_data)
+	if cat_id == "":
+		return null
+
+	var existing: Node2D = _get_resting_placeholder(cat_id)
+	if existing != null:
+		existing.set("cat_data", cat_data)
+		existing.set_meta("resting_cat_data", cat_data)
+		return existing
+
+	var placeholder: RestingCatPlaceholder = RestingCatPlaceholder.new()
+	placeholder.name = "RestingCat_%s" % cat_id
+	placeholder.cat_data = cat_data
+	placeholder.set_meta("resting_cat_id", cat_id)
+	placeholder.set_meta("resting_cat_data", cat_data)
+	placeholder.visible = false
+	cat_container.add_child(placeholder)
+	return placeholder
+
+func _get_resting_placeholder(cat_id: String) -> Node2D:
+	if cat_container == null:
+		return null
+
+	for child in cat_container.get_children():
+		if child is Node2D and child.has_meta("resting_cat_id") and String(child.get_meta("resting_cat_id")) == cat_id:
+			if not child.is_queued_for_deletion():
+				return child
+	return null
+
+func _remove_resting_placeholder(cat_id: String) -> void:
+	var placeholder: Node2D = _get_resting_placeholder(cat_id)
+	if placeholder != null:
+		placeholder.queue_free()
+
+func _swap_resting_cat(resting_cat_data: Variant, outgoing_cat_data: Variant = null) -> Variant:
+	var resting_cat_id: String = _get_cat_id(resting_cat_data)
+	if resting_cat_id == "":
+		return null
+
+	if outgoing_cat_data == null:
+		for raw_spawned_cat_id in spawned_cat_ids.keys():
+			var spawned_cat_id: String = String(raw_spawned_cat_id)
+			if spawned_cat_id != resting_cat_id:
+				outgoing_cat_data = spawned_cat_ids[spawned_cat_id].cat_data if is_instance_valid(spawned_cat_ids[spawned_cat_id]) and "cat_data" in spawned_cat_ids[spawned_cat_id] else null
+				break
+
+	var outgoing_cat_id: String = _get_cat_id(outgoing_cat_data)
+	if outgoing_cat_id != "" and spawned_cat_ids.has(outgoing_cat_id):
+		var outgoing_node: Variant = spawned_cat_ids[outgoing_cat_id]
+		if is_instance_valid(outgoing_node) and not outgoing_node.is_queued_for_deletion():
+			spawned_cat_ids.erase(outgoing_cat_id)
+			outgoing_node.queue_free()
+			_instance_resting_placeholder(outgoing_cat_data)
+
+	_remove_resting_placeholder(resting_cat_id)
+	var cat_node: Variant = instance_cat(resting_cat_data, false, true)
+	_emit_cat_count()
+	return cat_node
