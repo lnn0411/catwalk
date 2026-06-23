@@ -663,10 +663,12 @@ func _apply_cat_visibility() -> void:
 	var visible_ids: Array = []
 	if has_manager:
 		visible_ids = CatScreenManager.get_visible_cats()
+	# 防御：管理器返回空列表但容器有猫 → 全显示（防止启动时轮换未填充导致猫消失）
+	var show_all := has_manager and visible_ids.is_empty() and cat_container.get_child_count() > 0
 	for child in cat_container.get_children():
 		if not ("cat_data" in child) or child.cat_data == null:
 			continue
-		if not has_manager:
+		if not has_manager or show_all:
 			child.visible = true
 			continue
 		child.visible = visible_ids.has(String(child.cat_data.id))
