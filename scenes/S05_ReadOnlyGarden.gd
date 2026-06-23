@@ -202,7 +202,7 @@ func _build_hud() -> void:
 func _on_bottom_nav_tab_selected(index: int) -> void:
 	if index < 0 or index >= BottomNav.TABS.size():
 		return
-	var page := String(BottomNav.TABS[index]["page"])
+	var page: String = String(BottomNav.TABS[index]["page"])
 	if page != "":
 		UIManager.replace(page)
 

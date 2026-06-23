@@ -3,8 +3,7 @@
 extends Control
 
 var _accessory_target: Node2D
-var _sliders := {}
-
+var _sliders: Dictionary = {}
 func _ready() -> void:
 	_build_sliders()
 	_build_output_button()

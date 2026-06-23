@@ -61,7 +61,7 @@ func set_data(slot: Dictionary) -> void:
 	var status := _effective_status(slot)
 	var energy := float(slot.get("energy", 0.0))
 	var max_energy := float(slot.get("max_energy", 0.0))
-	var species := String(slot.get("species", CatData.BREED_ORANGE))
+	var species: String = String(slot.get("species", CatData.BREED_ORANGE))
 	var progress := 0.0
 	if max_energy > 0.0:
 		progress = clamp(energy / max_energy, 0.0, 1.0)
@@ -113,7 +113,7 @@ func set_data(slot: Dictionary) -> void:
 
 # incubating 且已满 → 视为 ready（沿用原 _slot_status 语义）
 func _effective_status(slot: Dictionary) -> String:
-	var status := String(slot.get("status", "empty"))
+	var status: String = String(slot.get("status", "empty"))
 	var energy := float(slot.get("energy", 0.0))
 	var max_energy := float(slot.get("max_energy", 0.0))
 	if status == "incubating" and max_energy > 0.0 and energy >= max_energy:

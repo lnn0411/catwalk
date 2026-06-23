@@ -34,7 +34,7 @@ func _gui_input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size).grow(-4.0)
-	var rarity := String(item_data.get("rarity", "common"))
+	var rarity: String = String(item_data.get("rarity", "common"))
 	var bg_color := _rarity_color(rarity)
 	var fill_color := Color("#FFFFFF")
 	fill_color.a = 0.94
@@ -62,7 +62,7 @@ func _draw_count_badge(rect: Rect2) -> void:
 	draw_string(font, badge_rect.position + Vector2((badge_rect.size.x - text_size.x) * 0.5, 15.5), badge_text, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size, Color.WHITE)
 
 func _draw_name(rect: Rect2) -> void:
-	var name := String(item_data.get("name", gift_id))
+	var name: String = String(item_data.get("name", gift_id))
 	var font := get_theme_default_font()
 	var font_size := 14
 	var max_width := rect.size.x - 18.0

@@ -113,7 +113,7 @@ class NavTab:
 		if _icon == null:
 			return
 		var active := index == nav.current_index
-		var icon_name := String(BottomNav.TABS[index]["icon"])
+		var icon_name: String = String(BottomNav.TABS[index]["icon"])
 		var file_name := "nav_%s.png" % icon_name
 		var formal_path := "res://assets/art/ui/nav/" + file_name
 		var fallback_path := BottomNav.UI_TEXTURE_PATH + file_name

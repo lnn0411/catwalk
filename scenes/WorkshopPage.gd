@@ -204,7 +204,7 @@ func _on_slot_pressed(slot_index: int) -> void:
 	if slot.is_empty():
 		return
 
-	var status := String(slot.get("status", ""))
+	var status: String = String(slot.get("status", ""))
 	if status != "box_ready":
 		return
 
@@ -212,15 +212,15 @@ func _on_slot_pressed(slot_index: int) -> void:
 	wm.open_box(slot_index)
 
 	# Get gift info for animation
-	var gift_id := String(slot.get("gift_id", ""))
+	var gift_id: String = String(slot.get("gift_id", ""))
 	var workshop_data := get_node_or_null("/root/WorkshopData")
 	var gift_data: Dictionary = {}
 	if workshop_data != null and workshop_data.has_method("get_gift_data"):
 		gift_data = workshop_data.get_gift_data(gift_id)
 
-	var rarity := String(gift_data.get("rarity", "common"))
-	var name := String(gift_data.get("name", gift_id))
-	var category := String(gift_data.get("category", ""))
+	var rarity: String = String(gift_data.get("rarity", "common"))
+	var name: String = String(gift_data.get("name", gift_id))
+	var category: String = String(gift_data.get("category", ""))
 
 	_box_animation.play(slot_index, gift_id, rarity, name, category)
 
@@ -297,7 +297,7 @@ func _refresh_all() -> void:
 		if sv == null:
 			continue
 		var slot: Dictionary = wm.get_slot_data(i) if wm.has_method("get_slot_data") else {}
-		var status := String(slot.get("status", "filling"))
+		var status: String = String(slot.get("status", "filling"))
 		var energy := float(slot.get("energy", 0.0))
 		sv.set_energy(energy, 3000.0)
 		sv.set_status(status)
@@ -320,7 +320,7 @@ func _refresh_status_text() -> void:
 
 	for i in range(3):
 		var slot: Dictionary = wm.get_slot_data(i) if wm.has_method("get_slot_data") else {}
-		var status := String(slot.get("status", "filling"))
+		var status: String = String(slot.get("status", "filling"))
 		if status == "box_ready":
 			any_ready = true
 		elif status == "filling":

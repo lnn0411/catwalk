@@ -277,7 +277,7 @@ func _select_rotation_candidates(count: int) -> Array[String]:
 
 func _calculate_weight(cat_id: String, cat_data = null) -> float:
 	var data = cat_data if cat_data != null else _get_cat_data(cat_id)
-	var rarity := String(_get_cat_value(data, "rarity", "common"))
+	var rarity: String = String(_get_cat_value(data, "rarity", "common"))
 	var time_bonus: float = clamp(float(cat_weight_bonus.get(cat_id, 0.0)), 0.0, TIME_BONUS_MAX)
 	return float(RARITY_WEIGHTS.get(rarity, 1.0)) + time_bonus
 
@@ -409,14 +409,14 @@ func _to_string_array(source: Array) -> Array[String]:
 
 
 func _string_key_int_dict(source: Dictionary) -> Dictionary:
-	var result := {}
+	var result: Dictionary = {}
 	for key in source.keys():
 		result[String(key)] = int(source[key])
 	return result
 
 
 func _string_key_float_dict(source: Dictionary) -> Dictionary:
-	var result := {}
+	var result: Dictionary = {}
 	for key in source.keys():
 		result[String(key)] = float(source[key])
 	return result

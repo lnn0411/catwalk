@@ -64,11 +64,11 @@ func _build_ui() -> void:
 	vb.add_child(spacer)
 
 	# Product info
-	var icon := String(product.get("icon", "🎁"))
-	var pname := String(product.get("name", ""))
-	var pdesc := String(product.get("desc", ""))
+	var icon: String = String(product.get("icon", "🎁"))
+	var pname: String = String(product.get("name", ""))
+	var pdesc: String = String(product.get("desc", ""))
 	var price := int(product.get("price", 0))
-	var cur := String(product.get("cur", "gold"))
+	var cur: String = String(product.get("cur", "gold"))
 	var cur_icon: String = String({"diamonds": "💎", "gold": "💰", "petals": "🌸"}.get(cur, "💎"))
 
 	var info := VBoxContainer.new()

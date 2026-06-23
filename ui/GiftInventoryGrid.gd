@@ -28,7 +28,7 @@ func populate(gifts: Array[Dictionary]) -> void:
 	for gift in _gifts:
 		var item: Control = GiftItemViewScript.new()
 		var item_data: Dictionary = Dictionary(gift.get("item_data", {}))
-		var id := String(gift.get("gift_id", item_data.get("id", "")))
+		var id: String = String(gift.get("gift_id", item_data.get("id", "")))
 		item.setup(id, int(gift.get("count", 0)), item_data)
 		item.gift_selected.connect(_on_item_selected)
 		add_child(item)
@@ -81,9 +81,9 @@ func _on_item_selected(selected_gift_id: String) -> void:
 func _show_detail(selected_gift_id: String) -> void:
 	var gift := _find_gift(selected_gift_id)
 	var data: Dictionary = Dictionary(gift.get("item_data", {}))
-	var name := String(data.get("name", selected_gift_id))
-	var rarity := String(data.get("rarity", "common")).capitalize()
-	var description := String(data.get("description", ""))
+	var name: String = String(data.get("name", selected_gift_id))
+	var rarity: String = String(data.get("rarity", "common")).capitalize()
+	var description: String = String(data.get("description", ""))
 	var cnt := int(gift.get("count", 0))
 	var text := "%s\n%s · x%d" % [name, rarity, cnt]
 	if description != "":

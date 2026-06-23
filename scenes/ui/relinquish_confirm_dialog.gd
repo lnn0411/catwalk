@@ -95,7 +95,7 @@ func _refresh_text() -> void:
 	if _title_label == null:
 		return
 	var name_str: String = String(_cat_data.get("display_name", _cat_data.get("name", "猫咪")))
-	var rarity := String(_cat_data.get("rarity", "common"))
+	var rarity: String = String(_cat_data.get("rarity", "common"))
 	var level := int(_cat_data.get("level", 1))
 	var friendship := int(_cat_data.get("friendship", 0))
 

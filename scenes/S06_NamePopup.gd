@@ -56,7 +56,7 @@ func _build_ui() -> void:
 func _apply_cat() -> void:
 	if _name_input == null:
 		return
-	var current := String(_cat.display_name) if _cat != null else ""
+	var current: String = String(_cat.display_name) if _cat != null else ""
 	# 「未命名+品种」默认名视为尚未命名 → 预填一个随机建议名给玩家
 	if current.length() >= 2 and not CatData.is_default_name(current):
 		_name_input.text = current

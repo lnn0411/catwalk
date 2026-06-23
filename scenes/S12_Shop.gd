@@ -23,7 +23,7 @@ const CUR_ICONS := {"gold": "💰", "diamonds": "💎", "petals": "🌸"}
 const CUR_NAMES := {"gold": "金币", "diamonds": "钻石", "petals": "爱心花瓣"}
 
 var _currency_labels := {"gold": null, "diamonds": null, "petals": null}
-var _buy_buttons := {}  # product_id → Button
+var _buy_buttons: Dictionary = {}  # product_id → Button
 var _is_purchasing := false
 var _back_rect: Rect2 = Rect2()
 
@@ -91,8 +91,8 @@ func _build_currency_bar(parent: VBoxContainer) -> void:
 	var col_width := width / 3.0
 
 	for kv in [["gold", "💰", Palette.AMBER], ["diamonds", "💎", Palette.MIST_BLUE], ["petals", "🌸", Palette.BRICK_RED]]:
-		var key := String(kv[0])
-		var icon := String(kv[1])
+		var key: String = String(kv[0])
+		var icon: String = String(kv[1])
 		var col := Color(kv[2])
 
 		var panel := PanelContainer.new()
@@ -138,7 +138,7 @@ func _build_product_list(parent: VBoxContainer) -> void:
 	# 分类分隔
 	var last_prefix := ""
 	for p in PRODUCTS:
-		var prefix := String(p.cur)
+		var prefix: String = String(p.cur)
 		if prefix != last_prefix:
 			if last_prefix != "":
 				# 分隔线
@@ -195,7 +195,7 @@ func _build_product_list(parent: VBoxContainer) -> void:
 		# 购买按钮
 		var buy_btn := Button.new()
 		buy_btn.custom_minimum_size = Vector2(100, 48)
-		var pid := String(p.id)
+		var pid: String = String(p.id)
 		buy_btn.pressed.connect(_on_buy_pressed.bind(pid))
 		_style_buy_button(buy_btn)
 		row.add_child(buy_btn)
@@ -242,7 +242,7 @@ func _refresh_all_buttons() -> void:
 		is_expand_owned = HatchEngine.garden_expand_purchased
 
 	for p in PRODUCTS:
-		var pid := String(p.id)
+		var pid: String = String(p.id)
 		var btn: Button = _buy_buttons.get(pid)
 		if btn == null:
 			continue
@@ -253,7 +253,7 @@ func _refresh_all_buttons() -> void:
 
 		if not owned:
 			# 货币不足检查
-			var cur := String(p.cur)
+			var cur: String = String(p.cur)
 			var price := int(p.price)
 			var can_afford := false
 			match cur:
@@ -281,7 +281,7 @@ func _on_buy_pressed(pid: String) -> void:
 	if p.is_empty():
 		return
 
-	var cur := String(p.cur)
+	var cur: String = String(p.cur)
 	var price := int(p.price)
 
 	# 查看加速/立即孵化：检查是否有进行中的孵化
@@ -333,7 +333,7 @@ func _show_insufficient_toast(cur: String) -> void:
 
 func _execute_purchase(p: Dictionary) -> void:
 	_is_purchasing = true
-	var cur := String(p.cur)
+	var cur: String = String(p.cur)
 	var price := int(p.price)
 
 	# 扣货币
@@ -365,7 +365,7 @@ func _execute_purchase(p: Dictionary) -> void:
 	_play_obtain_animation(p)
 
 func _grant_product(p: Dictionary) -> void:
-	var ptype := String(p.type)
+	var ptype: String = String(p.type)
 	var amt := int(p.get("amt", 0))
 
 	match ptype:

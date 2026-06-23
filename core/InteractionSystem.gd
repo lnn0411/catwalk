@@ -13,9 +13,7 @@ var _feed_timer: Timer
 var _play_timer: Timer
 var _bound_garden: Node = null
 var _cat_card_layer: CanvasLayer = null
-var _affection := {}
-
-
+var _affection: Dictionary = {}
 func _ready() -> void:
 	_feed_timer = Timer.new()
 	_feed_timer.name = "FeedCooldownTimer"

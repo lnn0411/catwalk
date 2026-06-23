@@ -619,7 +619,7 @@ func _refresh_slots() -> void:
 	if HatchEngine:
 		slots = HatchEngine.get_slots()
 	for i in range(_slot_views.size()):
-		var data := {}
+		var data: Dictionary = {}
 		if i < slots.size():
 			data = Dictionary(slots[i])
 		_slot_views[i].set_slot_data(data)
@@ -744,7 +744,7 @@ func _on_bottom_nav_tab_selected(index: int) -> void:
 		return
 	if index < 0 or index >= BottomNav.TABS.size():
 		return
-	var page := String(BottomNav.TABS[index]["page"])
+	var page: String = String(BottomNav.TABS[index]["page"])
 	if page == scene_file_path:
 		return
 	if page != "":
@@ -1267,7 +1267,7 @@ class HatchSlotView:
 			return
 		print("[HatchSlot %d] _refresh called, type=%s" % [slot_index, _frame.get_class()])
 		var unlocked := bool(slot_data.get("unlocked", slot_index == 0))
-		var status := String(slot_data.get("status", "empty" if slot_index == 0 else "locked"))
+		var status: String = String(slot_data.get("status", "empty" if slot_index == 0 else "locked"))
 		var energy := float(slot_data.get("energy", 0.0))
 		var max_energy := float(slot_data.get("max_energy", 0.0))
 		var progress: float = 0.0

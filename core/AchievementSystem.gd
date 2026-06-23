@@ -223,7 +223,7 @@ func _on_hatch_complete(cat) -> void:
 			_register_breed_collected(breed)
 
 	for def_dict in ACHIEVEMENTS:
-		var t := String(def_dict.get("type", ""))
+		var t: String = String(def_dict.get("type", ""))
 		if t in ["hatch_count", "breeds_all"]:
 			_check_def(def_dict)
 
@@ -262,7 +262,7 @@ func _on_cat_interacted(cat_id: String, _interaction_type: String) -> void:
 
 func _check_step_achievements() -> void:
 	for def_dict in ACHIEVEMENTS:
-		var t := String(def_dict.get("type", ""))
+		var t: String = String(def_dict.get("type", ""))
 		if t in ["steps_total", "steps_streak"]:
 			_check_def(def_dict)
 

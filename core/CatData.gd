@@ -90,7 +90,7 @@ static func serialize(cat) -> Dictionary:
 	}
 
 static func deserialize(data: Dictionary):
-	var species_name := String(data.get("species", data.get("breed", BREED_ORANGE)))
+	var species_name: String = String(data.get("species", data.get("breed", BREED_ORANGE)))
 	var index := int(data.get("hatch_index", 1))
 	var cat = load("res://core/CatData.gd").new()
 	cat.id = String(data.get("id", ""))

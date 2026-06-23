@@ -493,7 +493,7 @@ func _get_explore_nav_global_rect() -> Rect2:
 	if nav != null and ("_buttons" in nav) and nav.has_method("get_target_page"):
 		var tab_count = nav._buttons.size()
 		for i in range(tab_count):
-			var page := String(nav.get_target_page(i)).to_lower()
+			var page: String = String(nav.get_target_page(i)).to_lower()
 			if page.find("explore") != -1:
 				return _get_bottom_nav_global_rect(i)
 		var buttons: Array = nav._buttons

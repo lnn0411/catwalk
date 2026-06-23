@@ -29,7 +29,7 @@ func relinquish_cat(cat_data: Dictionary, relinquish_event_id: String) -> Dictio
 	if relinquish_event_id in relinquished_event_ids:
 		return { "love_petals": 0, "gold_coins": 0, "blocked": true, "reason": "重复送养请求" }
 
-	var rarity := String(cat_data.get("rarity", "common"))
+	var rarity: String = String(cat_data.get("rarity", "common"))
 	var level := int(cat_data.get("level", 1))
 	var friendship := int(cat_data.get("friendship", 0))
 	var rarity_mult := float(RARITY_FACTOR.get(rarity, 0.0))

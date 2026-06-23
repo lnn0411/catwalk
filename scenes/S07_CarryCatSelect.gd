@@ -115,7 +115,7 @@ func _refresh_list() -> void:
 		_cat_items.append(row)
 
 func _build_cat_row(cat_data, companion_id: String) -> Control:
-	var cat_id := String(cat_data.id)
+	var cat_id: String = String(cat_data.id)
 	var is_companion := cat_id == companion_id
 
 	var row := Button.new()

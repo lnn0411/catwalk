@@ -7,8 +7,7 @@ const CatData := preload("res://core/CatData.gd")
 
 var cat_container: Node2D
 var rng := RandomNumberGenerator.new()
-var spawned_cat_ids := {}
-
+var spawned_cat_ids: Dictionary = {}
 func _ready() -> void:
 	rng.randomize()
 	if HatchEngine and not HatchEngine.hatch_complete.is_connected(_on_hatch_complete):
