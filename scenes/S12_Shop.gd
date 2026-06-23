@@ -381,8 +381,7 @@ func _grant_product(p: Dictionary) -> void:
 func _apply_garden_expand() -> void:
 	if HatchEngine:
 		HatchEngine.garden_expand_purchased = true
-		HatchEngine.backpack_max_capacity = 36
-		EventBus.backpack_capacity_expanded.emit(36)
+		PackageSystem.set_capacity(36)
 	# 持久化到存档
 	if SaveManager:
 		SaveManager._config.set_value("shop", "garden_expand_purchased", true)

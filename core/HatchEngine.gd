@@ -23,11 +23,15 @@ var _fill_timer: Timer  # 填蛋定时兜底（步数静止时池能量也能流
 var _assign_timer: Timer  # 0.5s 自动落蛋延迟（检测到空槽后延迟装填）
 var _was_workshop_mode: bool = false  # 工坊/孵化态切换的去抖：仅在跨态时派发信号
 
+func _get_max_capacity() -> int:
+	if PackageSystem:
+		return PackageSystem.get_max_capacity()
+	return 24
+
 # GDD v2.17：工坊态/孵化态双轨切换 + 能量溢出链
 const WORKSHOP_CACHE_CAP := 3000.0
 var workshop_cached_energy: float = 0.0   # 工坊态半满能量冻结缓存（切回孵化态保留不丢）
 var surprise_box_ready: bool = false      # 惊喜礼盒是否 Ready（工坊缓存灌满触发）
-var backpack_max_capacity: int = 24       # 当前猫包上限
 var has_tutorial_first_egg: bool = false  # 是否已触发新手首蛋
 var current_companion_cat_id: String = ""
 var garden_expand_purchased: bool = false
@@ -175,6 +179,9 @@ func consume_ad_speedup() -> void:
 func collect_ready_slot(slot_id: int):
 	if slot_id < 0 or slot_id >= slots.size():
 		return null
+	if cats.size() >= _get_max_capacity():
+		print("[HatchEngine] Backpack full, cannot collect ready slot ", slot_id)
+		return null
 	var slot: Dictionary = slots[slot_id]
 	if String(slot.get("status", "")) != "ready":
 		return null
@@ -197,7 +204,6 @@ func apply_save(data: Dictionary) -> void:
 	ad_speedup_date = String(data.get("ad_speedup_date", ""))
 	workshop_cached_energy = clamp(float(data.get("workshop_cached_energy", 0.0)), 0.0, WORKSHOP_CACHE_CAP)
 	surprise_box_ready = bool(data.get("surprise_box_ready", false))
-	backpack_max_capacity = max(int(data.get("backpack_max_capacity", backpack_max_capacity)), 1)
 	has_tutorial_first_egg = bool(data.get("has_tutorial_first_egg", false))
 	current_companion_cat_id = String(data.get("current_companion_cat_id", ""))
 	garden_expand_purchased = bool(data.get("garden_expand_purchased", false))
@@ -257,7 +263,6 @@ func get_save_data() -> Dictionary:
 		"ad_speedup_date": ad_speedup_date,
 		"workshop_cached_energy": workshop_cached_energy,
 		"surprise_box_ready": surprise_box_ready,
-		"backpack_max_capacity": backpack_max_capacity,
 		"has_tutorial_first_egg": has_tutorial_first_egg,
 		"current_companion_cat_id": current_companion_cat_id,
 		"garden_expand_purchased": garden_expand_purchased,
@@ -531,7 +536,7 @@ func _emit_all_progress() -> void:
 
 func is_workshop_mode() -> bool:
 	# 工坊态条件：猫包已满（cats.size() >= backpack_max_capacity）且无 incubating 槽
-	return cats.size() >= backpack_max_capacity and _get_active_filling_slot() == -1
+	return cats.size() >= _get_max_capacity() and _get_active_filling_slot() == -1
 
 func _update_mode() -> void:
 	var workshop_now: bool = is_workshop_mode()
@@ -576,6 +581,8 @@ func is_energy_overflowing() -> bool:
 
 func _do_assign_empty_slots() -> void:
 	# 0.5s Timer 回调：执行实际的蛋装填
+	if cats.size() >= _get_max_capacity():
+		return
 	for i in range(SLOT_COUNT):
 		var slot: Dictionary = slots[i]
 		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "empty":

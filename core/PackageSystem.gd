@@ -40,6 +40,13 @@ func check_expansion(total_steps: int, postcard_count: int) -> void:
 		backpack_capacity_expanded.emit(backpack_max_capacity)
 
 
+func set_capacity(cap: int) -> void:
+	cap = clamp(cap, backpack_max_capacity, _HARD_CAP)
+	if cap > backpack_max_capacity:
+		backpack_max_capacity = cap
+		backpack_capacity_expanded.emit(backpack_max_capacity)
+
+
 func get_expansion_milestones() -> Array:
 	var result: Array = []
 	for tier in _TIERS:
