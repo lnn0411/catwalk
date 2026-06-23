@@ -218,10 +218,10 @@ func _restore_cats() -> void:
 		return
 
 	var first := true
-	print("[CatSpawner] _restore_cats: 引擎猫数=%d" % HatchEngine.get_cats().size())
+	print("[CatSpawner] _restore_cats: 引擎猫数=%d spawned_has=%s" % [HatchEngine.get_cats().size(), spawned_cat_ids.keys()])
 	for cat_data in HatchEngine.get_cats():
 		var cat_id := _get_cat_id(cat_data)
-		print("[CatSpawner] _restore_cats: cat=%s id=%s spawned_has=%s" % [cat_data.display_name if cat_data else "null", cat_id, spawned_cat_ids.has(cat_id)])
+		print("[CatSpawner] _restore_cats: cat=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_id])
 		var was_new: bool = not spawned_cat_ids.has(cat_id)
 		instance_cat(cat_data, false, first)
 		if was_new:
