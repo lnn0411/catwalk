@@ -223,6 +223,10 @@ func _restore_cats() -> void:
 		print("[CatSpawner] _restore_cats: cat=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_id])
 		instance_cat(cat_data, false, true)
 	print("[CatSpawner] _restore_cats DONE: spawned=%d" % spawned_cat_ids.size())
+	# 延迟3秒再查一次，看是否被其他系统移除
+	var t := get_tree().create_timer(3.0)
+	await t.timeout
+	print("[CatSpawner] DELAYED_CHECK 3s后: spawned=%d container子节点=%d" % [spawned_cat_ids.size(), cat_container.get_child_count() if cat_container else -1])
 
 func _emit_cat_count() -> void:
 	if HatchEngine:
