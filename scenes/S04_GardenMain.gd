@@ -1030,9 +1030,9 @@ func _setup_camera() -> void:
 	if view.y <= 0.0:
 		view = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - HUD_HEIGHT)
 	
-	# 虚拟花园尺寸: 2048x1536, 竖起希望高度带过扫描留拖动余量
+	# 虚拟花园尺寸: 2048x1536, 竖屏希望高度填满
 	if view.y > 0.0 and WORLD_HEIGHT > 0.0:
-		_cam_zoom = (view.y * 1.08) / WORLD_HEIGHT
+		_cam_zoom = view.y / WORLD_HEIGHT
 	else:
 		_cam_zoom = CONTENT_SCALE
 	var zoom := _get_camera_zoom()
