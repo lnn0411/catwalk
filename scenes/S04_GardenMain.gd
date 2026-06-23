@@ -568,6 +568,35 @@ func _build_debug_panel() -> void:
 		button.add_theme_stylebox_override("normal", bg)
 		button.pressed.connect(item[1])
 		box.add_child(button)
+	
+	# ── 场景跳转区 ──
+	var scene_label := Label.new()
+	scene_label.text = "── 场景跳转 ──"
+	scene_label.add_theme_font_size_override("font_size", 11)
+	scene_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	box.add_child(scene_label)
+	for item in [
+		["🌿 花园", "res://scenes/S04_GardenMain.tscn"],
+		["🥚 孵化屋", "res://scenes/S06_HatchPage.tscn"],
+		["📖 图鉴", "res://scenes/S10_Album.tscn"],
+		["🛍️ 商店", "res://scenes/S12_Shop.tscn"],
+		["👤 我的", "res://scenes/S11_Settings.tscn"],
+		["👭 好友", "res://scenes/S13_Friends.tscn"],
+	]:
+		var btn := Button.new()
+		btn.text = String(item[0])
+		btn.custom_minimum_size = Vector2(0.0, 32.0)
+		btn.add_theme_font_size_override("font_size", 11)
+		var bg2 := StyleBoxFlat.new()
+		bg2.bg_color = Color(0.85, 0.75, 0.65, 0.3)
+		bg2.set_corner_radius_all(6)
+		btn.add_theme_stylebox_override("normal", bg2)
+		var scene_path := str(item[1])
+		btn.pressed.connect(func(): _goto_scene(scene_path))
+		box.add_child(btn)
+	
+	# 增大面板高度
+	_debug_panel.size.y = 520
 
 func _make_box_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
@@ -785,6 +814,13 @@ func _toggle_debug_panel() -> void:
 	if not OS.is_debug_build():
 		return
 	_debug_panel.visible = not _debug_panel.visible
+
+
+func _goto_scene(path: String) -> void:
+	if UIManager and UIManager.has_method("replace"):
+		UIManager.replace(path)
+	else:
+		print("[DBG] UIManager unavailable, cannot switch to: ", path)
 
 func _add_mock_steps(amount: int) -> void:
 	if StepEngine:
