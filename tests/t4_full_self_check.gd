@@ -43,6 +43,7 @@ func _ready() -> void:
 	_t4_13_weather_time()
 	_t4_14_cat_screen()
 	_t4_15_breed_unlock()
+	_t4_16_companion_exp()
 
 	_summary()
 
@@ -312,6 +313,37 @@ func _t4_15_breed_unlock() -> void:
 	_check("T4-15", b in valid, "determine_breed → %s（合法品种）" % b)
 	var unlocked: Array = BreedUnlockEngine.get_unlocked_breeds()
 	_check("T4-15", unlocked.has(CatData.BREED_ORANGE), "初始已解锁橘猫")
+
+
+# ── T4-16 随行猫经验 ─────────────────────
+
+func _t4_16_companion_exp() -> void:
+	print("-- T4-16 随行猫经验 --")
+	var he := _node("HatchEngine")
+	if he == null:
+		_xx("T4-16", "HatchEngine 未注册")
+		return
+	if he.get_cats().is_empty():
+		_xx("T4-16", "没有猫")
+		return
+	var cat = he.get_cats()[0]
+	var cid: String = String(cat.id if "id" in cat else cat.get("id", ""))
+	var old_exp: int = int(cat.exp if "exp" in cat else cat.get("exp", 0))
+	var old_lv: int = int(cat.level if "level" in cat else cat.get("level", 1))
+	# 设为携带猫 + 加步数
+	he.current_companion_cat_id = cid
+	StepEngine.add_mock_steps(6000)
+	await get_tree().process_frame
+	var new_exp: int = int(cat.exp if "exp" in cat else cat.get("exp", 0))
+	var new_lv: int = int(cat.level if "level" in cat else cat.get("level", 1))
+	# 校验：经验应增长，等级应≥1
+	_check("T4-16", new_exp > old_exp, "步数→经验增长: %d→%d" % [old_exp, new_exp])
+	_check("T4-16", new_lv >= old_lv, "等级不降: Lv.%d→Lv.%d" % [old_lv, new_lv])
+	# 清理
+	he.current_companion_cat_id = ""
+	if StepEngine.has_method("apply_save"):
+		StepEngine.apply_save({})
+	SaveManager.reset_all()
 
 
 # ── 汇总 ─────────────────────────────────────────────────

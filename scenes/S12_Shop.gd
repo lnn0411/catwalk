@@ -8,8 +8,8 @@ const PRODUCTS := [
 	# 钻石商品
 	{id="energy_small",   name="小能量包",   icon="🔋", price=50,  cur="diamonds", desc="回复3000能量",        type="consume_energy",  amt=3000},
 	{id="energy_large",   name="大能量包",   icon="🔋", price=120, cur="diamonds", desc="回复8000能量",        type="consume_energy",  amt=8000},
-	{id="hatch_boost",    name="孵化加速器", icon="⏩", price=80,  cur="diamonds", desc="孵化剩余时间减半",    type="hatch_boost"},
-	{id="hatch_instant",  name="超级孵化器", icon="⚡", price=200, cur="diamonds", desc="孵化立即完成",        type="hatch_instant"},
+	{id="hatch_boost",    name="孵化加速器", icon="⏩", price=30,  cur="diamonds", desc="孵化剩余时间减半",    type="hatch_boost"},
+	{id="hatch_instant",  name="超级孵化器", icon="⚡", price=80,  cur="diamonds", desc="孵化立即完成",        type="hatch_instant"},
 	{id="snack_diamond",  name="零食礼包",   icon="🍪", price=60,  cur="diamonds", desc="获得5个零食",         type="add_item_snack",  amt=5},
 	{id="deco_box",       name="装饰礼盒",   icon="🎁", price=100, cur="diamonds", desc="获得3个装饰碎片",      type="add_item_deco",   amt=3},
 	# 金币商品
