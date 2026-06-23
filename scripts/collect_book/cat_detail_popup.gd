@@ -203,7 +203,7 @@ func _on_mask_input(event: InputEvent) -> void:
 func _on_panel_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		# 点击落在弹窗内部，仅当命中关闭按钮才关闭，否则吃掉事件
-		var local := event.position
+		var local: Vector2 = event.position
 		if CLOSE_BTN_LOCAL.has_point(local):
 			accept_event()
 			queue_free()
