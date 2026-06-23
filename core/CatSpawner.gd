@@ -217,24 +217,11 @@ func _restore_cats() -> void:
 	if HatchEngine == null:
 		return
 
-	# T4-14b: 用 CatScreenManager 筛选可见猫
-	var visible_ids: Array = []
-	if CatScreenManager:
-		visible_ids = CatScreenManager.get_visible_cats()
-
 	var first := true
-	print("[CatSpawner] _restore_cats: 引擎猫数=%d, visible_ids=%s" % [HatchEngine.get_cats().size(), visible_ids])
+	print("[CatSpawner] _restore_cats: 引擎猫数=%d" % HatchEngine.get_cats().size())
 	for cat_data in HatchEngine.get_cats():
 		var cat_id := _get_cat_id(cat_data)
-		print("[CatSpawner] _restore_cats: cat=%s id=%s visible_ids.has=%s spawned_has=%s" % [cat_data.display_name if cat_data else "null", cat_id, visible_ids.has(cat_id) if visible_ids.size()>0 else "N/A(empty)", spawned_cat_ids.has(cat_id)])
-		if visible_ids.size() > 0 and not visible_ids.has(cat_id):
-			# 不在可见列表 → 移除已存在的节点
-			if spawned_cat_ids.has(cat_id):
-				var old = spawned_cat_ids[cat_id]
-				if is_instance_valid(old):
-					old.queue_free()
-				spawned_cat_ids.erase(cat_id)
-			continue
+		print("[CatSpawner] _restore_cats: cat=%s id=%s spawned_has=%s" % [cat_data.display_name if cat_data else "null", cat_id, spawned_cat_ids.has(cat_id)])
 		var was_new: bool = not spawned_cat_ids.has(cat_id)
 		instance_cat(cat_data, false, first)
 		if was_new:
