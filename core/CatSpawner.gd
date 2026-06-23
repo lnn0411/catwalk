@@ -233,4 +233,6 @@ func _emit_cat_count() -> void:
 func _get_cat_id(cat_data) -> String:
 	if cat_data == null:
 		return ""
+	if typeof(cat_data) == TYPE_DICTIONARY:
+		return String(cat_data.get("id", ""))
 	return String(cat_data.id)

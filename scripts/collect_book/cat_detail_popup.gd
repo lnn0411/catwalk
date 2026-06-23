@@ -232,5 +232,16 @@ func _on_panel_input(event: InputEvent) -> void:
 func _release_to_garden() -> void:
 	var data = _cat_data
 	queue_free()
-	if data != null:
+	if data == null:
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
+		return
+	# 检查是否有合法 id（CatData 实例有 .id，纯品种字典没有）
+	var has_id := false
+	if typeof(data) == TYPE_DICTIONARY:
+		has_id = data.has("id")
+	else:
+		has_id = "id" in data
+	if has_id:
 		UIManager.replace("res://scenes/S04_GardenMain.tscn", {"focus_cat": data})
+	else:
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
