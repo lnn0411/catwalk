@@ -20,7 +20,7 @@ func _ready() -> void:
 
 	# 遮罩层：真实 ColorRect 节点全屏拦截点击
 	var mask := ColorRect.new()
-	mask.color = Color(0, 0, 0, 0.6)
+	mask.color = Color(0, 0, 0, 0.3)
 	mask.mouse_filter = Control.MOUSE_FILTER_STOP
 	mask.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(mask)

@@ -28,7 +28,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 
 	_mask = ColorRect.new()
-	_mask.color = Color(0, 0, 0, 0.6)
+	_mask.color = Color(0, 0, 0, 0.3)
 	_mask.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_mask.mouse_filter = Control.MOUSE_FILTER_STOP
 	_mask.gui_input.connect(_on_mask_input)
