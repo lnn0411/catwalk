@@ -1040,7 +1040,7 @@ func _setup_camera() -> void:
 	_camera.zoom = Vector2(zoom, zoom)
 	# 初始显示花园左半部分（从 x=0 开始）
 	var half_visible_w: float = (view.x * 0.5) / max(zoom, 0.0001)
-	_camera.position = Vector2(half_visible_w, WORLD_HEIGHT * 0.5)
+	_camera.position = Vector2(WORLD_WIDTH * 0.5, WORLD_HEIGHT * 0.5)
 	_clamp_camera_to_world()
 
 func _clamp_camera_to_world() -> void:
