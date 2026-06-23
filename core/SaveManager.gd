@@ -37,7 +37,6 @@ func load_and_apply() -> void:
 	BreedUnlockEngine.apply_save(_read_breed_unlock())
 	HatchEngine.apply_save(_read_hatch())
 	var currency_data := _read_currency()
-	currency_data["love_petals"] = int(_config.get_value("relinquish", "love_petals", 0))
 	CurrencyManager.apply_save(currency_data)
 	var rs := get_node_or_null("/root/RelinquishSystem")
 	var ps := get_node_or_null("/root/PackageSystem")
@@ -152,6 +151,7 @@ func _read_currency() -> Dictionary:
 		"gold_coins": int(_config.get_value("currency", "gold_coins", 0)),
 		"diamonds": int(_config.get_value("currency", "diamonds", 0)),
 		"flower_petals": int(_config.get_value("currency", "flower_petals", 0)),
+		"love_petals": int(_config.get_value("currency", "love_petals", 0)),
 	}
 
 func _write_currency() -> void:
@@ -159,6 +159,7 @@ func _write_currency() -> void:
 	_config.set_value("currency", "gold_coins", int(data.get("gold_coins", 0)))
 	_config.set_value("currency", "diamonds", int(data.get("diamonds", 0)))
 	_config.set_value("currency", "flower_petals", int(data.get("flower_petals", 0)))
+	_config.set_value("currency", "love_petals", int(data.get("love_petals", 0)))
 
 func _read_hatch() -> Dictionary:
 	var cat_count := int(_config.get_value("hatch", "cat_count", 0))
@@ -256,9 +257,9 @@ func _read_relinquish() -> Dictionary:
 	}
 
 func _write_relinquish() -> void:
-	# love_petals 对齐 CurrencyManager.flower_petals
+	# love_petals 对齐 CurrencyManager.love_petals
 	if CurrencyManager:
-		_config.set_value("relinquish", "love_petals", CurrencyManager.flower_petals)
+		_config.set_value("relinquish", "love_petals", CurrencyManager.love_petals)
 	# 背包容量由 PackageSystem 管理
 	var _ps := get_node_or_null("/root/PackageSystem")
 	if _ps and _ps.has_method("get_capacity"):

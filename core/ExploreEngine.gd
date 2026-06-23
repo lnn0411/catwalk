@@ -55,7 +55,7 @@ static func dispatch(cat_id: String, duration_hours: int) -> bool:
 		return false
 	if _active_count() >= _available_slot_count():
 		return false
-	var now := Time.get_unix_time_from_system()
+	var now := _safe_unix_time()
 	_explorers[cat_id] = {
 		"departure_time": now,
 		"return_time": now + duration_hours * SECONDS_PER_HOUR,
@@ -72,7 +72,7 @@ static func is_returned(cat_id: String) -> bool:
 	if not _explorers.has(cat_id):
 		return false
 	var return_time := float(_explorers[cat_id].get("return_time", 0.0))
-	return Time.get_unix_time_from_system() >= return_time
+	return _safe_unix_time() >= return_time
 
 static func collect(cat_id: String) -> Dictionary:
 	if not _explorers.has(cat_id):
@@ -107,7 +107,8 @@ static func get_remaining_seconds(cat_id: String) -> int:
 	if not _explorers.has(cat_id):
 		return 0
 	var return_time := float(_explorers[cat_id].get("return_time", 0.0))
-	var remaining := return_time - Time.get_unix_time_from_system()
+	var now := _safe_unix_time()
+	var remaining := return_time - now
 	return int(ceil(max(remaining, 0.0)))
 
 static func get_exploring_count() -> int:
@@ -144,6 +145,11 @@ static func _active_count() -> int:
 		if bool(_explorers[cat_id].get("is_exploring", false)):
 			n += 1
 	return n
+
+static func _safe_unix_time() -> float:
+	if Engine.has_singleton("TimeGuard") and Engine.get_singleton("TimeGuard").has_method("get_safe_unix_time"):
+		return Engine.get_singleton("TimeGuard").get_safe_unix_time()
+	return Time.get_unix_time_from_system()
 
 static func _save() -> void:
 	var cfg := ConfigFile.new()

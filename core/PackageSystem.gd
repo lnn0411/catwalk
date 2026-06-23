@@ -1,44 +1,52 @@
 extends Node
 
 signal backpack_capacity_expanded(new_capacity: int)
+signal expansion_available(unlock_count: int, cost_gold: int, capacity: int)
 
 const _INITIAL_CAPACITY := 24
 const _HARD_CAP := 36
 const _TIERS := [
-	{"capacity": 28, "steps": 300_000, "postcards": 5},
-	{"capacity": 32, "steps": 500_000, "postcards": 10},
-	{"capacity": 36, "steps": 1_000_000, "postcards": 20},
+	{"capacity": 28, "unlock_count": 6,  "cost_gold": 5000},
+	{"capacity": 32, "unlock_count": 12, "cost_gold": 10000},
+	{"capacity": 36, "unlock_count": 24, "cost_gold": 0},
 ]
 
 var backpack_max_capacity: int = _INITIAL_CAPACITY
 
-
-func _ready() -> void:
-	if StepEngine and not StepEngine.steps_updated.is_connected(_on_steps_updated):
-		StepEngine.steps_updated.connect(_on_steps_updated)
-
-
 func get_max_capacity() -> int:
 	return backpack_max_capacity
-
 
 func get_capacity() -> int:
 	return get_max_capacity()
 
-
-func check_expansion(total_steps: int, postcard_count: int) -> void:
+# Called when a new cat is hatched (from HatchEngine signal).
+# Checks if player has enough unique species to qualify for a new tier.
+# If cost is 0, auto-expands. If cost > 0, tries to charge gold.
+func check_expansion(unlock_count: int) -> void:
 	if backpack_max_capacity >= _HARD_CAP:
 		return
-	var new_cap := backpack_max_capacity
-	for tier in _TIERS:
-		if tier["capacity"] <= new_cap:
-			continue
-		if total_steps >= tier["steps"] or postcard_count >= tier["postcards"]:
-			new_cap = tier["capacity"]
-	if new_cap > backpack_max_capacity:
-		backpack_max_capacity = new_cap
+	var tier_index: int = -1
+	for i in range(_TIERS.size()):
+		if _TIERS[i]["capacity"] > backpack_max_capacity and unlock_count >= _TIERS[i]["unlock_count"]:
+			tier_index = i
+			break
+	if tier_index == -1:
+		return
+	var tier: Dictionary = _TIERS[tier_index]
+	var cost := int(tier["cost_gold"])
+	if cost <= 0:
+		backpack_max_capacity = tier["capacity"]
 		backpack_capacity_expanded.emit(backpack_max_capacity)
-
+		print("[PackageSystem] Free expansion to cap ", backpack_max_capacity)
+		return
+	# Cost > 0: check gold
+	if CurrencyManager and CurrencyManager.spend_gold(cost):
+		backpack_max_capacity = tier["capacity"]
+		backpack_capacity_expanded.emit(backpack_max_capacity)
+		print("[PackageSystem] Purchased expansion to cap ", backpack_max_capacity, " for ", cost, " gold")
+	else:
+		print("[PackageSystem] Cannot afford expansion: need ", cost, " gold")
+		expansion_available.emit(unlock_count, cost, tier["capacity"])
 
 func set_capacity(cap: int) -> void:
 	cap = clamp(cap, backpack_max_capacity, _HARD_CAP)
@@ -46,22 +54,19 @@ func set_capacity(cap: int) -> void:
 		backpack_max_capacity = cap
 		backpack_capacity_expanded.emit(backpack_max_capacity)
 
-
 func get_expansion_milestones() -> Array:
 	var result: Array = []
 	for tier in _TIERS:
 		result.append({
-			"capacity":  tier["capacity"],
-			"steps":     tier["steps"],
-			"postcards": tier["postcards"],
-			"unlocked":  backpack_max_capacity >= tier["capacity"],
+			"capacity":     tier["capacity"],
+			"unlock_count": tier["unlock_count"],
+			"cost_gold":    tier["cost_gold"],
+			"unlocked":     backpack_max_capacity >= tier["capacity"],
 		})
 	return result
 
-
 func get_save_data() -> Dictionary:
 	return {"backpack_max_capacity": backpack_max_capacity}
-
 
 func apply_save(data: Dictionary) -> void:
 	backpack_max_capacity = clamp(
@@ -69,10 +74,3 @@ func apply_save(data: Dictionary) -> void:
 		_INITIAL_CAPACITY,
 		_HARD_CAP
 	)
-
-
-func _on_steps_updated(_delta: int, total: int) -> void:
-	var postcard_count := 0
-	if AchievementSystem:
-		postcard_count = int(AchievementSystem.get_save_data().get("postcard_count", 0))
-	check_expansion(total, postcard_count)

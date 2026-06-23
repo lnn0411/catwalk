@@ -73,6 +73,7 @@ func _ready() -> void:
 	_fill_timer.timeout.connect(_fill_slots_from_pool)
 	add_child(_fill_timer)
 	_fill_timer.start()
+	hatch_complete.connect(_on_hatch_complete)
 	_emit_all_progress()
 
 func feed_energy(amount: float) -> void:
@@ -251,6 +252,18 @@ func get_cat_by_id(cat_id: String) -> Variant:
 		if cid == cat_id:
 			return c
 	return null
+
+func get_unique_species_count() -> int:
+	var species_set := {}
+	for c in cats:
+		var s: String = ""
+		if c is CatData:
+			s = c.species
+		elif c is Dictionary:
+			s = String(c.get("species", ""))
+		if s != "":
+			species_set[s] = true
+	return species_set.size()
 
 func get_save_data() -> Dictionary:
 	return {
@@ -531,6 +544,10 @@ func _emit_slot_progress(slot_id: int) -> void:
 func _emit_all_progress() -> void:
 	for i in range(slots.size()):
 		_emit_slot_progress(i)
+
+func _on_hatch_complete(_cat_data) -> void:
+	if PackageSystem:
+		PackageSystem.check_expansion(get_unique_species_count())
 
 # ── GDD v2.17 工坊态/孵化态双轨切换 ──
 
