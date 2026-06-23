@@ -62,7 +62,7 @@ func _build_shop_ui() -> void:
 	# 主内容容器（保留 _draw_top_bar 区域）
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.offset_top = 46.0   # 留给 _draw_top_bar
+	margin.offset_top = 115.0  # 留给 _draw_top_bar（返回按钮 y=59~107）
 	margin.offset_left = 12.0
 	margin.offset_right = -12.0
 	margin.offset_bottom = -12.0

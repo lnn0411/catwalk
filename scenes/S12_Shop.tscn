@@ -24,13 +24,3 @@ grow_vertical = 2
 mouse_filter = 2
 expand_mode = 0
 stretch_mode = 0
-
-[node name="BackBtn" type="TextureButton" parent="."]
-unique_name_in_owner = true
-layout_mode = 1
-offset_left = 28.0
-offset_top = 59.0
-offset_right = 113.0
-offset_bottom = 107.0
-stretch_mode = 0
-mouse_filter = 2
