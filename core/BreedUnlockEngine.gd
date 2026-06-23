@@ -2,7 +2,7 @@ extends Node
 
 const CatData := preload("res://core/CatData.gd")
 
-const UNLOCK_CHAIN_COUNT := 2
+const UNLOCK_CHAIN_COUNT := 3
 const PITY_THRESHOLD := 5
 const BREED_ORDER: Array[String] = [
 	CatData.BREED_ORANGE,

@@ -27,7 +27,22 @@ var relinquished_event_ids: Array = []
 
 
 func _ready() -> void:
-	pass
+	_check_weekly_reset()
+
+
+func _check_weekly_reset() -> void:
+	# DEF-05: 周一 0:00 本地时区重置周上限
+	var now: Dictionary = Time.get_datetime_dict_from_system()
+	var days_since_monday: int = now.get("weekday", 1) - 1  # 1=Mon..7=Sun
+	if days_since_monday < 0:
+		days_since_monday = 6
+	var this_monday: int = int(Time.get_unix_time_from_datetime_dict({
+		"year": now["year"], "month": now["month"], "day": now["day"] - days_since_monday,
+		"hour": 0, "minute": 0, "second": 0
+	}))
+	if week_reset_timestamp < this_monday:
+		this_week_petals_gained = 0
+		week_reset_timestamp = this_monday
 
 
 # cat_data: Dictionary 含 species/rarity/level/friendship/id
@@ -89,18 +104,6 @@ func _calculate_love_petals(cat_data: Dictionary) -> int:
 	var base := int(SPECIES_BASE.get(species, SPECIES_BASE["orange"]))
 	var rarity_factor := float(RARITY_FACTOR.get(rarity, 0.0))
 	return int(round(float(base) * rarity_factor * affection_factor))
-
-
-func _level_factor(level: int) -> float:
-	if level <= 1:
-		return 0.0
-	if level <= 3:
-		return 1.0
-	if level <= 6:
-		return 1.5
-	if level <= 9:
-		return 2.0
-	return 3.0
 
 
 func _affection_factor(affection: int) -> float:

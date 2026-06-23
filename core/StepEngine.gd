@@ -85,6 +85,11 @@ func _on_plugin_steps_changed(raw_steps: int) -> void:
 	if delta <= 0:
 		_emit_steps_updated(0)
 		return
+	# 安全闸门：单次 delta 超过 50000 视为异常（传感器重置/首次启动），
+	# 更新基线但不累加步数，防止跨天步数爆炸（DEF-01 P0）。
+	if delta > 50000:
+		_emit_steps_updated(0)
+		return
 
 	today_steps += delta
 	total_steps += delta
@@ -97,7 +102,8 @@ func _check_daily_reset() -> void:
 		return
 	if last_step_date != today:
 		today_steps = 0
-		last_plugin_steps = 0
+		# 不重置 last_plugin_steps：Android TYPE_STEP_COUNTER 是开机累计，
+		# 归零后下次回调会把硬件累计值整笔当今日步数注入（DEF-01 P0）。
 		last_step_date = today
 
 func _emit_steps_updated(delta: int) -> void:
