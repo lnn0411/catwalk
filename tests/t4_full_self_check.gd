@@ -43,7 +43,9 @@ func _ready() -> void:
 	_t4_13_weather_time()
 	_t4_14_cat_screen()
 	_t4_15_breed_unlock()
-	_t4_16_companion_exp()
+	await _t4_16_companion_exp()
+	_t4_17_common_no_petals()
+	_t4_18_weekly_cap()
 
 	_summary()
 
@@ -77,6 +79,47 @@ func _check_load(tag: String, path: String) -> void:
 # 安全取 autoload 单例（不存在返回 null，不崩）
 func _node(singleton_name: String) -> Node:
 	return get_node_or_null("/root/" + singleton_name)
+
+func _script_constants(path: String) -> Dictionary:
+	var script: Script = load(path)
+	if script != null and script.has_method("get_script_constant_map"):
+		return script.get_script_constant_map()
+	return {}
+
+func _cat_id(cat: Variant) -> String:
+	if cat is CatData:
+		return cat.id
+	if cat is Dictionary:
+		return String(cat.get("id", ""))
+	return ""
+
+func _cat_species(cat: Variant) -> String:
+	if cat is CatData:
+		return cat.species
+	if cat is Dictionary:
+		return String(cat.get("species", ""))
+	return CatData.BREED_ORANGE
+
+func _cat_exp(cat: Variant) -> int:
+	if cat is CatData:
+		return cat.exp
+	if cat is Dictionary:
+		return int(cat.get("exp", 0))
+	return 0
+
+func _cat_level(cat: Variant) -> int:
+	if cat is CatData:
+		return cat.level
+	if cat is Dictionary:
+		return int(cat.get("level", 1))
+	return 1
+
+func _make_selfcheck_cat(cat_id: String, species: String, rarity: String, level: int = 1, exp: int = 0, friendship: int = 0) -> CatData:
+	var cat: CatData = CatData.create(cat_id, species, rarity, 1)
+	cat.level = level
+	cat.exp = exp
+	cat.friendship = friendship
+	return cat
 
 
 # ── 编译错误总闸：加载今天新增的全部脚本/场景 ──────────────
@@ -252,11 +295,15 @@ func _t4_11_relinquish() -> void:
 		_xx("T4-11", "RelinquishSystem 未注册")
 		return
 	_check("T4-11", rs.has_method("relinquish_cat"), "relinquish_cat 存在")
-	var rf: Dictionary = RelinquishSystem.RARITY_FACTOR
-	_check("T4-11", float(rf.get("common", -1)) == 0.0 and float(rf.get("rare", -1)) == 1.0 \
-		and float(rf.get("epic", -1)) == 2.0 and float(rf.get("legendary", -1)) == 5.0, \
-		"稀有度系数 0/1/2/5")
 	_check("T4-11", int(RelinquishSystem.WEEKLY_PETAL_CAP) == 500, "周花瓣上限=500")
+	var constants: Dictionary = _script_constants("res://core/RelinquishSystem.gd")
+	var base_values: Dictionary = Dictionary(constants.get("BASE_VALUES", {}))
+	_check("T4-11", int(base_values.get("orange", -1)) == 10 and int(base_values.get("british", -1)) == 20 \
+		and int(base_values.get("siamese", -1)) == 30, "BASE_VALUES orange=10 british=20 siamese=30")
+	var rarity_factor: Dictionary = RelinquishSystem.RARITY_FACTOR
+	_check("T4-11", float(rarity_factor.get("common", -1.0)) == 0.0 and float(rarity_factor.get("rare", -1.0)) == 1.5 \
+		and float(rarity_factor.get("epic", -1.0)) == 2.0 and float(rarity_factor.get("legendary", -1.0)) == 3.0, \
+		"RARITY_FACTOR common=0 rare=1.5 epic=2.0 legendary=3.0")
 	_check_load("T4-11", "res://scenes/ui/relinquish_confirm_dialog.gd")
 
 
@@ -323,27 +370,108 @@ func _t4_16_companion_exp() -> void:
 	if he == null:
 		_xx("T4-16", "HatchEngine 未注册")
 		return
-	if he.get_cats().is_empty():
-		_xx("T4-16", "没有猫")
-		return
-	var cat = he.get_cats()[0]
-	var cid: String = String(cat.id if "id" in cat else cat.get("id", ""))
-	var old_exp: int = int(cat.exp if "exp" in cat else cat.get("exp", 0))
-	var old_lv: int = int(cat.level if "level" in cat else cat.get("level", 1))
+	var original_hatch_save: Dictionary = HatchEngine.get_save_data()
+	var original_step_save: Dictionary = StepEngine.get_save_data() if StepEngine.has_method("get_save_data") else {}
+	var selfcheck_cats: Array = [
+		_make_selfcheck_cat("selfcheck_companion_first", CatData.BREED_ORANGE, CatData.RARITY_COMMON),
+		_make_selfcheck_cat("selfcheck_companion_second", CatData.BREED_SIAMESE, CatData.RARITY_RARE),
+	]
+	var selfcheck_save: Dictionary = HatchEngine.get_save_data()
+	selfcheck_save["cats"] = selfcheck_cats
+	selfcheck_save["current_companion_cat_id"] = ""
+	HatchEngine.apply_save(selfcheck_save)
+	StepEngine.apply_save({})
+	var cats: Array = he.get_cats()
+	var cat: Variant = cats[0]
+	var cid: String = _cat_id(cat)
+	var old_exp: int = _cat_exp(cat)
+	var old_lv: int = _cat_level(cat)
 	# 设为携带猫 + 加步数
 	he.current_companion_cat_id = cid
 	StepEngine.add_mock_steps(6000)
 	await get_tree().process_frame
-	var new_exp: int = int(cat.exp if "exp" in cat else cat.get("exp", 0))
-	var new_lv: int = int(cat.level if "level" in cat else cat.get("level", 1))
+	var updated_cat: Variant = he.get_cat_by_id(cid)
+	var new_exp: int = _cat_exp(updated_cat)
+	var new_lv: int = _cat_level(updated_cat)
 	# 校验：经验应增长，等级应≥1
 	_check("T4-16", new_exp > old_exp, "步数→经验增长: %d→%d" % [old_exp, new_exp])
 	_check("T4-16", new_lv >= old_lv, "等级不降: Lv.%d→Lv.%d" % [old_lv, new_lv])
-	# 清理
+	var first_cat_exp: int = new_exp
+
+	# T-1303：切换随行猫时，新随行猫继承今日步数计算经验。
+	var second_cat: Variant = cats[1]
+	for candidate: Variant in he.get_cats():
+		if _cat_id(candidate) != cid:
+			second_cat = candidate
+			break
+
+	var second_id: String = _cat_id(second_cat)
 	he.current_companion_cat_id = ""
+	StepEngine.apply_save({})
+	StepEngine.add_mock_steps(5000)
+	he.current_companion_cat_id = second_id
+	await get_tree().process_frame
+	var switched_cat: Variant = he.get_cat_by_id(second_id)
+	var today_steps: int = StepEngine.get_today_steps()
+	var expected_exp: int = LevelSystem.calc_exp(today_steps, LevelSystem.get_breed_multiplier(_cat_species(switched_cat))) if LevelSystem else 0
+	var switched_exp: int = _cat_exp(switched_cat)
+	_check("T4-16", first_cat_exp == _cat_exp(he.get_cat_by_id(cid)), "切换后首只猫经验保持: %d" % first_cat_exp)
+	_check("T4-16", switched_exp == expected_exp, "切换猫继承今日步数: %d步 → %d exp" % [today_steps, expected_exp])
+	# 清理
+	HatchEngine.apply_save(original_hatch_save)
 	if StepEngine.has_method("apply_save"):
-		StepEngine.apply_save({})
-	SaveManager.reset_all()
+		StepEngine.apply_save(original_step_save)
+
+
+# ── T4-17 Common只返金币 ─────────────────────
+
+func _t4_17_common_no_petals() -> void:
+	print("-- T4-17 Common只返金币 --")
+	var rs := _node("RelinquishSystem")
+	var he := _node("HatchEngine")
+	if rs == null or he == null:
+		_xx("T4-17", "RelinquishSystem/HatchEngine 未注册")
+		return
+	var original_hatch_save: Dictionary = HatchEngine.get_save_data()
+	var original_relinquish_save: Dictionary = RelinquishSystem.get_save_data()
+	var selfcheck_cats: Array = [
+		_make_selfcheck_cat("selfcheck_relinquish_common", CatData.BREED_ORANGE, CatData.RARITY_COMMON),
+		_make_selfcheck_cat("selfcheck_relinquish_rare", CatData.BREED_ORANGE, CatData.RARITY_RARE, 1, 0, 200),
+	]
+	var patched_save: Dictionary = HatchEngine.get_save_data()
+	patched_save["cats"] = selfcheck_cats
+	HatchEngine.apply_save(patched_save)
+	RelinquishSystem.reset_all()
+
+	var common_cat: Dictionary = {
+		"id": "selfcheck_relinquish_common",
+		"species": CatData.BREED_ORANGE,
+		"rarity": CatData.RARITY_COMMON,
+		"level": 1,
+		"affection": 200,
+	}
+	var common_result: Dictionary = RelinquishSystem.relinquish_cat(common_cat, "selfcheck_common_no_petals")
+	_check("T4-17", int(common_result.get("love_petals", -1)) == 0 and int(common_result.get("gold_coins", -1)) == 50, "common → 0花瓣 + 50金币")
+
+	var rare_cat: Dictionary = {
+		"id": "selfcheck_relinquish_rare",
+		"species": CatData.BREED_ORANGE,
+		"rarity": CatData.RARITY_RARE,
+		"level": 1,
+		"affection": 200,
+	}
+	var rare_result: Dictionary = RelinquishSystem.relinquish_cat(rare_cat, "selfcheck_rare_petals")
+	_check("T4-17", int(rare_result.get("love_petals", 0)) > 0, "Rare Lv.1 好感200 → 花瓣>0")
+
+	HatchEngine.apply_save(original_hatch_save)
+	RelinquishSystem.apply_save(original_relinquish_save)
+
+
+# ── T4-18 周上限截断 ─────────────────────
+
+func _t4_18_weekly_cap() -> void:
+	print("-- T4-18 周上限截断 --")
+	_check("T4-18", int(RelinquishSystem.WEEKLY_PETAL_CAP) == 500, "WEEKLY_PETAL_CAP=500")
 
 
 # ── 汇总 ─────────────────────────────────────────────────
