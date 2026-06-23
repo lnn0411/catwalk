@@ -251,20 +251,6 @@ func _refresh_all_buttons() -> void:
 		btn.disabled = owned
 		btn.text = "已拥有" if owned else "购买"
 
-		if not owned:
-			# 货币不足检查
-			var cur: String = String(p.cur)
-			var price := int(p.price)
-			var can_afford := false
-			match cur:
-				"gold":
-					can_afford = CurrencyManager and CurrencyManager.gold_coins >= price
-				"diamonds":
-					can_afford = CurrencyManager and CurrencyManager.diamonds >= price
-				"petals":
-					can_afford = CurrencyManager and CurrencyManager.flower_petals >= price
-			btn.disabled = not can_afford and pid != "garden_expand"
-
 func _get_product(pid: String) -> Dictionary:
 	for p in PRODUCTS:
 		if String(p.id) == pid:
