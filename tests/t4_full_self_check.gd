@@ -354,7 +354,7 @@ func _t4_15_breed_unlock() -> void:
 	if be == null:
 		_xx("T4-15", "BreedUnlockEngine 未注册")
 		return
-	_check("T4-15", int(BreedUnlockEngine.UNLOCK_CHAIN_COUNT) == 2 and int(BreedUnlockEngine.PITY_THRESHOLD) == 5, "解锁链=每品种3只(chain2) + 保底5")
+	_check("T4-15", int(BreedUnlockEngine.UNLOCK_CHAIN_COUNT) == 3 and int(BreedUnlockEngine.PITY_THRESHOLD) == 5, "解锁链=每品种3只 + 保底5")
 	var b: String = BreedUnlockEngine.determine_breed()
 	var valid := [CatData.BREED_ORANGE, CatData.BREED_BRITISH, CatData.BREED_SIAMESE]
 	_check("T4-15", b in valid, "determine_breed → %s（合法品种）" % b)
