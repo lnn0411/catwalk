@@ -93,7 +93,7 @@ func instance_cat(cat_data, entrance: bool = false, in_view: bool = true):
 	if cat_id != "":
 		spawned_cat_ids[cat_id] = cat_node
 
-	print("[CatSpawner] instance_cat DONE: breed=%s spawned_count=%d" % [cat_data.species, spawned_cat_ids.size()])
+	print("[CatSpawner] instance_cat DONE: breed=%s spawned_count=%d pos=(%.0f,%.0f)" % [cat_data.species, spawned_cat_ids.size(), cat_node.position.x, cat_node.position.y])
 	cat_spawned.emit(cat_node)
 	_emit_cat_count()
 	return cat_node
