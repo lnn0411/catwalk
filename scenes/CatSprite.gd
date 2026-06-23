@@ -123,6 +123,19 @@ func _ready() -> void:
 	rng.randomize()
 	target_position = position
 
+	# 随行中图标（绿色爪印，头顶显示）
+	var companion_icon := Label.new()
+	companion_icon.name = "CompanionIcon"
+	companion_icon.text = "🐾"
+	companion_icon.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
+	companion_icon.add_theme_font_size_override("font_size", 20)
+	companion_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	companion_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	companion_icon.position = Vector2(-12, -90)
+	companion_icon.size = Vector2(24, 24)
+	companion_icon.visible = false
+	add_child(companion_icon)
+
 	_setup_sprite()
 	_load_spritesheet()
 	_setup_collision()
@@ -251,6 +264,8 @@ func _setup_click_area() -> void:
 func _process(delta: float) -> void:
 	_idle_phase += delta
 	_turn_cooldown = maxf(0.0, _turn_cooldown - delta)
+	# 随行图标更新
+	_update_companion_icon()
 
 	# Walk 动画：位移驱动（脚随身体走）；其他：时间驱动
 	if _is_walk_anim(_current_anim):
@@ -620,6 +635,21 @@ func _on_input_event(_viewport, event, _shape_idx) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_play_click_feedback()
 		cat_clicked.emit(cat_data)
+
+
+func _update_companion_icon() -> void:
+	var icon := get_node_or_null("CompanionIcon") as Label
+	if icon == null:
+		return
+	var is_companion: bool = false
+	if HatchEngine and cat_data != null:
+		var cid: String = ""
+		if typeof(cat_data) == TYPE_DICTIONARY:
+			cid = String(cat_data.get("id", ""))
+		elif "id" in cat_data:
+			cid = String(cat_data.id)
+		is_companion = cid != "" and cid == HatchEngine.current_companion_cat_id
+	icon.visible = is_companion
 
 
 func _play_click_feedback() -> void:

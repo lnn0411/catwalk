@@ -206,18 +206,8 @@ func get_cat_world_position(cat_data) -> Vector2:
 	return Vector2.ZERO
 
 func _on_cat_clicked(cat_data) -> void:
-	if not ResourceLoader.exists("res://scenes/CatInfoPopup.tscn"):
-		return
-
-	var packed_scene := load("res://scenes/CatInfoPopup.tscn")
-	if packed_scene == null:
-		return
-
-	var popup = packed_scene.instantiate()
-	popup.cat_data = cat_data
-	get_tree().root.add_child(popup)
-	if popup.has_signal("closed"):
-		popup.closed.connect(popup.queue_free)
+	# 方案 A：统一走 InteractionSystem 弹 CatCard，CatSpawner 不做弹窗
+	pass
 
 func _restore_cats() -> void:
 	if HatchEngine == null:

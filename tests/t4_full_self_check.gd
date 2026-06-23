@@ -214,7 +214,7 @@ func _t4_05_annoyed() -> void:
 	if esm == null:
 		_xx("T4-05", "EmotionStateMachine 未注册")
 		return
-	_check("T4-05", int(EmotionStateMachine.INTERACTION_THRESHOLD) == 5, "阈值=5（GDD：1h 内累计≥4 触发，实现取 5 次注册）")
+	_check("T4-05", int(EmotionStateMachine.INTERACTION_THRESHOLD) == 4, "阈值=4（GDD：1h 内累计≥4 触发）")
 	# 行为：dummy 猫连续注册到阈值 → 应进入 annoyed
 	var cid := "selfcheck_emotion_dummy"
 	EmotionStateMachine.reset_cat(cid)
