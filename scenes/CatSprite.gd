@@ -220,7 +220,7 @@ void fragment() {
 
 func _setup_collision() -> void:
 	collision_layer = 2
-	collision_mask = 2
+	collision_mask = 0
 
 	var body_shape := CollisionShape2D.new()
 	body_shape.position = Vector2(0, -42)
@@ -530,7 +530,7 @@ func _apply_separation(desired_dir: Vector2) -> Vector2:
 		var d := position.distance_to(child.position)
 		if d > 0.1 and d < 160.0:
 			var push: Vector2 = (position - child.position).normalized()
-			separation += push * ((1.0 - d / 160.0) * 1.8)
+			separation += push * ((1.0 - d / 160.0) * 3.0)
 			count += 1
 
 	if count == 0:
