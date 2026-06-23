@@ -17,8 +17,8 @@ var _card_textures: Array[TextureRect] = []
 var _cats: Array = []
 
 # —— M7：NEW 角标（本次会话内新见到的猫；static 跨页面实例存活）——
-static var _seen_ids := {}
-var _new_ids := {}
+static var _seen_ids: Dictionary = {}
+var _new_ids: Dictionary = {}
 var _anim_time := 0.0
 
 # —— Tab 切换（修复：原 Tab 高亮硬编码 i==0，且无点击处理，明信片/成就点了无响应）——
@@ -37,7 +37,7 @@ func _process(delta: float) -> void:
 		queue_redraw()
 		return
 	for c in _cats:
-		var r := String(c.rarity)
+		var r: String = String(c.rarity)
 		if r == CatData.RARITY_EPIC or r == CatData.RARITY_LEGENDARY:
 			queue_redraw()
 			return
@@ -47,7 +47,7 @@ func on_enter(_data: Dictionary = {}) -> void:
 	# 计算本次进入时的"新猫"，随后标记为已见（NEW 只在首次看到的这次展示）
 	_new_ids.clear()
 	for c in _cats:
-		var cid := String(c.id)
+		var cid: String = String(c.id)
 		if not _seen_ids.has(cid):
 			_new_ids[cid] = true
 			_seen_ids[cid] = true
@@ -70,7 +70,7 @@ func _gui_input(event: InputEvent) -> void:
 		if _tab_rects[i].has_point(point):
 			if _active_tab != i:
 				_active_tab = i
-				var j := get_node_or_null("/root/Juice")
+				var j = get_node_or_null("/root/Juice")
 				if j: j.tap()
 				queue_redraw()
 			accept_event()
@@ -149,7 +149,7 @@ func _draw_content() -> void:
 
 func _draw_cat_card(rect: Rect2, cat) -> void:
 	# M7：epic/legendary 卡片流光边框
-	var rarity := String(cat.rarity)
+	var rarity: String = String(cat.rarity)
 	if rarity == CatData.RARITY_LEGENDARY:
 		var hue := fmod(_anim_time * 0.25, 1.0)
 		var glow := Color.from_hsv(hue, 0.40, 1.0, 0.85)
@@ -224,7 +224,7 @@ var _postcard_unlocked: Dictionary = {}
 func _collect_unlocked_postcards() -> void:
 	_postcard_unlocked.clear()
 	# 从 PostcardPlaceholder 获取收集状态
-	var pp := get_node_or_null("/root/PostcardPlaceholder")
+	var pp = get_node_or_null("/root/PostcardPlaceholder")
 	if pp and pp.has_method("get_collected_postcards"):
 		for pc in Array(pp.get_collected_postcards()):
 			_postcard_unlocked[String(pc)] = true
