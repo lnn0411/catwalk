@@ -414,16 +414,27 @@ func _apply_frame(anim: String, frame: int) -> void:
 	if tex != null:
 		_sprite.region_enabled = true
 		_sprite.region_rect = Rect2(Vector2.ZERO, tex.get_size())
-	# Foot alignment: idle frames may sit higher than walk frames
-	var is_idle := anim == ANIM_IDLE or anim == "turn" or anim == "move_turn"
-	if is_idle:
-		var offset := 0
-		match breed:
-			"orange": offset = 11
-			"siamese": offset = 12
-		_sprite.position.y = float(offset)
-	else:
-		_sprite.position.y = 0.0
+		# Auto-align foot to bottom: scan texture for lowest non-transparent pixel
+		var img := tex.get_image()
+		if img != null:
+			var w := img.get_width()
+			var h := img.get_height()
+			var foot_y := h - 1
+			img.lock()
+			for y in range(h - 1, -1, -1):
+				var found := false
+				for x in range(w):
+					if img.get_pixel(x, y).a > 0.05:
+						foot_y = y
+						found = true
+						break
+				if found:
+					break
+			img.unlock()
+			# Offset so foot aligns with bottom edge of texture
+			_sprite.position.y = float(h - 1 - foot_y)
+		else:
+			_sprite.position.y = 0.0
 
 
 func _get_region_from_config(anim_name: String, col: int) -> Array:
