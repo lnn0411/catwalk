@@ -23,7 +23,7 @@ func _save_snow_flake() -> void:
 	for y in range(8):
 		for x in range(8):
 			var distance := Vector2(float(x), float(y)).distance_to(center)
-			var alpha := clamp(1.0 - (distance / radius), 0.0, 1.0)
+			var alpha: float = clampf(1.0 - (distance / radius), 0.0, 1.0)
 			alpha = smoothstep(0.0, 1.0, alpha)
 			image.set_pixel(x, y, Color(1.0, 1.0, 1.0, alpha))
 
