@@ -50,12 +50,112 @@ static func show_toast(message: String) -> void:
 static func show_info(message: String) -> void:
 	show_confirm("提示", message, Callable())
 
+static func show_input(title: String, placeholder: String, on_submit: Callable) -> void:
+	var root := _get_root()
+	if root == null:
+		return
+	var overlay := InputOverlay.new()
+	overlay.title = title
+	overlay.placeholder = placeholder
+	overlay.submit_callback = on_submit
+	var canvas := CanvasLayer.new()
+	canvas.layer = 100
+	canvas.add_child(overlay)
+	root.add_child(canvas)
+
 static func _get_root() -> Node:
 	var tree := Engine.get_main_loop() as SceneTree
 	if tree == null:
 		return null
 	return tree.root
 
+class InputOverlay:
+	extends Control
+
+	var title := ""
+	var placeholder := ""
+	var submit_callback: Callable
+	var _font: Font
+	var _input: LineEdit
+
+	const INPUT_DIALOG_SIZE := Vector2(460.0, 220.0)
+
+	func _ready() -> void:
+		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		mouse_filter = Control.MOUSE_FILTER_STOP
+		_font = ThemeDB.fallback_font
+		modulate.a = 0.0
+		var tween := create_tween()
+		tween.tween_property(self, "modulate:a", 1.0, 0.16)
+		_build_ui()
+
+	func _build_ui() -> void:
+		var dialog := Rect2((size - INPUT_DIALOG_SIZE) * 0.5, INPUT_DIALOG_SIZE)
+		
+		_input = LineEdit.new()
+		_input.placeholder_text = placeholder
+		_input.size = Vector2(INPUT_DIALOG_SIZE.x - 80, 36)
+		_input.position = dialog.position + Vector2(40, 90)
+		_input.add_theme_font_size_override("font_size", 16)
+		add_child(_input)
+		_input.grab_focus()
+
+		var cancel_btn := Button.new()
+		cancel_btn.text = "取消"
+		cancel_btn.flat = true
+		cancel_btn.position = dialog.position + Vector2(55, 148)
+		cancel_btn.size = Vector2(150, 40)
+		cancel_btn.add_theme_font_size_override("font_size", 16)
+		cancel_btn.pressed.connect(_close)
+		add_child(cancel_btn)
+
+		var confirm_btn := Button.new()
+		confirm_btn.text = "确定"
+		confirm_btn.flat = true
+		confirm_btn.position = dialog.position + Vector2(INPUT_DIALOG_SIZE.x - 55 - 150, 148)
+		confirm_btn.size = Vector2(150, 40)
+		confirm_btn.add_theme_font_size_override("font_size", 16)
+		confirm_btn.pressed.connect(_on_submit)
+		add_child(confirm_btn)
+
+		for btn in [cancel_btn, confirm_btn]:
+			var bg := StyleBoxFlat.new()
+			bg.bg_color = Palette.BG_CEMENT
+			bg.set_corner_radius_all(6)
+			btn.add_theme_stylebox_override("normal", bg)
+
+	func _on_submit() -> void:
+		var text := _input.text.strip_edges()
+		if text.is_empty():
+			return
+		if submit_callback.is_valid():
+			submit_callback.call(text)
+		_close()
+
+	func _draw() -> void:
+		var shade := Palette.TEXT_PRIMARY
+		shade.a = 0.5
+		draw_rect(Rect2(Vector2.ZERO, size), shade, true)
+
+		var dialog := Rect2((size - INPUT_DIALOG_SIZE) * 0.5, INPUT_DIALOG_SIZE)
+		draw_rect(dialog, Palette.BG_WARM_WHITE, true)
+		draw_rect(dialog, Palette.BORDER_DEFAULT, false, 1.0)
+
+		var title_size := 21
+		var title_width := _font.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size).x
+		draw_string(_font, Vector2(dialog.position.x + (dialog.size.x - title_width) * 0.5, dialog.position.y + 56.0), title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, Palette.TEXT_PRIMARY)
+
+	func _close() -> void:
+		var tween := create_tween()
+		tween.tween_property(self, "modulate:a", 0.0, 0.14)
+		tween.finished.connect(func() -> void:
+			var p := get_parent()
+			if p is CanvasLayer:
+				p.queue_free()
+			else:
+				queue_free()
+		)
+	
 class DialogOverlay:
 	extends Control
 

@@ -8,14 +8,16 @@ const DIARY_DATA := [
 ]
 
 var _cat_data: Dictionary = {}
+var _cat_id: String = ""
 
 func _on_page_setup(data: Dictionary) -> void:
 	_cat_data = data
+	_cat_id = String(_cat_data.get("id", ""))
 	_refresh()
 
 func _refresh() -> void:
-	var name_str: String = String(_cat_data.get("name", "猫咪"))
-	var breed: String = String(_cat_data.get("breed", "普通"))
+	var name_str: String = String(_cat_data.get("name", String(_cat_data.get("display_name", "猫咪"))))
+	var breed: String = String(_cat_data.get("breed", String(_cat_data.get("species", "普通"))))
 	var lv: int = int(_cat_data.get("level", 1))
 	var aff_lv: int = int(_cat_data.get("affection_lv", min(lv, 3)))
 	var diary_unlocked: int = int(_cat_data.get("diary_unlocked", min(lv - 1, 2)))
@@ -50,14 +52,52 @@ func _refresh() -> void:
 		if card is ColorRect:
 			card.color = Color(1, 1, 1, 1) if unlocked else Color(0.95, 0.95, 0.95, 1)
 
+func _find_cat() -> Variant:
+	if _cat_id.is_empty() or not HatchEngine:
+		return null
+	return HatchEngine.get_cat_by_id(_cat_id)
+
 func _on_rename_pressed() -> void:
-	pass
+	Popups.show_input("改名", "请输入新名字", func(new_name: String) -> void:
+		var cat = _find_cat()
+		if cat == null:
+			Popups.show_toast("找不到这只猫了")
+			return
+		# CatData has display_name, Dictionary has "name"
+		if cat is Dictionary:
+			cat["name"] = new_name
+		else:
+			cat.display_name = new_name
+		_cat_data["name"] = new_name
+		_cat_data["display_name"] = new_name
+		if SaveManager:
+			SaveManager.save_all()
+		_refresh()
+		Popups.show_toast("已改名「%s」" % new_name)
+	)
 
 func _on_companion_pressed() -> void:
-	pass
+	if _cat_id.is_empty() or not HatchEngine:
+		return
+	HatchEngine.set_companion_cat_id(_cat_id)
+	Popups.show_toast("已设为随行猫")
+	UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 func _on_giveaway_pressed() -> void:
-	pass
+	if _cat_id.is_empty():
+		return
+	# Check that we have more than 1 cat
+	if HatchEngine and HatchEngine.get_cats().size() <= 1:
+		Popups.show_toast("至少保留一只猫咪")
+		return
+	Popups.show_confirm("送养", "确定送养这只猫咪吗？", func() -> void:
+		if HatchEngine and HatchEngine.remove_cat(_cat_id):
+			if SaveManager:
+				SaveManager.save_all()
+			UIManager.replace("res://ui/pages/S10_Album.tscn")
+		else:
+			Popups.show_toast("送养失败，请重试")
+	)
 
 func _on_back_pressed() -> void:
 	UIManager.replace("res://ui/pages/S10_Album.tscn")
