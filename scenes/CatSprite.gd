@@ -411,7 +411,6 @@ func _apply_frame(anim: String, frame: int) -> void:
 	if tex != null:
 		_sprite.region_enabled = true
 		_sprite.region_rect = Rect2(Vector2.ZERO, tex.get_size())
-	_sprite.modulate = COLOR_NORMAL if _current_anim != ANIM_IDLE else _idle_color()
 
 
 func _get_region_from_config(anim_name: String, col: int) -> Array:
