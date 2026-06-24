@@ -34,12 +34,19 @@ const HatchS    = preload("res://core/HatchEngine.gd")
 const StepS     = preload("res://core/StepEngine.gd")
 const MailS     = preload("res://core/MailSystem.gd")
 const ExploreS  = preload("res://core/ExploreEngine.gd")
-const CatDS     = preload("res://core/CatData.gd")
-# 本套件"绕过单例直接实例化"的策略已逐方法核实：
-# .new() 实例上调用的方法全部不依赖 _ready()、(Timer/信号)，autoload 引用处均有 if X: null 守卫。
-# 见文件头注释第 9-12 行。
 const CurrencyS = preload("res://core/CurrencyManager.gd")
+const PackageS  = preload("res://core/PackageSystem.gd")
+const AchS      = preload("res://core/AchievementSystem.gd")
+const SigninS   = preload("res://core/SigninSystem.gd")
+const CatDS     = preload("res://core/CatData.gd")
 
+# ===========================================================================
+# 入口：extends SceneTree 经 --script 运行时，引擎在「构造期」调用 _init()
+# （这是官方命令行文档的标准入口；_initialize() 是 MainLoop 的 C++ 钩子，
+#  GDScript 侧不可靠，切勿使用）。_init() 内同步跑完所有断言后 quit()，
+#  主循环启动即见退出标记、立即结束。
+# 注意：_init() 时序下 autoload 单例尚未实例化、root 可能未就绪——本套件
+#  全程用 preload().new() 自建实例 + 纯 static 调用，不依赖任何单例，故不受影响。
 # ===========================================================================
 
 func _init() -> void:
@@ -51,6 +58,7 @@ func _init() -> void:
 	_t_level()                 # 五、等级经验
 	_t_relinquish_formula()    # 八、送养公式
 	_t_currency()              # 九、货币非负
+	_t_economy()               # 十、经济对账：扩容成本/成就奖励/签到（DEF-08 等）
 	_t_workshop_mode()         # 十四、工坊态判定
 	_t_explore()               # 十三、探索(基础逻辑)
 	_t_mail_dates()            # DEF-13 节日信件日期
@@ -177,7 +185,8 @@ func _t_hatch_breed_slots() -> void:
 	he.cats = _dummy_cats(24)
 	he.backpack_max_capacity = 24
 	# _do_assign_empty_slots 内部经 _roll_next_species 触及 BreedUnlockEngine(autoload)；
-	# 仅在该单例可达时执行，否则跳过(标注)。determine_breed 为 null 时回退橘猫，亦安全。
+	# _init() 时序下该单例尚未实例化 → `if BreedUnlockEngine:` 取 null → 安全回退橘猫，
+	# 落蛋逻辑照常执行。用 ProjectSettings 确认 autoload 已配置即放行（不依赖 root）。
 	if _breed_global_safe():
 		he._do_assign_empty_slots()
 		var has_incubating := he._get_active_filling_slot() != -1
@@ -188,7 +197,7 @@ func _t_hatch_breed_slots() -> void:
 			"在带 autoload 环境运行；或对 _do_assign_empty_slots 增加满包守卫后改为常规断言")
 	he.free()
 
-# BreedUnlockEngine 全局是否可安全求值（注册即可，null 也安全回退橘猫）
+# BreedUnlockEngine 全局是否可安全求值（autoload 已配置即可，null 也安全回退橘猫）
 func _breed_global_safe() -> bool:
 	return ProjectSettings.has_setting("autoload/BreedUnlockEngine")
 
@@ -326,6 +335,80 @@ func _t_currency() -> void:
 	cm.add_gold(-5)
 	check_eq("负数加金币被拒(余额不变)", cm.gold_coins, 50)
 	cm.free()
+
+# ============================ 十、经济对账 ================================
+# 扩容金币成本(DEF-08)、成就奖励数值(§10)、签到经济常量(§11)。
+# 全部纯 const / 纯函数，零 autoload。
+
+func _t_economy() -> void:
+	# —— 猫包扩容档位 §2.2.1 第四节 (DEF-08) ——
+	check_eq("猫包初始上限=24", int(PackageS._INITIAL_CAPACITY), 24)         # PASS
+	check_eq("猫包硬顶=36", int(PackageS._HARD_CAP), 36)                     # PASS
+	var tiers: Array = PackageS._TIERS
+	check_eq("扩容容量档=28/32/36",
+		[int(tiers[0]["capacity"]), int(tiers[1]["capacity"]), int(tiers[2]["capacity"])],
+		[28, 32, 36])                                                        # PASS（容量值对）
+	# GDD：按图鉴解锁数(6/12/24) + 金币(5000/10000/0)触发；代码用 steps/postcards 且无金币 → DEF-08
+	check_xfail("DEF-08 扩容档应含金币成本字段", bool(tiers[0].has("gold")), "DEF-08",
+		"当前档位无 gold 字段，扩容免费")
+	check_xfail("DEF-08 第一档应=5000金币", int(tiers[0].get("gold", -1)) == 5000, "DEF-08",
+		"GDD 28只档需 5000 金币")
+	# 行为：仅靠步数达标不应免费扩容（GDD 要图鉴解锁+金币）
+	var ps = PackageS.new()
+	ps.check_expansion(300_000)   # 30万步（当前只接受 unlock_count；需 postcard 参数 → DEF-08）
+	check_xfail("DEF-08 步数达标不应免费扩容", ps.backpack_max_capacity == 24, "DEF-08",
+		"当前 steps≥30万 即免费扩到 28（应需图鉴B2解锁+5000金币）")
+	ps.free()
+
+	# —— 成就奖励数值对账 §10（const 数组，逐条回归红线）——
+	_ach_check("A1", 1000, "gold_coins", 100)
+	_ach_check("A2", 10000, "gold_coins", 200)
+	_ach_check("A3", 42195, "diamonds", 30)
+	_ach_check("A4", 100000, "diamonds", 50)
+	_ach_check("A5", 1000000, "diamonds", 100)
+	_ach_check("A6", 7, "diamonds", 50)
+	_ach_check("B1", 1, "gold_coins", 200)
+	_ach_check("B2", 6, "diamonds", 30)
+	_ach_check("B3", 12, "diamonds", 50)
+	_ach_check("B4", 24, "diamonds", 100)
+	_ach_check("B5", 3, "diamonds", 80)
+	_ach_check("C1", 3, "gold_coins", 300)
+	_ach_check("C2", 10, "diamonds", 50)
+	_ach_check("E1", 1, "gold_coins", 100)
+	_ach_check("E2", 10, "diamonds", 30)
+	_ach_check("E3", 30, "diamonds", 50)
+	_ach_check("E4", 30, "diamonds", 100)
+	_ach_check("D1", 1, "diamonds", 20)
+
+	# C3 好感大师：奖励项圈在（PASS），但 target=25 与 GDD「好感Lv5」对不上 → 提示核对
+	var c3 := _ach_by_id("C3")
+	check("C3 奖励含猫咪项圈", c3.size() > 0 and Dictionary(c3.get("reward", {})).has("cat_collar"))
+	check_xfail("FINDING-C3 target 应对应好感Lv5", int(c3.get("target", -1)) != 25, "FINDING-C3",
+		"当前 target=25，GDD 好感Lv5=累计360/等级5，口径不符，请核对")
+
+	# B2/B3/B4 计量口径：type=hatch_count，GDD §10.2 要『图鉴去重数(品种×稀有度)』
+	check_xfail("FINDING-DEX B2 应按图鉴去重而非孵化总数",
+		String(_ach_by_id("B2").get("type", "")) != "hatch_count", "FINDING-DEX",
+		"代码无『图鉴解锁数』概念，B2/B3/B4 与 DEF-08 同源退化为孵化/步数计")
+
+	# —— 签到经济常量 §11.1 ——
+	check_eq("签到周期=7天", int(SigninS.CYCLE_LENGTH), 7)
+	check_eq("每周期补签上限=2", int(SigninS.MAX_MAKEUP), 2)
+
+func _ach_by_id(id: String) -> Dictionary:
+	for a in AchS.ACHIEVEMENTS:
+		if String(a.get("id", "")) == id:
+			return a
+	return {}
+
+func _ach_check(id: String, target: int, reward_key: String, reward_val: int) -> void:
+	var a := _ach_by_id(id)
+	if a.is_empty():
+		check("成就 %s 存在" % id, false, "未找到该成就")
+		return
+	check_eq("成就 %s target" % id, int(a.get("target", -999)), target)
+	var rw: Dictionary = a.get("reward", {})
+	check_eq("成就 %s 奖励 %s" % [id, reward_key], int(rw.get(reward_key, -999)), reward_val)
 
 # ============================ 十四、工坊态判定 ============================
 
