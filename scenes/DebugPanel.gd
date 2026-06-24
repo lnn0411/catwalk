@@ -27,7 +27,7 @@ func _build_weather_toggle() -> void:
 
 func _on_weather_toggle() -> void:
 	_weather_idx = (_weather_idx + 1) % WEATHER_VALS.size()
-	var wt := WEATHER_VALS[_weather_idx]
+	var wt: int = WEATHER_VALS[_weather_idx]
 	if WeatherTimeManager:
 		WeatherTimeManager.dbg_set_weather(wt)
 	var btn := get_child(0) as Button
