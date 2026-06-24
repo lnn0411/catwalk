@@ -39,7 +39,7 @@ signal cat_clicked(cat_data)
 
 const FRAME_SIZE := Vector2i(100, 140)
 const FOOT_Y := 131
-const ARCHED_GROUND_Y := 6.5  # 脚底自然落地点（相对根节点 Y 偏移，匹配橘猫当前视觉位置）
+const ARCHED_GROUND_Y := 3.0  # 脚底自然落地点（相对根节点 Y 偏移，与地面阴影平齐）
 const WALK_PX_BRITISH := 4.0
 
 var _per_frame_foot_y := FOOT_Y
