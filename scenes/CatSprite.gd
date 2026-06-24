@@ -692,6 +692,16 @@ func set_breed(new_breed: String) -> void:
 	_load_frames()
 	_set_anim(ANIM_IDLE, false, true)
 
+# 按花园背景切换走行区
+func set_wander_bounds(x_min: float, x_max: float, y_min: float, y_max: float) -> void:
+	wander_x_min = x_min
+	wander_x_max = x_max
+	wander_y_min = y_min
+	wander_y_max = y_max
+	# 如果猫当前在范围外，拉回
+	position.x = clampf(position.x, wander_x_min, wander_x_max)
+	position.y = clampf(position.y, wander_y_min, wander_y_max)
+
 
 func _on_input_event(_viewport, event, _shape_idx) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:

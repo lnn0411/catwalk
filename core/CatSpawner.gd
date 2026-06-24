@@ -6,6 +6,18 @@ signal cat_count_changed(count)
 const CatData := preload("res://core/CatData.gd")
 const MAX_VISIBLE_CATS := 12
 
+# 按花园背景图索引定义猫咪安全走行区（基于视觉分析）
+# 格式: { bg_idx: {"x_min", "x_max", "y_min", "y_max"} }
+# 索引对应 garden_01~04.png
+const GARDEN_WANDER_ZONES := {
+	1: { "x_min": 150,  "x_max": 2900, "y_min": 550,  "y_max": 980  },  # 意式庄园
+	2: { "x_min": 150,  "x_max": 2800, "y_min": 580,  "y_max": 1024 },  # 英伦花园
+	3: { "x_min": 280,  "x_max": 2850, "y_min": 720,  "y_max": 1000 },  # 小镇广场
+	4: { "x_min": 180,  "x_max": 2850, "y_min": 480,  "y_max": 1024 },  # 地中海巷弄
+}
+
+var _current_zone: Dictionary = GARDEN_WANDER_ZONES[1].duplicate()
+
 class RestingCatPlaceholder:
 	extends Node2D
 	var cat_data: Variant = null
@@ -18,6 +30,20 @@ func _ready() -> void:
 	rng.randomize()
 	if HatchEngine and not HatchEngine.hatch_complete.is_connected(_on_hatch_complete):
 		HatchEngine.hatch_complete.connect(_on_hatch_complete)
+
+# 切换花园背景时同步更新走行区，影响新猫出生和现有猫游荡
+func set_wander_zone(bg_index: int) -> void:
+	var zone: Dictionary = GARDEN_WANDER_ZONES.get(bg_index, GARDEN_WANDER_ZONES[1])
+	_current_zone = zone.duplicate()
+	# 同步到场上所有猫的游荡范围
+	for child in cat_container.get_children() if cat_container else []:
+		if child is Node2D and "cat_data" in child and child.has_method("set_wander_bounds"):
+			child.set_wander_bounds(
+				float(_current_zone["x_min"]),
+				float(_current_zone["x_max"]),
+				float(_current_zone["y_min"]),
+				float(_current_zone["y_max"])
+			)
 
 func set_cat_container(container) -> void:
 	print("[CatSpawner] set_cat_container: %s id=%s _restoring=%s" % [container != null, container.get_instance_id() if container else -1, _restoring])
@@ -88,6 +114,14 @@ func instance_cat(cat_data, entrance: bool = false, in_view: bool = true):
 	if entrance:
 		_setup_entrance(cat_node)
 	print("[CatSpawner] instance_cat: breed=%s pos=(%.0f,%.0f) entrance=%s" % [cat_data.species, cat_node.position.x, cat_node.position.y, entrance])
+	# 同步走行区
+	if cat_node.has_method("set_wander_bounds"):
+		cat_node.set_wander_bounds(
+			float(_current_zone.get("x_min", 350.0)),
+			float(_current_zone.get("x_max", 1700.0)),
+			float(_current_zone.get("y_min", 380.0)),
+			float(_current_zone.get("y_max", 640.0))
+		)
 	cat_node.modulate.a = 0.0
 	cat_container.add_child(cat_node)
 
@@ -127,7 +161,9 @@ func _setup_entrance(cat_node) -> void:
 	var target: Vector2 = cat_node.position  # _pick_spawn_position 已选好镜头内目标
 	var from_left: bool = rng.randf() < 0.5
 	var start_x: float = (view.position.x - 90.0) if from_left else (view.end.x + 90.0)
-	var start_y: float = clampf(target.y + rng.randf_range(-50.0, 50.0), 380.0, 640.0) # 核心修复：入场限制在地面草坪，防飞天
+	var start_y: float = clampf(target.y + rng.randf_range(-50.0, 50.0),
+		float(_current_zone.get("y_min", 380.0)),
+		float(_current_zone.get("y_max", 640.0)))
 	cat_node.position = Vector2(start_x, start_y)
 	cat_node.target_position = target
 	cat_node.is_moving = true
@@ -137,11 +173,11 @@ func _setup_entrance(cat_node) -> void:
 		cat_node.face_direction(target.x - start_x)
 
 func _pick_spawn_position(in_view: bool = true) -> Vector2:
-	# wander 同款世界限界（出生点不能超出猫的活动范围）
-	var min_x := 350.0
-	var max_x := 1700.0
-	var min_y := 380.0   # 核心修复：出生限制在地面草坪，防飞天
-	var max_y := 640.0  # 核心修复：出生限制在地面草坪，防飞天
+	# 走行区同款限界（出生点不能超出猫的活动范围）
+	var min_x := float(_current_zone.get("x_min", 350.0))
+	var max_x := float(_current_zone.get("x_max", 1700.0))
+	var min_y := float(_current_zone.get("y_min", 380.0))
+	var max_y := float(_current_zone.get("y_max", 640.0))
 	# in_view=true：出生在【当前镜头可视范围】内（新孵化猫的入场目标/保底首只）。
 	# in_view=false：全花园随机散布（重启恢复的猫——它们一直住在这里，
 	# 不该全挤在首屏，玩家拖动镜头逐渐发现才自然）。
@@ -156,11 +192,11 @@ func _pick_spawn_position(in_view: bool = true) -> Vector2:
 			max_y = minf(max_y, inset.end.y)
 			# 可视区与活动范围无交集（异常情况）→ 退回全图
 			if min_x >= max_x:
-				min_x = 350.0
-				max_x = 1700.0
+				min_x = float(_current_zone.get("x_min", 350.0))
+				max_x = float(_current_zone.get("x_max", 1700.0))
 			if min_y >= max_y:
-				min_y = 380.0
-				max_y = 640.0
+				min_y = float(_current_zone.get("y_min", 380.0))
+				max_y = float(_current_zone.get("y_max", 640.0))
 	var position := Vector2.ZERO
 	if not in_view:
 		# 刻意避开镜头区：恢复的猫要"拖动才发现"，不赌随机概率。

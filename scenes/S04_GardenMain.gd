@@ -304,6 +304,9 @@ func _build_parallax_background() -> void:
 	_bg_sprite = sprite
 	_bg_index = idx
 	garden_layer.add_child(sprite)
+	# 同步更新猫咪走行区
+	if CatSpawner and CatSpawner.has_method("set_wander_zone"):
+		CatSpawner.set_wander_zone(idx)
 
 func _add_background_layer(parent: ParallaxBackground, motion_scale: Vector2, layer_type: int) -> void:
 	var layer := ParallaxLayer.new()
