@@ -181,15 +181,17 @@ func _config_path() -> String:
 
 
 func _anim_to_file_prefix(anim: String) -> String:
+	# British frames are mirrored compared to orange/siamese
+	var is_british_inverted := breed == "british"
 	match anim:
 		"walk_right":
-			return "side_left"
+			return "side_left" if is_british_inverted else "side_right"
 		"walk_up_right":
-			return "back_right"
+			return "back_left" if is_british_inverted else "back_right"
 		"walk_up":
 			return "back"
 		"walk_down_right":
-			return "front_right"
+			return "front_left" if is_british_inverted else "front_right"
 		"walk_down":
 			return "front"
 		"idle":
