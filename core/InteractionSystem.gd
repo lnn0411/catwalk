@@ -212,6 +212,9 @@ func try_interact(cat_id: String, type: String) -> bool:
 
 	if type in ["feed", "pet", "play", "photo"]:
 		start_cooldown(type)
+		# Accumulate affection
+		var gain := _get_affection_gain(type)
+		_affection[cat_id] = _affection.get(cat_id, 0) + gain
 
 	if EmotionStateMachine != null:
 		EmotionStateMachine.record_interaction(cat_id, type)
@@ -226,8 +229,8 @@ func do_interact(cat_id: String, type: String) -> int:
 	return _get_affection_gain(type) if try_interact(cat_id, type) else 0
 
 
-func get_affection(_cat_id: String) -> int:
-	return 0
+func get_affection(cat_id: String) -> int:
+	return _affection.get(cat_id, 0)
 
 
 # 兼容旧 HUD 按钮冷却判定
