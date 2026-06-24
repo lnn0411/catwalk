@@ -561,6 +561,7 @@ func _build_debug_panel() -> void:
 		["Show/Hide stats", func() -> void: _toggle_stats()],
 		["重播Onboarding", func() -> void: _replay_onboarding()],
 		["注入数据", func() -> void: _inject_data()],
+		["☀️ 切换天气", func() -> void: _toggle_weather()],
 	]:
 		var button := Button.new()
 		button.text = String(item[0])
@@ -839,6 +840,15 @@ func _inject_data() -> void:
 		EnergyEngine.energy_changed.emit(EnergyEngine.energy_pool, EnergyEngine.MAX_ENERGY_POOL, EnergyEngine.reserve_tank)
 	if SaveManager:
 		SaveManager.save_all()
+
+
+func _toggle_weather() -> void:
+	var wtm := get_node_or_null("/root/WeatherTimeManager")
+	if wtm == null:
+		return
+	var cur: int = wtm.current_weather
+	var next: int = (cur + 1) % 3
+	wtm.dbg_set_weather(next)
 
 
 func _replay_onboarding() -> void:
