@@ -221,7 +221,7 @@ func _load_frames() -> void:
 	for anim in [ANIM_WALK_RIGHT, ANIM_WALK_UP_RIGHT, ANIM_WALK_UP, ANIM_WALK_DOWN_RIGHT, ANIM_WALK_DOWN, ANIM_IDLE, "turn", "move_turn"]:
 		var prefix := _anim_to_file_prefix(anim)
 		var frames: Array[Texture2D] = []
-		var frame_count := ANIM_FRAME_COUNT.get(anim, 4)
+		var frame_count: int = ANIM_FRAME_COUNT.get(anim, 4)
 		for i in range(frame_count):
 			var path := "res://assets/art/cats/%s/%s_frame_%02d.png" % [dir, prefix, i]
 			if ResourceLoader.exists(path):
