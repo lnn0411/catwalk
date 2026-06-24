@@ -126,6 +126,7 @@ func _create_cat_card(cat, index: int) -> Button:
 	bg.name = "Bg"
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	bg.color = _rarity_bg(rarity)
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(bg)
 
 	# Rarity stripe (top 4px)
@@ -140,6 +141,7 @@ func _create_cat_card(cat, index: int) -> Button:
 	stripe.offset_top = 0.0
 	stripe.offset_bottom = 4.0
 	stripe.color = _rarity_color(rarity)
+	stripe.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(stripe)
 
 	# Breed icon (colored circle placeholder)
@@ -154,6 +156,7 @@ func _create_cat_card(cat, index: int) -> Button:
 	icon.offset_right = icon.offset_left + 46.0
 	icon.offset_bottom = icon.offset_top + 46.0
 	icon.color = _breed_color(species)
+	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(icon)
 
 	var letter := Label.new()
@@ -173,6 +176,7 @@ func _create_cat_card(cat, index: int) -> Button:
 	letter.theme_type_variation = &""
 	letter.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
 	letter.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.3))
+	letter.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	icon.add_child(letter)
 
 	# Level badge (top-right)
@@ -201,6 +205,7 @@ func _create_cat_card(cat, index: int) -> Button:
 	lv_label.text = "Lv.%d" % lv
 	lv_label.add_theme_font_size_override("font_size", 11)
 	lv_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	lv_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	badge.add_child(lv_label)
 
 	# Name label
@@ -219,6 +224,7 @@ func _create_cat_card(cat, index: int) -> Button:
 	name_label.text = name_str
 	name_label.add_theme_font_size_override("font_size", 12)
 	name_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2, 1))
+	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(name_label)
 
 	# Breed label
@@ -237,6 +243,7 @@ func _create_cat_card(cat, index: int) -> Button:
 	breed_label.text = _breed_label(species)
 	breed_label.add_theme_font_size_override("font_size", 10)
 	breed_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5, 1))
+	breed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(breed_label)
 
 	return card
