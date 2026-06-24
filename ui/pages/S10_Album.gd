@@ -107,20 +107,19 @@ func _populate_cat_cards() -> void:
 const CARD_W := 165
 const CARD_H := 120
 
-func _create_cat_card(cat, index: int) -> Control:
+func _create_cat_card(cat, index: int) -> Button:
 	var species: String = _cat_str(cat, "species", "orange")
 	var rarity: String = _cat_str(cat, "rarity", "common")
 	var name_str: String = _cat_str(cat, "name", _cat_str(cat, "display_name", "猫咪"))
 	var lv: int = _cat_int(cat, "level", 1)
 
-	var card := Control.new()
+	var card := Button.new()
+	card.flat = true
+	card.focus_mode = Control.FOCUS_NONE
 	card.custom_minimum_size = Vector2(CARD_W, CARD_H)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
-	card.gui_input.connect(func(event: InputEvent) -> void:
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			_open_cat_detail(index)
-	)
+	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	card.pressed.connect(func() -> void: _open_cat_detail(index))
 
 	# Background
 	var bg := ColorRect.new()
