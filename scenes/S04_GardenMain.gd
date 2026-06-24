@@ -40,6 +40,7 @@ var _frame_ready: Texture2D
 enum SubState { IDLE, INTERACT_FEED, INTERACT_PET, INTERACT_PLAY, INTERACT_PHOTO }
 
 var garden_layer: Node2D
+var _garden_viewport: SubViewport
 var cat_container: Node2D
 var _camera: Camera2D
 var _dragging := false
@@ -149,6 +150,7 @@ func _build_garden_layer() -> void:
 	garden_vp.size = Vector2(720, 1280 - int(HUD_HEIGHT))  # 与 SubViewportContainer 实际高度一致（顶部被 HUD 占 130）
 	garden_vp.transparent_bg = false
 	garden_vp.handle_input_locally = false
+	_garden_viewport = garden_vp
 	
 	garden_layer = Node2D.new()
 	garden_layer.name = "GardenLayer"
@@ -191,22 +193,15 @@ func _build_garden_layer() -> void:
 		_apply_cat_visibility()
 
 func _setup_weather_layer() -> void:
+	if _garden_viewport == null:
+		return
 	_weather_overlay = ColorRect.new()
 	_weather_overlay.name = "WeatherOverlay"
 	_weather_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_weather_overlay.color = Color(1, 1, 1, 0)
-	_weather_overlay.z_index = 2
-	add_child(_weather_overlay)
 	_weather_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-
-	var shader := load("res://shaders/weather_color_grade.gdshader") as Shader
-	if shader:
-		_weather_material = ShaderMaterial.new()
-		_weather_material.shader = shader
-		_weather_material.set_shader_parameter("day_palette", load("res://assets/weather/day_palette.png"))
-		_weather_material.set_shader_parameter("sunset_palette", load("res://assets/weather/sunset_palette.png"))
-		_weather_material.set_shader_parameter("night_palette", load("res://assets/weather/night_palette.png"))
-		_weather_overlay.material = _weather_material
+	_weather_overlay.z_index = 100
+	_garden_viewport.add_child(_weather_overlay)
 
 	_rain_particles = _create_rain_particles()
 	_weather_overlay.add_child(_rain_particles)
@@ -220,13 +215,6 @@ func _setup_weather_layer() -> void:
 			WeatherTimeManager.weather_changed.connect(_on_weather_changed)
 		_apply_weather_period(WeatherTimeManager.current_period, true)
 		_apply_weather_particles(WeatherTimeManager.current_weather)
-
-func _process(delta: float) -> void:
-	if _weather_material and WeatherTimeManager:
-		var blend := WeatherTimeManager.get_current_blend()
-		if blend != _last_blend:
-			_last_blend = blend
-			_weather_material.set_shader_parameter("blend", blend)
 
 func _create_rain_particles() -> CPUParticles2D:
 	var particles := CPUParticles2D.new()
@@ -275,9 +263,18 @@ func _on_weather_changed(weather: int) -> void:
 	_apply_weather_particles(weather)
 
 func _apply_weather_period(period: int, immediate := false) -> void:
-	if _weather_material == null or not WeatherTimeManager:
+	if _weather_overlay == null:
 		return
-	_last_blend = -1.0
+	match period:
+		WeatherTimeManager.TimePeriod.SUNSET:
+			_weather_overlay.color = Color("e8a05e")
+			_weather_overlay.modulate.a = 0.25
+		WeatherTimeManager.TimePeriod.NIGHT:
+			_weather_overlay.color = Color("2a3050")
+			_weather_overlay.modulate.a = 0.45
+		_:  # DAY
+			_weather_overlay.color = Color.WHITE
+			_weather_overlay.modulate.a = 0.0
 
 func _apply_weather_particles(weather: int) -> void:
 	if _rain_particles != null:
@@ -285,6 +282,17 @@ func _apply_weather_particles(weather: int) -> void:
 		_rain_particles.visible = _rain_particles.emitting
 	if _snow_particles != null:
 		_snow_particles.emitting = weather == WeatherTimeManager.WeatherType.SNOW
+		_snow_particles.visible = _snow_particles.emitting
+	# Weather tint overlays on top of period tint
+	if weather == WeatherTimeManager.WeatherType.RAIN:
+		_weather_overlay.color = Color("8e9eb5")
+		_weather_overlay.modulate.a = 0.3
+	elif weather == WeatherTimeManager.WeatherType.SNOW:
+		_weather_overlay.color = Color.WHITE
+		_weather_overlay.modulate.a = 0.15
+	else:
+		# Restore period tint (called again in case period_changed didn't re-fire)
+		_apply_weather_period(WeatherTimeManager.current_period if WeatherTimeManager else 0)
 		_snow_particles.visible = _snow_particles.emitting
 
 func _build_parallax_background() -> void:
