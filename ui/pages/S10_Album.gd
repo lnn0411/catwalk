@@ -35,6 +35,32 @@ func _switch_tab(tab: Tab) -> void:
 	if tab == Tab.CATS:
 		_refresh_cats()
 
+func _cat_str(cat, field: String, fallback: String = "") -> String:
+	if cat is Dictionary:
+		return String(cat.get(field, fallback))
+	# CatData Resource — direct property access
+	var v = cat.get(field)
+	return String(v) if v != null else fallback
+
+func _cat_int(cat, field: String, fallback: int = 0) -> int:
+	if cat is Dictionary:
+		return int(cat.get(field, fallback))
+	var v = cat.get(field)
+	return int(v) if v != null else fallback
+
+func _cat_to_dict(cat) -> Dictionary:
+	if cat is Dictionary:
+		return cat.duplicate()
+	var d := {}
+	for key in ["id", "species", "rarity", "hatch_index", "display_name", "level", "exp", "friendship", "created_at"]:
+		var v = cat.get(key)
+		if v != null:
+			d[key] = v
+	# Map CatData field names to what cat_detail expects
+	d["name"] = d.get("display_name", "")
+	d["breed"] = d.get("species", "")
+	return d
+
 func _populate_cat_cards() -> void:
 	var grid := $VBox/Body/CatsGrid as GridContainer
 	if grid == null:
@@ -59,22 +85,11 @@ func _populate_cat_cards() -> void:
 		var btn := Button.new()
 		btn.custom_minimum_size = Vector2(160, 50)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		var name_str: String = String(cat.get("name", "猫咪"))
-		var breed: String = _breed_label(cat)
-		var lv: int = int(cat.get("level", 1))
+		var name_str: String = _cat_str(cat, "name", _cat_str(cat, "display_name", "猫咪"))
+		var breed: String = _breed_label(_cat_str(cat, "species", "orange"))
+		var lv: int = _cat_int(cat, "level", 1)
 		btn.text = "%s — %s Lv.%d" % [name_str, breed, lv]
 		btn.mouse_filter = Control.MOUSE_FILTER_STOP
-
-		var cat_data: Dictionary = {}
-		if cat is Dictionary:
-			cat_data = cat
-		elif cat.has_method("to_dict"):
-			cat_data = cat.to_dict()
-		else:
-			# CatData object: manually convert fields
-			for key in ["id", "name", "species", "breed", "level", "rarity", "friendship", "affection_lv", "is_following", "hatch_time"]:
-				if cat.get(key) != null:
-					cat_data[key] = cat.get(key)
 
 		var idx := i
 		btn.pressed.connect(func() -> void:
@@ -86,23 +101,12 @@ func _populate_cat_cards() -> void:
 func _open_cat_detail(index: int) -> void:
 	if index < 0 or index >= _cats.size():
 		return
-	var cat = _cats[index]
-	var cat_data: Dictionary = {}
-	if cat is Dictionary:
-		cat_data = cat
-	elif cat.has_method("to_dict"):
-		cat_data = cat.to_dict()
-	else:
-		for key in ["id", "name", "species", "breed", "level", "rarity", "friendship", "affection_lv", "is_following", "hatch_time"]:
-			if cat.get(key) != null:
-				cat_data[key] = cat.get(key)
-
+	var cat_data: Dictionary = _cat_to_dict(_cats[index])
 	var ui := get_node_or_null("/root/UIManager") as UIManager
 	if ui:
 		ui.push("res://ui/pages/S10_CatDetail.tscn", {"cat": cat_data})
 
-func _breed_label(cat) -> String:
-	var species: String = String(cat.get("species", "orange")) if cat else "orange"
+func _breed_label(species: String) -> String:
 	match species:
 		"british_shorthair":
 			return "英短"
