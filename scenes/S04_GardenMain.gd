@@ -257,11 +257,12 @@ func _on_weather_changed(weather: int) -> void:
 func _apply_weather_period(period: int, immediate := false) -> void:
 	if garden_layer == null:
 		return
+	# Period uses garden_layer.modulate (overall light tone)
 	match period:
 		WeatherTimeManager.TimePeriod.SUNSET:
-			garden_layer.modulate = Color("f0c898")
+			garden_layer.modulate = Color(1.2, 0.95, 0.80, 1)
 		WeatherTimeManager.TimePeriod.NIGHT:
-			garden_layer.modulate = Color("5a6888")
+			garden_layer.modulate = Color(0.65, 0.70, 0.90, 1)
 		_:  # DAY
 			garden_layer.modulate = Color.WHITE
 
@@ -272,13 +273,6 @@ func _apply_weather_particles(weather: int) -> void:
 	if _snow_particles != null:
 		_snow_particles.emitting = weather == WeatherTimeManager.WeatherType.SNOW
 		_snow_particles.visible = _snow_particles.emitting
-	# Weather tint on garden_layer (period tint still visible underneath)
-	if weather == WeatherTimeManager.WeatherType.RAIN:
-		garden_layer.modulate = Color("8e9eb5")
-	elif weather == WeatherTimeManager.WeatherType.SNOW:
-		garden_layer.modulate = Color("c8d8e8")
-	else:
-		_apply_weather_period(WeatherTimeManager.current_period if WeatherTimeManager else 0)
 
 func _build_parallax_background() -> void:
 	# 随机从 4 张宽幅花园背景中选一张（garden_01~04.png）
