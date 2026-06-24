@@ -220,7 +220,7 @@ func _setup_sprite() -> void:
 
 func _load_frames() -> void:
 	var dir := _breed_dir()
-	for anim in [ANIM_WALK_RIGHT, ANIM_WALK_UP_RIGHT, ANIM_WALK_UP, ANIM_WALK_DOWN_RIGHT, ANIM_WALK_DOWN, ANIM_IDLE, "turn", "move_turn"]:
+	for anim in [ANIM_WALK_RIGHT, ANIM_WALK_UP_RIGHT, ANIM_WALK_UP, ANIM_WALK_DOWN_RIGHT, ANIM_WALK_DOWN, ANIM_IDLE]:
 		var prefix := _anim_to_file_prefix(anim)
 		var frames: Array[Texture2D] = []
 		var frame_count: int = ANIM_FRAME_COUNT.get(anim, 4)
@@ -406,23 +406,41 @@ func _set_anim(anim_name: String, flip_left: bool, force: bool = false) -> void:
 
 
 var _foot_cache: Dictionary = {}
-
 func _get_foot_offset(resource_path: String) -> int:
 	if _foot_cache.has(resource_path):
 		return _foot_cache[resource_path]
 	var img := Image.new()
 	var abs_path := ProjectSettings.globalize_path(resource_path)
 	if img.load(abs_path) == OK:
+		var w := img.get_width()
 		var h := img.get_height()
 		var foot_y := h - 1
 		for y in range(h - 1, -1, -1):
-			for x in range(img.get_width()):
+			for x in range(w):
 				if img.get_pixel(x, y).a > 0.05:
 					foot_y = y
 					_foot_cache[resource_path] = h - 1 - foot_y
 					return _foot_cache[resource_path]
 	_foot_cache[resource_path] = 0
 	return 0
+
+
+func _get_x_center_fix(resource_path: String) -> float:
+	var img := Image.new()
+	var abs_path := ProjectSettings.globalize_path(resource_path)
+	if img.load(abs_path) == OK:
+		var w := img.get_width()
+		var h := img.get_height()
+		var sum_x := 0
+		var count := 0
+		for y in range(h):
+			for x in range(w):
+				if img.get_pixel(x, y).a > 0.05:
+					sum_x += x
+					count += 1
+		if count > 0:
+			return float(sum_x) / float(count) - float(w) * 0.5
+	return 0.0
 
 
 func _apply_frame(anim: String, frame: int) -> void:
@@ -434,9 +452,10 @@ func _apply_frame(anim: String, frame: int) -> void:
 	if tex != null:
 		_sprite.region_enabled = true
 		_sprite.region_rect = Rect2(Vector2.ZERO, tex.get_size())
-		# Auto-align foot to bottom: scan texture's source image for lowest non-transparent pixel
+		# Auto-align foot to bottom and center X: scan texture's source image
 		var foot_offset := _get_foot_offset(tex.resource_path)
-		_sprite.position.y = float(foot_offset)
+		var x_center := _get_x_center_fix(tex.resource_path)
+		_sprite.position = Vector2(x_center, float(foot_offset))
 
 
 func _get_region_from_config(anim_name: String, col: int) -> Array:
@@ -490,10 +509,9 @@ func _apply_sprite_anchor(sx: float, sy: float) -> void:
 
 
 func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> void:
-	_turn_playing = true
-	_turn_after_anim = after_anim
-	_turn_after_flip = after_flip
-	_set_anim(ANIM_MOVE_TURN if move_turn else ANIM_TURN, after_flip, true)
+	# No dedicated turn frames in new format — go directly to target
+	_set_anim(after_anim, after_flip, true)
+	_turn_playing = false
 
 
 func _select_anim_from_direction(dir: Vector2) -> Dictionary:
