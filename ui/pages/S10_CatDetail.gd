@@ -94,10 +94,10 @@ func _on_giveaway_pressed() -> void:
 		if HatchEngine and HatchEngine.remove_cat(_cat_id):
 			if SaveManager:
 				SaveManager.save_all()
-			UIManager.replace("res://ui/pages/S10_Album.tscn")
+			UIManager.pop()
 		else:
 			Popups.show_toast("送养失败，请重试")
 	)
 
 func _on_back_pressed() -> void:
-	UIManager.replace("res://ui/pages/S10_Album.tscn")
+	UIManager.pop()
