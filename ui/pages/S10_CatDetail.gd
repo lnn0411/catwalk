@@ -11,7 +11,7 @@ var _cat_data: Dictionary = {}
 var _cat_id: String = ""
 
 func _on_page_setup(data: Dictionary) -> void:
-	_cat_data = data
+	_cat_data = data.get("cat", {})
 	_cat_id = String(_cat_data.get("id", ""))
 	_refresh()
 
