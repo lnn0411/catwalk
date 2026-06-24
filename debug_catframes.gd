@@ -1,1 +1,0 @@
-/tmp/debug_catframes.gd
