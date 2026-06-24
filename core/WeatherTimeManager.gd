@@ -116,6 +116,8 @@ func dbg_set_weather(weather_type: int) -> void:
 	if current_weather != prev:
 		weather_changed.emit(current_weather)
 		weather_bonus_changed.emit(get_weather_bonus_data())
+	if _check_timer:
+		_check_timer.stop()
 
 
 # Debug helper — force time period
@@ -125,6 +127,8 @@ func dbg_set_period(period: int) -> void:
 	if current_period != prev:
 		period_changed.emit(current_period)
 		weather_bonus_changed.emit(get_weather_bonus_data())
+	if _check_timer:
+		_check_timer.stop()
 
 
 func _is_winter() -> bool:
