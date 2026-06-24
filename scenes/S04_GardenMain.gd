@@ -200,13 +200,12 @@ func _setup_weather_layer() -> void:
 	_weather_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_weather_overlay.color = Color(1, 1, 1, 0)
 	_weather_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_weather_overlay.z_index = 100
 	_garden_viewport.add_child(_weather_overlay)
 
 	_rain_particles = _create_rain_particles()
-	_weather_overlay.add_child(_rain_particles)
+	_garden_viewport.add_child(_rain_particles)
 	_snow_particles = _create_snow_particles()
-	_weather_overlay.add_child(_snow_particles)
+	_garden_viewport.add_child(_snow_particles)
 
 	if WeatherTimeManager:
 		if not WeatherTimeManager.period_changed.is_connected(_on_weather_period_changed):
