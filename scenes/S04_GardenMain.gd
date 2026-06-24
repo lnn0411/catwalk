@@ -948,8 +948,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			_drag_start = event.position
 	# 触摸事件（移动端）
 	elif event is InputEventScreenTouch:
-		if event.pressed and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
-			return
 		if event.pressed and _is_in_garden(event.position):
 			get_viewport().set_input_as_handled()
 			var now := Time.get_ticks_msec() / 1000.0
