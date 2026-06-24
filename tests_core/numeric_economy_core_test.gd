@@ -35,10 +35,10 @@ const StepS     = preload("res://core/StepEngine.gd")
 const MailS     = preload("res://core/MailSystem.gd")
 const ExploreS  = preload("res://core/ExploreEngine.gd")
 const CurrencyS = preload("res://core/CurrencyManager.gd")
+const CatDS     = preload("res://core/CatData.gd")
 const PackageS  = preload("res://core/PackageSystem.gd")
 const AchS      = preload("res://core/AchievementSystem.gd")
 const SigninS   = preload("res://core/SigninSystem.gd")
-const CatDS     = preload("res://core/CatData.gd")
 
 # ===========================================================================
 # 入口：extends SceneTree 经 --script 运行时，引擎在「构造期」调用 _init()
