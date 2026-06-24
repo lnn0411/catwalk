@@ -98,6 +98,7 @@ func get_weather_bonus_data() -> Dictionary:
 		"weather": current_weather,
 	}
 
+
 func get_period_name() -> String:
 	match current_period:
 		TimePeriod.SUNSET:
@@ -106,6 +107,16 @@ func get_period_name() -> String:
 			return "夜晚"
 		_:
 			return "白天"
+
+
+# Debug helper — force weather type (used by DebugPanel)
+func dbg_set_weather(weather_type: int) -> void:
+	var prev := current_weather
+	current_weather = weather_type
+	if current_weather != prev:
+		weather_changed.emit(current_weather)
+		weather_bonus_changed.emit(get_weather_bonus_data())
+
 
 func _is_winter() -> bool:
 	var dd := Time.get_date_dict_from_system()

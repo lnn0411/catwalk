@@ -1,12 +1,38 @@
-# DebugPanel — 配饰 Slot 校准滑块 (GDD v2.17 §5.6)
-# 实时拖拽控制猫咪配饰的 Offset/Scale，输出 JSON 配置
+# DebugPanel — 风天切换测试 + 配饰校准滑块
 extends Control
 
 var _accessory_target: Node2D
 var _sliders: Dictionary = {}
+var _weather_idx := 0
+const WEATHER_NAMES := ["☀️ 晴", "🌧 雨", "❄️ 雪"]
+const WEATHER_VALS := [0, 1, 2]
+
 func _ready() -> void:
+	_build_weather_toggle()
 	_build_sliders()
 	_build_output_button()
+
+func _build_weather_toggle() -> void:
+	var btn := Button.new()
+	btn.text = "天气: " + WEATHER_NAMES[0]
+	btn.position = Vector2(20, 20)
+	btn.size = Vector2(200, 40)
+	btn.pressed.connect(_on_weather_toggle)
+	add_child(btn)
+
+	var label := Label.new()
+	label.text = "当前: "
+	label.position = Vector2(20, 70)
+	add_child(label)
+
+func _on_weather_toggle() -> void:
+	_weather_idx = (_weather_idx + 1) % WEATHER_VALS.size()
+	var wt := WEATHER_VALS[_weather_idx]
+	if WeatherTimeManager:
+		WeatherTimeManager.dbg_set_weather(wt)
+	var btn := get_child(0) as Button
+	if btn:
+		btn.text = "天气: " + WEATHER_NAMES[_weather_idx]
 
 func _build_sliders() -> void:
 	var labels := ["Offset X", "Offset Y", "Scale X", "Scale Y"]
