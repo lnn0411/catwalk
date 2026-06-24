@@ -193,20 +193,13 @@ func _build_garden_layer() -> void:
 		_apply_cat_visibility()
 
 func _setup_weather_layer() -> void:
-	if _garden_viewport == null:
-		return
-	_weather_overlay = ColorRect.new()
-	_weather_overlay.name = "WeatherOverlay"
-	_weather_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_weather_overlay.color = Color(1, 1, 1, 0)
-	_weather_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_garden_viewport.add_child(_weather_overlay)
-
+	# Weather particles: added to self (GardenMain Control layer) - works
 	_rain_particles = _create_rain_particles()
-	_garden_viewport.add_child(_rain_particles)
+	add_child(_rain_particles)
 	_snow_particles = _create_snow_particles()
-	_garden_viewport.add_child(_snow_particles)
+	add_child(_snow_particles)
 
+	# Period tint: use garden_layer.modulate to avoid SubViewport Control/Node2D mixing
 	if WeatherTimeManager:
 		if not WeatherTimeManager.period_changed.is_connected(_on_weather_period_changed):
 			WeatherTimeManager.period_changed.connect(_on_weather_period_changed)
@@ -262,18 +255,15 @@ func _on_weather_changed(weather: int) -> void:
 	_apply_weather_particles(weather)
 
 func _apply_weather_period(period: int, immediate := false) -> void:
-	if _weather_overlay == null:
+	if garden_layer == null:
 		return
 	match period:
 		WeatherTimeManager.TimePeriod.SUNSET:
-			_weather_overlay.color = Color("e8a05e")
-			_weather_overlay.modulate.a = 0.25
+			garden_layer.modulate = Color("f0c898")
 		WeatherTimeManager.TimePeriod.NIGHT:
-			_weather_overlay.color = Color("2a3050")
-			_weather_overlay.modulate.a = 0.45
+			garden_layer.modulate = Color("5a6888")
 		_:  # DAY
-			_weather_overlay.color = Color.WHITE
-			_weather_overlay.modulate.a = 0.0
+			garden_layer.modulate = Color.WHITE
 
 func _apply_weather_particles(weather: int) -> void:
 	if _rain_particles != null:
@@ -282,17 +272,13 @@ func _apply_weather_particles(weather: int) -> void:
 	if _snow_particles != null:
 		_snow_particles.emitting = weather == WeatherTimeManager.WeatherType.SNOW
 		_snow_particles.visible = _snow_particles.emitting
-	# Weather tint overlays on top of period tint
+	# Weather tint on garden_layer (period tint still visible underneath)
 	if weather == WeatherTimeManager.WeatherType.RAIN:
-		_weather_overlay.color = Color("8e9eb5")
-		_weather_overlay.modulate.a = 0.3
+		garden_layer.modulate = Color("8e9eb5")
 	elif weather == WeatherTimeManager.WeatherType.SNOW:
-		_weather_overlay.color = Color.WHITE
-		_weather_overlay.modulate.a = 0.15
+		garden_layer.modulate = Color("c8d8e8")
 	else:
-		# Restore period tint (called again in case period_changed didn't re-fire)
 		_apply_weather_period(WeatherTimeManager.current_period if WeatherTimeManager else 0)
-		_snow_particles.visible = _snow_particles.emitting
 
 func _build_parallax_background() -> void:
 	# 随机从 4 张宽幅花园背景中选一张（garden_01~04.png）
