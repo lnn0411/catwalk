@@ -13,8 +13,8 @@ void fragment() {
 	vec2 palette_uv = vec2(clamp(luminance, 0.0, 1.0), UV.y);
 
 	vec3 day_color = mix(source_color.rgb, texture(day_palette, palette_uv).rgb, 0.0);
-	vec3 sunset_color = mix(source_color.rgb, texture(sunset_palette, palette_uv).rgb, 0.32);
-	vec3 night_color = mix(source_color.rgb, texture(night_palette, palette_uv).rgb, 0.45);
+	vec3 sunset_color = mix(source_color.rgb, texture(sunset_palette, palette_uv).rgb, 0.55);
+	vec3 night_color = mix(source_color.rgb, texture(night_palette, palette_uv).rgb, 0.75);
 
 	float day_to_sunset = smoothstep(0.0, 1.0, clamp(blend, 0.0, 1.0));
 	float sunset_to_night = smoothstep(0.0, 1.0, clamp(blend - 1.0, 0.0, 1.0));

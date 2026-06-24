@@ -565,6 +565,7 @@ func _build_debug_panel() -> void:
 		["重播Onboarding", func() -> void: _replay_onboarding()],
 		["注入数据", func() -> void: _inject_data()],
 		["☀️ 切换天气", func() -> void: _toggle_weather()],
+		["🌓 切换时段", func() -> void: _toggle_period()],
 	]:
 		var button := Button.new()
 		button.text = String(item[0])
@@ -852,6 +853,15 @@ func _toggle_weather() -> void:
 	var cur: int = wtm.current_weather
 	var next: int = (cur + 1) % 3
 	wtm.dbg_set_weather(next)
+
+
+func _toggle_period() -> void:
+	var wtm := get_node_or_null("/root/WeatherTimeManager")
+	if wtm == null:
+		return
+	var cur: int = wtm.current_period
+	var next: int = (cur + 1) % 3
+	wtm.dbg_set_period(next)
 
 
 func _replay_onboarding() -> void:

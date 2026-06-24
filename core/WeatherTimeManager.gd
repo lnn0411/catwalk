@@ -118,6 +118,15 @@ func dbg_set_weather(weather_type: int) -> void:
 		weather_bonus_changed.emit(get_weather_bonus_data())
 
 
+# Debug helper — force time period
+func dbg_set_period(period: int) -> void:
+	var prev := current_period
+	current_period = period
+	if current_period != prev:
+		period_changed.emit(current_period)
+		weather_bonus_changed.emit(get_weather_bonus_data())
+
+
 func _is_winter() -> bool:
 	var dd := Time.get_date_dict_from_system()
 	var m: int = dd.month
