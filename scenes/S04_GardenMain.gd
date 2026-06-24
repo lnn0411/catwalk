@@ -203,6 +203,9 @@ func _setup_weather_layer() -> void:
 	if shader:
 		_weather_material = ShaderMaterial.new()
 		_weather_material.shader = shader
+		_weather_material.set_shader_parameter("day_palette", load("res://assets/weather/day_palette.png"))
+		_weather_material.set_shader_parameter("sunset_palette", load("res://assets/weather/sunset_palette.png"))
+		_weather_material.set_shader_parameter("night_palette", load("res://assets/weather/night_palette.png"))
 		_weather_overlay.material = _weather_material
 
 	_rain_particles = _create_rain_particles()
