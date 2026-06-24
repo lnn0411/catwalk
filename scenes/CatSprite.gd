@@ -405,6 +405,26 @@ func _set_anim(anim_name: String, flip_left: bool, force: bool = false) -> void:
 	_apply_frame(_current_anim, _current_col)
 
 
+var _foot_cache: Dictionary = {}
+
+func _get_foot_offset(resource_path: String) -> int:
+	if _foot_cache.has(resource_path):
+		return _foot_cache[resource_path]
+	var img := Image.new()
+	var abs_path := ProjectSettings.globalize_path(resource_path)
+	if img.load(abs_path) == OK:
+		var h := img.get_height()
+		var foot_y := h - 1
+		for y in range(h - 1, -1, -1):
+			for x in range(img.get_width()):
+				if img.get_pixel(x, y).a > 0.05:
+					foot_y = y
+					_foot_cache[resource_path] = h - 1 - foot_y
+					return _foot_cache[resource_path]
+	_foot_cache[resource_path] = 0
+	return 0
+
+
 func _apply_frame(anim: String, frame: int) -> void:
 	_current_anim = anim
 	var frames: Array = _frames_cache.get(anim, [])
@@ -414,27 +434,9 @@ func _apply_frame(anim: String, frame: int) -> void:
 	if tex != null:
 		_sprite.region_enabled = true
 		_sprite.region_rect = Rect2(Vector2.ZERO, tex.get_size())
-		# Auto-align foot to bottom: scan texture for lowest non-transparent pixel
-		var img := tex.get_image()
-		if img != null:
-			var w := img.get_width()
-			var h := img.get_height()
-			var foot_y := h - 1
-			img.lock()
-			for y in range(h - 1, -1, -1):
-				var found := false
-				for x in range(w):
-					if img.get_pixel(x, y).a > 0.05:
-						foot_y = y
-						found = true
-						break
-				if found:
-					break
-			img.unlock()
-			# Offset so foot aligns with bottom edge of texture
-			_sprite.position.y = float(h - 1 - foot_y)
-		else:
-			_sprite.position.y = 0.0
+		# Auto-align foot to bottom: scan texture's source image for lowest non-transparent pixel
+		var foot_offset := _get_foot_offset(tex.resource_path)
+		_sprite.position.y = float(foot_offset)
 
 
 func _get_region_from_config(anim_name: String, col: int) -> Array:
