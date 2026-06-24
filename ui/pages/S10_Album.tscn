@@ -1,0 +1,124 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://ui/pages/S10_Album.gd" id="1"]
+
+[node name="S10_Album" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 0.0
+offset_bottom = 0.0
+
+[node name="Head" type="Control" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 54)
+size_flags_horizontal = 3
+size_flags_vertical = 0
+
+[node name="BackBtn" type="Button" parent="VBox/Head"]
+layout_mode = 0
+offset_left = 12
+offset_top = 28
+offset_right = 40
+offset_bottom = 50
+text = "<"
+
+[node name="Title" type="Label" parent="VBox/Head"]
+layout_mode = 0
+offset_left = 44
+offset_top = 28
+offset_right = 160
+offset_bottom = 50
+text = "我的收藏"
+
+[node name="Tabs" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 38)
+size_flags_horizontal = 3
+size_flags_vertical = 0
+theme_override_constants/separation = 6
+
+[node name="TabCats" type="Button" parent="VBox/Tabs"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 34)
+
+[node name="TabCards" type="Button" parent="VBox/Tabs"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 34)
+
+[node name="TabAch" type="Button" parent="VBox/Tabs"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 34)
+
+[node name="Body" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CatsGrid" type="GridContainer" parent="VBox/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(360, 0)
+columns = 2
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+
+[node name="Card0" type="ColorRect" parent="VBox/Body/CatsGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(160, 180)
+color = Color(0.9, 0.9, 0.9, 1)
+
+[node name="Card1" type="ColorRect" parent="VBox/Body/CatsGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(160, 180)
+color = Color(0.9, 0.9, 0.9, 1)
+
+[node name="Card2" type="ColorRect" parent="VBox/Body/CatsGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(160, 180)
+color = Color(0.9, 0.9, 0.9, 1)
+
+[node name="Card3" type="ColorRect" parent="VBox/Body/CatsGrid"]
+layout_mode = 2
+custom_minimum_size = Vector2(160, 180)
+color = Color(0.9, 0.9, 0.9, 1)
+
+[node name="PostcardsBox" type="Control" parent="VBox/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(360, 500)
+visible = false
+
+[node name="Placeholder" type="ColorRect" parent="VBox/Body/PostcardsBox"]
+layout_mode = 0
+offset_left = 0
+offset_top = 0
+offset_right = 360
+offset_bottom = 500
+color = Color(0.85, 0.9, 0.95, 1)
+
+[node name="AchBox" type="Control" parent="VBox/Body"]
+layout_mode = 2
+custom_minimum_size = Vector2(360, 500)
+visible = false
+
+[node name="Placeholder" type="ColorRect" parent="VBox/Body/AchBox"]
+layout_mode = 0
+offset_left = 0
+offset_top = 0
+offset_right = 360
+offset_bottom = 500
+color = Color(0.9, 0.85, 0.9, 1)
+
+[connection signal="pressed" from="VBox/Head/BackBtn" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="VBox/Tabs/TabCats" to="." method="_on_tab_cats_pressed"]
+[connection signal="pressed" from="VBox/Tabs/TabCards" to="." method="_on_tab_cards_pressed"]
+[connection signal="pressed" from="VBox/Tabs/TabAch" to="." method="_on_tab_ach_pressed"]
