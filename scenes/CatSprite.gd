@@ -39,7 +39,7 @@ signal cat_clicked(cat_data)
 
 const FRAME_SIZE := Vector2i(100, 140)
 const FOOT_Y := 131
-const ARCHED_GROUND_Y := 3.0  # 脚底自然落地点（相对根节点 Y 偏移，与地面阴影平齐）
+const ARCHED_GROUND_Y := 1.0  # 脚底略高于阴影，避免垂直压在阴影上
 const WALK_PX_BRITISH := 4.0
 
 var _per_frame_foot_y := FOOT_Y
@@ -737,7 +737,7 @@ func _play_click_feedback() -> void:
 func _draw() -> void:
 	if not shadow_enabled:
 		return
-	_draw_oval(Vector2(0, 3), Vector2(30, 7), Color(0.12, 0.14, 0.06, 0.11))
+	_draw_oval(Vector2(0, 3), Vector2(30, 7), Color(0.12, 0.14, 0.06, 0.07))
 
 
 func _draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
