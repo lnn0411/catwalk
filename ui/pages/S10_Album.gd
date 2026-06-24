@@ -220,7 +220,6 @@ func _create_cat_card(cat, index: int) -> Control:
 	name_label.text = name_str
 	name_label.add_theme_font_size_override("font_size", 12)
 	name_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2, 1))
-	name_label.autowrap_mode = TextServer.AUTOWORD_WRAP
 	card.add_child(name_label)
 
 	# Breed label
