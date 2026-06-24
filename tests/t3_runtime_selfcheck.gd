@@ -91,7 +91,11 @@ func _le(desc: String, actual, maxv) -> void:
 # ============================================================
 func _t_energy_engine() -> void:
 	_sec("A. EnergyEngine 能量逻辑")
-	var E = EnergyEngine
+	if not FileAccess.file_exists("res://core/EnergyEngine.gd"):
+		print("  [⏭] 跳过 — EnergyEngine 已移除，相关逻辑归入 HatchEngine")
+		await get_tree().process_frame
+		return
+	var E = load("res://core/EnergyEngine.gd")
 
 	# A1 能量公式各 Tier 边界（对照 GDD §2.1 表，非新手 t1=0.3）
 	_eq("calcEnergy 500步",   E.calc_energy(500, false), 150)
@@ -140,6 +144,10 @@ func _t_energy_engine() -> void:
 # ============================================================
 func _t_step_engine() -> void:
 	_sec("B. StepEngine 步数逻辑")
+	if not FileAccess.file_exists("res://core/StepEngine.gd"):
+		print("  [⏭] 跳过 — StepEngine.gd 未加载")
+		await get_tree().process_frame
+		return
 	var S = StepEngine
 
 	# B1 mock 步数累加

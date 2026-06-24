@@ -42,13 +42,6 @@ func _ready() -> void:
 	_setup_cooldown_timer()
 	_style_button(_explore_button)
 	_setup_explore_countdown_timer()
-	# 送养按钮
-	_relinquish_button = Button.new()
-	_relinquish_button.text = "💕 送养"
-	_relinquish_button.pressed.connect(_on_relinquish_pressed)
-	_style_button(_relinquish_button)
-	if _explore_button and _explore_button.get_parent():
-		_explore_button.get_parent().add_child(_relinquish_button)
 	_resolve_interaction_system()
 	_refresh_cat_info()
 	_check_explore_state()
@@ -172,14 +165,13 @@ func _show_relinquish_confirm_dialog() -> void:
 		_on_relinquish_confirmed(dialog)
 	)
 	dialog.canceled.connect(func() -> void:
-		dialog.queue_free()
+		_close_overlay(dialog)
 	)
 	_add_overlay(dialog)
 
 
 func _on_relinquish_confirmed(dialog: Node) -> void:
-	if dialog != null:
-		dialog.queue_free()
+	_close_overlay(dialog)
 	var cid := _get_cat_property("id", "")
 	if cid == "":
 		return
@@ -317,14 +309,13 @@ func _show_duration_picker() -> void:
 		_on_explore_duration_selected(duration_hours, picker)
 	)
 	picker.canceled.connect(func() -> void:
-		picker.queue_free()
+		_close_overlay(picker)
 	)
 	_add_overlay(picker)
 
 
 func _on_explore_duration_selected(duration_hours: int, picker: Node) -> void:
-	if picker != null:
-		picker.queue_free()
+	_close_overlay(picker)
 	var packed := load("res://scenes/ui/explore_confirm_dialog.tscn")
 	var dialog = packed.instantiate()
 	dialog.setup(_get_cat_display_name(), duration_hours)
@@ -332,14 +323,13 @@ func _on_explore_duration_selected(duration_hours: int, picker: Node) -> void:
 		_on_explore_confirmed(confirmed_duration_hours, dialog)
 	)
 	dialog.canceled.connect(func() -> void:
-		dialog.queue_free()
+		_close_overlay(dialog)
 	)
 	_add_overlay(dialog)
 
 
 func _on_explore_confirmed(duration_hours: int, dialog: Node) -> void:
-	if dialog != null:
-		dialog.queue_free()
+	_close_overlay(dialog)
 	if cat_id == "":
 		return
 	if ExploreEngine.dispatch(cat_id, duration_hours):
@@ -390,10 +380,22 @@ func _show_postcard_reveal(reward_type: String) -> void:
 
 
 func _add_overlay(node: Control) -> void:
-	var parent := get_tree().current_scene
-	if parent == null:
-		parent = get_tree().root
-	parent.add_child(node)
+	var canvas := CanvasLayer.new()
+	canvas.layer = 100
+	canvas.add_child(node)
+	var root := get_tree().root
+	if root != null:
+		root.add_child(canvas)
+
+# Close an overlay node and its CanvasLayer wrapper
+func _close_overlay(node: Node) -> void:
+	if not is_instance_valid(node):
+		return
+	var p := node.get_parent()
+	if p is CanvasLayer:
+		p.queue_free()
+	else:
+		node.queue_free()
 
 
 func _has_explore_slot_available() -> bool:
