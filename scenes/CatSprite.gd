@@ -39,7 +39,11 @@ signal cat_clicked(cat_data)
 
 const FRAME_SIZE := Vector2i(100, 140)
 const FOOT_Y := 131
+const ARCHED_GROUND_Y := 6.5  # 脚底自然落地点（相对根节点 Y 偏移，匹配橘猫当前视觉位置）
 const WALK_PX_BRITISH := 4.0
+
+var _per_frame_foot_y := FOOT_Y
+var _per_frame_x_center := 0.0
 const WALK_PX_ORANGE := 6.5
 const WALK_PX_SIAMESE := 7.0
 
@@ -452,10 +456,9 @@ func _apply_frame(anim: String, frame: int) -> void:
 	if tex != null:
 		_sprite.region_enabled = true
 		_sprite.region_rect = Rect2(Vector2.ZERO, tex.get_size())
-		# Auto-align foot to bottom and center X: scan texture's source image
-		var foot_offset := _get_foot_offset(tex.resource_path)
-		var x_center := _get_x_center_fix(tex.resource_path)
-		_sprite.position = Vector2(x_center, float(foot_offset))
+		# Cache foot offset and x-center for _apply_sprite_anchor to use
+		_per_frame_foot_y = tex.get_height() - 1 - _get_foot_offset(tex.resource_path)
+		_per_frame_x_center = _get_x_center_fix(tex.resource_path)
 
 
 func _get_region_from_config(anim_name: String, col: int) -> Array:
@@ -503,9 +506,12 @@ func _apply_visual_motion(_delta: float) -> void:
 
 
 func _apply_sprite_anchor(sx: float, sy: float) -> void:
-	# Sprite2D centered=false 时，纹理局部坐标 (50, 131) 是脚底锚点。
-	# 这里让脚底锚点永远落在 CatSprite 根节点原点，避免猫漂浮。
-	_sprite.position = Vector2(-FRAME_SIZE.x * 0.5 * sx, -FOOT_Y * sy)
+	# Sprite2D centered=false 时，纹理局部坐标 (50, foot_y) 是脚底像素位置。
+	# 这里根据每帧实际脚底像素高度定位，确保脚底落在 ARChED_GROUND_Y 处。
+	_sprite.position = Vector2(
+		-FRAME_SIZE.x * 0.5 * sx + _per_frame_x_center,
+		-_per_frame_foot_y * sy + ARCHED_GROUND_Y
+	)
 
 
 func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> void:
@@ -520,9 +526,6 @@ func _select_anim_from_direction(dir: Vector2) -> Dictionary:
 
 	var deg := rad_to_deg(dir.angle())
 	if deg >= -22.5 and deg < 22.5:
-		# 英短 walk_right 帧无交替迈步，用斜向帧代替
-		if breed.begins_with("british"):
-			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": false}
 		return {"anim": ANIM_WALK_RIGHT, "flip": false}
 	elif deg >= 22.5 and deg < 67.5:
 		return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": false}
@@ -534,21 +537,12 @@ func _select_anim_from_direction(dir: Vector2) -> Dictionary:
 	elif deg >= 112.5 and deg < 157.5:
 		return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": true}
 	elif deg >= 157.5 or deg < -157.5:
-		# 英短 walk_left 帧无交替迈步，用斜向帧代替
-		if breed.begins_with("british"):
-			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": true}
 		return {"anim": ANIM_WALK_RIGHT, "flip": true}
 	elif deg >= -157.5 and deg < -112.5:
-		# 英短 walk_up_left 帧无交替迈步，用斜向帧代替
-		if breed.begins_with("british"):
-			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": true}
 		return {"anim": ANIM_WALK_UP_RIGHT, "flip": true}
 	elif deg >= -112.5 and deg < -67.5:
 		return {"anim": ANIM_WALK_UP, "flip": false}
 	else:
-		# 英短 walk_up_right 帧无交替迈步，用斜向帧代替
-		if breed.begins_with("british"):
-			return {"anim": ANIM_WALK_DOWN_RIGHT, "flip": false}
 		return {"anim": ANIM_WALK_UP_RIGHT, "flip": false}
 
 
