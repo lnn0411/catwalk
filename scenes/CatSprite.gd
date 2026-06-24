@@ -183,7 +183,7 @@ func _config_path() -> String:
 func _anim_to_file_prefix(anim: String) -> String:
 	match anim:
 		"walk_right":
-			return "side_right"
+			return "side_left"
 		"walk_up_right":
 			return "back_right"
 		"walk_up":
@@ -230,6 +230,7 @@ func _load_frames() -> void:
 			push_error("CatSprite: no frames loaded for anim %s breed %s" % [anim, dir])
 		_frames_cache[anim] = frames
 	_apply_frame(ANIM_IDLE, 0)
+	_apply_sprite_anchor(0.5, 1.0)
 
 
 func _make_chroma_key_material() -> ShaderMaterial:
