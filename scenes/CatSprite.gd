@@ -414,6 +414,16 @@ func _apply_frame(anim: String, frame: int) -> void:
 	if tex != null:
 		_sprite.region_enabled = true
 		_sprite.region_rect = Rect2(Vector2.ZERO, tex.get_size())
+	# Foot alignment: idle frames may sit higher than walk frames
+	var is_idle := anim == ANIM_IDLE or anim == "turn" or anim == "move_turn"
+	if is_idle:
+		var offset := 0
+		match breed:
+			"orange": offset = 11
+			"siamese": offset = 12
+		_sprite.position.y = float(offset)
+	else:
+		_sprite.position.y = 0.0
 
 
 func _get_region_from_config(anim_name: String, col: int) -> Array:
