@@ -49,55 +49,47 @@ theme_override_constants/separation = 6
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 34)
+text = "猫咪"
 
 [node name="TabCards" type="Button" parent="VBox/Tabs"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 34)
+text = "明信片"
 
 [node name="TabAch" type="Button" parent="VBox/Tabs"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 34)
+text = "成就"
 
 [node name="Body" type="ScrollContainer" parent="VBox"]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="CatsGrid" type="GridContainer" parent="VBox/Body"]
+[node name="Margin" type="MarginContainer" parent="VBox/Body"]
 layout_mode = 2
-custom_minimum_size = Vector2(360, 0)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 12
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_bottom = 80
+
+[node name="CatsGrid" type="GridContainer" parent="VBox/Body/Margin"]
+layout_mode = 2
+size_flags_horizontal = 3
 columns = 2
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
 
-[node name="Card0" type="ColorRect" parent="VBox/Body/CatsGrid"]
-layout_mode = 2
-custom_minimum_size = Vector2(160, 180)
-color = Color(0.9, 0.9, 0.9, 1)
-
-[node name="Card1" type="ColorRect" parent="VBox/Body/CatsGrid"]
-layout_mode = 2
-custom_minimum_size = Vector2(160, 180)
-color = Color(0.9, 0.9, 0.9, 1)
-
-[node name="Card2" type="ColorRect" parent="VBox/Body/CatsGrid"]
-layout_mode = 2
-custom_minimum_size = Vector2(160, 180)
-color = Color(0.9, 0.9, 0.9, 1)
-
-[node name="Card3" type="ColorRect" parent="VBox/Body/CatsGrid"]
-layout_mode = 2
-custom_minimum_size = Vector2(160, 180)
-color = Color(0.9, 0.9, 0.9, 1)
-
-[node name="PostcardsBox" type="Control" parent="VBox/Body"]
+[node name="PostcardsBox" type="Control" parent="VBox/Body/Margin"]
 layout_mode = 2
 custom_minimum_size = Vector2(360, 500)
 visible = false
 
-[node name="Placeholder" type="ColorRect" parent="VBox/Body/PostcardsBox"]
+[node name="Placeholder" type="ColorRect" parent="VBox/Body/Margin/PostcardsBox"]
 layout_mode = 0
 offset_left = 0
 offset_top = 0
@@ -105,12 +97,12 @@ offset_right = 360
 offset_bottom = 500
 color = Color(0.85, 0.9, 0.95, 1)
 
-[node name="AchBox" type="Control" parent="VBox/Body"]
+[node name="AchBox" type="Control" parent="VBox/Body/Margin"]
 layout_mode = 2
 custom_minimum_size = Vector2(360, 500)
 visible = false
 
-[node name="Placeholder" type="ColorRect" parent="VBox/Body/AchBox"]
+[node name="Placeholder" type="ColorRect" parent="VBox/Body/Margin/AchBox"]
 layout_mode = 0
 offset_left = 0
 offset_top = 0
