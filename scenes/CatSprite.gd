@@ -87,6 +87,7 @@ const ANIM_FRAME_COUNT := {
 	ANIM_TURN: 4,
 	ANIM_MOVE_TURN: 4,
 }
+var _frames_cache: Dictionary = {}
 
 var rng := RandomNumberGenerator.new()
 var target_position := Vector2.ZERO
@@ -137,7 +138,7 @@ func _ready() -> void:
 	add_child(companion_icon)
 
 	_setup_sprite()
-	_load_spritesheet()
+	_load_frames()
 	_setup_collision()
 	_setup_click_area()
 
@@ -158,17 +159,45 @@ func _ready() -> void:
 
 
 func _breed_dir() -> String:
-	return "orange_tabby" if breed == "orange" else breed
+	match breed:
+		"orange", "orange_tabby":
+			return "orange"
+		"british":
+			return "british"
+		"siamese":
+			return "siamese"
+		_:
+			return "orange"
 
 
-func _texture_path() -> String:
+func _texture_path(anim: String, frame: int) -> String:
 	var dir := _breed_dir()
-	return "res://assets/art/cats/%s/%s_32frame_green_fixed.png" % [dir, dir]
+	var base_name := _anim_to_file_prefix(anim)
+	return "res://assets/art/cats/%s/%s_frame_%02d.png" % [dir, base_name, frame]
 
 
 func _config_path() -> String:
-	var dir := _breed_dir()
-	return "res://assets/art/cats/%s/%s_32frame_godot.json" % [dir, dir]
+	return ""
+
+
+func _anim_to_file_prefix(anim: String) -> String:
+	match anim:
+		"walk_right":
+			return "side_right"
+		"walk_up_right":
+			return "back_right"
+		"walk_up":
+			return "back"
+		"walk_down_right":
+			return "front_right"
+		"walk_down":
+			return "front"
+		"idle":
+			return "idle_front"
+		"turn", "move_turn":
+			return "idle_front"
+		_:
+			return "front"
 
 
 func _setup_sprite() -> void:
@@ -187,25 +216,20 @@ func _setup_sprite() -> void:
 		_sprite.material = _make_chroma_key_material()
 
 
-func _load_spritesheet() -> void:
-	var path := _texture_path()
-	if ResourceLoader.exists(path):
-		_texture = load(path)
-		_sprite.texture = _texture
-	else:
-		push_error("CatSprite: spritesheet not found: %s" % path)
-
-	var cfg_path := _config_path()
-	if ResourceLoader.exists(cfg_path):
-		var text := FileAccess.get_file_as_string(cfg_path)
-		var parsed = JSON.parse_string(text)
-		if typeof(parsed) == TYPE_DICTIONARY:
-			_config = parsed
-		else:
-			push_warning("CatSprite: invalid JSON config: %s" % cfg_path)
-
+func _load_frames() -> void:
+	var dir := _breed_dir()
+	for anim in [ANIM_WALK_RIGHT, ANIM_WALK_UP_RIGHT, ANIM_WALK_UP, ANIM_WALK_DOWN_RIGHT, ANIM_WALK_DOWN, ANIM_IDLE, "turn", "move_turn"]:
+		var prefix := _anim_to_file_prefix(anim)
+		var frames: Array[Texture2D] = []
+		var frame_count := ANIM_FRAME_COUNT.get(anim, 4)
+		for i in range(frame_count):
+			var path := "res://assets/art/cats/%s/%s_frame_%02d.png" % [dir, prefix, i]
+			if ResourceLoader.exists(path):
+				frames.append(load(path))
+		if frames.is_empty():
+			push_error("CatSprite: no frames loaded for anim %s breed %s" % [anim, dir])
+		_frames_cache[anim] = frames
 	_apply_frame(ANIM_IDLE, 0)
-	_apply_sprite_anchor(1.0, 1.0)
 
 
 func _make_chroma_key_material() -> ShaderMaterial:
@@ -378,15 +402,16 @@ func _set_anim(anim_name: String, flip_left: bool, force: bool = false) -> void:
 	_apply_frame(_current_anim, _current_col)
 
 
-func _apply_frame(anim_name: String, col: int) -> void:
-	var row: int = ANIM_ROWS.get(anim_name, 5)
-	var region := Rect2i(col * FRAME_SIZE.x, row * FRAME_SIZE.y, FRAME_SIZE.x, FRAME_SIZE.y)
-
-	var json_region := _get_region_from_config(anim_name, col)
-	if json_region.size() == 4:
-		region = Rect2i(int(json_region[0]), int(json_region[1]), int(json_region[2]), int(json_region[3]))
-
-	_sprite.region_rect = region
+func _apply_frame(anim: String, frame: int) -> void:
+	_current_anim = anim
+	var frames: Array = _frames_cache.get(anim, [])
+	var tex: Texture2D = frames[frame % maxi(frames.size(), 1)] if not frames.is_empty() else null
+	if tex != _sprite.texture:
+		_sprite.texture = tex
+	if tex != null:
+		_sprite.region_enabled = true
+		_sprite.region_rect = Rect2(Vector2.ZERO, tex.get_size())
+	_sprite.modulate = COLOR_NORMAL if _current_anim != ANIM_IDLE else _idle_color()
 
 
 func _get_region_from_config(anim_name: String, col: int) -> Array:
@@ -627,7 +652,7 @@ func face_direction(dx: float) -> void:
 func set_breed(new_breed: String) -> void:
 	breed = new_breed
 	_config.clear()
-	_load_spritesheet()
+	_load_frames()
 	_set_anim(ANIM_IDLE, false, true)
 
 
