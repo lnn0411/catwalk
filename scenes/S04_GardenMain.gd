@@ -257,14 +257,23 @@ func _on_weather_changed(weather: int) -> void:
 func _apply_weather_period(period: int, immediate := false) -> void:
 	if garden_layer == null:
 		return
-	# Period uses garden_layer.modulate (overall light tone)
+	var target: Color
 	match period:
 		WeatherTimeManager.TimePeriod.SUNSET:
-			garden_layer.modulate = Color(1.2, 0.95, 0.80, 1)
+			target = Color(1.08, 0.98, 0.88, 1)
 		WeatherTimeManager.TimePeriod.NIGHT:
-			garden_layer.modulate = Color(0.65, 0.70, 0.90, 1)
+			target = Color(0.65, 0.70, 0.90, 1)
 		_:  # DAY
-			garden_layer.modulate = Color.WHITE
+			target = Color.WHITE
+
+	if immediate or garden_layer.modulate == target:
+		garden_layer.modulate = target
+		return
+
+	if _weather_tween and _weather_tween.is_valid():
+		_weather_tween.kill()
+	_weather_tween = create_tween()
+	_weather_tween.tween_property(garden_layer, "modulate", target, 1.5).set_ease(Tween.EASE_IN_OUT)
 
 func _apply_weather_particles(weather: int) -> void:
 	if _rain_particles != null:
