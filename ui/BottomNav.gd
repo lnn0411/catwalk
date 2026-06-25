@@ -80,7 +80,6 @@ class NavTab:
 	var index := 0
 	var nav: BottomNav
 	var _icon: TextureRect
-	var _active_bar: ColorRect
 
 	func _ready() -> void:
 		mouse_filter = Control.MOUSE_FILTER_STOP
@@ -89,13 +88,6 @@ class NavTab:
 		update_state()
 
 	func _build_visuals() -> void:
-		_active_bar = ColorRect.new()
-		_active_bar.color = Palette.BORDER_ACTIVE
-		_active_bar.anchor_right = 1.0
-		_active_bar.offset_bottom = 3.0
-		_active_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(_active_bar)
-
 		_icon = TextureRect.new()
 		_icon.custom_minimum_size = Vector2(50.0, 50.0)
 		_icon.stretch_mode = TextureRect.STRETCH_SCALE
@@ -112,7 +104,6 @@ class NavTab:
 	func update_state() -> void:
 		if _icon == null:
 			return
-		var active := index == nav.current_index
 		var icon_name: String = String(BottomNav.TABS[index]["icon"])
 		var file_name := "nav_%s.png" % icon_name
 		var formal_path := "res://assets/art/ui/nav/" + file_name
@@ -122,7 +113,6 @@ class NavTab:
 		else:
 			_icon.texture = load(fallback_path)
 		_icon.modulate = Color.WHITE
-		_active_bar.visible = active
 
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:

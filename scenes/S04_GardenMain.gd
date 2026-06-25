@@ -343,18 +343,17 @@ func _build_hud() -> void:
 	debug_btn.pressed.connect(_toggle_debug_panel)
 	root.add_child(debug_btn)
 
-	# 顶栏背景：程序生成木纹底图
-	var top_bg := TextureRect.new()
-	top_bg.texture = load("res://assets/art/ui/nav/top_bar_bg.png")
-	top_bg.stretch_mode = TextureRect.STRETCH_SCALE
+	# 顶栏背景：纯色暖底（不用贴图，避免纹理加载问题）
+	var top_bg := ColorRect.new()
+	top_bg.color = Color("DEC8AA")
 	top_bg.anchor_left = 0.0
 	top_bg.anchor_right = 1.0
 	top_bg.anchor_top = 0.0
 	top_bg.anchor_bottom = 0.0
 	top_bg.offset_left = 0.0
 	top_bg.offset_right = 0.0
-	top_bg.offset_top = 0.0
-	top_bg.offset_bottom = 50.0
+	top_bg.offset_top = -1.0
+	top_bg.offset_bottom = 49.0
 	top_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_bg)
 
