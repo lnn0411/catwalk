@@ -450,22 +450,11 @@ func _format_duration(total_seconds: int) -> String:
 
 
 func _play_open_animation() -> void:
-	modulate.a = 1.0
+	modulate = Color(1, 1, 1, 0)
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_OUT)
-	# 卡片从下方滑入
-	_card_background.position = Vector2(_card_background.position.x, 1280)
-	tween.parallel().tween_property(_card_background, "position:y", 640.0, 0.35)
-	# 遮罩淡入
-	modulate = Color(1, 1, 1, 0)
-	tween.parallel().tween_property(self, "modulate", Color(1, 1, 1, 1), 0.25)
-	# 猫展示区 + info + 按钮 渐入
-	var children := [get_node_or_null("CardPanel/CatDisplay"), get_node_or_null("CardPanel/InfoRow"), get_node_or_null("CardPanel/ButtonRow")]
-	for child in children:
-		if child:
-			child.modulate = Color(1, 1, 1, 0)
-			tween.parallel().tween_property(child, "modulate", Color(1, 1, 1, 1), 0.2)
+	tween.tween_property(self, "modulate", Color(1, 1, 1, 1), 0.2)
 
 
 func _play_close_animation() -> void:
@@ -475,8 +464,7 @@ func _play_close_animation() -> void:
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_IN)
-	tween.tween_property(self, "modulate", Color(1, 1, 1, 0), 0.15)
-	tween.parallel().tween_property(_card_background, "position:y", 1280.0, 0.2)
+	tween.tween_property(self, "modulate", Color(1, 1, 1, 0), 0.12)
 	tween.then(_on_close_anim_done)
 
 
