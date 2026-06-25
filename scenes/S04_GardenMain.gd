@@ -1073,9 +1073,6 @@ func _emit_cat_click_at(screen_pos: Vector2) -> bool:
 			best_cat = cat_data
 	if best_cat == null:
 		return false
-	var cat_node = CatSpawner.get_cat_node(best_cat)
-	if cat_node != null and cat_node.has_method("_play_click_feedback"):
-		cat_node._play_click_feedback()
 	var cid := str(best_cat.id) if best_cat != null else ""
 	cat_clicked.emit(cid, screen_pos)
 	return true

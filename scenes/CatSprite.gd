@@ -718,6 +718,7 @@ func set_card_open(open: bool) -> void:
 
 func _on_input_event(_viewport, event, _shape_idx) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		_play_click_feedback()
 		cat_clicked.emit(cat_data)
 
 
