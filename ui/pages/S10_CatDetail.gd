@@ -84,9 +84,9 @@ func _on_companion_pressed() -> void:
 	UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 func _on_let_out_pressed() -> void:
-	if _cat_id.is_empty():
+	if _cat_data.is_empty():
 		return
-	UIManager.replace("res://scenes/S04_GardenMain.tscn", {"focus_cat": _cat_id})
+	UIManager.replace("res://scenes/S04_GardenMain.tscn", {"focus_cat": _cat_data})
 
 func _on_giveaway_pressed() -> void:
 	if _cat_id.is_empty():
