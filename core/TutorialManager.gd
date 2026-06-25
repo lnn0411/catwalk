@@ -251,6 +251,10 @@ func _create_bubble(text: String, has_button: bool, auto_dismiss: float, preferr
 func _advance_from_ack() -> void:
 	if current_step == Step.ENERGY:
 		_step_03_hatch()
+	elif current_step == Step.HATCH:
+		_clear_step_ui()
+		_hatch_pending = true
+		_start_hatch_timeout()
 	elif current_step == Step.EXPLORE:
 		_complete()
 
