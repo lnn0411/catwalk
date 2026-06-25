@@ -123,7 +123,7 @@ func on_enter(_data: Dictionary = {}) -> void:
 			# 没有这一下玩家不知道哪只是它
 			var cat_node = CatSpawner.get_cat_node(focus_cat)
 			if cat_node != null and cat_node.has_method("_play_click_feedback"):
-				cat_node.call_deferred("_play_click_feedback")
+				cat_node._play_click_feedback()
 
 func _load_frame_textures() -> void:
 	_frame_empty = _try_load("res://assets/art/ui/panels/slot_frame_empty.png")
@@ -1075,7 +1075,7 @@ func _emit_cat_click_at(screen_pos: Vector2) -> bool:
 		return false
 	var cat_node = CatSpawner.get_cat_node(best_cat)
 	if cat_node != null and cat_node.has_method("_play_click_feedback"):
-		cat_node.call_deferred("_play_click_feedback")
+		cat_node._play_click_feedback()
 	var cid := str(best_cat.id) if best_cat != null else ""
 	cat_clicked.emit(cid, screen_pos)
 	return true

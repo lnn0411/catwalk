@@ -1,9 +1,15 @@
 extends Control
 
-const CARD_HEIGHT := 200.0
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const CARD_COLOR := Color("#3C2A1C")
 const TEXT_COLOR := Color("#FFFFFF")
+const RARITY_COLOR := Color("#B8A088")
+const DISPLAY_BG_COLOR := Color("#5C4A3A")
+const BTN_NORMAL := Color("#5C4A3A")
+const BTN_HOVER := Color("#6D5A48")
+const BTN_PRESSED := Color("#4A3A2C")
+const BTN_DISABLED := Color("#2C2218")
+const BTN_TEXT_DISABLED := Color("#665544")
 const DISABLED_ALPHA := 0.4
 const CatData := preload("res://core/CatData.gd")
 
@@ -45,9 +51,12 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_apply_theme()
 	_setup_cooldown_timer()
-	_style_button(_explore_button)
 	_setup_explore_countdown_timer()
 	_setup_anim_timer()
+	_connect_button_feedback(_feed_button)
+	_connect_button_feedback(_pet_button)
+	_connect_button_feedback(_play_button)
+	_connect_button_feedback(_explore_button)
 	_resolve_interaction_system()
 	_refresh_cat_info()
 	_check_explore_state()
@@ -449,47 +458,91 @@ func _format_duration(total_seconds: int) -> String:
 	return "%02d:%02d" % [minutes, secs]
 
 
+# ── 动画 ──
+# 缩放/淡入轴心设在底部中点（半屏弹窗从底部生长）
+func _apply_panel_pivot(panel: Control) -> void:
+	if panel == null:
+		return
+	var psize := panel.size
+	if psize == Vector2.ZERO:
+		psize = Vector2(get_viewport_rect().size.x, 520.0)
+	panel.pivot_offset = Vector2(psize.x * 0.5, psize.y)
+
+
+# 错峰进场：遮罩先淡入（0.05s 延迟），卡片随后缩放(0.8→1.0)+淡入
 func _play_open_animation() -> void:
-	modulate = Color(1, 1, 1, 0)
-	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_CUBIC)
+	modulate = Color(1, 1, 1, 1)
+	scale = Vector2.ONE
+	var overlay := get_node_or_null("Overlay") as ColorRect
+	var panel := _card_background
+	_apply_panel_pivot(panel)
+	panel.scale = Vector2(0.8, 0.8)
+	panel.modulate.a = 0.0
+
+	if overlay:
+		overlay.modulate.a = 0.0
+		var overlay_tween := create_tween()
+		overlay_tween.set_trans(Tween.TRANS_SINE)
+		overlay_tween.set_ease(Tween.EASE_OUT)
+		overlay_tween.tween_interval(0.05)
+		overlay_tween.tween_property(overlay, "modulate:a", 1.0, 0.2)
+
+	var tween := create_tween().set_parallel(true)
+	tween.set_trans(Tween.TRANS_BOUNCE)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "modulate", Color(1, 1, 1, 1), 0.2)
+	tween.tween_property(panel, "scale", Vector2.ONE, 0.3)
+	tween.tween_property(panel, "modulate:a", 1.0, 0.25)
+	# 弹窗内飘爱心
+	_show_card_heart()
+
+
+func _show_card_heart() -> void:
+	var heart := Label.new()
+	heart.text = "♥"
+	heart.add_theme_font_size_override("font_size", 36)
+	heart.add_theme_color_override("font_color", Color("#D98E8E"))
+	heart.position = Vector2(340, 100)
+	heart.z_index = 100
+	add_child(heart)
+	var ht := create_tween()
+	ht.set_parallel(true)
+	ht.tween_property(heart, "position:y", heart.position.y - 60.0, 0.8).set_ease(Tween.EASE_OUT)
+	ht.tween_property(heart, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN)
+	ht.tween_callback(heart.queue_free)
 
 
 func _play_close_animation() -> void:
 	if _close_playing:
 		return
 	_close_playing = true
-	var tween := create_tween()
+	var overlay := get_node_or_null("Overlay") as ColorRect
+	var panel := _card_background
+	_apply_panel_pivot(panel)
+
+	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_IN)
-	tween.tween_property(self, "modulate", Color(1, 1, 1, 0), 0.12)
-	tween.then(_on_close_anim_done)
+	tween.tween_property(panel, "scale", Vector2(0.9, 0.9), 0.15)
+	tween.tween_property(panel, "modulate:a", 0.0, 0.15)
+	if overlay:
+		tween.tween_property(overlay, "modulate:a", 0.0, 0.15)
+	tween.chain().tween_callback(_on_close_anim_done)
 
 
 func _on_close_anim_done() -> void:
-	if interaction_system:
+	if interaction_system and interaction_system.has_method("_close_cat_card"):
 		interaction_system._close_cat_card()
-
-
-func _draw() -> void:
-	if _card_background == null:
-		return
-	var rect := Rect2(_card_background.position, _card_background.size)
-	_draw_round_rect(rect, 6.0, CARD_COLOR)
-
-
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED:
-		queue_redraw()
+	else:
+		queue_free()
 
 
 func _apply_theme() -> void:
-	_style_label(_name_label, 22)
-	_style_label(_meta_label, 15)
-	_style_label(_status_label, 14)
-	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_style_card_panel()
+	_style_cat_display_bg()
+	_style_label(_name_label, 24, TEXT_COLOR)
+	_style_label(_meta_label, 14, RARITY_COLOR)
+	_style_label(_status_label, 13, RARITY_COLOR)
+	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_style_button(_feed_button)
 	_style_button(_pet_button)
 	_style_button(_play_button)
@@ -498,36 +551,91 @@ func _apply_theme() -> void:
 		_style_button(_relinquish_button)
 
 
-func _style_label(label: Label, font_size: int) -> void:
-	label.add_theme_color_override("font_color", TEXT_COLOR)
+# 卡片面板：上圆角 24px + 阴影
+func _style_card_panel() -> void:
+	if _card_background == null:
+		return
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = CARD_COLOR
+	sb.corner_radius_top_left = 24
+	sb.corner_radius_top_right = 24
+	sb.corner_radius_bottom_left = 0
+	sb.corner_radius_bottom_right = 0
+	sb.shadow_size = 8
+	sb.shadow_color = Color(0, 0, 0, 0.3)
+	_card_background.add_theme_stylebox_override("panel", sb)
+
+
+# 猫咪展示区背景：圆角 12px 底板
+func _style_cat_display_bg() -> void:
+	var bg := get_node_or_null("CardPanel/CatDisplayBg") as Panel
+	if bg == null:
+		return
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = DISPLAY_BG_COLOR
+	sb.set_corner_radius_all(12)
+	bg.add_theme_stylebox_override("panel", sb)
+
+
+func _style_label(label: Label, font_size: int, color: Color) -> void:
+	if label == null:
+		return
+	label.add_theme_color_override("font_color", color)
 	label.add_theme_font_size_override("font_size", font_size)
 
 
+func _make_button_style(color: Color) -> StyleBoxFlat:
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = color
+	sb.set_corner_radius_all(12)
+	sb.content_margin_left = 6
+	sb.content_margin_right = 6
+	sb.content_margin_top = 4
+	sb.content_margin_bottom = 4
+	return sb
+
+
 func _style_button(button: Button) -> void:
+	if button == null:
+		return
 	button.add_theme_color_override("font_color", TEXT_COLOR)
-	button.add_theme_color_override("font_disabled_color", Color(TEXT_COLOR, 0.75))
-	button.add_theme_font_size_override("font_size", 18)
+	button.add_theme_color_override("font_hover_color", TEXT_COLOR)
+	button.add_theme_color_override("font_pressed_color", TEXT_COLOR)
+	button.add_theme_color_override("font_focus_color", TEXT_COLOR)
+	button.add_theme_color_override("font_disabled_color", BTN_TEXT_DISABLED)
+	button.add_theme_font_size_override("font_size", 17)
 	button.custom_minimum_size = Vector2(0.0, 52.0)
+	button.add_theme_stylebox_override("normal", _make_button_style(BTN_NORMAL))
+	button.add_theme_stylebox_override("hover", _make_button_style(BTN_HOVER))
+	button.add_theme_stylebox_override("pressed", _make_button_style(BTN_PRESSED))
+	button.add_theme_stylebox_override("focus", _make_button_style(BTN_NORMAL))
+	button.add_theme_stylebox_override("disabled", _make_button_style(BTN_DISABLED))
 
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Palette.AMBER
-	normal.set_corner_radius_all(6)
-	button.add_theme_stylebox_override("normal", normal)
 
-	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = Palette.UI_PRESSED_AMBER
-	pressed.set_corner_radius_all(6)
-	button.add_theme_stylebox_override("pressed", pressed)
+# 按钮按压缩放反馈：按下缩到 0.95，松开弹回 1.0
+func _connect_button_feedback(button: Button) -> void:
+	if button == null:
+		return
+	button.button_down.connect(func() -> void: _on_button_down(button))
+	button.button_up.connect(func() -> void: _on_button_up(button))
 
-	var hover := StyleBoxFlat.new()
-	hover.bg_color = Palette.AMBER.lightened(0.08)
-	hover.set_corner_radius_all(6)
-	button.add_theme_stylebox_override("hover", hover)
 
-	var disabled := StyleBoxFlat.new()
-	disabled.bg_color = Palette.CITY_GRAY
-	disabled.set_corner_radius_all(6)
-	button.add_theme_stylebox_override("disabled", disabled)
+func _on_button_down(button: Button) -> void:
+	if button == null or not is_instance_valid(button):
+		return
+	button.pivot_offset = button.size * 0.5
+	var tween := create_tween()
+	tween.tween_property(button, "scale", Vector2(0.95, 0.95), 0.05)
+
+
+func _on_button_up(button: Button) -> void:
+	if button == null or not is_instance_valid(button):
+		return
+	button.pivot_offset = button.size * 0.5
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_SINE)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(button, "scale", Vector2.ONE, 0.1)
 
 
 func _setup_cooldown_timer() -> void:
@@ -666,12 +774,6 @@ func _update_cooldown_timer(should_run: bool) -> void:
 		_cooldown_timer.stop()
 
 
-func _set_animation_pivot() -> void:
-	var viewport_size := get_viewport_rect().size
-	var fallback := Vector2(viewport_size.x * 0.5, viewport_size.y - CARD_HEIGHT * 0.5)
-	pivot_offset = _screen_pos if _screen_pos != Vector2.ZERO else fallback
-
-
 func _get_cat_property(property_name: String, default_value: String) -> String:
 	if cat_data == null:
 		return default_value
@@ -693,16 +795,6 @@ func _get_full_cat_data() -> Dictionary:
 		"level": int(_get_cat_property("level", "1")),
 		"friendship": int(_get_cat_property("friendship", "0")),
 	}
-
-
-func _draw_round_rect(rect: Rect2, radius: float, color: Color) -> void:
-	var r := minf(radius, minf(rect.size.x, rect.size.y) * 0.5)
-	draw_rect(Rect2(rect.position + Vector2(r, 0.0), Vector2(rect.size.x - r * 2.0, rect.size.y)), color, true)
-	draw_rect(Rect2(rect.position + Vector2(0.0, r), Vector2(rect.size.x, rect.size.y - r * 2.0)), color, true)
-	draw_circle(rect.position + Vector2(r, r), r, color)
-	draw_circle(rect.position + Vector2(rect.size.x - r, r), r, color)
-	draw_circle(rect.position + Vector2(r, rect.size.y - r), r, color)
-	draw_circle(rect.position + Vector2(rect.size.x - r, rect.size.y - r), r, color)
 
 
 func _species_label(species: String) -> String:
