@@ -111,8 +111,10 @@ func on_enter(_data: Dictionary = {}) -> void:
 	# 位置必须在【这里】查——上面的容器重申刚把所有猫 restore 到场上；
 	# 在图鉴页预查位置必然失败（花园销毁时登记表已清空）。
 	var focus_cat: Variant = _data.get("focus_cat", null)
-	print("[Garden] on_enter focus_cat=%s _data=%s" % [focus_cat, _data])
+	print("[Garden] on_enter focus_cat=%s" % [focus_cat])
 	if focus_cat != null and CatSpawner and _camera != null:
+		# 确保猫在场上可见（可能超出 MAX_VISIBLE_CATS 在休息组）
+		CatSpawner.ensure_cat_visible(focus_cat)
 		var cat_pos: Vector2 = CatSpawner.get_cat_world_position(focus_cat)
 		if cat_pos != Vector2.ZERO:
 			# 只动 x——横版相机竖直方向锁定居中，整体赋值会破坏锁定（黑边回归）

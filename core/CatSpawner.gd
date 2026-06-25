@@ -223,6 +223,23 @@ func _is_position_occupied(pos: Vector2) -> bool:
 			return true
 	return false
 
+# 「让它出来」：确保指定猫在场上可见（如果它在休息组，拉出来替换占位）
+func ensure_cat_visible(cat_data) -> Node2D:
+	var cid := _get_cat_id(cat_data)
+	if cid == "":
+		return null
+	# 已经在了
+	var existing := get_cat_node(cat_data)
+	if existing != null:
+		return existing
+	# 清除休息占位（如果存在），然后正常生成
+	if cat_container:
+		for child in cat_container.get_children():
+			if child.has_meta("resting_cat_id") and child.get_meta("resting_cat_id") == cid:
+				child.queue_free()
+				break
+	return instance_cat(cat_data, false, true)
+
 # 查询某只猫的场上节点（不在场/死引用返回 null）
 func get_cat_node(cat_data):
 	if cat_data == null:
@@ -242,8 +259,6 @@ func get_cat_node(cat_data):
 # 猫局部坐标 + 容器偏移 即相机坐标系。
 func get_cat_world_position(cat_data) -> Vector2:
 	var node = get_cat_node(cat_data)
-	var cid = _get_cat_id(cat_data)
-	print("[CatSpawner] get_cat_world_position: cid=%s spawned_keys=%s node=%s" % [cid, spawned_cat_ids.keys(), node != null])
 	if node == null:
 		return Vector2.ZERO
 	if cat_container and is_instance_valid(cat_container):
