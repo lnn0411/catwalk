@@ -229,7 +229,7 @@ func ensure_cat_visible(cat_data) -> Node2D:
 	if cid == "":
 		return null
 	# 已经在了
-	var existing := get_cat_node(cat_data)
+	var existing = get_cat_node(cat_data)
 	if existing != null:
 		return existing
 	# 清除休息占位（如果存在），然后正常生成
