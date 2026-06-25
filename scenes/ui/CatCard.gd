@@ -11,7 +11,7 @@ var cat_id: String = ""
 var cat_data
 var interaction_system
 
-@onready var _card_background: ColorRect = %CardPanel
+@onready var _card_background: Panel = %CardPanel
 @onready var _avatar_rect: TextureRect = %CatDisplay
 @onready var _name_label: Label = %CatName
 @onready var _meta_label: Label = %BreedRarityLabel
@@ -37,6 +37,7 @@ var _frames_cache: Dictionary = {}
 var _anim_timer: Timer
 var _anim_frames: Array[Texture2D] = []
 var _anim_index: int = 0
+var _close_playing := false
 
 
 func _ready() -> void:
@@ -450,26 +451,35 @@ func _format_duration(total_seconds: int) -> String:
 
 func _play_open_animation() -> void:
 	modulate.a = 1.0
-	scale = Vector2.ZERO
-	_set_animation_pivot()
 	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_BOUNCE)
+	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "scale", Vector2(1.05, 1.05), 0.17)
-	tween.tween_property(self, "scale", Vector2.ONE, 0.08)
+	# 卡片从下方滑入
+	_card_background.position = Vector2(_card_background.position.x, 1280)
+	tween.parallel().tween_property(_card_background, "position:y", 640.0, 0.35)
+	# 遮罩淡入
+	modulate = Color(1, 1, 1, 0)
+	tween.parallel().tween_property(self, "modulate", Color(1, 1, 1, 1), 0.25)
+	# 猫展示区 + info + 按钮 渐入
+	var children := [get_node_or_null("CardPanel/CatDisplay"), get_node_or_null("CardPanel/InfoRow"), get_node_or_null("CardPanel/ButtonRow")]
+	for child in children:
+		if child:
+			child.modulate = Color(1, 1, 1, 0)
+			tween.parallel().tween_property(child, "modulate", Color(1, 1, 1, 1), 0.2)
 
 
 func _play_close_animation() -> void:
-	if _closing:
+	if _close_playing:
 		return
-	_closing = true
+	_close_playing = true
 	var tween := create_tween()
-	tween.set_trans(Tween.TRANS_BOUNCE)
-	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(self, "scale", Vector2.ZERO, 0.15)
-	tween.parallel().tween_property(self, "modulate:a", 0.0, 0.15)
-	tween.tween_callback(queue_free)
-
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_IN)
+	tween.tween_property(self, "modulate", Color(1, 1, 1, 0), 0.15)
+	tween.parallel().tween_property(_card_background, "position:y", 1280.0, 0.2)
+	tween.then(func():
+		if interaction_system:
+			interaction_system._close_cat_card()
 
 func _draw() -> void:
 	if _card_background == null:
@@ -484,7 +494,7 @@ func _notification(what: int) -> void:
 
 
 func _apply_theme() -> void:
-	_card_background.color = Color(CARD_COLOR, 0.0)
+	_card_background.modulate = Color(1, 1, 1, 0.0)
 	_style_label(_name_label, 22)
 	_style_label(_meta_label, 15)
 	_style_label(_status_label, 14)
@@ -764,9 +774,16 @@ func _load_idle_frame() -> void:
 	if cat_data != null:
 		breed = String(cat_data.get("species", cat_data.get("breed", "orange")) if cat_data is Dictionary else cat_data.species)
 	var dir := _breed_dir(breed)
-	var path := "res://assets/art/cats/%s/idle_frame_00.png" % dir
+	var path := "res://assets/art/cats/%s/idle_front_frame_00.png" % dir
 	if ResourceLoader.exists(path):
 		_cat_display.texture = load(path)
+	else:
+		# fallback: 用 idle 方向任意帧
+		for fallback in ["idle_frame_00", "idle_front_frame_00", "front_frame_00"]:
+			var fp := "res://assets/art/cats/%s/%s.png" % [dir, fallback]
+			if ResourceLoader.exists(fp):
+				_cat_display.texture = load(fp)
+				break
 
 func _load_cat_frames() -> void:
 	if _cat_display == null:
@@ -779,7 +796,7 @@ func _load_cat_frames() -> void:
 	if _frames_cache.has(breed):
 		_load_idle_frame()
 		return
-	var anims := ["idle", "walk_right"]
+	var anims := ["idle_front", "front"]
 	var cache: Dictionary = {}
 	for anim in anims:
 		var frames: Array[Texture2D] = []
@@ -801,11 +818,11 @@ func _play_action_anim(action: String) -> void:
 	var frames: Array[Texture2D] = []
 	match action:
 		"eating":
-			frames = cache.get("walk_right", [])
+			frames = cache.get("front", [])
 		"petting":
-			frames = cache.get("idle", [])
+			frames = cache.get("idle_front", [])
 		"playing":
-			frames = cache.get("walk_right", [])
+			frames = cache.get("front", [])
 	if frames.is_empty():
 		return
 	_anim_frames = frames

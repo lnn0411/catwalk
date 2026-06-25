@@ -1,6 +1,18 @@
-[gd_scene load_steps=2 format=3 uid="uid://catwalk_catcard"]
+[gd_scene load_steps=3 format=3 uid="uid://catwalk_catcard"]
 
 [ext_resource type="Script" path="res://scenes/ui/CatCard.gd" id="1"]
+
+[sub_resource type="StyleBoxFlat" id="1"]
+content_margin_left = 0.0
+content_margin_top = 0.0
+content_margin_right = 0.0
+content_margin_bottom = 0.0
+bg_color = Color(0.235294, 0.164706, 0.109804, 1)
+corner_radius_top_left = 24
+corner_radius_top_right = 24
+corner_radius_bottom_left = 0
+corner_radius_bottom_right = 0
+corner_detail = 8
 
 [node name="CatCard" type="Control"]
 layout_mode = 3
@@ -20,10 +32,10 @@ anchors_preset = 12
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_bottom = -640.0
-color = Color(0, 0, 0, 0.4)
+color = Color(0, 0, 0, 0.45)
 mouse_filter = 1
 
-[node name="CardPanel" type="ColorRect" parent="."]
+[node name="CardPanel" type="Panel" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 12
@@ -33,34 +45,35 @@ anchor_bottom = 1.0
 offset_top = -640.0
 grow_horizontal = 2
 grow_vertical = 0
-color = Color(0.235294, 0.164706, 0.109804, 1)
+theme_override_styles/panel = SubResource("1")
 
 [node name="CatDisplay" type="TextureRect" parent="CardPanel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 180
-offset_top = 30
-offset_right = -180
+offset_left = 160
+offset_top = 40
+offset_right = -160
 offset_bottom = 290
 mouse_filter = 2
 expand_mode = 0
 stretch_mode = 5
+texture_filter = 1
 
 [node name="InfoRow" type="HBoxContainer" parent="CardPanel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 24
-offset_top = 300
-offset_right = -24
-offset_bottom = 340
-theme_override_constants/separation = 14
+offset_left = 32
+offset_top = 310
+offset_right = -32
+offset_bottom = 350
+theme_override_constants/separation = 16
 
 [node name="CatName" type="Label" parent="CardPanel/InfoRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 22
+theme_override_font_sizes/font_size = 24
 text = "猫咪"
 vertical_alignment = 1
 
@@ -68,23 +81,23 @@ vertical_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
-theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
+theme_override_font_sizes/font_size = 16
 text = "橘猫 · 普通"
 vertical_alignment = 1
 
 [node name="ButtonRow" type="HBoxContainer" parent="CardPanel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 24
-offset_top = 350
-offset_right = -24
-offset_bottom = 406
-theme_override_constants/separation = 10
+offset_left = 32
+offset_top = 365
+offset_right = -32
+offset_bottom = 425
+theme_override_constants/separation = 12
 
 [node name="FeedButton" type="Button" parent="CardPanel/ButtonRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -93,7 +106,7 @@ text = "🍖 喂食"
 
 [node name="PetButton" type="Button" parent="CardPanel/ButtonRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -102,7 +115,7 @@ text = "✋ 抚摸"
 
 [node name="PlayButton" type="Button" parent="CardPanel/ButtonRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -111,7 +124,7 @@ text = "🎾 玩耍"
 
 [node name="ExploreButton" type="Button" parent="CardPanel/ButtonRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 50)
+custom_minimum_size = Vector2(0, 54)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
@@ -121,11 +134,11 @@ text = "🧭 探索"
 [node name="StatusLabel" type="Label" parent="CardPanel"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 24
-offset_top = 416
-offset_right = -24
-offset_bottom = 446
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+offset_left = 32
+offset_top = 435
+offset_right = -32
+offset_bottom = 465
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 vertical_alignment = 1
@@ -134,11 +147,11 @@ vertical_alignment = 1
 unique_name_in_owner = true
 visible = false
 layout_mode = 0
-offset_left = 24
-offset_top = 350
-offset_right = -24
-offset_bottom = 410
-theme_override_constants/separation = 2
+offset_left = 32
+offset_top = 365
+offset_right = -32
+offset_bottom = 425
+theme_override_constants/separation = 4
 
 [node name="ExploringLabel" type="Label" parent="CardPanel/ExploreStatePanel"]
 unique_name_in_owner = true
@@ -162,7 +175,7 @@ horizontal_alignment = 1
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
 theme_override_font_sizes/font_size = 13
 text = "预计返回 --:--"
 horizontal_alignment = 1
