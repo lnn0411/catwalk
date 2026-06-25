@@ -927,7 +927,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			# 双击检测
 			var now := Time.get_ticks_msec() / 1000.0
-			var is_double_tap = event.double_click or now - _last_tap_time < DOUBLE_TAP_TIME
+			# 只靠本地时间检测双击（Windows 上 event.double_click 可能被 SubViewport 输入转发误置）
+			var is_double_tap := now - _last_tap_time < DOUBLE_TAP_TIME
 			_last_tap_time = now
 			if is_double_tap:
 				_cycle_garden_zoom(event.position)
