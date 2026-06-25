@@ -507,7 +507,6 @@ func _build_hud() -> void:
 	_steps_hold_timer.timeout.connect(_toggle_debug_panel)
 	add_child(_steps_hold_timer)
 
-	var nav = BottomNavScene.instantiate()
 	_debug_panel = PanelContainer.new()
 	_debug_panel.visible = false
 	_debug_panel.position = Vector2(40.0, 220.0)
