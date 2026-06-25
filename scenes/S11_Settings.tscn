@@ -1,8 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scenes/S11_Settings.gd" id="1"]
-[ext_resource type="Texture2D" uid="uid://bwb6iamcgwr1l" path="res://assets/art/ui/panels/panel_settings.png" id="2"]
-[ext_resource type="Texture2D" uid="uid://cy3qewhcknbtr" path="res://assets/art/ui/buttons/btn_settings.png" id="3"]
 
 [node name="S11_Settings" type="Control"]
 layout_mode = 3
@@ -13,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="Bg" type="TextureRect" parent="."]
+[node name="Bg" type="ColorRect" parent="."]
 unique_name_in_owner = true
 show_behind_parent = true
 layout_mode = 1
@@ -23,15 +21,4 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("2")
-
-[node name="BackBtn" type="TextureRect" parent="."]
-unique_name_in_owner = true
-show_behind_parent = true
-layout_mode = 0
-offset_left = 28.0
-offset_top = 59.0
-offset_right = 113.0
-offset_bottom = 107.0
-mouse_filter = 0
-texture = ExtResource("3")
+color = Color(0.964706, 0.937255, 0.886275, 1)
