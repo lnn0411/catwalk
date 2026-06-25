@@ -325,15 +325,13 @@ func _build_hud() -> void:
 	var debug_btn := Button.new()
 	debug_btn.text = "DBG"
 	debug_btn.flat = true
-	# 核心修复：DBG 按钮采用右对齐锚点，动态适应不同真机/模拟器屏幕宽度
-	debug_btn.anchor_left = 1.0
-	debug_btn.anchor_right = 1.0
-	debug_btn.anchor_top = 0.0
-	debug_btn.anchor_bottom = 0.0
-	debug_btn.offset_left = -54.0
-	debug_btn.offset_right = -10.0
-	debug_btn.offset_top = 8.0
-	debug_btn.offset_bottom = 44.0
+	# DBG移到左侧中间
+	debug_btn.anchor_left = 0.0
+	debug_btn.anchor_right = 0.0
+	debug_btn.offset_left = 12.0
+	debug_btn.offset_right = 56.0
+	debug_btn.offset_top = 580.0
+	debug_btn.offset_bottom = 620.0
 	debug_btn.add_theme_color_override("font_color", Color.WHITE)
 	debug_btn.add_theme_font_size_override("font_size", 14)
 	var red_bg := StyleBoxFlat.new()
