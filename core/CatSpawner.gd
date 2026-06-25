@@ -10,10 +10,10 @@ const MAX_VISIBLE_CATS := 12
 # 格式: { bg_idx: {"x_min", "x_max", "y_min", "y_max"} }
 # 索引对应 garden_01~04.png
 const GARDEN_WANDER_ZONES := {
-	1: { "x_min": 150,  "x_max": 2900, "y_min": 550,  "y_max": 980  },  # 意式庄园
-	2: { "x_min": 150,  "x_max": 2800, "y_min": 580,  "y_max": 1024 },  # 英伦花园
-	3: { "x_min": 280,  "x_max": 2850, "y_min": 720,  "y_max": 1000 },  # 小镇广场
-	4: { "x_min": 180,  "x_max": 2850, "y_min": 480,  "y_max": 1024 },  # 地中海巷弄
+	1: { "x_min": 150,  "x_max": 2900, "y_min": 300,  "y_max": 800  },  # 意式庄园
+	2: { "x_min": 150,  "x_max": 2800, "y_min": 300,  "y_max": 800  },  # 英伦花园
+	3: { "x_min": 280,  "x_max": 2850, "y_min": 300,  "y_max": 800  },  # 小镇广场
+	4: { "x_min": 180,  "x_max": 2850, "y_min": 300,  "y_max": 800  },  # 地中海巷弄
 }
 
 var _current_zone: Dictionary = GARDEN_WANDER_ZONES[1].duplicate()
