@@ -14,7 +14,7 @@ const DEFAULT_FRIENDS := [
 const FAKE_NAMES := ["HappyCat", "TinyPaws", "Mocha", "FurryBall", "MewMew", "SunnyPaw", "MilkTea", "LuckyCat"]
 const INVITE_PREFIX := "CAT-"
 const INVITE_CODE_LEN := 4
-static var CHART_COLORS: Array = [Palette.MOSS, Palette.MIST, Palette.BRICK, Color("E8B87A"), Color("9BB8D4")]
+const CHART_COLORS = [Color("7A9E6E"), Color("D2E4EC"), Color("B5553C"), Color("E8B87A"), Color("9BB8D4")]
 
 
 class ChartControl:
