@@ -353,8 +353,8 @@ func _build_hud() -> void:
 	top_bg.anchor_bottom = 0.0
 	top_bg.offset_left = 0.0
 	top_bg.offset_right = 0.0
-	top_bg.offset_top = 24.0
-	top_bg.offset_bottom = 74.0
+	top_bg.offset_top = 0.0
+	top_bg.offset_bottom = 50.0
 	top_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_bg)
 
