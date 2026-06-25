@@ -1,15 +1,17 @@
 extends Control
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
-const CARD_COLOR := Color("#3C2A1C")
-const TEXT_COLOR := Color("#FFFFFF")
-const RARITY_COLOR := Color("#B8A088")
-const DISPLAY_BG_COLOR := Color("#5C4A3A")
-const BTN_NORMAL := Color("#5C4A3A")
-const BTN_HOVER := Color("#6D5A48")
-const BTN_PRESSED := Color("#4A3A2C")
-const BTN_DISABLED := Color("#2C2218")
-const BTN_TEXT_DISABLED := Color("#665544")
+# 主题色统一引用 Palette（新 Palette：浅色卡片 + amber 按钮 + TEXT_PRIMARY 文字）
+# 含 Palette 引用/方法调用，故用 var（实例初始化时 Palette autoload 已就绪）
+var CARD_COLOR := Palette.MILK_WHITE          # 卡片底色
+var TEXT_COLOR := Palette.TEXT_PRIMARY        # 卡片上所有文字（含 amber 按钮，对比度 5.9:1）
+var RARITY_COLOR := Palette.TEXT_SECONDARY    # 次级文字（品种·稀有度 等）
+var DISPLAY_BG_COLOR := Palette.BG_CEMENT     # 猫咪展示区底板
+var BTN_NORMAL := Palette.AMBER               # 按钮常态
+var BTN_HOVER := Palette.AMBER.lightened(0.05)# 按钮悬停
+var BTN_PRESSED := Palette.AMBER_PRESS        # 按钮按下
+var BTN_DISABLED := Color("EDE7D8")           # 按钮禁用（浅奶油）
+var BTN_TEXT_DISABLED := Palette.TEXT_SECONDARY # 禁用文字
 const DISABLED_ALPHA := 0.4
 const CatData := preload("res://core/CatData.gd")
 const AD_REFRESH_CFG := "user://ad_refresh.cfg"
@@ -665,7 +667,7 @@ func _style_card_panel() -> void:
 	sb.corner_radius_bottom_left = 0
 	sb.corner_radius_bottom_right = 0
 	sb.shadow_size = 8
-	sb.shadow_color = Color(0, 0, 0, 0.3)
+	sb.shadow_color = Palette.UI_SHADOW
 	_card_background.add_theme_stylebox_override("panel", sb)
 
 
