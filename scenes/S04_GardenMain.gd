@@ -933,6 +933,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			var is_double_tap := now - _last_tap_time < DOUBLE_TAP_TIME and now - _last_touch_time >= 0.05
 			_last_tap_time = now
 			if is_double_tap:
+				# 双击猫咪 → 弹 CatCard；双击背景 → 缩放
+				if _emit_cat_click_at(event.position):
+					_dragging = false
+					return
 				_cycle_garden_zoom(event.position)
 				_dragging = false
 				return
@@ -961,10 +965,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			var is_double_tap := now - _last_touch_time < DOUBLE_TAP_TIME and now - _last_tap_time >= 0.05
 			_last_touch_time = now
 			if is_double_tap:
+				# 双击猫咪 → 弹 CatCard；双击背景 → 缩放
+				if _emit_cat_click_at(event.position):
+					_dragging = false
+					return
 				_cycle_garden_zoom(event.position)
 				_dragging = false
 				return
-			# 检测猫咪点击（任何缩放等级）
+			# L2+ 单击猫咪 → 弹 CatCard
 			if _zoom_factor >= ZOOM_L2 and _emit_cat_click_at(event.position):
 				_dragging = false
 				return
