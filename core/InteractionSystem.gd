@@ -16,6 +16,7 @@ var feed_cooldown_active: bool = false
 var pet_cooldown_active: bool = false
 var play_cooldown_active: bool = false
 var photo_cooldown_active: bool = false
+var _locked_cat_id: String = ""  # CatCard 打开时锁住这只猫的移动
 var _feed_timer: Timer
 var _pet_timer: Timer
 var _play_timer: Timer
@@ -112,6 +113,9 @@ func _on_cat_clicked(cat_id: String, screen_position: Vector2) -> void:
 	get_tree().root.add_child(_cat_card_layer)
 
 	_set_cat_card_data(current_cat_card, cat_id, cat_data, screen_position)
+	# 锁定这只猫的移动，防止弹出 CatCard 时猫跑掉
+	_locked_cat_id = cat_id
+	_set_cat_move_lock(cat_id, true)
 
 
 func _try_find_garden() -> void:
@@ -124,6 +128,10 @@ func _try_find_garden() -> void:
 
 
 func _close_cat_card() -> void:
+	# 解锁之前锁定的猫
+	if _locked_cat_id != "":
+		_set_cat_move_lock(_locked_cat_id, false)
+		_locked_cat_id = ""
 	if _cat_card_layer != null and is_instance_valid(_cat_card_layer):
 		_cat_card_layer.queue_free()
 	elif current_cat_card != null and is_instance_valid(current_cat_card):
@@ -357,3 +365,11 @@ func _get_affection_gain(type: String) -> int:
 			return 4
 		_:
 			return 0
+
+# CatCard 打开/关闭时锁定/恢复猫咪移动
+func _set_cat_move_lock(cat_id: String, locked: bool) -> void:
+	if not CatSpawner:
+		return
+	var node = CatSpawner.get_cat_node_by_id(cat_id)
+	if node != null and node.has_method("set_card_open"):
+		node.set_card_open(locked)

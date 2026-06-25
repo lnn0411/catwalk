@@ -249,6 +249,10 @@ func get_cat_node(cat_data):
 	if cat_data == null:
 		return null
 	var cat_id := _get_cat_id(cat_data)
+	return get_cat_node_by_id(cat_id)
+
+# 按字符串 ID 直接查猫节点
+func get_cat_node_by_id(cat_id: String):
 	if cat_id == "" or not spawned_cat_ids.has(cat_id):
 		return null
 	var node = spawned_cat_ids[cat_id]

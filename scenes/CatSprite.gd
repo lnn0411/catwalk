@@ -122,6 +122,7 @@ var _turn_cooldown := 0.0
 
 var _wander_timer: Timer
 var _bounce_tween: Tween
+var _card_open := false  # CatCard 打开时锁住移动
 
 
 func _ready() -> void:
@@ -293,6 +294,8 @@ func _setup_click_area() -> void:
 
 
 func _process(delta: float) -> void:
+	if _card_open:
+		return  # CatCard 打开时冻结移动
 	_idle_phase += delta
 	_turn_cooldown = maxf(0.0, _turn_cooldown - delta)
 	# 随行图标更新
@@ -701,6 +704,16 @@ func set_wander_bounds(x_min: float, x_max: float, y_min: float, y_max: float) -
 	# 如果猫当前在范围外，拉回
 	position.x = clampf(position.x, wander_x_min, wander_x_max)
 	position.y = clampf(position.y, wander_y_min, wander_y_max)
+
+
+# CatCard 打开/关闭时冻结/恢复移动
+func set_card_open(open: bool) -> void:
+	_card_open = open
+	if open:
+		is_moving = false
+		_wander_timer.stop()
+	else:
+		_schedule_wander()
 
 
 func _on_input_event(_viewport, event, _shape_idx) -> void:
