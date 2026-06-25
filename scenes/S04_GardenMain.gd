@@ -936,8 +936,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_cycle_garden_zoom(event.position)
 				_dragging = false
 				return
-			# 检测猫咪点击（任何缩放等级）
-			if _emit_cat_click_at(event.position):
+			# L2+ 检测猫咪点击
+			if _zoom_factor >= ZOOM_L2 and _emit_cat_click_at(event.position):
 				_dragging = false
 				return
 			_dragging = true
@@ -965,7 +965,7 @@ func _unhandled_input(event: InputEvent) -> void:
 				_dragging = false
 				return
 			# 检测猫咪点击（任何缩放等级）
-			if _emit_cat_click_at(event.position):
+			if _zoom_factor >= ZOOM_L2 and _emit_cat_click_at(event.position):
 				_dragging = false
 				return
 			_dragging = true
@@ -996,15 +996,12 @@ func _handle_magnify_gesture(event: InputEventMagnifyGesture) -> void:
 # 双击切换 L1<->L2（0.3s 平滑 Tween）
 func _cycle_garden_zoom(anchor_screen_pos: Vector2) -> void:
 	var target := ZOOM_L2 if _zoom_factor < 1.5 else ZOOM_L1
-	_smooth_zoom_to(target)
-
-# 平滑缩放过渡（双击专用）
-func _smooth_zoom_to(target_factor: float) -> void:
-	target_factor = clampf(target_factor, ZOOM_L1, ZOOM_L3)
+	var old_zoom := _zoom_factor
+	_zoom_factor = target  # 立即更新，让后续 cat click 检测马上命中
 	if _zoom_tween and _zoom_tween.is_valid():
 		_zoom_tween.kill()
 	_zoom_tween = create_tween()
-	_zoom_tween.tween_method(_set_garden_zoom_factor, _zoom_factor, target_factor, ZOOM_TWEEN_DURATION).set_ease(Tween.EASE_OUT)
+	_zoom_tween.tween_method(_set_garden_zoom_factor, old_zoom, target, ZOOM_TWEEN_DURATION).set_ease(Tween.EASE_OUT)
 
 func _set_garden_zoom_level(level: int, anchor_screen_pos: Vector2 = Vector2.ZERO) -> void:
 	if GARDEN_ZOOM_LEVELS.is_empty():
