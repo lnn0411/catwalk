@@ -53,6 +53,7 @@ func _build_tabs() -> void:
 	nav_paper.custom_minimum_size = Vector2(720.0, BAR_HEIGHT)
 	nav_paper.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	nav_paper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	nav_paper.modulate.a = 0.85
 	add_child(nav_paper)
 
 	var box := HBoxContainer.new()

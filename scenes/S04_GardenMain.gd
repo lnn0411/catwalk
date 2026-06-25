@@ -354,6 +354,7 @@ func _build_hud() -> void:
 	top_bg.offset_top = 0.0
 	top_bg.offset_bottom = 50.0
 	top_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_bg.modulate.a = 0.85
 	root.add_child(top_bg)
 
 	# 顶栏：HBoxContainer，用两个 spacer 实现 左|中|右 布局
