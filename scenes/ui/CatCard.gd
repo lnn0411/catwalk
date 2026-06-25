@@ -486,7 +486,6 @@ func _notification(what: int) -> void:
 
 
 func _apply_theme() -> void:
-	_card_background.modulate = Color(1, 1, 1, 0.0)
 	_style_label(_name_label, 22)
 	_style_label(_meta_label, 15)
 	_style_label(_status_label, 14)
