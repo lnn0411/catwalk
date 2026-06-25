@@ -153,6 +153,7 @@ func _build_garden_layer() -> void:
 	garden_vp.size = Vector2(720, 1280 - int(HUD_HEIGHT))  # 与 SubViewportContainer 实际高度一致（顶部被 HUD 占 130）
 	garden_vp.transparent_bg = false
 	garden_vp.handle_input_locally = false
+	garden_vp.physics_object_picking = true
 	_garden_viewport = garden_vp
 	
 	garden_layer = Node2D.new()
