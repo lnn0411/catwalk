@@ -37,8 +37,6 @@ var _frame_empty: Texture2D
 var _frame_filling: Texture2D
 var _frame_ready: Texture2D
 
-enum SubState { IDLE, INTERACT_FEED, INTERACT_PET, INTERACT_PLAY, INTERACT_PHOTO }
-
 var garden_layer: Node2D
 var _garden_viewport: SubViewport
 var cat_container: Node2D
@@ -52,7 +50,6 @@ var _last_touch_time: float = -DOUBLE_TAP_TIME
 var _zoom_tween: Tween
 var _steps_label: Label
 var _energy_label: Label
-var _action_buttons: Array[TextureButton] = []
 var _hatch_navigating := false
 var _empty_label: Label
 var _debug_panel: PanelContainer
@@ -66,9 +63,7 @@ var _snow_particles: CPUParticles2D
 var _weather_tween: Tween
 var _last_blend := -1.0
 var _stats_visible := false
-var _sub_state: int = SubState.IDLE
-var _interact_reset_timer: Timer
-
+var _debug_panel: PanelContainer
 func _ready() -> void:
 	super()
 	_load_frame_textures()
@@ -349,6 +344,21 @@ func _build_hud() -> void:
 	debug_btn.pressed.connect(_toggle_debug_panel)
 	root.add_child(debug_btn)
 
+	# 顶栏背景：复用底栏 nav_bg.png
+	var top_bg := TextureRect.new()
+	top_bg.texture = load("res://assets/art/ui/nav/nav_bg.png")
+	top_bg.stretch_mode = TextureRect.STRETCH_SCALE
+	top_bg.anchor_left = 0.0
+	top_bg.anchor_right = 1.0
+	top_bg.anchor_top = 0.0
+	top_bg.anchor_bottom = 0.0
+	top_bg.offset_left = 0.0
+	top_bg.offset_right = 0.0
+	top_bg.offset_top = 24.0
+	top_bg.offset_bottom = 74.0
+	top_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(top_bg)
+
 	# 顶栏：HBoxContainer，用两个 spacer 实现 左|中|右 布局
 	var top_row := HBoxContainer.new()
 	top_row.anchor_right = 1.0
@@ -444,28 +454,6 @@ func _build_hud() -> void:
 	_empty_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	root.add_child(_empty_label)
 
-	# 互动按钮：右竖排（不挡花园视线）
-	var action_col := VBoxContainer.new()
-	action_col.position = Vector2(640.0, 380.0)
-	action_col.size = Vector2(46.0, 280.0)
-	action_col.add_theme_constant_override("separation", 20)
-	root.add_child(action_col)
-	var action_data := [
-		{"title": "喂食", "texture": "btn_feed.png", "state": SubState.INTERACT_FEED},
-		{"title": "抚摸", "texture": "btn_pet.png", "state": SubState.INTERACT_PET},
-		{"title": "玩耍", "texture": "btn_play.png", "state": SubState.INTERACT_PLAY},
-		{"title": "拍照", "texture": "btn_photo.png", "state": SubState.INTERACT_PHOTO},
-	]
-	for data in action_data:
-		var button := TextureButton.new()
-		button.texture_normal = load("res://assets/art/ui/buttons/" + String(data["texture"]))
-		button.custom_minimum_size = Vector2(42.0, 54.0)
-		button.stretch_mode = TextureButton.STRETCH_KEEP_CENTERED
-		button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		button.pressed.connect(_on_action_pressed.bind(int(data["state"])))
-		action_col.add_child(button)
-		_action_buttons.append(button)
-
 	# 「爱意工坊」入口按钮 — 工坊态时显示
 	var workshop_btn := Button.new()
 	workshop_btn.name = "WorkshopBtn"
@@ -520,14 +508,7 @@ func _build_hud() -> void:
 	_steps_hold_timer.timeout.connect(_toggle_debug_panel)
 	add_child(_steps_hold_timer)
 
-	# 互动子状态在 2 秒后自动回到 IDLE
-	_interact_reset_timer = Timer.new()
-	_interact_reset_timer.one_shot = true
-	_interact_reset_timer.wait_time = 2.0
-	_interact_reset_timer.timeout.connect(_on_interact_reset)
-	add_child(_interact_reset_timer)
-
-func _build_debug_panel() -> void:
+	var nav = BottomNavScene.instantiate()
 	_debug_panel = PanelContainer.new()
 	_debug_panel.visible = false
 	_debug_panel.position = Vector2(40.0, 220.0)
@@ -584,6 +565,10 @@ func _build_debug_panel() -> void:
 	# 增大面板高度
 	_debug_panel.size.y = 520
 
+func _build_debug_panel() -> void:
+	# Debug panel now built inside _build_hud()
+	pass
+
 func _make_box_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = bg
@@ -634,8 +619,6 @@ func _refresh_cat_state() -> void:
 	if HatchEngine:
 		cat_count = HatchEngine.get_cats().size()
 	_empty_label.visible = cat_count == 0
-	for button in _action_buttons:
-		button.disabled = cat_count <= 0
 
 func _on_steps_updated(_delta: int, _total: int) -> void:
 	_refresh_steps()
@@ -659,47 +642,6 @@ func _apply_cat_visibility() -> void:
 	for child in cat_container.get_children():
 		if "cat_data" in child and child.cat_data != null:
 			child.visible = true
-
-func _on_action_pressed(state: int) -> void:
-	if TutorialManager and TutorialManager.is_running():
-		return
-	# 没有猫时按钮本就 disabled，这里双保险
-	if _empty_label.visible:
-		return
-	# SubState 枚举 → InteractionSystem 类型字符串
-	var type := ""
-	match state:
-		SubState.INTERACT_FEED:
-			type = "feed"
-		SubState.INTERACT_PET:
-			type = "pet"
-		SubState.INTERACT_PLAY:
-			type = "play"
-		SubState.INTERACT_PHOTO:
-			type = "photo"
-	var cat_id := _get_first_cat_id()
-	if type != "" and cat_id != "":
-		if not InteractionSystem.can_interact(cat_id, type):
-			print("[Interact] %s 冷却中：%s" % [type, _get_cooldown_remaining_text(cat_id, type)])
-			return
-		var gain := InteractionSystem.do_interact(cat_id, type)
-		print("[Interact] %s +%d 好感（总 %d）" % [type, gain, InteractionSystem.get_affection(cat_id)])
-	_sub_state = state
-	_interact_reset_timer.start()
-
-func _on_interact_reset() -> void:
-	var prev := _sub_state
-	_sub_state = SubState.IDLE
-	if prev != SubState.IDLE:
-		print("[Interact] %s → IDLE" % SubState.keys()[prev])
-
-func _get_first_cat_id() -> String:
-	var cats := []
-	if HatchEngine:
-		cats = HatchEngine.get_cats()
-	if cats.is_empty():
-		return ""
-	return String(cats[0].id)
 
 func _get_cooldown_remaining_text(cat_id: String, type: String) -> String:
 	var cfg := ConfigFile.new()

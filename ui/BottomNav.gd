@@ -3,7 +3,7 @@ extends Control
 
 signal tab_selected(index: int)
 
-const BAR_HEIGHT := 72.0
+const BAR_HEIGHT := 94.0
 const MIN_TOUCH := 48.0
 const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 const TABS := [
