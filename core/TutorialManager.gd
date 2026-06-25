@@ -120,10 +120,7 @@ func _step_03_hatch() -> void:
 	_clear_step_ui()
 	_hatch_pending = false
 	_hatch_fired = false
-	if _garden_ok() and _garden_page._hatch_row != null:
-		_highlight_control(_garden_page._hatch_row)
-		_create_hatch_bridge()
-	_create_bubble("🐣 点击这里孵化你的第一只猫咪！", false, 0.0, _above_highlight())
+	_create_bubble("🐣 点击底部导航的蛋图标进入孵化屋！", false, 0.0, _above_highlight())
 
 
 func _step_04_interact() -> void:
@@ -344,17 +341,8 @@ func _clear_bubble() -> void:
 
 
 func _create_hatch_bridge() -> void:
-	if not _garden_ok() or _garden_page._hatch_row == null:
-		return
-	var row: Control = _garden_page._hatch_row
-	_hatch_bridge = Control.new()
-	_hatch_bridge.name = "TutorialHatchBridge"
-	_hatch_bridge.mouse_filter = Control.MOUSE_FILTER_STOP
-	_hatch_bridge.z_index = 180
-	_hatch_bridge.position = row.global_position - Vector2(4.0, 4.0)
-	_hatch_bridge.size = row.size + Vector2(8.0, 8.0)
-	_hatch_bridge.gui_input.connect(_on_hatch_bridge_input)
-	_garden_page.add_child(_hatch_bridge)
+	# 孵化现在通过底部导航进入，跳过高亮
+	pass
 
 
 func _on_hatch_bridge_input(event: InputEvent) -> void:
