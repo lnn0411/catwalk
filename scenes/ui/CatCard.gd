@@ -8,6 +8,8 @@ const CatData := preload("res://core/CatData.gd")
 const AD_REFRESH_CFG := "user://ad_refresh.cfg"
 const AD_REFRESH_SECTION := "ad_refresh"
 const AD_REFRESH_MAX := 2
+# 立绘动画帧率（8 帧/动作）
+const ANIM_FPS := 10.0
 
 var cat_id: String = ""
 var cat_data
@@ -15,7 +17,6 @@ var interaction_system
 
 # 卡片底图改为 TextureRect（库洛洛 美术资源），动画仍以此节点为缩放/淡入对象
 @onready var _card_background: Control = %CardTexture
-@onready var _avatar_rect: TextureRect = %CatDisplay
 @onready var _name_label: Label = %CatName
 @onready var _meta_label: Label = %BreedRarityLabel
 # 互动按钮全部换成 TextureButton；TextureButton 与 Button 同为 BaseButton 子类但互不继承，
@@ -30,7 +31,8 @@ var interaction_system
 @onready var _countdown_label: Label = %CountdownLabel
 @onready var _return_time_label: Label = %ReturnTimeLabel
 @onready var _status_label: Label = %StatusLabel
-@onready var _cat_display: TextureRect = %CatDisplay
+# 猫咪展示改为 AnimatedSprite2D（按品种逐帧动画）
+@onready var _cat_display: AnimatedSprite2D = %CatDisplay
 @onready var _ad_refresh_btn: TextureButton = %AdRefreshBtn
 # TextureButton 没有 text 属性，动态文案改写其 Label 子节点
 @onready var _explore_label: Label = %ExploreLabel
@@ -43,10 +45,8 @@ var _is_exploring_this_cat := false
 var _screen_pos := Vector2.ZERO
 var _closing := false
 var _feedback_until := 0.0
+# 每个立绘目录(british/siamese) 对应一份 SpriteFrames，按需构建并缓存
 var _frames_cache: Dictionary = {}
-var _anim_timer: Timer
-var _anim_frames: Array[Texture2D] = []
-var _anim_index: int = 0
 var _close_playing := false
 
 
@@ -696,7 +696,7 @@ func _refresh_cat_info() -> void:
 	var species := _get_cat_property("species", _get_cat_property("breed", "orange"))
 	var rarity := _get_cat_property("rarity", "common")
 	_meta_label.text = "%s · %s" % [_species_label(species), _rarity_label(rarity)]
-	_avatar_rect.texture = _make_avatar_texture(_species_color(species))
+	_load_cat_frames()
 
 
 func _show_feedback(text: String) -> void:
@@ -874,118 +874,98 @@ func _rarity_label(rarity: String) -> String:
 			return rarity
 
 
-func _species_color(species: String) -> Color:
-	match species:
-		"british":
-			return Palette.CAT_BRIT_MID
-		"siamese":
-			return Palette.CAT_SIAM_BODY
-		_:
-			return Palette.CAT_ORANGE_MID
+# ── 猫咪展示（AnimatedSprite2D，按品种 8 帧/动作）──
 
-# ── 猫咪展示 ──
-
+# _ready 中调用：连接动作播放结束信号（动作放完一次自动回到 idle 循环）
 func _setup_anim_timer() -> void:
-	_anim_timer = Timer.new()
-	_anim_timer.one_shot = true
-	_anim_timer.timeout.connect(_on_anim_tick)
-	add_child(_anim_timer)
-
-func _on_anim_tick() -> void:
-	_anim_index += 1
-	if _anim_index >= _anim_frames.size():
-		# 回到 idle
-		_load_idle_frame()
-		return
-	if _anim_index < _anim_frames.size():
-		_cat_display.texture = _anim_frames[_anim_index]
-		_anim_timer.start(0.15)
-
-func _load_idle_frame() -> void:
 	if _cat_display == null:
 		return
-	var breed := ""
-	if cat_data != null:
-		breed = String(cat_data.get("species", cat_data.get("breed", "orange")) if cat_data is Dictionary else cat_data.species)
-	var dir := _breed_dir(breed)
-	var path := "res://assets/art/cats/%s/idle_front_frame_00.png" % dir
-	if ResourceLoader.exists(path):
-		_cat_display.texture = load(path)
-	else:
-		# fallback: 用 idle 方向任意帧
-		for fallback in ["idle_frame_00", "idle_front_frame_00", "front_frame_00"]:
-			var fp := "res://assets/art/cats/%s/%s.png" % [dir, fallback]
-			if ResourceLoader.exists(fp):
-				_cat_display.texture = load(fp)
-				break
+	if not _cat_display.animation_finished.is_connected(_on_anim_finished):
+		_cat_display.animation_finished.connect(_on_anim_finished)
+
+func _on_anim_finished() -> void:
+	# idle 为循环动画不会触发本信号；feed/pet/play 播完后回到 idle
+	_play_breed_animation("idle")
+
+func _current_breed() -> String:
+	if cat_data == null:
+		return "orange"
+	if cat_data is Dictionary:
+		return String(cat_data.get("species", cat_data.get("breed", "orange")))
+	var value = cat_data.get("species")
+	if value == null:
+		value = cat_data.get("breed")
+	return String(value) if value != null else "orange"
+
+# 立绘目录：橘猫暂缺 -> 用英短代替
+func _portrait_dir(breed: String) -> String:
+	match breed:
+		"siamese":
+			return "siamese"
+		"british", "british_shorthair":
+			return "british"
+		_:
+			return "british"
+
+# 按品种构建 SpriteFrames（idle 循环，feed/pet/play 各播一次），并缓存
+func _ensure_breed_frames(breed: String) -> SpriteFrames:
+	var dir := _portrait_dir(breed)
+	if _frames_cache.has(dir):
+		return _frames_cache[dir]
+	var sf := SpriteFrames.new()
+	if sf.has_animation("default"):
+		sf.remove_animation("default")
+	for action in ["idle", "feed", "pet", "play"]:
+		sf.add_animation(action)
+		sf.set_animation_loop(action, action == "idle")
+		sf.set_animation_speed(action, ANIM_FPS)
+		for i in range(8):
+			var p := "res://assets/art/cats/portraits/catcard/%s/catcard_%s_%s_frame_%02d.png" % [dir, dir, action, i]
+			if ResourceLoader.exists(p):
+				sf.add_frame(action, load(p))
+	_frames_cache[dir] = sf
+	return sf
+
+func _play_breed_animation(action: String) -> void:
+	if _cat_display == null:
+		return
+	var sf := _ensure_breed_frames(_current_breed())
+	if sf == null:
+		return
+	var anim := action
+	if not sf.has_animation(anim) or sf.get_frame_count(anim) == 0:
+		anim = "idle"
+	if _cat_display.sprite_frames != sf:
+		_cat_display.sprite_frames = sf
+	_cat_display.animation = anim
+	_cat_display.frame = 0
+	_cat_display.play(anim)
+
+func _load_idle_frame() -> void:
+	_play_breed_animation("idle")
 
 func _load_cat_frames() -> void:
 	if _cat_display == null:
 		return
-	var breed := ""
-	if cat_data != null:
-		breed = String(cat_data.get("species", cat_data.get("breed", "orange")) if cat_data is Dictionary else cat_data.species)
-	var dir := _breed_dir(breed)
-	# 缓存 breed 的所有帧
-	if _frames_cache.has(breed):
-		_load_idle_frame()
-		return
-	var anims := ["idle_front", "front"]
-	var cache: Dictionary = {}
-	for anim in anims:
-		var frames: Array[Texture2D] = []
-		for i in range(4):
-			var p := "res://assets/art/cats/%s/%s_frame_%02d.png" % [dir, anim, i]
-			if ResourceLoader.exists(p):
-				frames.append(load(p))
-		cache[anim] = frames
-	_frames_cache[breed] = cache
-	_load_idle_frame()
+	_ensure_breed_frames(_current_breed())
+	_play_breed_animation("idle")
 
+# _on_feed/pet/play_pressed 传入 eating/petting/playing，映射到立绘动作并播放一次
 func _play_action_anim(action: String) -> void:
-	if _frames_cache.is_empty():
-		return
-	var breed := ""
-	if cat_data != null:
-		breed = String(cat_data.get("species", cat_data.get("breed", "orange")) if cat_data is Dictionary else cat_data.species)
-	var cache: Dictionary = _frames_cache.get(breed, {})
-	var frames: Array[Texture2D] = []
+	var mapped := "idle"
 	match action:
 		"eating":
-			frames = cache.get("front", [])
+			mapped = "feed"
 		"petting":
-			frames = cache.get("idle_front", [])
+			mapped = "pet"
 		"playing":
-			frames = cache.get("front", [])
-	if frames.is_empty():
-		return
-	_anim_frames = frames
-	_anim_index = 0
-	_cat_display.texture = frames[0]
-	_anim_timer.start(0.18)
+			mapped = "play"
+	_play_breed_animation(mapped)
 
 func _stop_action_anim() -> void:
-	_anim_timer.stop()
-	_load_idle_frame()
-
-func _breed_dir(breed: String) -> String:
-	match breed:
-		"orange", "orange_tabby":
-			return "orange"
-		"british", "british_shorthair":
-			return "british"
-		"siamese":
-			return "siamese"
-		_:
-			return "orange"
+	_play_breed_animation("idle")
 
 # 遮罩点击关闭
 func _on_overlay_clicked(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		_play_close_animation()
-
-
-func _make_avatar_texture(color: Color) -> Texture2D:
-	var image := Image.create(60, 60, false, Image.FORMAT_RGBA8)
-	image.fill(color)
-	return ImageTexture.create_from_image(image)
