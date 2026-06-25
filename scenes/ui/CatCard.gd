@@ -1,17 +1,8 @@
 extends Control
 
 const DESIGN_SIZE := Vector2(720.0, 1280.0)
-# 主题色统一引用 Palette（新 Palette：浅色卡片 + amber 按钮 + TEXT_PRIMARY 文字）
-# 含 Palette 引用/方法调用，故用 var（实例初始化时 Palette autoload 已就绪）
-var CARD_COLOR := Palette.MILK_WHITE          # 卡片底色
-var TEXT_COLOR := Palette.TEXT_PRIMARY        # 卡片上所有文字（含 amber 按钮，对比度 5.9:1）
-var RARITY_COLOR := Palette.TEXT_SECONDARY    # 次级文字（品种·稀有度 等）
-var DISPLAY_BG_COLOR := Palette.BG_CEMENT     # 猫咪展示区底板
-var BTN_NORMAL := Palette.AMBER               # 按钮常态
-var BTN_HOVER := Palette.AMBER.lightened(0.05)# 按钮悬停
-var BTN_PRESSED := Palette.AMBER_PRESS        # 按钮按下
-var BTN_DISABLED := Color("EDE7D8")           # 按钮禁用（浅奶油）
-var BTN_TEXT_DISABLED := Palette.TEXT_SECONDARY # 禁用文字
+# 卡片底图与按钮态已由 库洛洛 美术资源（TextureRect/TextureButton）提供，
+# 不再用代码描边；仅保留禁用态的整体变暗系数。
 const DISABLED_ALPHA := 0.4
 const CatData := preload("res://core/CatData.gd")
 const AD_REFRESH_CFG := "user://ad_refresh.cfg"
@@ -22,22 +13,29 @@ var cat_id: String = ""
 var cat_data
 var interaction_system
 
-@onready var _card_background: Panel = %CardPanel
+# 卡片底图改为 TextureRect（库洛洛 美术资源），动画仍以此节点为缩放/淡入对象
+@onready var _card_background: Control = %CardTexture
 @onready var _avatar_rect: TextureRect = %CatDisplay
 @onready var _name_label: Label = %CatName
 @onready var _meta_label: Label = %BreedRarityLabel
-@onready var _feed_button: Button = %FeedButton
-@onready var _pet_button: Button = %PetButton
-@onready var _play_button: Button = %PlayButton
-@onready var _explore_button: Button = %ExploreButton
-var _relinquish_button: Button
+# 互动按钮全部换成 TextureButton；TextureButton 与 Button 同为 BaseButton 子类但互不继承，
+# 故类型标注用具体 TextureButton，公共辅助函数参数改用 BaseButton。
+@onready var _feed_button: TextureButton = %FeedButton
+@onready var _pet_button: TextureButton = %PetButton
+@onready var _play_button: TextureButton = %PlayButton
+@onready var _explore_button: TextureButton = %ExploreButton
+@onready var _relinquish_button: TextureButton = %RelinquishButton
 @onready var _explore_state_panel: Control = %ExploreStatePanel
 @onready var _exploring_label: Label = %ExploringLabel
 @onready var _countdown_label: Label = %CountdownLabel
 @onready var _return_time_label: Label = %ReturnTimeLabel
 @onready var _status_label: Label = %StatusLabel
 @onready var _cat_display: TextureRect = %CatDisplay
-@onready var _ad_refresh_btn: Button = %AdRefreshBtn
+@onready var _ad_refresh_btn: TextureButton = %AdRefreshBtn
+# TextureButton 没有 text 属性，动态文案改写其 Label 子节点
+@onready var _explore_label: Label = %ExploreLabel
+@onready var _ad_refresh_label: Label = %AdRefreshLabel
+@onready var _relinquish_label: Label = %RelinquishLabel
 
 var _cooldown_timer: Timer
 var _explore_countdown_timer: Timer
@@ -55,7 +53,7 @@ var _close_playing := false
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_apply_theme()
+	# 主题样式已由 TextureButton/卡片底图替代，无需再做代码描边
 	_setup_cooldown_timer()
 	_setup_explore_countdown_timer()
 	_setup_anim_timer()
@@ -64,6 +62,7 @@ func _ready() -> void:
 	_connect_button_feedback(_play_button)
 	_connect_button_feedback(_explore_button)
 	_connect_button_feedback(_ad_refresh_btn)
+	_connect_button_feedback(_relinquish_button)
 	_resolve_interaction_system()
 	_refresh_cat_info()
 	_check_explore_state()
@@ -165,7 +164,8 @@ func refresh_interaction_buttons() -> void:
 		var is_last := HatchEngine and HatchEngine.get_cats().size() <= 1
 		var is_exploring := cat_id != "" and ExploreEngine and ExploreEngine.is_exploring(cat_id)
 		_set_button_disabled(_relinquish_button, is_last or is_exploring)
-		_relinquish_button.text = "💕 送养" if not is_last else "最后一只"
+		if _relinquish_label:
+			_relinquish_label.text = "💕 送养" if not is_last else "最后一只"
 
 
 func _on_feed_pressed() -> void:
@@ -236,10 +236,12 @@ func _update_ad_refresh_button() -> void:
 		return
 	var count := _get_ad_refresh_count()
 	if count >= AD_REFRESH_MAX:
-		_ad_refresh_btn.text = "今日已用完(2/2)"
+		if _ad_refresh_label:
+			_ad_refresh_label.text = "今日已用完(2/2)"
 		_set_button_disabled(_ad_refresh_btn, true)
 	else:
-		_ad_refresh_btn.text = "⚡ 看广告刷新冷却 🎬"
+		if _ad_refresh_label:
+			_ad_refresh_label.text = "⚡ 看广告刷新冷却 🎬"
 		_set_button_disabled(_ad_refresh_btn, false)
 
 
@@ -347,13 +349,15 @@ func update_explore_button_state() -> void:
 		cat_id = _get_cat_property("id", "")
 	if cat_id != "" and ExploreEngine.is_exploring(cat_id):
 		_explore_button.visible = true
-		_explore_button.text = "🎁 领取" if ExploreEngine.is_returned(cat_id) else "🧭 探索中"
+		if _explore_label:
+			_explore_label.text = "🎁 领取" if ExploreEngine.is_returned(cat_id) else "🧭 探索中"
 		_set_button_disabled(_explore_button, not ExploreEngine.is_returned(cat_id))
 		return
 
 	_explore_button.visible = true
 	var has_explore_slot := _has_explore_slot_available()
-	_explore_button.text = "🧭 探索" if has_explore_slot else "探索名额已满"
+	if _explore_label:
+		_explore_label.text = "🧭 探索" if has_explore_slot else "探索名额已满"
 	_set_button_disabled(_explore_button, not has_explore_slot)
 
 
@@ -640,92 +644,25 @@ func _on_close_anim_done() -> void:
 		queue_free()
 
 
-func _apply_theme() -> void:
-	_style_card_panel()
-	_style_cat_display_bg()
-	_style_label(_name_label, 24, TEXT_COLOR)
-	_style_label(_meta_label, 14, RARITY_COLOR)
-	_style_label(_status_label, 13, RARITY_COLOR)
-	_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_style_button(_feed_button)
-	_style_button(_pet_button)
-	_style_button(_play_button)
-	_style_button(_explore_button)
-	_style_button(_ad_refresh_btn)
-	if _relinquish_button:
-		_style_button(_relinquish_button)
-
-
-# 卡片面板：上圆角 24px + 阴影
-func _style_card_panel() -> void:
-	if _card_background == null:
-		return
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = CARD_COLOR
-	sb.corner_radius_top_left = 24
-	sb.corner_radius_top_right = 24
-	sb.corner_radius_bottom_left = 0
-	sb.corner_radius_bottom_right = 0
-	sb.shadow_size = 8
-	sb.shadow_color = Palette.UI_SHADOW
-	_card_background.add_theme_stylebox_override("panel", sb)
-
-
-# 猫咪展示区背景：圆角 12px 底板
-func _style_cat_display_bg() -> void:
-	var bg := get_node_or_null("CardPanel/CatDisplayBg") as Panel
-	if bg == null:
-		return
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = DISPLAY_BG_COLOR
-	sb.set_corner_radius_all(12)
-	bg.add_theme_stylebox_override("panel", sb)
-
-
-func _style_label(label: Label, font_size: int, color: Color) -> void:
-	if label == null:
-		return
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", font_size)
-
-
-func _make_button_style(color: Color) -> StyleBoxFlat:
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = color
-	sb.set_corner_radius_all(12)
-	sb.content_margin_left = 6
-	sb.content_margin_right = 6
-	sb.content_margin_top = 4
-	sb.content_margin_bottom = 4
-	return sb
-
-
-func _style_button(button: Button) -> void:
-	if button == null:
-		return
-	button.add_theme_color_override("font_color", TEXT_COLOR)
-	button.add_theme_color_override("font_hover_color", TEXT_COLOR)
-	button.add_theme_color_override("font_pressed_color", TEXT_COLOR)
-	button.add_theme_color_override("font_focus_color", TEXT_COLOR)
-	button.add_theme_color_override("font_disabled_color", BTN_TEXT_DISABLED)
-	button.add_theme_font_size_override("font_size", 17)
-	button.custom_minimum_size = Vector2(0.0, 52.0)
-	button.add_theme_stylebox_override("normal", _make_button_style(BTN_NORMAL))
-	button.add_theme_stylebox_override("hover", _make_button_style(BTN_HOVER))
-	button.add_theme_stylebox_override("pressed", _make_button_style(BTN_PRESSED))
-	button.add_theme_stylebox_override("focus", _make_button_style(BTN_NORMAL))
-	button.add_theme_stylebox_override("disabled", _make_button_style(BTN_DISABLED))
+# 详情链接：关闭卡片并跳转到图鉴/详情页
+func _on_detail_link_pressed() -> void:
+	if interaction_system and interaction_system.has_method("_close_cat_card"):
+		interaction_system._close_cat_card()
+	else:
+		_play_close_animation()
+	if UIManager and UIManager.has_method("replace"):
+		UIManager.replace("res://scenes/S10_Album.tscn")
 
 
 # 按钮按压缩放反馈：按下缩到 0.95，松开弹回 1.0
-func _connect_button_feedback(button: Button) -> void:
+func _connect_button_feedback(button: BaseButton) -> void:
 	if button == null:
 		return
 	button.button_down.connect(func() -> void: _on_button_down(button))
 	button.button_up.connect(func() -> void: _on_button_up(button))
 
 
-func _on_button_down(button: Button) -> void:
+func _on_button_down(button: BaseButton) -> void:
 	if button == null or not is_instance_valid(button):
 		return
 	button.pivot_offset = button.size * 0.5
@@ -733,7 +670,7 @@ func _on_button_down(button: Button) -> void:
 	tween.tween_property(button, "scale", Vector2(0.95, 0.95), 0.05)
 
 
-func _on_button_up(button: Button) -> void:
+func _on_button_up(button: BaseButton) -> void:
 	if button == null or not is_instance_valid(button):
 		return
 	button.pivot_offset = button.size * 0.5
@@ -857,17 +794,17 @@ func _resolve_interaction_system() -> void:
 	interaction_system = get_node_or_null("/root/InteractionSystem")
 
 
-func _reset_button(button: Button) -> void:
+func _reset_button(button: BaseButton) -> void:
 	button.disabled = false
 	button.modulate.a = 1.0
 
 
-func _set_button_disabled(button: Button, disabled: bool) -> void:
+func _set_button_disabled(button: BaseButton, disabled: bool) -> void:
 	button.disabled = disabled
 	button.modulate.a = DISABLED_ALPHA if disabled else 1.0
 
 
-func _button_for_type(interaction_type: String) -> Button:
+func _button_for_type(interaction_type: String) -> BaseButton:
 	match interaction_type:
 		"feed":
 			return _feed_button

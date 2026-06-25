@@ -1,20 +1,29 @@
-[gd_scene load_steps=3 format=3 uid="uid://catwalk_catcard"]
+[gd_scene load_steps=25 format=3 uid="uid://catwalk_catcard"]
 
 [ext_resource type="Script" path="res://scenes/ui/CatCard.gd" id="1"]
-
-[sub_resource type="StyleBoxFlat" id="1"]
-content_margin_left = 0.0
-content_margin_top = 0.0
-content_margin_right = 0.0
-content_margin_bottom = 0.0
-bg_color = Color(0.980392, 0.964706, 0.941176, 1)
-corner_radius_top_left = 24
-corner_radius_top_right = 24
-corner_radius_bottom_left = 0
-corner_radius_bottom_right = 0
-corner_detail = 8
-shadow_color = Color(0.309804, 0.270588, 0.235294, 0.078431)
-shadow_size = 8
+[ext_resource type="Texture2D" uid="uid://51hx2aupuurh" path="res://assets/art/ui/catcard/catcard_panel.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://dhbvki27qc2ru" path="res://assets/art/ui/catcard/btn_feed_normal.png" id="3"]
+[ext_resource type="Texture2D" uid="uid://b7urt5uemb7e3" path="res://assets/art/ui/catcard/btn_feed_hover.png" id="4"]
+[ext_resource type="Texture2D" uid="uid://b8jkv231l3f1y" path="res://assets/art/ui/catcard/btn_feed_pressed.png" id="5"]
+[ext_resource type="Texture2D" uid="uid://d4ho07okddt5q" path="res://assets/art/ui/catcard/btn_feed_disabled.png" id="6"]
+[ext_resource type="Texture2D" uid="uid://cm5ex4b7i3rpb" path="res://assets/art/ui/catcard/btn_pet_normal.png" id="7"]
+[ext_resource type="Texture2D" uid="uid://bhohntfgp32i" path="res://assets/art/ui/catcard/btn_pet_hover.png" id="8"]
+[ext_resource type="Texture2D" uid="uid://cwcy3k4l5tkvi" path="res://assets/art/ui/catcard/btn_pet_pressed.png" id="9"]
+[ext_resource type="Texture2D" uid="uid://c3yc60eb1jekb" path="res://assets/art/ui/catcard/btn_pet_disabled.png" id="10"]
+[ext_resource type="Texture2D" uid="uid://ckggjpgdmvojf" path="res://assets/art/ui/catcard/btn_play_normal.png" id="11"]
+[ext_resource type="Texture2D" uid="uid://cjfafwkkcyjxb" path="res://assets/art/ui/catcard/btn_play_hover.png" id="12"]
+[ext_resource type="Texture2D" uid="uid://cbg1n0dapbvbm" path="res://assets/art/ui/catcard/btn_play_pressed.png" id="13"]
+[ext_resource type="Texture2D" uid="uid://dehvfvynxdqbi" path="res://assets/art/ui/catcard/btn_play_disabled.png" id="14"]
+[ext_resource type="Texture2D" uid="uid://cy8uw3cmxx8vp" path="res://assets/art/ui/catcard/btn_explore_normal.png" id="15"]
+[ext_resource type="Texture2D" uid="uid://buapwqlsf504o" path="res://assets/art/ui/catcard/btn_explore_hover.png" id="16"]
+[ext_resource type="Texture2D" uid="uid://g5esgb1atuk8" path="res://assets/art/ui/catcard/btn_explore_pressed.png" id="17"]
+[ext_resource type="Texture2D" uid="uid://cvdpqj0hsv67y" path="res://assets/art/ui/catcard/btn_explore_disabled.png" id="18"]
+[ext_resource type="Texture2D" uid="uid://df4jmuxl2t5a2" path="res://assets/art/ui/catcard/btn_adrefresh_normal.png" id="19"]
+[ext_resource type="Texture2D" uid="uid://cjtst1yin62c6" path="res://assets/art/ui/catcard/btn_adrefresh_hover.png" id="20"]
+[ext_resource type="Texture2D" uid="uid://livapruvqd5k" path="res://assets/art/ui/catcard/btn_adrefresh_pressed.png" id="21"]
+[ext_resource type="Texture2D" uid="uid://cn3p7ehp2vm8d" path="res://assets/art/ui/catcard/btn_adrefresh_disabled.png" id="22"]
+[ext_resource type="Texture2D" uid="uid://dmq6uqa4nobcc" path="res://assets/art/ui/catcard/btn_close_normal.png" id="23"]
+[ext_resource type="Texture2D" uid="uid://bxm533jjeeyvw" path="res://assets/art/ui/catcard/btn_close_hover.png" id="24"]
 
 [node name="CatCard" type="Control"]
 layout_mode = 3
@@ -28,53 +37,79 @@ script = ExtResource("1")
 
 [node name="Overlay" type="ColorRect" parent="."]
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_bottom = -640.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0, 0, 0, 0.45)
 mouse_filter = 1
 
-[node name="CardPanel" type="Panel" parent="."]
+[node name="CardTexture" type="TextureRect" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 7
+anchor_left = 0.5
 anchor_top = 1.0
-anchor_right = 1.0
+anchor_right = 0.5
 anchor_bottom = 1.0
-offset_top = -640.0
+offset_left = -300.0
+offset_top = -780.0
+offset_right = 300.0
+offset_bottom = 0.0
 grow_horizontal = 2
 grow_vertical = 0
-theme_override_styles/panel = SubResource("1")
+mouse_filter = 0
+texture = ExtResource("2")
+expand_mode = 1
+stretch_mode = 5
 
-[node name="CatDisplay" type="TextureRect" parent="CardPanel"]
+[node name="CloseButton" type="TextureButton" parent="CardTexture"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(36, 36)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -52.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = 52.0
+grow_horizontal = 0
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("23")
+texture_hover = ExtResource("24")
+texture_pressed = ExtResource("24")
+
+[node name="CatDisplay" type="TextureRect" parent="CardTexture"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 160.0
-offset_top = 40.0
-offset_right = -160.0
-offset_bottom = 290.0
+offset_left = 170.0
+offset_top = 80.0
+offset_right = -170.0
+offset_bottom = 340.0
 grow_horizontal = 2
 mouse_filter = 2
 expand_mode = 0
 stretch_mode = 5
 texture_filter = 1
 
-[node name="InfoRow" type="HBoxContainer" parent="CardPanel"]
+[node name="InfoRow" type="HBoxContainer" parent="CardTexture"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 32.0
-offset_top = 310.0
-offset_right = -32.0
-offset_bottom = 350.0
+offset_left = 40.0
+offset_top = 350.0
+offset_right = -40.0
+offset_bottom = 394.0
 grow_horizontal = 2
 theme_override_constants/separation = 16
 
-[node name="CatName" type="Label" parent="CardPanel/InfoRow"]
+[node name="CatName" type="Label" parent="CardTexture/InfoRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -83,106 +118,153 @@ theme_override_font_sizes/font_size = 24
 text = "猫咪"
 vertical_alignment = 1
 
-[node name="BreedRarityLabel" type="Label" parent="CardPanel/InfoRow"]
+[node name="BreedRarityLabel" type="Label" parent="CardTexture/InfoRow"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.635294, 0.592157, 0.54902, 1)
 theme_override_font_sizes/font_size = 16
 text = "橘猫 · 普通"
+horizontal_alignment = 2
 vertical_alignment = 1
 
-[node name="ButtonRow" type="HBoxContainer" parent="CardPanel"]
+[node name="ButtonRow" type="HBoxContainer" parent="CardTexture"]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 32.0
-offset_top = 365.0
-offset_right = -32.0
-offset_bottom = 425.0
+offset_top = 410.0
+offset_bottom = 462.0
 grow_horizontal = 2
-theme_override_constants/separation = 12
+alignment = 1
+theme_override_constants/separation = 8
 
-[node name="FeedButton" type="Button" parent="CardPanel/ButtonRow"]
+[node name="FeedButton" type="TextureButton" parent="CardTexture/ButtonRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 54)
+custom_minimum_size = Vector2(180, 52)
 layout_mode = 2
-size_flags_horizontal = 3
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("3")
+texture_hover = ExtResource("4")
+texture_pressed = ExtResource("5")
+texture_disabled = ExtResource("6")
+
+[node name="Label" type="Label" parent="CardTexture/ButtonRow/FeedButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
 theme_override_font_sizes/font_size = 18
 text = "🍖 喂食"
-
-[node name="PetButton" type="Button" parent="CardPanel/ButtonRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 54)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
-theme_override_font_sizes/font_size = 18
-text = "✋ 抚摸"
-
-[node name="PlayButton" type="Button" parent="CardPanel/ButtonRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 54)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
-theme_override_font_sizes/font_size = 18
-text = "🎾 玩耍"
-
-[node name="ExploreButton" type="Button" parent="CardPanel/ButtonRow"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 54)
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
-theme_override_font_sizes/font_size = 18
-text = "🧭 探索"
-
-[node name="StatusLabel" type="Label" parent="CardPanel"]
-unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 32.0
-offset_top = 435.0
-offset_right = -32.0
-offset_bottom = 465.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(0.635294, 0.592157, 0.54902, 1)
-theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="AdRefreshBtn" type="Button" parent="CardPanel"]
+[node name="PetButton" type="TextureButton" parent="CardTexture/ButtonRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 52)
+layout_mode = 2
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("7")
+texture_hover = ExtResource("8")
+texture_pressed = ExtResource("9")
+texture_disabled = ExtResource("10")
+
+[node name="Label" type="Label" parent="CardTexture/ButtonRow/PetButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
+theme_override_font_sizes/font_size = 18
+text = "✋ 抚摸"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayButton" type="TextureButton" parent="CardTexture/ButtonRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(180, 52)
+layout_mode = 2
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("11")
+texture_hover = ExtResource("12")
+texture_pressed = ExtResource("13")
+texture_disabled = ExtResource("14")
+
+[node name="Label" type="Label" parent="CardTexture/ButtonRow/PlayButton"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
+theme_override_font_sizes/font_size = 18
+text = "🎾 玩耍"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ExploreButton" type="TextureButton" parent="CardTexture"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 48)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -140.0
+offset_top = 475.0
+offset_right = 140.0
+offset_bottom = 523.0
+grow_horizontal = 2
+grow_vertical = 1
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("15")
+texture_hover = ExtResource("16")
+texture_pressed = ExtResource("17")
+texture_disabled = ExtResource("18")
+
+[node name="ExploreLabel" type="Label" parent="CardTexture/ExploreButton"]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = 32.0
-offset_top = 470.0
-offset_right = -32.0
-offset_bottom = 500.0
+anchor_bottom = 1.0
 grow_horizontal = 2
-theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
-theme_override_font_sizes/font_size = 16
-text = "⚡ 看广告刷新冷却 🎬"
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.352941, 0.309804, 0.270588, 1)
+theme_override_font_sizes/font_size = 17
+text = "🧭 探索"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="ExploreStatePanel" type="VBoxContainer" parent="CardPanel"]
+[node name="ExploreStatePanel" type="VBoxContainer" parent="CardTexture"]
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 32.0
-offset_top = 365.0
-offset_right = -32.0
-offset_bottom = 425.0
+offset_left = 40.0
+offset_top = 405.0
+offset_right = -40.0
+offset_bottom = 465.0
 grow_horizontal = 2
 theme_override_constants/separation = 4
 
-[node name="ExploringLabel" type="Label" parent="CardPanel/ExploreStatePanel"]
+[node name="ExploringLabel" type="Label" parent="CardTexture/ExploreStatePanel"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -191,7 +273,7 @@ theme_override_font_sizes/font_size = 16
 text = "猫咪正在探索"
 horizontal_alignment = 1
 
-[node name="CountdownLabel" type="Label" parent="CardPanel/ExploreStatePanel"]
+[node name="CountdownLabel" type="Label" parent="CardTexture/ExploreStatePanel"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -200,7 +282,7 @@ theme_override_font_sizes/font_size = 20
 text = "返回倒计时 00:00"
 horizontal_alignment = 1
 
-[node name="ReturnTimeLabel" type="Label" parent="CardPanel/ExploreStatePanel"]
+[node name="ReturnTimeLabel" type="Label" parent="CardTexture/ExploreStatePanel"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -209,8 +291,115 @@ theme_override_font_sizes/font_size = 13
 text = "预计返回 --:--"
 horizontal_alignment = 1
 
-[connection signal="pressed" from="CardPanel/ButtonRow/FeedButton" to="." method="_on_feed_pressed"]
-[connection signal="pressed" from="CardPanel/ButtonRow/PetButton" to="." method="_on_pet_pressed"]
-[connection signal="pressed" from="CardPanel/ButtonRow/PlayButton" to="." method="_on_play_pressed"]
-[connection signal="pressed" from="CardPanel/ButtonRow/ExploreButton" to="." method="_on_explore_button_pressed"]
-[connection signal="pressed" from="CardPanel/AdRefreshBtn" to="." method="_on_ad_refresh_pressed"]
+[node name="StatusLabel" type="Label" parent="CardTexture"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 40.0
+offset_top = 530.0
+offset_right = -40.0
+offset_bottom = 560.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(0.635294, 0.592157, 0.54902, 1)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="AdRefreshBtn" type="TextureButton" parent="CardTexture"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(280, 48)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.0
+anchor_right = 0.5
+anchor_bottom = 0.0
+offset_left = -140.0
+offset_top = 570.0
+offset_right = 140.0
+offset_bottom = 618.0
+grow_horizontal = 2
+grow_vertical = 1
+ignore_texture_size = true
+stretch_mode = 0
+texture_normal = ExtResource("19")
+texture_hover = ExtResource("20")
+texture_pressed = ExtResource("21")
+texture_disabled = ExtResource("22")
+
+[node name="AdRefreshLabel" type="Label" parent="CardTexture/AdRefreshBtn"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.352941, 0.309804, 0.270588, 1)
+theme_override_font_sizes/font_size = 16
+text = "⚡ 看广告刷新冷却 🎬"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BottomRow" type="HBoxContainer" parent="CardTexture"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 40.0
+offset_top = 700.0
+offset_right = -40.0
+offset_bottom = 744.0
+grow_horizontal = 2
+alignment = 1
+theme_override_constants/separation = 24
+
+[node name="DetailLink" type="TextureButton" parent="CardTexture/BottomRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+
+[node name="Label" type="Label" parent="CardTexture/BottomRow/DetailLink"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.352941, 0.309804, 0.270588, 1)
+theme_override_font_sizes/font_size = 15
+text = "查看详情 ›"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RelinquishButton" type="TextureButton" parent="CardTexture/BottomRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+
+[node name="RelinquishLabel" type="Label" parent="CardTexture/BottomRow/RelinquishButton"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.352941, 0.309804, 0.270588, 1)
+theme_override_font_sizes/font_size = 15
+text = "💕 送养"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[connection signal="pressed" from="CardTexture/CloseButton" to="." method="_play_close_animation"]
+[connection signal="pressed" from="CardTexture/ButtonRow/FeedButton" to="." method="_on_feed_pressed"]
+[connection signal="pressed" from="CardTexture/ButtonRow/PetButton" to="." method="_on_pet_pressed"]
+[connection signal="pressed" from="CardTexture/ButtonRow/PlayButton" to="." method="_on_play_pressed"]
+[connection signal="pressed" from="CardTexture/ExploreButton" to="." method="_on_explore_button_pressed"]
+[connection signal="pressed" from="CardTexture/AdRefreshBtn" to="." method="_on_ad_refresh_pressed"]
+[connection signal="pressed" from="CardTexture/BottomRow/DetailLink" to="." method="_on_detail_link_pressed"]
+[connection signal="pressed" from="CardTexture/BottomRow/RelinquishButton" to="." method="_on_relinquish_pressed"]
