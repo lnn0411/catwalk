@@ -128,6 +128,10 @@ func instance_cat(cat_data, entrance: bool = false, in_view: bool = true):
 	if cat_node.has_signal("cat_clicked"):
 		cat_node.cat_clicked.connect(_on_cat_clicked)
 
+	# 同步「探索中」徽标显隐
+	if ExploreEngine and cat_node.has_method("set_exploring"):
+		cat_node.set_exploring(ExploreEngine.is_exploring(cat_id))
+
 	var tween := create_tween()
 	tween.tween_property(cat_node, "modulate:a", 1.0, 0.5)
 
@@ -289,7 +293,10 @@ func _restore_cats() -> void:
 	for cat_data in visible_cats:
 		var cat_id := _get_cat_id(cat_data)
 		print("[CatSpawner] _restore_cats: cat=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_id])
-		instance_cat(cat_data, false, true)
+		var cat_node = instance_cat(cat_data, false, true)
+		# 已在场的猫走 instance_cat 早返回不会刷新徽标，这里兜底同步探索状态
+		if cat_node and ExploreEngine and cat_node.has_method("set_exploring"):
+			cat_node.set_exploring(ExploreEngine.is_exploring(cat_id))
 	for cat_data in resting_cats:
 		var cat_id := _get_cat_id(cat_data)
 		print("[CatSpawner] _restore_cats: resting cat=%s id=%s" % [cat_data.display_name if cat_data else "null", cat_id])

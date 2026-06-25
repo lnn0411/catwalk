@@ -123,6 +123,7 @@ var _turn_cooldown := 0.0
 var _wander_timer: Timer
 var _bounce_tween: Tween
 var _card_open := false  # CatCard 打开时锁住移动
+var _explore_badge: Label  # 探索中头顶徽标（🧭 探索中），由 set_exploring 控制显隐
 
 
 func _ready() -> void:
@@ -141,6 +142,19 @@ func _ready() -> void:
 	companion_icon.size = Vector2(24, 24)
 	companion_icon.visible = false
 	add_child(companion_icon)
+
+	# 探索中徽标（🧭 探索中，头顶右上角显示，默认隐藏）
+	var explore_badge := Label.new()
+	explore_badge.name = "ExploreBadge"
+	explore_badge.text = "🧭 探索中"
+	explore_badge.add_theme_color_override("font_color", Color(1, 1, 1))
+	explore_badge.add_theme_font_size_override("font_size", 20)
+	explore_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	explore_badge.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	explore_badge.position = Vector2(20, -80)
+	explore_badge.visible = false
+	add_child(explore_badge)
+	_explore_badge = explore_badge
 
 	_setup_sprite()
 	_load_frames()
@@ -704,6 +718,13 @@ func set_wander_bounds(x_min: float, x_max: float, y_min: float, y_max: float) -
 	# 如果猫当前在范围外，拉回
 	position.x = clampf(position.x, wander_x_min, wander_x_max)
 	position.y = clampf(position.y, wander_y_min, wander_y_max)
+
+
+# 显隐「探索中」头顶徽标（猫被派遣探索时显示）
+func set_exploring(exploring: bool) -> void:
+	if _explore_badge == null:
+		return
+	_explore_badge.visible = exploring
 
 
 # CatCard 打开/关闭时冻结/恢复移动

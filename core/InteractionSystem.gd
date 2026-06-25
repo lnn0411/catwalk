@@ -310,6 +310,17 @@ func reset_all() -> void:
 	_save_cooldowns()
 
 
+# 清除指定猫的全部冷却（看广告刷新冷却入口）
+func clear_cat_cooldowns(cat_id: String) -> void:
+	if cat_id == "":
+		return
+	if _cat_cooldowns.has(cat_id):
+		_cat_cooldowns.erase(cat_id)
+		_save_cooldowns()
+	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
+		current_cat_card.refresh_interaction_buttons()
+
+
 # 测试辅助：把某只猫某类型「上次互动时间」设为 seconds_ago 秒前
 # 在「结束时间戳」模型下等价于 end = now - seconds_ago + cooldown
 func _override_last_interact(cat_id: String, type: String, seconds_ago: float) -> void:

@@ -12,6 +12,9 @@ const BTN_DISABLED := Color("#2C2218")
 const BTN_TEXT_DISABLED := Color("#665544")
 const DISABLED_ALPHA := 0.4
 const CatData := preload("res://core/CatData.gd")
+const AD_REFRESH_CFG := "user://ad_refresh.cfg"
+const AD_REFRESH_SECTION := "ad_refresh"
+const AD_REFRESH_MAX := 2
 
 var cat_id: String = ""
 var cat_data
@@ -32,6 +35,7 @@ var _relinquish_button: Button
 @onready var _return_time_label: Label = %ReturnTimeLabel
 @onready var _status_label: Label = %StatusLabel
 @onready var _cat_display: TextureRect = %CatDisplay
+@onready var _ad_refresh_btn: Button = %AdRefreshBtn
 
 var _cooldown_timer: Timer
 var _explore_countdown_timer: Timer
@@ -57,10 +61,12 @@ func _ready() -> void:
 	_connect_button_feedback(_pet_button)
 	_connect_button_feedback(_play_button)
 	_connect_button_feedback(_explore_button)
+	_connect_button_feedback(_ad_refresh_btn)
 	_resolve_interaction_system()
 	_refresh_cat_info()
 	_check_explore_state()
 	refresh_interaction_buttons()
+	_update_ad_refresh_button()
 	# 遮罩点击关闭
 	var overlay := get_node_or_null("Overlay") as ColorRect
 	if overlay:
@@ -76,12 +82,14 @@ func setup(c_id: String, c_data, screen_pos: Vector2) -> void:
 	_refresh_cat_info()
 	_check_explore_state()
 	refresh_interaction_buttons()
+	_update_ad_refresh_button()
 	_load_cat_frames()
 
 
 func refresh_interaction_buttons() -> void:
 	if not is_inside_tree():
 		return
+	_update_ad_refresh_button()
 	if _feed_button == null or _pet_button == null or _play_button == null:
 		return
 	if _check_explore_state():
@@ -195,6 +203,66 @@ func _on_play_pressed() -> void:
 	print("[CatCard]   play _do_interaction success=%s cooldown before=%.1f after=%.1f" % [ok, cd_before, cd_after])
 	_play_action_anim("playing")
 	_show_feedback("🎾 玩得好开心！")
+
+
+# ── 看广告刷新冷却 ──
+func _on_ad_refresh_pressed() -> void:
+	if _ad_refresh_btn == null or _ad_refresh_btn.disabled:
+		return
+	if cat_id == "" and cat_data != null:
+		cat_id = _get_cat_property("id", "")
+	if cat_id == "":
+		_show_feedback("暂时找不到这只猫")
+		return
+	var count := _get_ad_refresh_count()
+	if count >= AD_REFRESH_MAX:
+		_update_ad_refresh_button()
+		return
+	# 清除这只猫的全部冷却
+	_resolve_interaction_system()
+	if interaction_system != null and interaction_system.has_method("clear_cat_cooldowns"):
+		interaction_system.clear_cat_cooldowns(cat_id)
+	count += 1
+	_save_ad_refresh_count(count)
+	_show_feedback("⚡ 冷却已刷新")
+	_update_ad_refresh_button()
+	refresh_interaction_buttons()
+
+
+func _update_ad_refresh_button() -> void:
+	if _ad_refresh_btn == null:
+		return
+	var count := _get_ad_refresh_count()
+	if count >= AD_REFRESH_MAX:
+		_ad_refresh_btn.text = "今日已用完(2/2)"
+		_set_button_disabled(_ad_refresh_btn, true)
+	else:
+		_ad_refresh_btn.text = "⚡ 看广告刷新冷却 🎬"
+		_set_button_disabled(_ad_refresh_btn, false)
+
+
+func _ad_refresh_today_string() -> String:
+	var dt := Time.get_datetime_dict_from_system()
+	return "%04d-%02d-%02d" % [int(dt.get("year", 0)), int(dt.get("month", 0)), int(dt.get("day", 0))]
+
+
+# 读取今天的刷新次数；存档日期非今天则视为 0（每日重置）
+func _get_ad_refresh_count() -> int:
+	var cfg := ConfigFile.new()
+	if cfg.load(AD_REFRESH_CFG) != OK:
+		return 0
+	var saved_date := String(cfg.get_value(AD_REFRESH_SECTION, "refresh_date", ""))
+	if saved_date != _ad_refresh_today_string():
+		return 0
+	return int(cfg.get_value(AD_REFRESH_SECTION, "refresh_count", 0))
+
+
+func _save_ad_refresh_count(count: int) -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(AD_REFRESH_CFG)
+	cfg.set_value(AD_REFRESH_SECTION, "refresh_count", count)
+	cfg.set_value(AD_REFRESH_SECTION, "refresh_date", _ad_refresh_today_string())
+	cfg.save(AD_REFRESH_CFG)
 
 
 func _on_relinquish_pressed() -> void:
@@ -581,6 +649,7 @@ func _apply_theme() -> void:
 	_style_button(_pet_button)
 	_style_button(_play_button)
 	_style_button(_explore_button)
+	_style_button(_ad_refresh_btn)
 	if _relinquish_button:
 		_style_button(_relinquish_button)
 

@@ -143,6 +143,17 @@ theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="AdRefreshBtn" type="Button" parent="CardPanel"]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 32.0
+offset_top = 470.0
+offset_right = -32.0
+offset_bottom = 500.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "⚡ 看广告刷新冷却 🎬"
+
 [node name="ExploreStatePanel" type="VBoxContainer" parent="CardPanel"]
 unique_name_in_owner = true
 visible = false
@@ -184,3 +195,4 @@ horizontal_alignment = 1
 [connection signal="pressed" from="CardPanel/ButtonRow/PetButton" to="." method="_on_pet_pressed"]
 [connection signal="pressed" from="CardPanel/ButtonRow/PlayButton" to="." method="_on_play_pressed"]
 [connection signal="pressed" from="CardPanel/ButtonRow/ExploreButton" to="." method="_on_explore_button_pressed"]
+[connection signal="pressed" from="CardPanel/AdRefreshBtn" to="." method="_on_ad_refresh_pressed"]
