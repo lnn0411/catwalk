@@ -38,10 +38,18 @@ const CITY_GRAY       = Color("A2978C")   # → 新 TEXT_SECONDARY
 const MIST_BLUE       = Color("D2E4EC")   # → 新 MIST
 const BRICK_RED       = Color("B5553C")   # → 新 BRICK
 const MOSS_GREEN      = Color("7A9E6E")   # → 新 MOSS
+const MILK_WHITE      = Color("FAF6F0")   # 旧背景白
+const BG_NIGHT_OVERLAY = Color("7A8A9640")# 旧夜间氛围
 # 猫毛色（旧临时值，暂保留兼容）
-const CAT_ORANGE_MID  = Color("D4834A")
-const CAT_BRIT_MID    = Color("9AA0A8")
-const CAT_SIAM_BODY   = Color("E8D5C0")
+const CAT_ORANGE_MID   = Color("D4834A")
+const CAT_ORANGE_LIGHT = Color("E8B87A")
+const CAT_ORANGE_HIGH  = Color("F2D4A8")
+const CAT_BRIT_MID     = Color("9AA0A8")
+const CAT_BRIT_LIGHT   = Color("C4C9CE")
+const CAT_BRIT_HIGH    = Color("E4E8EA")
+const CAT_SIAM_BODY    = Color("E8D5C0")
+const CAT_SIAM_POINT   = Color("4A3728")
+const CAT_SIAM_HIGH    = Color("F5EDE4")
 
 # ===== 阴影（暖棕层级）=====
 const UI_SHADOW       := Color("4F453C14")  # 8%  低层 卡片
