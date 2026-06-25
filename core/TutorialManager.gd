@@ -120,7 +120,7 @@ func _step_03_hatch() -> void:
 	_clear_step_ui()
 	_hatch_pending = false
 	_hatch_fired = false
-	_create_bubble("🐣 点击底部导航的蛋图标进入孵化屋！", false, 0.0, _above_highlight())
+	_create_bubble("🐣 点击底部导航的蛋图标，去看看猫咪是怎么孵出来的~", true, 0.0, _above_highlight())
 
 
 func _step_04_interact() -> void:
@@ -252,9 +252,7 @@ func _advance_from_ack() -> void:
 	if current_step == Step.ENERGY:
 		_step_03_hatch()
 	elif current_step == Step.HATCH:
-		_clear_step_ui()
-		_hatch_pending = true
-		_start_hatch_timeout()
+		_on_cat_hatched()
 	elif current_step == Step.EXPLORE:
 		_complete()
 
