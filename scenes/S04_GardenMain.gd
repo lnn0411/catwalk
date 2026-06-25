@@ -63,7 +63,6 @@ var _snow_particles: CPUParticles2D
 var _weather_tween: Tween
 var _last_blend := -1.0
 var _stats_visible := false
-var _debug_panel: PanelContainer
 func _ready() -> void:
 	super()
 	_load_frame_textures()
