@@ -928,12 +928,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed and _is_in_garden(event.position):
 			get_viewport().set_input_as_handled()
-			# L1 单击猫咪只飘爱心（不弹 CatCard）
-			var l1_cat = _find_cat_at(event.position)
-			if l1_cat != null:
-				var l1_node = CatSpawner.get_cat_node(l1_cat) if CatSpawner else null
-				if l1_node != null and l1_node.has_method("_play_click_feedback"):
-					l1_node._play_click_feedback()
 			# 双击检测（仅用本地时间，Windows 可能在单次点击同时发 mouse 和 touch 两个事件）
 			var now := Time.get_ticks_msec() / 1000.0
 			var is_double_tap := now - _last_tap_time < DOUBLE_TAP_TIME and now - _last_touch_time >= 0.05
@@ -946,7 +940,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_cycle_garden_zoom(event.position)
 				_dragging = false
 				return
-			# L2+ 检测猫咪点击
+			# 单击：命中猫咪先飘爱心（任意缩放级别 L1/L2+ 都飘）
+			_play_cat_click_heart_at(event.position)
+			# L2+ 单击猫咪 → 在飘爱心之外，再弹 CatCard
 			if _zoom_factor >= ZOOM_L2 and _emit_cat_click_at(event.position):
 				_dragging = false
 				return
@@ -967,12 +963,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventScreenTouch:
 		if event.pressed and _is_in_garden(event.position):
 			get_viewport().set_input_as_handled()
-			# L1 单击猫咪只飘爱心（不弹 CatCard）
-			var l1_cat = _find_cat_at(event.position)
-			if l1_cat != null:
-				var l1_node = CatSpawner.get_cat_node(l1_cat) if CatSpawner else null
-				if l1_node != null and l1_node.has_method("_play_click_feedback"):
-					l1_node._play_click_feedback()
 			var now := Time.get_ticks_msec() / 1000.0
 			var is_double_tap := now - _last_touch_time < DOUBLE_TAP_TIME and now - _last_tap_time >= 0.05
 			_last_touch_time = now
@@ -984,7 +974,9 @@ func _unhandled_input(event: InputEvent) -> void:
 				_cycle_garden_zoom(event.position)
 				_dragging = false
 				return
-			# L2+ 单击猫咪 → 弹 CatCard
+			# 单击：命中猫咪先飘爱心（任意缩放级别 L1/L2+ 都飘）
+			_play_cat_click_heart_at(event.position)
+			# L2+ 单击猫咪 → 在飘爱心之外，再弹 CatCard
 			if _zoom_factor >= ZOOM_L2 and _emit_cat_click_at(event.position):
 				_dragging = false
 				return
@@ -1076,6 +1068,16 @@ func _emit_cat_click_at(screen_pos: Vector2) -> bool:
 	var cid := str(best_cat.id) if best_cat != null else ""
 	cat_clicked.emit(cid, screen_pos)
 	return true
+
+# 单击命中猫咪时让它飘爱心（弹跳+♥），不发射信号、不弹 CatCard。
+# L1/L2+ 单击都会调用：L1 仅飘心，L2+ 飘心之外另走 _emit_cat_click_at 弹卡。
+func _play_cat_click_heart_at(screen_pos: Vector2) -> void:
+	var cat = _find_cat_at(screen_pos)
+	if cat == null:
+		return
+	var cat_node = CatSpawner.get_cat_node(cat) if CatSpawner else null
+	if cat_node != null and cat_node.has_method("_play_click_feedback"):
+		cat_node._play_click_feedback()
 
 # 检测指定屏幕位置是否有猫咪（不发射信号）
 func _find_cat_at(screen_pos: Vector2):
