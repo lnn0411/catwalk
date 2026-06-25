@@ -11,8 +11,8 @@ var cat_id: String = ""
 var cat_data
 var interaction_system
 
-@onready var _card_background: ColorRect = %CardBackground
-@onready var _avatar_rect: TextureRect = %AvatarRect
+@onready var _card_background: ColorRect = %CardPanel
+@onready var _avatar_rect: TextureRect = %CatDisplay
 @onready var _name_label: Label = %CatName
 @onready var _meta_label: Label = %BreedRarityLabel
 @onready var _feed_button: Button = %FeedButton
@@ -25,7 +25,7 @@ var _relinquish_button: Button
 @onready var _countdown_label: Label = %CountdownLabel
 @onready var _return_time_label: Label = %ReturnTimeLabel
 @onready var _status_label: Label = %StatusLabel
-@onready var _adopt_button: Button = %AdoptButton
+@onready var _cat_display: TextureRect = %CatDisplay
 
 var _cooldown_timer: Timer
 var _explore_countdown_timer: Timer
@@ -33,6 +33,10 @@ var _is_exploring_this_cat := false
 var _screen_pos := Vector2.ZERO
 var _closing := false
 var _feedback_until := 0.0
+var _frames_cache: Dictionary = {}
+var _anim_timer: Timer
+var _anim_frames: Array[Texture2D] = []
+var _anim_index: int = 0
 
 
 func _ready() -> void:
@@ -42,10 +46,15 @@ func _ready() -> void:
 	_setup_cooldown_timer()
 	_style_button(_explore_button)
 	_setup_explore_countdown_timer()
+	_setup_anim_timer()
 	_resolve_interaction_system()
 	_refresh_cat_info()
 	_check_explore_state()
 	refresh_interaction_buttons()
+	# 遮罩点击关闭
+	var overlay := get_node_or_null("Overlay") as ColorRect
+	if overlay:
+		overlay.gui_input.connect(_on_overlay_clicked)
 	_play_open_animation()
 
 
@@ -57,6 +66,7 @@ func setup(c_id: String, c_data, screen_pos: Vector2) -> void:
 	_refresh_cat_info()
 	_check_explore_state()
 	refresh_interaction_buttons()
+	_load_cat_frames()
 
 
 func refresh_interaction_buttons() -> void:
@@ -123,6 +133,7 @@ func _on_feed_pressed() -> void:
 	if _feed_button.disabled:
 		return
 	_do_interaction("feed")
+	_play_action_anim("eating")
 	_show_feedback("🍖 喂食成功！")
 
 
@@ -130,6 +141,7 @@ func _on_pet_pressed() -> void:
 	if _pet_button.disabled:
 		return
 	_do_interaction("pet")
+	_play_action_anim("petting")
 	_show_feedback("✋ 摸摸头~")
 
 
@@ -137,6 +149,7 @@ func _on_play_pressed() -> void:
 	if _play_button.disabled:
 		return
 	_do_interaction("play")
+	_play_action_anim("playing")
 	_show_feedback("🎾 玩得好开心！")
 
 
@@ -725,6 +738,100 @@ func _species_color(species: String) -> Color:
 			return Palette.CAT_SIAM_BODY
 		_:
 			return Palette.CAT_ORANGE_MID
+
+# ── 猫咪展示 ──
+
+func _setup_anim_timer() -> void:
+	_anim_timer = Timer.new()
+	_anim_timer.one_shot = true
+	_anim_timer.timeout.connect(_on_anim_tick)
+	add_child(_anim_timer)
+
+func _on_anim_tick() -> void:
+	_anim_index += 1
+	if _anim_index >= _anim_frames.size():
+		# 回到 idle
+		_load_idle_frame()
+		return
+	if _anim_index < _anim_frames.size():
+		_cat_display.texture = _anim_frames[_anim_index]
+		_anim_timer.start(0.15)
+
+func _load_idle_frame() -> void:
+	if _cat_display == null:
+		return
+	var breed := ""
+	if cat_data != null:
+		breed = String(cat_data.get("species", cat_data.get("breed", "orange")) if cat_data is Dictionary else cat_data.species)
+	var dir := _breed_dir(breed)
+	var path := "res://assets/art/cats/%s/idle_frame_00.png" % dir
+	if ResourceLoader.exists(path):
+		_cat_display.texture = load(path)
+
+func _load_cat_frames() -> void:
+	if _cat_display == null:
+		return
+	var breed := ""
+	if cat_data != null:
+		breed = String(cat_data.get("species", cat_data.get("breed", "orange")) if cat_data is Dictionary else cat_data.species)
+	var dir := _breed_dir(breed)
+	# 缓存 breed 的所有帧
+	if _frames_cache.has(breed):
+		_load_idle_frame()
+		return
+	var anims := ["idle", "walk_right"]
+	var cache: Dictionary = {}
+	for anim in anims:
+		var frames: Array[Texture2D] = []
+		for i in range(4):
+			var p := "res://assets/art/cats/%s/%s_frame_%02d.png" % [dir, anim, i]
+			if ResourceLoader.exists(p):
+				frames.append(load(p))
+		cache[anim] = frames
+	_frames_cache[breed] = cache
+	_load_idle_frame()
+
+func _play_action_anim(action: String) -> void:
+	if _frames_cache.is_empty():
+		return
+	var breed := ""
+	if cat_data != null:
+		breed = String(cat_data.get("species", cat_data.get("breed", "orange")) if cat_data is Dictionary else cat_data.species)
+	var cache: Dictionary = _frames_cache.get(breed, {})
+	var frames: Array[Texture2D] = []
+	match action:
+		"eating":
+			frames = cache.get("walk_right", [])
+		"petting":
+			frames = cache.get("idle", [])
+		"playing":
+			frames = cache.get("walk_right", [])
+	if frames.is_empty():
+		return
+	_anim_frames = frames
+	_anim_index = 0
+	_cat_display.texture = frames[0]
+	_anim_timer.start(0.18)
+
+func _stop_action_anim() -> void:
+	_anim_timer.stop()
+	_load_idle_frame()
+
+func _breed_dir(breed: String) -> String:
+	match breed:
+		"orange", "orange_tabby":
+			return "orange"
+		"british", "british_shorthair":
+			return "british"
+		"siamese":
+			return "siamese"
+		_:
+			return "orange"
+
+# 遮罩点击关闭
+func _on_overlay_clicked(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		_play_close_animation()
 
 
 func _make_avatar_texture(color: Color) -> Texture2D:
