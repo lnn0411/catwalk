@@ -715,12 +715,11 @@ func _is_interaction_blocked(interaction_type: String) -> bool:
 	_resolve_interaction_system()
 	if interaction_system == null:
 		return false
+	# 按这只猫单独判定冷却（注意参数顺序：type, cat_id）
 	if _has_interaction_method("is_interaction_blocked"):
-		return _call_interaction("is_interaction_blocked", interaction_type, false)
+		return bool(interaction_system.is_interaction_blocked(interaction_type, cat_id))
 	if _has_interaction_method("can_interact"):
-		return not _call_interaction("can_interact", interaction_type, true)
-	if _has_interaction_method("can_interact_global"):
-		return not _call_interaction("can_interact_global", interaction_type, true)
+		return not bool(interaction_system.can_interact(cat_id, interaction_type))
 	return false
 
 
@@ -728,10 +727,11 @@ func _get_cooldown_remaining(interaction_type: String) -> float:
 	_resolve_interaction_system()
 	if interaction_system == null:
 		return 0.0
+	# 优先使用按猫查询的接口
+	if _has_interaction_method("cat_cooldown_remaining"):
+		return float(interaction_system.cat_cooldown_remaining(cat_id, interaction_type))
 	if _has_interaction_method("get_cooldown_remaining"):
-		return float(_call_interaction("get_cooldown_remaining", interaction_type, 0.0))
-	if _has_interaction_method("get_global_cooldown_remaining"):
-		return float(_call_interaction("get_global_cooldown_remaining", interaction_type, 0.0))
+		return float(interaction_system.get_cooldown_remaining(interaction_type))
 	return 0.0
 
 

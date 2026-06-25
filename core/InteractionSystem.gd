@@ -12,46 +12,15 @@ const DEBUG_PLAY_COOLDOWN := 60.0
 const SAVE_PATH: String = "user://interaction.cfg"
 
 var current_cat_card: Control = null
-var feed_cooldown_active: bool = false
-var pet_cooldown_active: bool = false
-var play_cooldown_active: bool = false
-var photo_cooldown_active: bool = false
 var _locked_cat_id: String = ""  # CatCard 打开时锁住这只猫的移动
-var _feed_timer: Timer
-var _pet_timer: Timer
-var _play_timer: Timer
-var _photo_timer: Timer
+# 每只猫各自的冷却结束时间戳（unix 秒）：
+# { "cat_id": { "feed": end_ts, "pet": end_ts, "play": end_ts, "photo": end_ts } }
+var _cat_cooldowns: Dictionary = {}
 var _bound_garden: Node = null
 var _cat_card_layer: CanvasLayer = null
 var _affection: Dictionary = {}
 func _ready() -> void:
-	_feed_timer = Timer.new()
-	_feed_timer.name = "FeedCooldownTimer"
-	_feed_timer.one_shot = true
-	_feed_timer.wait_time = _get_feed_cooldown()
-	_feed_timer.timeout.connect(_on_feed_cooldown_done)
-	add_child(_feed_timer)
-
-	_pet_timer = Timer.new()
-	_pet_timer.name = "PetCooldownTimer"
-	_pet_timer.one_shot = true
-	_pet_timer.wait_time = _get_pet_cooldown()
-	_pet_timer.timeout.connect(_on_pet_cooldown_done)
-	add_child(_pet_timer)
-
-	_play_timer = Timer.new()
-	_play_timer.name = "PlayCooldownTimer"
-	_play_timer.one_shot = true
-	_play_timer.wait_time = _get_play_cooldown()
-	_play_timer.timeout.connect(_on_play_cooldown_done)
-	add_child(_play_timer)
-
-	_photo_timer = Timer.new()
-	_photo_timer.name = "PhotoCooldownTimer"
-	_photo_timer.one_shot = true
-	_photo_timer.wait_time = _get_photo_cooldown()
-	_photo_timer.timeout.connect(_on_photo_cooldown_done)
-	add_child(_photo_timer)
+	_load_cooldowns()
 
 	_try_find_garden()
 	if _bound_garden == null and UIManager != null:
@@ -140,86 +109,53 @@ func _close_cat_card() -> void:
 	current_cat_card = null
 
 
-func is_interaction_blocked(type: String) -> bool:
-	match type:
-		"feed":
-			return feed_cooldown_active
-		"pet":
-			return pet_cooldown_active
-		"play":
-			return play_cooldown_active
-		"photo":
-			return photo_cooldown_active
-		_:
-			return false
+# 这只猫的某个互动类型是否仍在冷却中
+func is_interaction_blocked(type: String, cat_id: String) -> bool:
+	return cat_cooldown_remaining(cat_id, type) > 0.0
 
 
-func start_cooldown(type: String) -> void:
-	match type:
-		"feed":
-			feed_cooldown_active = true
-			_feed_timer.start(_get_feed_cooldown())
-		"pet":
-			pet_cooldown_active = true
-			_pet_timer.start(_get_pet_cooldown())
-		"play":
-			play_cooldown_active = true
-			_play_timer.start(_get_play_cooldown())
-		"photo":
-			photo_cooldown_active = true
-			_photo_timer.start(_get_photo_cooldown())
-		_:
-			pass
+# 开始这只猫的某个互动冷却：记录冷却结束的时间戳
+func start_cooldown(type: String, cat_id: String) -> void:
+	if cat_id == "":
+		return
+	var seconds := _get_cooldown_seconds(type)
+	if seconds <= 0.0:
+		return
+	var per_type = _cat_cooldowns.get(cat_id, {})
+	if not (per_type is Dictionary):
+		per_type = {}
+	per_type[type] = Time.get_unix_time_from_system() + seconds
+	_cat_cooldowns[cat_id] = per_type
+	_save_cooldowns()
 	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
 		current_cat_card.refresh_interaction_buttons()
 
 
-func _on_feed_cooldown_done() -> void:
-	feed_cooldown_active = false
-	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
-		current_cat_card.refresh_interaction_buttons()
+# 这只猫某个互动类型剩余冷却秒数；不在冷却中返回 0
+func cat_cooldown_remaining(cat_id: String, type: String) -> float:
+	if cat_id == "" or not _cat_cooldowns.has(cat_id):
+		return 0.0
+	var per_type = _cat_cooldowns[cat_id]
+	if not (per_type is Dictionary) or not per_type.has(type):
+		return 0.0
+	var end_ts = per_type[type]
+	var remaining = float(end_ts) - Time.get_unix_time_from_system()
+	return remaining if remaining > 0.0 else 0.0
 
 
-func _on_pet_cooldown_done() -> void:
-	pet_cooldown_active = false
-	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
-		current_cat_card.refresh_interaction_buttons()
-
-
-func _on_play_cooldown_done() -> void:
-	play_cooldown_active = false
-	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
-		current_cat_card.refresh_interaction_buttons()
-
-
-func _on_photo_cooldown_done() -> void:
-	photo_cooldown_active = false
-	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
-		current_cat_card.refresh_interaction_buttons()
-
-
+# 兼容旧调用方：返回当前打开的 CatCard 这只猫的剩余冷却
 func get_cooldown_remaining(type: String) -> float:
-	match type:
-		"feed":
-			return _feed_timer.time_left if feed_cooldown_active else 0.0
-		"pet":
-			return _pet_timer.time_left if pet_cooldown_active else 0.0
-		"play":
-			return _play_timer.time_left if play_cooldown_active else 0.0
-		"photo":
-			return _photo_timer.time_left if photo_cooldown_active else 0.0
-		_:
-			return 0.0
+	return cat_cooldown_remaining(_locked_cat_id, type)
 
 
 func try_interact(cat_id: String, type: String) -> bool:
-	if cat_id == "" or is_interaction_blocked(type):
+	if cat_id == "" or is_interaction_blocked(type, cat_id):
 		return false
 	if EmotionStateMachine != null and EmotionStateMachine.is_annoyed(cat_id):
 		return false
 
 	if type in ["feed", "pet", "play", "photo"]:
-		start_cooldown(type)
+		start_cooldown(type, cat_id)
 		# Accumulate affection
 		var gain := _get_affection_gain(type)
 		_affection[cat_id] = _affection.get(cat_id, 0) + gain
@@ -269,9 +205,9 @@ func get_affection(cat_id: String) -> int:
 	return _affection.get(cat_id, 0)
 
 
-# 兼容旧 HUD 按钮冷却判定
-func can_interact(_cat_id: String, type: String) -> bool:
-	return not is_interaction_blocked(type)
+# 兼容旧 HUD 按钮冷却判定（按猫判定）
+func can_interact(cat_id: String, type: String) -> bool:
+	return not is_interaction_blocked(type, cat_id)
 
 
 static func get_cooldown_minutes(type: String) -> int:
@@ -290,6 +226,21 @@ static func get_cooldown_minutes(type: String) -> int:
 			return 0
 
 
+# 互动类型对应的冷却秒数
+func _get_cooldown_seconds(type: String) -> float:
+	match type:
+		"feed":
+			return _get_feed_cooldown()
+		"pet":
+			return _get_pet_cooldown()
+		"play":
+			return _get_play_cooldown()
+		"photo":
+			return _get_photo_cooldown()
+		_:
+			return 0.0
+
+
 static func _get_feed_cooldown() -> float:
 	return DEBUG_FEED_COOLDOWN if DEBUG_FAST_COOLDOWN else RELEASE_FEED_COOLDOWN
 
@@ -304,6 +255,76 @@ static func _get_play_cooldown() -> float:
 
 static func _get_photo_cooldown() -> float:
 	return DEBUG_FEED_COOLDOWN if DEBUG_FAST_COOLDOWN else RELEASE_PHOTO_COOLDOWN
+
+
+# ── 存档：把 _cat_cooldowns 以 CSV 形式存进 ConfigFile ──
+# 每只猫一行，值形如 "feed:1719300000.0,pet:1719310000.0"
+func _save_cooldowns() -> void:
+	var cfg := ConfigFile.new()
+	for cat_id in _cat_cooldowns.keys():
+		var per_type = _cat_cooldowns[cat_id]
+		if not (per_type is Dictionary):
+			continue
+		cfg.set_value("cooldowns", cat_id, _serialize_cooldown_entry(per_type))
+	cfg.save(SAVE_PATH)
+
+
+func _load_cooldowns() -> void:
+	_cat_cooldowns = {}
+	var cfg := ConfigFile.new()
+	var err := cfg.load(SAVE_PATH)
+	if err != OK:
+		return
+	if not cfg.has_section("cooldowns"):
+		return
+	for cat_id in cfg.get_section_keys("cooldowns"):
+		var raw = cfg.get_value("cooldowns", cat_id, "")
+		var entry := _deserialize_cooldown_entry(String(raw))
+		if not entry.is_empty():
+			_cat_cooldowns[cat_id] = entry
+
+
+func _serialize_cooldown_entry(per_type: Dictionary) -> String:
+	var parts: Array[String] = []
+	for type in per_type.keys():
+		parts.append("%s:%s" % [String(type), str(per_type[type])])
+	return ",".join(parts)
+
+
+func _deserialize_cooldown_entry(raw: String) -> Dictionary:
+	var result: Dictionary = {}
+	if raw == "":
+		return result
+	for pair in raw.split(",", false):
+		var kv := pair.split(":", false)
+		if kv.size() != 2:
+			continue
+		result[kv[0]] = float(kv[1])
+	return result
+
+
+# 清空所有冷却与好感（测试 / 重置入口）
+func reset_all() -> void:
+	_cat_cooldowns.clear()
+	_affection.clear()
+	_save_cooldowns()
+
+
+# 测试辅助：把某只猫某类型「上次互动时间」设为 seconds_ago 秒前
+# 在「结束时间戳」模型下等价于 end = now - seconds_ago + cooldown
+func _override_last_interact(cat_id: String, type: String, seconds_ago: float) -> void:
+	if cat_id == "":
+		return
+	var per_type = _cat_cooldowns.get(cat_id, {})
+	if not (per_type is Dictionary):
+		per_type = {}
+	per_type[type] = Time.get_unix_time_from_system() - seconds_ago + _get_cooldown_seconds(type)
+	_cat_cooldowns[cat_id] = per_type
+
+
+# 公开好感增益查询（兼容测试）
+func get_affection_gain(type: String) -> int:
+	return _get_affection_gain(type)
 
 
 func _on_page_changed(page_name: String) -> void:
