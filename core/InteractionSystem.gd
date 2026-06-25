@@ -215,6 +215,8 @@ func try_interact(cat_id: String, type: String) -> bool:
 		# Accumulate affection
 		var gain := _get_affection_gain(type)
 		_affection[cat_id] = _affection.get(cat_id, 0) + gain
+		# 更新 CatData 的 friendship 和 exp（真实数值，会被存档）
+		_update_cat_stats(cat_id, type)
 
 	if EmotionStateMachine != null:
 		EmotionStateMachine.record_interaction(cat_id, type)
@@ -222,6 +224,32 @@ func try_interact(cat_id: String, type: String) -> bool:
 	if current_cat_card != null and is_instance_valid(current_cat_card) and current_cat_card.has_method("refresh_interaction_buttons"):
 		current_cat_card.refresh_interaction_buttons()
 	return true
+
+# 互动后更新 CatData 的 friendship 和 exp
+func _update_cat_stats(cat_id: String, type: String) -> void:
+	var cat = HatchEngine.get_cat_by_id(cat_id) if HatchEngine else null
+	if cat == null or not (cat is CatData):
+		return
+	# 好感度
+	match type:
+		"feed":
+			cat.friendship += 1
+		"pet":
+			cat.friendship += 1
+		"play":
+			cat.friendship += 2
+		"photo":
+			cat.friendship += 1
+	# 经验
+	var exp_gain := {"feed": 50, "pet": 30, "play": 80, "photo": 20}.get(type, 20)
+	cat.exp += exp_gain
+	# 升级检查：每10级需要 (level * 100) 经验
+	while cat.exp >= cat.level * 100:
+		cat.exp -= cat.level * 100
+		cat.level += 1
+	# 存盘
+	if SaveManager:
+		SaveManager.save_all()
 
 
 # 兼容旧调用方（AchievementSystem / GardenMain action buttons）
