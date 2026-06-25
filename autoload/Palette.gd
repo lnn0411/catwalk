@@ -1,53 +1,40 @@
 extends Node
 
 # ============================================================
-# 猫步天下 · 全局色板 · 临时版 v1.0
-# 所有程序化资产唯一取色来源。日后替换为正式版时只改 Hex 值。
+# 猫步天下 · 全局色板 v1.0
+# 唯一基准：Style Bible v2.2 §3.1
+# 基准色（bible 权威）→ 扩展色（bible 未定义，待补录）
+# 更新路径：bible → 本文档 → 代码与原型（单向，杜绝漂移）
 # ============================================================
 
-# --- 背景 / 地面 ---
-const BG_WARM_WHITE    = Color("#FAF6F0")
-const BG_CEMENT        = Color("#F2EDE4")
-const BG_NIGHT_OVERLAY = Color("#7A8A9640")
-const BG_RAIN_OVERLAY  = Color("#D6E4EC26")
+# ===== 基准色：Style Bible v2.2 §3.1（唯一权威）=====
+const PAPER_CREAM     := Color("F6EFE2")  # 背景/卡片/留白 50-60%
+const AMBER           := Color("F2C572")  # 主色：能量/奖励/按钮/孵化反馈 10-15%
+const SOFT_SAGE       := Color("A6BE84")  # 花园/植物 10-15%
+const TEXT_PRIMARY    := Color("4F453C")  # 文字 & 亮色填充上的字
+const AMBER_PRESS     := Color("C4894A")  # 按钮按下态/深描边（非主色）
 
-# --- 主色 ---
-const AMBER            = Color("#C4894A")
-const CITY_GRAY        = Color("#7A8A96")
+# ===== 扩展色：bible 未定义，暂用，待补录 =====
+const TEXT_SECONDARY  := Color("A2978C")  # 次级文字、说明
+const BORDER          := Color("EFE4D6")  # 卡片描边、分隔
+const MOSS            := Color("7A9E6E")  # 成功/随行/生机强调
 
-# --- 辅助色 ---
-const MOSS_GREEN       = Color("#7A9E6E")
-const BRICK_RED        = Color("#B5553C")
-const MIST_BLUE        = Color("#D6E4EC")
-const MILK_WHITE       = Color("#FAF6F0")
+# 货币色
+const COIN            := Color("EAB94F")  # 金币 🪙
+const DIAMOND         := Color("86C0DC")  # 钻石 💎
+const SPRING_PETAL    := Color("F2A8BE")  # 春日花瓣 🌸（活动货币）
+const LOVE_PETAL      := Color("E58AA8")  # 爱心花瓣 💗（送养硬货币）
 
-# --- 猫咪毛色：橘猫 ---
-const CAT_ORANGE_MID   = Color("#D4834A")
-const CAT_ORANGE_LIGHT = Color("#E8B87A")
-const CAT_ORANGE_HIGH  = Color("#F2D4A8")
+const BRICK           := Color("B5553C")  # 冷却/警示
+const MIST            := Color("D2E4EC")  # 夜间/雨天氛围
 
-# --- 猫咪毛色：英短 ---
-const CAT_BRIT_MID     = Color("#9AA0A8")
-const CAT_BRIT_LIGHT   = Color("#C4C9CE")
-const CAT_BRIT_HIGH    = Color("#E4E8EA")
+# ===== 阴影（暖棕层级）=====
+const UI_SHADOW       := Color("4F453C14")  # 8%  低层 卡片
+const UI_SHADOW_MID   := Color("4F453C1F")  # 12% 中层 浮层/抽屉
 
-# --- 猫咪毛色：暹罗 ---
-const CAT_SIAM_BODY    = Color("#E8D5C0")
-const CAT_SIAM_POINT   = Color("#4A3728")
-const CAT_SIAM_HIGH    = Color("#F5EDE4")
-
-# --- 文字 ---
-const TEXT_PRIMARY     = Color("#2C2926")
-const TEXT_SECONDARY   = Color("#7A8A96")
-const TEXT_ON_AMBER    = Color("#FAF6F0")
-
-# --- 边框 ---
-const BORDER_DEFAULT   = Color("#C8BFB0")
-const BORDER_ACTIVE    = Color("#C4894A")
-
-# --- 阴影（暖棕层级）---
-const UI_SHADOW        = Color("#2C292614")  # 8%  低层 卡片
-const UI_SHADOW_MID    = Color("#2C29261F")  # 12% 中层 浮层/抽屉
+# ===== 规则 =====
+# AMBER/SOFT_SAGE 等亮色填充上的文字一律 TEXT_PRIMARY，禁止白字。
+# 按钮样式走 UITheme 的 StyleBoxFlat，禁止在各 .gd 里硬编码颜色。
 const UI_PRESSED_AMBER = Color("#B77A3E")    # 主按钮按下态
 
 # --- 稀有度光效 ---

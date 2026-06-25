@@ -1,21 +1,22 @@
 extends "res://ui/UIPage.gd"
 # ============================================================
-# S06 孵化室 —— B2 节点版（替代原 _draw 绘制）
-# 结构在 S06_HatchPage.tscn；本脚本只负责绑定节点 + 状态驱动 + 交互。
-# 逻辑（孵化/注入/加速/导航/信号）与原 _draw 版完全一致，未改玩法。
-# 美术接入点：%Bg(整页背景) / HatchSlot 内部的 %FrameArt %EggArt / 各按钮可换 TextureButton。
+# S06 孵化屋 —— 卡片化重构 v2（节点版）
+# 结构在 S06_HatchPage.tscn；本脚本负责绑定节点 + 状态驱动 + 交互。
+# 玩法逻辑（孵化/注入/加速/导航/信号）与原版完全一致，未改数值。
+# 配色走新 Palette（Style Bible v2.2 §3.1）：PAPER_CREAM 底 + 白卡 + AMBER 主色。
+# 美术接入点：HatchSlot 内部的 %FrameArt %EggArt；各按钮可换 TextureButton。
 # ============================================================
 
 const CatData := preload("res://core/CatData.gd")
-const RESERVE_BAR_W := 400.0
+const WORKSHOP_SCENE := "res://scenes/WorkshopPage.gd"
 
-@onready var _bg: TextureRect = %Bg
 @onready var _back_btn: Button = %BackBtn
 @onready var _inject_btn: Button = %InjectBtn
 @onready var _ad_btn: Button = %AdBtn
-@onready var _reserve_panel: Panel = %ReservePanel
+@onready var _workshop_link: Button = %WorkshopLink
+@onready var _energy_card: Panel = %EnergyCard
 @onready var _reserve_bar_bg: Panel = %ReserveBarBg
-@onready var _reserve_bar_fill: Panel = %ReserveBarFill
+@onready var _reserve_bar_fill: ColorRect = %ReserveBarFill
 @onready var _reserve_value: Label = %ReserveValue
 @onready var _slots: Array = [%Slot0, %Slot1, %Slot2, %Slot3]
 
@@ -26,12 +27,11 @@ func _ready() -> void:
 	_back_btn.pressed.connect(_on_back_pressed)
 	_inject_btn.pressed.connect(_inject_energy)
 	_ad_btn.pressed.connect(_speed_up)
+	_workshop_link.pressed.connect(_on_workshop_pressed)
 	for i in range(_slots.size()):
 		_slots[i].slot_index = i
 		if not _slots[i].slot_pressed.is_connected(_on_slot_pressed):
 			_slots[i].slot_pressed.connect(_on_slot_pressed)
-	# 背景美术就位才显示 TextureRect，否则透明露出 BgFallback 底色
-	_bg.visible = _bg.texture != null
 	_connect_data()
 	_refresh_all()
 
@@ -85,21 +85,27 @@ func _refresh_reserve() -> void:
 	var current := EnergyEngine.reserve_tank if EnergyEngine else 0.0
 	var max_value := EnergyEngine.MAX_RESERVE_TANK if EnergyEngine else 6000.0
 	var ratio: float = clamp(current / max_value, 0.0, 1.0) if max_value > 0.0 else 0.0
-	_reserve_bar_fill.size = Vector2(_reserve_bar_bg.size.x * ratio, _reserve_bar_bg.size.y)
+	# 用 anchor_right 比例填充，天然随卡片宽度自适配（不再依赖固定像素宽）
+	_reserve_bar_fill.anchor_right = ratio
+	_reserve_bar_fill.offset_right = 0.0
 	_reserve_value.text = "%.0f / %.0f" % [current, max_value]
 
 
 func _refresh_ad_button() -> void:
 	var remaining: int = HatchEngine.ad_speedup_remaining() if HatchEngine else 0
-	var limit: int = HatchEngine.AD_SPEEDUP_DAILY_LIMIT if HatchEngine else 3
-	_ad_btn.text = "看广告加速 %d/%d" % [remaining, limit]
-	_ad_btn.add_theme_color_override("font_color", Palette.TEXT_SECONDARY if remaining <= 0 else Palette.TEXT_PRIMARY)
+	_ad_btn.text = "📺 补充能量 +3,000  今日还可 %d次" % remaining
+	_ad_btn.add_theme_color_override("font_color", Palette.TEXT_SECONDARY if remaining <= 0 else Palette.MOSS)
+	_ad_btn.disabled = false
 
 
 # ── 交互 ──
 
 func _on_back_pressed() -> void:
 	UIManager.replace("res://scenes/S04_GardenMain.tscn")
+
+
+func _on_workshop_pressed() -> void:
+	UIManager.push(WORKSHOP_SCENE)
 
 
 func _on_slot_pressed(index: int) -> void:
@@ -184,36 +190,58 @@ func _on_energy_changed(_current: float, _pool_max: float, _backup: float) -> vo
 # ── 样式（Palette 上色，美术图就位后可逐步替换）──
 
 func _style() -> void:
-	_style_panel(_reserve_panel, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 5, 1)
-	_style_panel(_reserve_bar_bg, Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, 5, 1)
-	_style_panel(_reserve_bar_fill, Palette.AMBER, Palette.AMBER, 5, 0)
-	_style_button(_back_btn, Palette.BG_WARM_WHITE, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
-	_style_button(_inject_btn, Palette.AMBER, Palette.AMBER, Palette.TEXT_ON_AMBER)
-	_style_button(_ad_btn, Palette.BG_CEMENT, Palette.BORDER_ACTIVE, Palette.TEXT_PRIMARY)
+	_style_card(_energy_card)
+	_set_panel_bg(_reserve_bar_bg, Color("EDE7D8"), 5)
+	_reserve_bar_fill.color = Palette.MOSS
+	# 返回键：白底圆形
+	_style_button(_back_btn, Color.WHITE, Palette.BORDER, Palette.TEXT_PRIMARY, 17, 1)
+	# 注入：幽灵按钮（白底 + AMBER 描边）
+	_style_button(_inject_btn, Color.WHITE, Palette.AMBER, Palette.TEXT_PRIMARY, 12, 2)
+	# 看广告补能量：浅 moss 底 + MOSS 字
+	_style_button(_ad_btn, Palette.MOSS.lerp(Color.WHITE, 0.82), Palette.MOSS.lerp(Color.WHITE, 0.55), Palette.MOSS, 14, 1)
+	# 工坊链接：扁平文字链
+	_workshop_link.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	_workshop_link.add_theme_color_override("font_hover_color", Palette.TEXT_PRIMARY)
 
 
-func _style_panel(p: Panel, bg: Color, border: Color, radius: int, border_w: int) -> void:
+func _style_card(p: Panel) -> void:
 	if p == null:
 		return
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = bg
-	sb.set_corner_radius_all(radius)
-	if border_w > 0:
-		sb.set_border_width_all(border_w)
-		sb.border_color = border
+	sb.bg_color = Color.WHITE
+	sb.set_corner_radius_all(18)
+	sb.set_border_width_all(1)
+	sb.border_color = Palette.BORDER
+	sb.shadow_color = Palette.UI_SHADOW
+	sb.shadow_size = 8
+	sb.shadow_offset = Vector2(0, 4)
 	p.add_theme_stylebox_override("panel", sb)
 
 
-func _style_button(b: Button, bg: Color, border: Color, fg: Color) -> void:
+func _set_panel_bg(p: Panel, c: Color, radius: int) -> void:
+	if p == null:
+		return
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = c
+	sb.set_corner_radius_all(radius)
+	p.add_theme_stylebox_override("panel", sb)
+
+
+func _style_button(b: Button, bg: Color, border: Color, fg: Color, radius: int, border_w: int) -> void:
 	if b == null:
 		return
 	b.add_theme_color_override("font_color", fg)
+	b.add_theme_color_override("font_hover_color", fg)
+	b.add_theme_color_override("font_pressed_color", fg)
 	for state in ["normal", "hover", "pressed", "disabled"]:
 		var sb := StyleBoxFlat.new()
-		sb.bg_color = bg if state != "pressed" else bg.darkened(0.12)
-		sb.set_corner_radius_all(8)
-		sb.set_border_width_all(1)
-		sb.border_color = border
-		sb.content_margin_left = 8.0
-		sb.content_margin_right = 8.0
+		sb.bg_color = bg if state != "pressed" else bg.darkened(0.10)
+		sb.set_corner_radius_all(radius)
+		if border_w > 0:
+			sb.set_border_width_all(border_w)
+			sb.border_color = border
+		sb.content_margin_left = 10.0
+		sb.content_margin_right = 10.0
+		sb.content_margin_top = 6.0
+		sb.content_margin_bottom = 6.0
 		b.add_theme_stylebox_override(state, sb)

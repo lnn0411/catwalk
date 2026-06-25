@@ -52,9 +52,8 @@ var _last_touch_time: float = -DOUBLE_TAP_TIME
 var _zoom_tween: Tween
 var _steps_label: Label
 var _energy_label: Label
-var _hatch_row: HBoxContainer
 var _action_buttons: Array[TextureButton] = []
-var _slot_views: Array[HatchSlotView] = []
+var _hatch_navigating := false
 var _empty_label: Label
 var _debug_panel: PanelContainer
 var _steps_hold_timer: Timer
@@ -468,20 +467,6 @@ func _build_hud() -> void:
 		action_col.add_child(button)
 		_action_buttons.append(button)
 
-	_hatch_row = HBoxContainer.new()
-	_hatch_row.position = Vector2(32.0, 1126.0)
-	_hatch_row.size = Vector2(656.0, HATCH_HEIGHT)
-	_hatch_row.add_theme_constant_override("separation", 12)
-	root.add_child(_hatch_row)
-	for i in range(4):
-		var slot_view := HatchSlotView.new()
-		slot_view.slot_index = i
-		slot_view.custom_minimum_size = Vector2(160.0, 56.0)
-		slot_view.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		slot_view.slot_pressed.connect(_on_hatch_slot_pressed)
-		_hatch_row.add_child(slot_view)
-		_slot_views.append(slot_view)
-
 	# 「爱意工坊」入口按钮 — 工坊态时显示
 	var workshop_btn := Button.new()
 	workshop_btn.name = "WorkshopBtn"
@@ -617,11 +602,6 @@ func _connect_data() -> void:
 		StepEngine.steps_updated.connect(_on_steps_updated)
 	if EnergyEngine and not EnergyEngine.energy_changed.is_connected(_on_energy_changed):
 		EnergyEngine.energy_changed.connect(_on_energy_changed)
-	if HatchEngine:
-		if not HatchEngine.hatch_progress.is_connected(_on_hatch_progress):
-			HatchEngine.hatch_progress.connect(_on_hatch_progress)
-		if not HatchEngine.hatch_complete.is_connected(_on_hatch_complete):
-			HatchEngine.hatch_complete.connect(_on_hatch_complete)
 	if EventBus:
 		if not EventBus.workshop_activated.is_connected(_on_workshop_activated):
 			EventBus.workshop_activated.connect(_on_workshop_activated)
@@ -633,7 +613,6 @@ func _connect_data() -> void:
 func _refresh_all() -> void:
 	_refresh_steps()
 	_refresh_energy()
-	_refresh_slots()
 	_refresh_cat_state()
 
 func _refresh_steps() -> void:
@@ -651,16 +630,6 @@ func _refresh_energy() -> void:
 	print("[Refresh] energy bar set: %.0f/%.0f" % [current, max_value])
 	_energy_label.text = "%d/%d" % [int(current), int(max_value)]
 
-func _refresh_slots() -> void:
-	var slots := []
-	if HatchEngine:
-		slots = HatchEngine.get_slots()
-	for i in range(_slot_views.size()):
-		var data: Dictionary = {}
-		if i < slots.size():
-			data = Dictionary(slots[i])
-		_slot_views[i].set_slot_data(data)
-
 func _refresh_cat_state() -> void:
 	var cat_count := 0
 	if HatchEngine:
@@ -674,15 +643,6 @@ func _on_steps_updated(_delta: int, _total: int) -> void:
 
 func _on_energy_changed(_current: float, _pool_max: float, _backup: float) -> void:
 	_refresh_energy()
-
-func _on_hatch_progress(_slot: int, _progress: float) -> void:
-	_refresh_slots()
-
-func _on_hatch_complete(_cat_data) -> void:
-	_refresh_slots()
-	_refresh_cat_state()
-	if TutorialManager and TutorialManager.current_step == TutorialManager.Step.HATCH:
-		TutorialManager._on_cat_hatched()
 
 func _on_cat_count_changed(_count: int) -> void:
 	_refresh_cat_state()
@@ -700,16 +660,6 @@ func _apply_cat_visibility() -> void:
 	for child in cat_container.get_children():
 		if "cat_data" in child and child.cat_data != null:
 			child.visible = true
-
-func _on_hatch_slot_pressed(_slot_index: int) -> void:
-	if TutorialManager and TutorialManager.is_running():
-		if TutorialManager.current_step != TutorialManager.Step.HATCH:
-			return
-		TutorialManager.notify_hatch_requested()
-	if _hatch_navigating:
-		return
-	_hatch_navigating = true
-	UIManager.push("res://scenes/S06_HatchPage.tscn")
 
 func _on_action_pressed(state: int) -> void:
 	if TutorialManager and TutorialManager.is_running():
@@ -1275,116 +1225,3 @@ class DebugTextureButton:
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(label)
 
-class HatchSlotView:
-	extends Control
-
-	signal slot_pressed(slot_index: int)
-
-	var slot_index := 0
-	var slot_data: Dictionary = {}
-	var _frame: TextureRect
-	var _icon: TextureRect
-	var _detail_label: Label
-
-	# slot_frame 纹理缓存（动态加载，文件不存在返回 null）
-	static var _frame_tex_cache: Dictionary = {}
-
-	func _get_frame_tex(key: String) -> Texture2D:
-		if _frame_tex_cache.has(key):
-			return _frame_tex_cache[key]
-		var p := "res://assets/art/ui/panels/slot_frame_%s.png" % key
-		var tex: Texture2D = null
-		if ResourceLoader.exists(p):
-			var r: Resource = load(p)
-			if r is Texture2D:
-				tex = r
-		_frame_tex_cache[key] = tex
-		return tex
-
-	func _ready() -> void:
-		mouse_filter = Control.MOUSE_FILTER_STOP
-		# 槽位底框：临时贴图 → 程序绘制（按状态换样式），不再依赖 slot_frame_*.png
-		_frame = TextureRect.new()
-		_frame.anchor_left = 0.0
-		_frame.anchor_right = 1.0
-		_frame.anchor_top = 0.0
-		_frame.anchor_bottom = 1.0
-		_frame.offset_left = 10.0
-		_frame.offset_top = 10.0
-		_frame.offset_right = -10.0
-		_frame.offset_bottom = -10.0
-		_frame.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		_frame.texture = load("res://assets/art/ui/panels/slot_frame_empty.png")
-		_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(_frame)
-
-		_icon = TextureRect.new()
-		_icon.position = Vector2(11.0, 35.0)
-		_icon.size = Vector2(36.0, 28.0)
-		_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
-		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(_icon)
-
-		_detail_label = Label.new()
-		_detail_label.position = Vector2(39.0, 37.0)
-		_detail_label.size = Vector2(105.0, 24.0)
-		_detail_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_detail_label.add_theme_font_size_override("font_size", 12)
-		_detail_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
-		_detail_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		add_child(_detail_label)
-
-	func set_slot_data(data: Dictionary) -> void:
-		slot_data = data
-		_refresh()
-
-	func _gui_input(event: InputEvent) -> void:
-		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-			slot_pressed.emit(slot_index)
-			accept_event()
-		elif event is InputEventScreenTouch and event.pressed:
-			slot_pressed.emit(slot_index)
-			accept_event()
-
-	func _refresh() -> void:
-		if _frame == null:
-			print("[HatchSlot %d] _frame is null!" % slot_index)
-			return
-		print("[HatchSlot %d] _refresh called, type=%s" % [slot_index, _frame.get_class()])
-		var unlocked := bool(slot_data.get("unlocked", slot_index == 0))
-		var status: String = String(slot_data.get("status", "empty" if slot_index == 0 else "locked"))
-		var energy := float(slot_data.get("energy", 0.0))
-		var max_energy := float(slot_data.get("max_energy", 0.0))
-		var progress: float = 0.0
-		if max_energy > 0.0:
-			progress = clamp(energy / max_energy, 0.0, 1.0)
-
-		var detail := ""
-		if not unlocked:
-			_icon.modulate = Color(0.35, 0.35, 0.35, 1.0)
-			detail = ""
-		elif status == "ready":
-			_icon.modulate = Color.WHITE
-			detail = "点击孵化"
-		elif status == "incubating":
-			_icon.modulate = Color.WHITE
-			detail = "等待能量填充" if progress <= 0.0 else "%d%%" % int(progress * 100.0)
-		else:
-			_icon.modulate = Color.WHITE
-			detail = "等待能量填充"
-
-		var frame_tex := _get_frame_tex("filling")
-		if not unlocked:
-			_frame.modulate = Color(0.4, 0.4, 0.4, 1.0)
-			frame_tex = _get_frame_tex("empty")
-		elif status == "ready" or (status == "incubating" and progress >= 1.0):
-			_frame.modulate = Color.WHITE
-			frame_tex = _get_frame_tex("ready")
-		elif status == "incubating":
-			_frame.modulate = Color.WHITE
-			frame_tex = _get_frame_tex("filling")
-		else:
-			_frame.modulate = Color.WHITE
-		_frame.texture = frame_tex
-		_detail_label.text = detail

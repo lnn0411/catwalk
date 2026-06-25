@@ -12,7 +12,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1")
 
-[node name="BgFallback" type="ColorRect" parent="."]
+[node name="BgColor" type="ColorRect" parent="."]
 show_behind_parent = true
 layout_mode = 1
 anchors_preset = 15
@@ -21,152 +21,188 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.98, 0.965, 0.941, 1)
-
-[node name="Bg" type="TextureRect" parent="."]
-unique_name_in_owner = true
-show_behind_parent = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 6
+color = Color(0.965, 0.937, 0.886, 1)
 
 [node name="BackBtn" type="Button" parent="."]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(34, 34)
 layout_mode = 1
 anchors_preset = 0
-offset_left = 28.0
-offset_top = 59.0
-offset_right = 88.0
-offset_bottom = 107.0
-text = "返回"
+offset_left = 22.0
+offset_top = 54.0
+offset_right = 56.0
+offset_bottom = 88.0
+text = "‹"
 
-[node name="Title" type="Label" parent="."]
+[node name="PageTitle" type="Label" parent="."]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 62.0
-offset_bottom = 102.0
+offset_left = 64.0
+offset_top = 52.0
+offset_right = -64.0
+offset_bottom = 82.0
 grow_horizontal = 2
 mouse_filter = 2
-theme_override_colors/font_color = Color(0.172, 0.161, 0.149, 1)
-theme_override_font_sizes/font_size = 24
-text = "孵化室"
+theme_override_colors/font_color = Color(0.31, 0.271, 0.235, 1)
+theme_override_font_sizes/font_size = 22
+text = "孵化屋"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="ReservePanel" type="Panel" parent="."]
-unique_name_in_owner = true
+[node name="PageSubtitle" type="Label" parent="."]
 layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -312.0
-offset_top = 153.0
-offset_right = 312.0
-offset_bottom = 300.0
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 24.0
+offset_top = 84.0
+offset_right = -24.0
+offset_bottom = 106.0
 grow_horizontal = 2
 mouse_filter = 2
+theme_override_colors/font_color = Color(0.635, 0.592, 0.549, 1)
+theme_override_font_sizes/font_size = 12
+text = "走路的能量，正悄悄钻进这颗蛋"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="ReserveTitle" type="Label" parent="ReservePanel"]
-layout_mode = 0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 280.0
-offset_bottom = 52.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.172, 0.161, 0.149, 1)
-theme_override_font_sizes/font_size = 19
-text = "储备能量"
+[node name="Body" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 118.0
+offset_right = -20.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="ReserveBarBg" type="Panel" parent="ReservePanel"]
+[node name="VBox" type="VBoxContainer" parent="Body"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="EnergyCard" type="Panel" parent="Body/VBox"]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 24.0
-offset_top = 71.0
-offset_right = 424.0
-offset_bottom = 87.0
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+
+[node name="CardMargin" type="MarginContainer" parent="Body/VBox/EnergyCard"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 14
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 14
+
+[node name="CardVBox" type="VBoxContainer" parent="Body/VBox/EnergyCard/CardMargin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TopRow" type="HBoxContainer" parent="Body/VBox/EnergyCard/CardMargin/CardVBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="EggIcon" type="Label" parent="Body/VBox/EnergyCard/CardMargin/CardVBox/TopRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "🥚"
+vertical_alignment = 1
+
+[node name="ReserveTitle" type="Label" parent="Body/VBox/EnergyCard/CardMargin/CardVBox/TopRow"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.31, 0.271, 0.235, 1)
+theme_override_font_sizes/font_size = 12
+text = "🫙 备用能量槽"
+vertical_alignment = 1
+
+[node name="Spacer" type="Control" parent="Body/VBox/EnergyCard/CardMargin/CardVBox/TopRow"]
+layout_mode = 2
+size_flags_horizontal = 3
 mouse_filter = 2
 
-[node name="ReserveBarFill" type="Panel" parent="ReservePanel/ReserveBarBg"]
+[node name="ReserveValue" type="Label" parent="Body/VBox/EnergyCard/CardMargin/CardVBox/TopRow"]
 unique_name_in_owner = true
-layout_mode = 0
-offset_right = 400.0
-offset_bottom = 16.0
-mouse_filter = 2
-
-[node name="ReserveValue" type="Label" parent="ReservePanel"]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 24.0
-offset_top = 100.0
-offset_right = 424.0
-offset_bottom = 124.0
-mouse_filter = 2
-theme_override_colors/font_color = Color(0.478, 0.541, 0.588, 1)
-theme_override_font_sizes/font_size = 15
+layout_mode = 2
+theme_override_colors/font_color = Color(0.635, 0.592, 0.549, 1)
+theme_override_font_sizes/font_size = 11
 text = "0 / 6000"
+vertical_alignment = 1
 
-[node name="InjectBtn" type="Button" parent="ReservePanel"]
+[node name="ReserveBarBg" type="Panel" parent="Body/VBox/EnergyCard/CardMargin/CardVBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ReserveBarFill" type="ColorRect" parent="Body/VBox/EnergyCard/CardMargin/CardVBox/ReserveBarBg"]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -164.0
-offset_top = 48.0
-offset_right = -37.0
-offset_bottom = 99.0
-grow_horizontal = 0
+anchors_preset = 9
+anchor_bottom = 1.0
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ReserveHint" type="Label" parent="Body/VBox/EnergyCard/CardMargin/CardVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.635, 0.592, 0.549, 1)
+theme_override_font_sizes/font_size = 10
+text = "平时空着是正常的——能量都在干活呀"
+
+[node name="InjectRow" type="HBoxContainer" parent="Body/VBox/EnergyCard/CardMargin/CardVBox"]
+layout_mode = 2
+alignment = 2
+
+[node name="InjectBtn" type="Button" parent="Body/VBox/EnergyCard/CardMargin/CardVBox/InjectRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(96, 40)
+layout_mode = 2
 text = "注入"
 
-[node name="SlotGrid" type="GridContainer" parent="."]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -185.0
-offset_top = 374.0
-offset_right = 185.0
-offset_bottom = 744.0
-grow_horizontal = 2
-theme_override_constants/h_separation = 24
-theme_override_constants/v_separation = 24
+[node name="SlotGrid" type="GridContainer" parent="Body/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
 columns = 2
 
-[node name="Slot0" parent="SlotGrid" instance=ExtResource("2")]
+[node name="Slot0" parent="Body/VBox/SlotGrid" instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="Slot1" parent="SlotGrid" instance=ExtResource("2")]
+[node name="Slot1" parent="Body/VBox/SlotGrid" instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="Slot2" parent="SlotGrid" instance=ExtResource("2")]
+[node name="Slot2" parent="Body/VBox/SlotGrid" instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="Slot3" parent="SlotGrid" instance=ExtResource("2")]
+[node name="Slot3" parent="Body/VBox/SlotGrid" instance=ExtResource("2")]
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_horizontal = 3
 
-[node name="AdBtn" type="Button" parent="."]
+[node name="GrowSpacer" type="Control" parent="Body/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="AdBtn" type="Button" parent="Body/VBox"]
 unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -240.0
-offset_top = -167.0
-offset_right = 240.0
-offset_bottom = -112.0
-grow_horizontal = 2
-grow_vertical = 0
-text = "看广告加速"
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+text = "📺 补充能量 +3,000"
+
+[node name="WorkshopLink" type="Button" parent="Body/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+flat = true
+text = "猫咪住满了？去爱意工坊做礼物 →"
