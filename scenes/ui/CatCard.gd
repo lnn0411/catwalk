@@ -477,9 +477,13 @@ func _play_close_animation() -> void:
 	tween.set_ease(Tween.EASE_IN)
 	tween.tween_property(self, "modulate", Color(1, 1, 1, 0), 0.15)
 	tween.parallel().tween_property(_card_background, "position:y", 1280.0, 0.2)
-	tween.then(func():
-		if interaction_system:
-			interaction_system._close_cat_card()
+	tween.then(_on_close_anim_done)
+
+
+func _on_close_anim_done() -> void:
+	if interaction_system:
+		interaction_system._close_cat_card()
+
 
 func _draw() -> void:
 	if _card_background == null:
