@@ -897,13 +897,15 @@ func _current_breed() -> String:
 		value = cat_data.get("breed")
 	return String(value) if value != null else "orange"
 
-# 立绘目录：橘猫暂缺 -> 用英短代替
+# 立绘目录
 func _portrait_dir(breed: String) -> String:
 	match breed:
 		"siamese":
 			return "siamese"
 		"british", "british_shorthair":
 			return "british"
+		"orange":
+			return "orange"
 		_:
 			return "british"
 
