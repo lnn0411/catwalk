@@ -83,6 +83,11 @@ func _on_companion_pressed() -> void:
 	Popups.show_toast("已设为随行猫")
 	UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
+func _on_let_out_pressed() -> void:
+	if _cat_id.is_empty():
+		return
+	UIManager.replace("res://scenes/S04_GardenMain.tscn", {"focus_cat": _cat_id})
+
 func _on_giveaway_pressed() -> void:
 	if _cat_id.is_empty():
 		return

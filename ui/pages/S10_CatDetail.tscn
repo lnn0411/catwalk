@@ -328,6 +328,12 @@ size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 40)
 text = "设为随行"
 
+[node name="LetOutBtn" type="Button" parent="VBox/Scroll/Body/Actions"]
+layout_mode = 2
+size_flags_horizontal = 3
+custom_minimum_size = Vector2(0, 40)
+text = "让它出来"
+
 [node name="GiveawayBtn" type="Button" parent="VBox/Scroll/Body/Actions"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -342,4 +348,5 @@ size_flags_horizontal = 3
 [connection signal="pressed" from="VBox/Head/BackBtn" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="VBox/Scroll/Body/Actions/RenameBtn" to="." method="_on_rename_pressed"]
 [connection signal="pressed" from="VBox/Scroll/Body/Actions/CompanionBtn" to="." method="_on_companion_pressed"]
+[connection signal="pressed" from="VBox/Scroll/Body/Actions/LetOutBtn" to="." method="_on_let_out_pressed"]
 [connection signal="pressed" from="VBox/Scroll/Body/Actions/GiveawayBtn" to="." method="_on_giveaway_pressed"]
