@@ -48,6 +48,7 @@ var _drag_start := Vector2.ZERO
 var _cam_zoom: float = CONTENT_SCALE
 var _zoom_factor: float = ZOOM_L1
 var _last_tap_time: float = -DOUBLE_TAP_TIME
+var _last_touch_time: float = -DOUBLE_TAP_TIME
 var _zoom_tween: Tween
 var _steps_label: Label
 var _energy_label: Label
@@ -925,10 +926,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed and _is_in_garden(event.position):
 			get_viewport().set_input_as_handled()
-			# 双击检测
+			# 双击检测（仅用本地时间，Windows 可能在单次点击同时发 mouse 和 touch 两个事件）
 			var now := Time.get_ticks_msec() / 1000.0
-			# 只靠本地时间检测双击（Windows 上 event.double_click 可能被 SubViewport 输入转发误置）
-			var is_double_tap := now - _last_tap_time < DOUBLE_TAP_TIME
+			var is_double_tap := now - _last_tap_time < DOUBLE_TAP_TIME and now - _last_touch_time >= 0.05
 			_last_tap_time = now
 			if is_double_tap:
 				_cycle_garden_zoom(event.position)
@@ -942,6 +942,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_drag_start = event.position
 		else:
 			_dragging = false
+	# 鼠标拖拽
 	elif event is InputEventMouseMotion and _dragging and _camera:
 		if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 			_dragging = false
@@ -955,8 +956,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed and _is_in_garden(event.position):
 			get_viewport().set_input_as_handled()
 			var now := Time.get_ticks_msec() / 1000.0
-			var is_double_tap := now - _last_tap_time < DOUBLE_TAP_TIME
-			_last_tap_time = now
+			var is_double_tap := now - _last_touch_time < DOUBLE_TAP_TIME and now - _last_tap_time >= 0.05
+			_last_touch_time = now
 			if is_double_tap:
 				_cycle_garden_zoom(event.position)
 				_dragging = false
