@@ -153,7 +153,6 @@ func _build_garden_layer() -> void:
 	garden_vp.size = Vector2(720, 1280 - int(HUD_HEIGHT))  # 与 SubViewportContainer 实际高度一致（顶部被 HUD 占 130）
 	garden_vp.transparent_bg = false
 	garden_vp.handle_input_locally = false
-	garden_vp.physics_object_picking = true
 	_garden_viewport = garden_vp
 	
 	garden_layer = Node2D.new()
@@ -929,6 +928,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		if event.pressed and _is_in_garden(event.position):
 			get_viewport().set_input_as_handled()
+			# L1 单击猫咪只飘爱心（不弹 CatCard）
+			var l1_cat = _find_cat_at(event.position)
+			if l1_cat != null:
+				var l1_node = CatSpawner.get_cat_node(l1_cat) if CatSpawner else null
+				if l1_node != null and l1_node.has_method("_play_click_feedback"):
+					l1_node._play_click_feedback()
 			# 双击检测（仅用本地时间，Windows 可能在单次点击同时发 mouse 和 touch 两个事件）
 			var now := Time.get_ticks_msec() / 1000.0
 			var is_double_tap := now - _last_tap_time < DOUBLE_TAP_TIME and now - _last_touch_time >= 0.05
@@ -962,6 +967,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event is InputEventScreenTouch:
 		if event.pressed and _is_in_garden(event.position):
 			get_viewport().set_input_as_handled()
+			# L1 单击猫咪只飘爱心（不弹 CatCard）
+			var l1_cat = _find_cat_at(event.position)
+			if l1_cat != null:
+				var l1_node = CatSpawner.get_cat_node(l1_cat) if CatSpawner else null
+				if l1_node != null and l1_node.has_method("_play_click_feedback"):
+					l1_node._play_click_feedback()
 			var now := Time.get_ticks_msec() / 1000.0
 			var is_double_tap := now - _last_touch_time < DOUBLE_TAP_TIME and now - _last_tap_time >= 0.05
 			_last_touch_time = now
@@ -1059,8 +1070,17 @@ func _screen_to_garden_world(screen_pos: Vector2) -> Vector2:
 	return _camera.position + (screen_pos - view * 0.5) / zoom
 
 func _emit_cat_click_at(screen_pos: Vector2) -> bool:
-	if HatchEngine == null or CatSpawner == null:
+	var best_cat = _find_cat_at(screen_pos)
+	if best_cat == null:
 		return false
+	var cid := str(best_cat.id) if best_cat != null else ""
+	cat_clicked.emit(cid, screen_pos)
+	return true
+
+# 检测指定屏幕位置是否有猫咪（不发射信号）
+func _find_cat_at(screen_pos: Vector2):
+	if HatchEngine == null or CatSpawner == null:
+		return null
 	var world_pos := _screen_to_garden_world(screen_pos)
 	var best_cat = null
 	var best_dist := INF
@@ -1072,11 +1092,7 @@ func _emit_cat_click_at(screen_pos: Vector2) -> bool:
 		if dist <= CAT_HIT_RADIUS and dist < best_dist:
 			best_dist = dist
 			best_cat = cat_data
-	if best_cat == null:
-		return false
-	var cid := str(best_cat.id) if best_cat != null else ""
-	cat_clicked.emit(cid, screen_pos)
-	return true
+	return best_cat
 
 # 横版花园相机：按真实视口尺寸算缩放，让世界高度恰好填满可视高度（消除上下黑边）；
 # 世界比屏幕宽 → 只支持左右滚动，竖直居中锁定。aspect=expand 下视口尺寸随设备变化，
