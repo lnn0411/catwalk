@@ -111,6 +111,7 @@ func on_enter(_data: Dictionary = {}) -> void:
 	# 位置必须在【这里】查——上面的容器重申刚把所有猫 restore 到场上；
 	# 在图鉴页预查位置必然失败（花园销毁时登记表已清空）。
 	var focus_cat: Variant = _data.get("focus_cat", null)
+	print("[Garden] on_enter focus_cat=%s _data=%s" % [focus_cat, _data])
 	if focus_cat != null and CatSpawner and _camera != null:
 		var cat_pos: Vector2 = CatSpawner.get_cat_world_position(focus_cat)
 		if cat_pos != Vector2.ZERO:

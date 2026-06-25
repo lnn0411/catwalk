@@ -242,6 +242,8 @@ func get_cat_node(cat_data):
 # 猫局部坐标 + 容器偏移 即相机坐标系。
 func get_cat_world_position(cat_data) -> Vector2:
 	var node = get_cat_node(cat_data)
+	var cid = _get_cat_id(cat_data)
+	print("[CatSpawner] get_cat_world_position: cid=%s spawned_keys=%s node=%s" % [cid, spawned_cat_ids.keys(), node != null])
 	if node == null:
 		return Vector2.ZERO
 	if cat_container and is_instance_valid(cat_container):
