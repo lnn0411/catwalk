@@ -241,7 +241,7 @@ func _update_cat_stats(cat_id: String, type: String) -> void:
 		"photo":
 			cat.friendship += 1
 	# 经验
-	var exp_gain := {"feed": 50, "pet": 30, "play": 80, "photo": 20}.get(type, 20)
+	var exp_gain = {"feed": 50, "pet": 30, "play": 80, "photo": 20}.get(type, 20)
 	cat.exp += exp_gain
 	# 升级检查：每10级需要 (level * 100) 经验
 	while cat.exp >= cat.level * 100:
