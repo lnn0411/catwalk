@@ -131,6 +131,25 @@ func refresh_interaction_buttons() -> void:
 	if Time.get_unix_time_from_system() >= _feedback_until:
 		_status_label.text = status_text
 	_update_cooldown_timer(any_cooldown)
+
+	# ── 调试日志：按钮状态/冷却/情绪/探索 ──
+	var emotion_str = "n/a"
+	if cat_id != "" and get_node_or_null("/root/EmotionStateMachine") != null:
+		emotion_str = String(EmotionStateMachine.get_emotion(cat_id))
+	var explore_disp = "n/a"
+	if _explore_button != null:
+		explore_disp = str(_explore_button.disabled)
+	print("[CatCard] refresh_interaction_buttons cat_id=%s" % cat_id)
+	print("[CatCard]   disabled: feed=%s pet=%s play=%s explore=%s" % [
+		_feed_button.disabled, _pet_button.disabled, _play_button.disabled, explore_disp])
+	print("[CatCard]   cooldown(s): feed=%.1f pet=%.1f play=%.1f" % [
+		_get_cooldown_remaining("feed"), _get_cooldown_remaining("pet"), _get_cooldown_remaining("play")])
+	print("[CatCard]   blocked: feed=%s pet=%s play=%s" % [
+		_is_interaction_blocked("feed"), _is_interaction_blocked("pet"), _is_interaction_blocked("play")])
+	print("[CatCard]   emotion=%s annoyed=%s sleeping=%s" % [emotion_str, annoyed, sleeping])
+	print("[CatCard]   explore: is_exploring_this_cat=%s any_cooldown=%s status='%s'" % [
+		_is_exploring_this_cat, any_cooldown, status_text])
+
 	# 送养按钮状态：最后一只或探索中禁用
 	if _relinquish_button:
 		var is_last := HatchEngine and HatchEngine.get_cats().size() <= 1
@@ -140,25 +159,40 @@ func refresh_interaction_buttons() -> void:
 
 
 func _on_feed_pressed() -> void:
+	print("[CatCard] _on_feed_pressed clicked cat_id=%s disabled=%s" % [cat_id, _feed_button.disabled])
 	if _feed_button.disabled:
+		print("[CatCard]   feed ignored: button disabled")
 		return
-	_do_interaction("feed")
+	var cd_before = _get_cooldown_remaining("feed")
+	var ok = _do_interaction("feed")
+	var cd_after = _get_cooldown_remaining("feed")
+	print("[CatCard]   feed _do_interaction success=%s cooldown before=%.1f after=%.1f" % [ok, cd_before, cd_after])
 	_play_action_anim("eating")
 	_show_feedback("🍖 喂食成功！")
 
 
 func _on_pet_pressed() -> void:
+	print("[CatCard] _on_pet_pressed clicked cat_id=%s disabled=%s" % [cat_id, _pet_button.disabled])
 	if _pet_button.disabled:
+		print("[CatCard]   pet ignored: button disabled")
 		return
-	_do_interaction("pet")
+	var cd_before = _get_cooldown_remaining("pet")
+	var ok = _do_interaction("pet")
+	var cd_after = _get_cooldown_remaining("pet")
+	print("[CatCard]   pet _do_interaction success=%s cooldown before=%.1f after=%.1f" % [ok, cd_before, cd_after])
 	_play_action_anim("petting")
 	_show_feedback("✋ 摸摸头~")
 
 
 func _on_play_pressed() -> void:
+	print("[CatCard] _on_play_pressed clicked cat_id=%s disabled=%s" % [cat_id, _play_button.disabled])
 	if _play_button.disabled:
+		print("[CatCard]   play ignored: button disabled")
 		return
-	_do_interaction("play")
+	var cd_before = _get_cooldown_remaining("play")
+	var ok = _do_interaction("play")
+	var cd_after = _get_cooldown_remaining("play")
+	print("[CatCard]   play _do_interaction success=%s cooldown before=%.1f after=%.1f" % [ok, cd_before, cd_after])
 	_play_action_anim("playing")
 	_show_feedback("🎾 玩得好开心！")
 
@@ -664,13 +698,17 @@ func _show_feedback(text: String) -> void:
 	timer.timeout.connect(refresh_interaction_buttons)
 
 
-func _do_interaction(interaction_type: String) -> void:
+func _do_interaction(interaction_type: String) -> bool:
 	_resolve_interaction_system()
 	if interaction_system == null:
-		return
+		print("[CatCard] _do_interaction(%s) ERROR: interaction_system is null" % interaction_type)
+		return false
 	if _call_interaction("do_interact", interaction_type, false):
-		return
-	_call_interaction("do_interact_global", interaction_type, false)
+		print("[CatCard] _do_interaction(%s) via do_interact -> success" % interaction_type)
+		return true
+	var ok = bool(_call_interaction("do_interact_global", interaction_type, false))
+	print("[CatCard] _do_interaction(%s) via do_interact_global -> success=%s" % [interaction_type, ok])
+	return ok
 
 
 func _is_interaction_blocked(interaction_type: String) -> bool:
@@ -699,11 +737,16 @@ func _get_cooldown_remaining(interaction_type: String) -> float:
 
 func _call_interaction(method_name: String, interaction_type: String, default_value):
 	if interaction_system == null or not interaction_system.has_method(method_name):
+		print("[CatCard] _call_interaction method=%s unavailable -> default=%s" % [method_name, str(default_value)])
 		return default_value
 	var arg_count := _get_method_arg_count(interaction_system, method_name)
+	var result
 	if arg_count <= 1:
-		return interaction_system.call(method_name, interaction_type)
-	return interaction_system.call(method_name, cat_id, interaction_type)
+		result = interaction_system.call(method_name, interaction_type)
+	else:
+		result = interaction_system.call(method_name, cat_id, interaction_type)
+	print("[CatCard] _call_interaction method=%s(arg_count=%d) type=%s -> %s" % [method_name, arg_count, interaction_type, str(result)])
+	return result
 
 
 func _has_interaction_method(method_name: String) -> bool:
