@@ -994,7 +994,11 @@ func _unhandled_input(event: InputEvent) -> void:
 			_dragging = false
 
 func _is_in_garden(pos: Vector2) -> bool:
-	return pos.y >= HUD_HEIGHT and pos.y <= HUD_HEIGHT + GARDEN_HEIGHT
+	var vp_height := DESIGN_SIZE.y
+	var vp := get_viewport()
+	if vp != null and vp.get_visible_rect().size.y > 0.0:
+		vp_height = vp.get_visible_rect().size.y
+	return pos.y >= HUD_HEIGHT and pos.y <= vp_height
 
 func _handle_magnify_gesture(event: InputEventMagnifyGesture) -> void:
 	if _camera == null:
