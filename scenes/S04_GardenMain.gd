@@ -343,9 +343,9 @@ func _build_hud() -> void:
 	debug_btn.pressed.connect(_toggle_debug_panel)
 	root.add_child(debug_btn)
 
-	# 顶栏背景：复用底栏 nav_bg.png
+	# 顶栏背景：程序生成木纹底图
 	var top_bg := TextureRect.new()
-	top_bg.texture = load("res://assets/art/ui/nav/nav_bg.png")
+	top_bg.texture = load("res://assets/art/ui/nav/top_bar_bg.png")
 	top_bg.stretch_mode = TextureRect.STRETCH_SCALE
 	top_bg.anchor_left = 0.0
 	top_bg.anchor_right = 1.0
