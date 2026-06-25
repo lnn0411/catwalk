@@ -9,7 +9,7 @@ const AD_REFRESH_CFG := "user://ad_refresh.cfg"
 const AD_REFRESH_SECTION := "ad_refresh"
 const AD_REFRESH_MAX := 2
 # 立绘动画帧率（8 帧/动作）
-const ANIM_FPS := 10.0
+const ANIM_FPS := 6.0
 
 var cat_id: String = ""
 var cat_data
