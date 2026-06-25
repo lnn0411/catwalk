@@ -38,7 +38,8 @@ stretch_mode = 6
 
 [node name="BackBtn" type="Button" parent="."]
 unique_name_in_owner = true
-layout_mode = 0
+layout_mode = 1
+anchors_preset = 0
 offset_left = 28.0
 offset_top = 59.0
 offset_right = 88.0
@@ -46,10 +47,12 @@ offset_bottom = 107.0
 text = "返回"
 
 [node name="Title" type="Label" parent="."]
-layout_mode = 0
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_top = 62.0
-offset_right = 720.0
 offset_bottom = 102.0
+grow_horizontal = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.172, 0.161, 0.149, 1)
 theme_override_font_sizes/font_size = 24
@@ -59,11 +62,15 @@ vertical_alignment = 1
 
 [node name="ReservePanel" type="Panel" parent="."]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 48.0
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -312.0
 offset_top = 153.0
-offset_right = 672.0
+offset_right = 312.0
 offset_bottom = 300.0
+grow_horizontal = 2
 mouse_filter = 2
 
 [node name="ReserveTitle" type="Label" parent="ReservePanel"]
@@ -107,50 +114,59 @@ text = "0 / 6000"
 
 [node name="InjectBtn" type="Button" parent="ReservePanel"]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 460.0
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -164.0
 offset_top = 48.0
-offset_right = 587.0
+offset_right = -37.0
 offset_bottom = 99.0
+grow_horizontal = 0
 text = "注入"
 
-[node name="Slot0" parent="." instance=ExtResource("2")]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 168.0
+[node name="SlotGrid" type="GridContainer" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -185.0
 offset_top = 374.0
-offset_right = 341.0
-offset_bottom = 547.0
-
-[node name="Slot1" parent="." instance=ExtResource("2")]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 365.0
-offset_top = 374.0
-offset_right = 538.0
-offset_bottom = 547.0
-
-[node name="Slot2" parent="." instance=ExtResource("2")]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 168.0
-offset_top = 571.0
-offset_right = 341.0
+offset_right = 185.0
 offset_bottom = 744.0
+grow_horizontal = 2
+theme_override_constants/h_separation = 24
+theme_override_constants/v_separation = 24
+columns = 2
 
-[node name="Slot3" parent="." instance=ExtResource("2")]
+[node name="Slot0" parent="SlotGrid" instance=ExtResource("2")]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 365.0
-offset_top = 571.0
-offset_right = 538.0
-offset_bottom = 744.0
+layout_mode = 2
+
+[node name="Slot1" parent="SlotGrid" instance=ExtResource("2")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Slot2" parent="SlotGrid" instance=ExtResource("2")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Slot3" parent="SlotGrid" instance=ExtResource("2")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [node name="AdBtn" type="Button" parent="."]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 120.0
-offset_top = 1113.0
-offset_right = 600.0
-offset_bottom = 1168.0
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -240.0
+offset_top = -167.0
+offset_right = 240.0
+offset_bottom = -112.0
+grow_horizontal = 2
+grow_vertical = 0
 text = "看广告加速"

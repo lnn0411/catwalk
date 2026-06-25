@@ -19,8 +19,6 @@ layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_right = 720.0
-offset_bottom = 1280.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -49,11 +47,14 @@ theme_override_styles/panel = SubResource("1")
 
 [node name="CatDisplay" type="TextureRect" parent="CardPanel"]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 160
-offset_top = 40
-offset_right = -160
-offset_bottom = 290
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 160.0
+offset_top = 40.0
+offset_right = -160.0
+offset_bottom = 290.0
+grow_horizontal = 2
 mouse_filter = 2
 expand_mode = 0
 stretch_mode = 5
@@ -61,11 +62,14 @@ texture_filter = 1
 
 [node name="InfoRow" type="HBoxContainer" parent="CardPanel"]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 32
-offset_top = 310
-offset_right = -32
-offset_bottom = 350
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 32.0
+offset_top = 310.0
+offset_right = -32.0
+offset_bottom = 350.0
+grow_horizontal = 2
 theme_override_constants/separation = 16
 
 [node name="CatName" type="Label" parent="CardPanel/InfoRow"]
@@ -88,11 +92,14 @@ vertical_alignment = 1
 
 [node name="ButtonRow" type="HBoxContainer" parent="CardPanel"]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 32
-offset_top = 365
-offset_right = -32
-offset_bottom = 425
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 32.0
+offset_top = 365.0
+offset_right = -32.0
+offset_bottom = 425.0
+grow_horizontal = 2
 theme_override_constants/separation = 12
 
 [node name="FeedButton" type="Button" parent="CardPanel/ButtonRow"]
@@ -133,11 +140,14 @@ text = "🧭 探索"
 
 [node name="StatusLabel" type="Label" parent="CardPanel"]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 32
-offset_top = 435
-offset_right = -32
-offset_bottom = 465
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 32.0
+offset_top = 435.0
+offset_right = -32.0
+offset_bottom = 465.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
@@ -145,11 +155,14 @@ vertical_alignment = 1
 
 [node name="AdRefreshBtn" type="Button" parent="CardPanel"]
 unique_name_in_owner = true
-layout_mode = 0
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
 offset_left = 32.0
 offset_top = 470.0
 offset_right = -32.0
 offset_bottom = 500.0
+grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 16
 text = "⚡ 看广告刷新冷却 🎬"
@@ -157,11 +170,14 @@ text = "⚡ 看广告刷新冷却 🎬"
 [node name="ExploreStatePanel" type="VBoxContainer" parent="CardPanel"]
 unique_name_in_owner = true
 visible = false
-layout_mode = 0
-offset_left = 32
-offset_top = 365
-offset_right = -32
-offset_bottom = 425
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 32.0
+offset_top = 365.0
+offset_right = -32.0
+offset_bottom = 425.0
+grow_horizontal = 2
 theme_override_constants/separation = 4
 
 [node name="ExploringLabel" type="Label" parent="CardPanel/ExploreStatePanel"]
