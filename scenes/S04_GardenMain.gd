@@ -937,8 +937,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_cycle_garden_zoom(event.position)
 				_dragging = false
 				return
-			# L2+ 检测猫咪点击
-			if _zoom_factor >= ZOOM_L2 and _emit_cat_click_at(event.position):
+			# 检测猫咪点击（任何缩放等级）
+			if _emit_cat_click_at(event.position):
 				_dragging = false
 				return
 			_dragging = true
@@ -965,7 +965,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				_cycle_garden_zoom(event.position)
 				_dragging = false
 				return
-			if _zoom_factor >= ZOOM_L2 and _emit_cat_click_at(event.position):
+			# 检测猫咪点击（任何缩放等级）
+			if _emit_cat_click_at(event.position):
 				_dragging = false
 				return
 			_dragging = true
