@@ -164,7 +164,7 @@ func _process(delta: float) -> void:
 
 # ── 进度条填充（ProgressFill 为 ProgressBg 子节点，靠 anchor_right 比例填充，天然随宽度自适配）──
 func _set_progress(p: float) -> void:
-	var ratio := clamp(p, 0.0, 1.0)
+	var ratio: float = clamp(p, 0.0, 1.0)
 	_prog_fill.anchor_right = ratio
 	_prog_fill.offset_right = 0.0
 

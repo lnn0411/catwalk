@@ -66,7 +66,6 @@ var _snow_particles: CPUParticles2D
 var _weather_tween: Tween
 var _last_blend := -1.0
 var _stats_visible := false
-var _hatch_navigating := false
 var _sub_state: int = SubState.IDLE
 var _interact_reset_timer: Timer
 
