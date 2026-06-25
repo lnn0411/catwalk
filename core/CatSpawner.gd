@@ -228,8 +228,12 @@ func ensure_cat_visible(cat_data) -> Node2D:
 	var cid := _get_cat_id(cat_data)
 	if cid == "":
 		return null
+	# 从 HatchEngine 取真实 CatData Resource（传过来的可能是序列化 Dictionary）
+	var real_cat = HatchEngine.get_cat_by_id(cid) if HatchEngine else null
+	if real_cat == null:
+		return null
 	# 已经在了
-	var existing = get_cat_node(cat_data)
+	var existing = get_cat_node(real_cat)
 	if existing != null:
 		return existing
 	# 清除休息占位（如果存在），然后正常生成
@@ -238,7 +242,7 @@ func ensure_cat_visible(cat_data) -> Node2D:
 			if child.has_meta("resting_cat_id") and child.get_meta("resting_cat_id") == cid:
 				child.queue_free()
 				break
-	return instance_cat(cat_data, false, true)
+	return instance_cat(real_cat, false, true)
 
 # 查询某只猫的场上节点（不在场/死引用返回 null）
 func get_cat_node(cat_data):
