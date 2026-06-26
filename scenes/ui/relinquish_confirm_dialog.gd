@@ -71,7 +71,7 @@ func _build_ui() -> void:
 	box.add_child(row)
 
 	var cancel := TextureButton.new()
-	cancel.custom_minimum_size = Vector2(0, 68)
+	cancel.custom_minimum_size = Vector2(126, 68)
 	cancel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_cancel_normal.png")
 	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_cancel_hover.png")
@@ -95,7 +95,7 @@ func _build_ui() -> void:
 	cancel.add_child(cancel_label)
 
 	var ok := TextureButton.new()
-	ok.custom_minimum_size = Vector2(0, 68)
+	ok.custom_minimum_size = Vector2(126, 68)
 	ok.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ok.texture_normal = load("res://assets/art/ui/catcard/btn_confirm_normal.png")
 	ok.texture_hover = load("res://assets/art/ui/catcard/btn_confirm_hover.png")
