@@ -37,21 +37,13 @@ func _build_pages() -> void:
 	for i in range(PAGE_TEXTURES.size()):
 		var page := TextureRect.new()
 		page.texture = PAGE_TEXTURES[i]
-		page.expand_mode = 3
 		page.stretch_mode = TextureRect.STRETCH_SCALE
 		page.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		page.anchor_left = 0.0
-		page.anchor_top = 0.0
-		page.anchor_right = 1.0
-		page.anchor_bottom = 1.0
-		page.offset_left = 0
-		page.offset_top = 0
-		page.offset_right = 0
-		page.offset_bottom = 0
+		page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		page.grow_horizontal = Control.GROW_DIRECTION_BOTH
 		page.grow_vertical = Control.GROW_DIRECTION_BOTH
 		add_child(page)
-		move_child(page, i)  # keep dynamic pages behind the scene-defined buttons
+		move_child(page, i)
 		_pages.append(page)
 
 func _on_start_pressed() -> void:
