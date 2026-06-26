@@ -17,6 +17,7 @@ import org.godotengine.godot.Godot
 import org.godotengine.godot.plugin.GodotPlugin
 import org.godotengine.godot.plugin.SignalInfo
 import org.godotengine.godot.plugin.UsedByGodot
+import kotlin.jvm.JvmName
 
 class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener {
 
@@ -62,9 +63,11 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
     // 返回硬件累计步数（自开机）。-1 = 尚无读数。
     // 差值与每日重置由 Godot 侧 StepEngine 负责。
     @UsedByGodot
+    @JvmName("getSteps")
     fun getSteps() = rawSensorSteps
 
     @UsedByGodot
+    @JvmName("hasActivityRecognitionPermission")
     fun hasActivityRecognitionPermission(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return true
@@ -77,6 +80,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
     }
 
     @UsedByGodot
+    @JvmName("requestActivityRecognitionPermission")
     fun requestActivityRecognitionPermission() {
         val hostActivity = activity ?: return
         if (hasActivityRecognitionPermission()) {
@@ -121,6 +125,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
     }
 
     @UsedByGodot
+    @JvmName("openAppSettings")
     fun openAppSettings() {
         val hostActivity = activity ?: return
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
