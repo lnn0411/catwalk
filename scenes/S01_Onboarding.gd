@@ -38,7 +38,7 @@ func _build_pages() -> void:
 		var page := TextureRect.new()
 		page.texture = PAGE_TEXTURES[i]
 		page.expand_mode = 3
-		page.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		page.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		page.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		add_child(page)
