@@ -70,25 +70,53 @@ func _build_ui() -> void:
 	row.add_theme_constant_override("separation", 12)
 	box.add_child(row)
 
-	var cancel := Button.new()
-	cancel.text = "再想想"
-	cancel.custom_minimum_size = Vector2(0, 52)
+	var cancel := TextureButton.new()
+	cancel.custom_minimum_size = Vector2(0, 68)
 	cancel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_button(cancel, Color("#7A7A7A"))
+	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_cancel_normal.png")
+	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_cancel_hover.png")
+	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_cancel_pressed.png")
+	cancel.texture_disabled = load("res://assets/art/ui/catcard/btn_cancel_disabled.png")
+	cancel.ignore_texture_size = true
+	cancel.stretch_mode = TextureButton.STRETCH_SCALE
 	cancel.pressed.connect(func() -> void:
 		canceled.emit()
 	)
 	row.add_child(cancel)
 
-	var ok := Button.new()
-	ok.text = "💕 送养"
-	ok.custom_minimum_size = Vector2(0, 52)
+	var cancel_label := Label.new()
+	cancel_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cancel_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cancel_label.text = "再想想"
+	cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cancel_label.add_theme_font_size_override("font_size", 18)
+	cancel_label.add_theme_color_override("font_color", Color("#4F453C"))
+	cancel.add_child(cancel_label)
+
+	var ok := TextureButton.new()
+	ok.custom_minimum_size = Vector2(0, 68)
 	ok.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_style_button(ok, Color("#C0392B"))
+	ok.texture_normal = load("res://assets/art/ui/catcard/btn_confirm_normal.png")
+	ok.texture_hover = load("res://assets/art/ui/catcard/btn_confirm_hover.png")
+	ok.texture_pressed = load("res://assets/art/ui/catcard/btn_confirm_pressed.png")
+	ok.texture_disabled = load("res://assets/art/ui/catcard/btn_confirm_disabled.png")
+	ok.ignore_texture_size = true
+	ok.stretch_mode = TextureButton.STRETCH_SCALE
 	ok.pressed.connect(func() -> void:
 		confirmed.emit()
 	)
 	row.add_child(ok)
+
+	var ok_label := Label.new()
+	ok_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ok_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ok_label.text = "💕 送养"
+	ok_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ok_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ok_label.add_theme_font_size_override("font_size", 18)
+	ok_label.add_theme_color_override("font_color", Color("#4F453C"))
+	ok.add_child(ok_label)
 
 
 func _refresh_text() -> void:
