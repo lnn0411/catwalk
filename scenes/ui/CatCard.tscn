@@ -71,13 +71,13 @@ stretch_mode = 0
 
 [node name="CloseButton" type="TextureButton" parent="CardTexture"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(72, 72)
+custom_minimum_size = Vector2(60, 60)
 layout_mode = 1
 anchors_preset = 0
-offset_left = 518.0
-offset_top = 20.0
-offset_right = 590.0
-offset_bottom = 92.0
+offset_left = 524.0
+offset_top = 26.0
+offset_right = 584.0
+offset_bottom = 86.0
 ignore_texture_size = true
 stretch_mode = 0
 texture_normal = ExtResource("23")
