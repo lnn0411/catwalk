@@ -27,7 +27,7 @@
 
 [sub_resource type="AtlasTexture" id="AtlasPanel"]
 atlas = ExtResource("2")
-region = Rect2(0, 0, 600, 740)
+region = Rect2(0, 0, 600, 780)
 
 [node name="CatCard" type="Control"]
 layout_mode = 3
@@ -58,7 +58,7 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -300.0
-offset_top = -740.0
+offset_top = -780.0
 offset_right = 300.0
 offset_bottom = 0.0
 grow_horizontal = 2
