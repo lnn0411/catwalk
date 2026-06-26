@@ -306,8 +306,13 @@ func _build_parallax_background() -> void:
 	_bg_sprite = sprite
 	_bg_index = idx
 	garden_layer.add_child(sprite)
-	# 按实际背景图尺寸锁相机，防止露黑
+	# 按实际背景图尺寸锁相机+重算zoom填满视口
 	var tex_size := tex.get_size()
+	var vp_size := _garden_viewport.size
+	if vp_size.y > 0 and tex_size.y > 0:
+		_cam_zoom = vp_size.y / tex_size.y
+		_camera.zoom = Vector2(_cam_zoom, _cam_zoom)
+	_camera.limit_smoothed = false
 	_camera.limit_left = 0
 	_camera.limit_right = int(tex_size.x)
 	_camera.limit_top = 0
