@@ -791,17 +791,31 @@ func _spawn_footprint() -> void:
 		return
 	var fp := Label.new()
 	fp.text = "🐾"
-	fp.add_theme_font_size_override("font_size", 14)
-	fp.add_theme_color_override("font_color", Color(0.4, 0.6, 0.3, 0.7))
-	fp.position = Vector2(-8, 4)  # 脚底位置
-	fp.size = Vector2(16, 16)
-	fp.z_index = -1  # 在猫身后
+	fp.add_theme_font_size_override("font_size", 18)
+	fp.add_theme_color_override("font_color", Color(0.95, 0.78, 0.45, 0.85))
+	fp.position = Vector2(-9, -5)
+	fp.size = Vector2(18, 18)
+	fp.z_index = -1
 	add_child(fp)
+	# 光晕层
+	var glow := Label.new()
+	glow.text = "🐾"
+	glow.add_theme_font_size_override("font_size", 24)
+	glow.add_theme_color_override("font_color", Color(0.95, 0.78, 0.45, 0.2))
+	glow.position = Vector2(-12, -8)
+	glow.size = Vector2(24, 24)
+	glow.z_index = -2
+	add_child(glow)
 	var t := create_tween()
 	t.set_parallel(true)
-	t.tween_property(fp, "position:y", fp.position.y - 30.0, 0.8).set_ease(Tween.EASE_OUT)
-	t.tween_property(fp, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN)
-	t.chain().tween_callback(fp.queue_free)
+	t.tween_property(fp, "position:y", fp.position.y - 20.0, 0.7).set_ease(Tween.EASE_OUT)
+	t.tween_property(fp, "modulate:a", 0.0, 0.7).set_ease(Tween.EASE_IN)
+	t.tween_property(glow, "position:y", glow.position.y - 15.0, 0.7).set_ease(Tween.EASE_OUT)
+	t.tween_property(glow, "modulate:a", 0.0, 0.5).set_ease(Tween.EASE_IN)
+	t.chain().tween_callback(func():
+		fp.queue_free()
+		glow.queue_free()
+	)
 
 
 func _is_companion() -> bool:
