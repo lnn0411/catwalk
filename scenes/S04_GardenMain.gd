@@ -116,6 +116,8 @@ func on_enter(_data: Dictionary = {}) -> void:
 			var cat_node = CatSpawner.get_cat_node(focus_cat)
 			if cat_node != null and cat_node.has_method("_play_click_feedback"):
 				cat_node._play_click_feedback()
+		# 孵化回来：显示引导提示
+		call_deferred("_show_hatch_guide_tip")
 
 func _load_frame_textures() -> void:
 	_frame_empty = _try_load("res://assets/art/ui/panels/slot_frame_empty.png")
@@ -938,6 +940,32 @@ func _set_garden_zoom_factor(factor: float, anchor_screen_pos: Vector2 = Vector2
 		var after_world := _screen_to_garden_world(anchor_screen_pos)
 		_camera.position.x += before_world.x - after_world.x
 	_clamp_camera_to_world()
+
+# 首猫孵化回来后：显示引导提示，3 秒后自动消失
+func _show_hatch_guide_tip() -> void:
+	if not is_inside_tree():
+		return
+	var tip := Label.new()
+	tip.name = "HatchGuideTip"
+	tip.text = "🐱 点击猫咪可以互动哦！"
+	tip.add_theme_font_size_override("font_size", 26)
+	tip.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+	tip.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.6))
+	tip.add_theme_constant_override("shadow_outline_size", 2)
+	tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	tip.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	tip.set_anchors_and_offsets_preset(Control.PRESET_TOP_WIDE)
+	tip.offset_top = 200.0
+	tip.offset_bottom = 260.0
+	add_child(tip)
+	# 淡入
+	tip.modulate.a = 0.0
+	var fade_in := create_tween()
+	fade_in.tween_property(tip, "modulate:a", 1.0, 0.3)
+	# 3 秒后淡出
+	var fade_out := create_tween().set_delay(3.0)
+	fade_out.tween_property(tip, "modulate:a", 0.0, 0.5)
+	fade_out.tween_callback(tip.queue_free)
 
 # 找最接近当前 _zoom_factor 的级别索引
 func _get_garden_zoom_level() -> int:
