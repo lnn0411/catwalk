@@ -963,7 +963,8 @@ func _show_hatch_guide_tip() -> void:
 	var fade_in: Tween = create_tween()
 	fade_in.tween_property(tip, "modulate:a", 1.0, 0.3)
 	# 3 秒后淡出
-	var fade_out: Tween = create_tween().set_delay(3.0)
+	var fade_out: Tween = create_tween()
+	fade_out.set_delay(3.0)
 	fade_out.tween_property(tip, "modulate:a", 0.0, 0.5)
 	fade_out.tween_callback(tip.queue_free)
 
