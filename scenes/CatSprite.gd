@@ -119,6 +119,7 @@ var _walk_accum := 0.0
 var _walk_px_table: Dictionary = {}
 var _last_frame_pos := Vector2.ZERO
 var _turn_cooldown := 0.0
+var _footprint_timer := 0.0
 
 var _wander_timer: Timer
 var _bounce_tween: Tween
@@ -318,6 +319,12 @@ func _process(delta: float) -> void:
 	# Walk 动画：位移驱动（脚随身体走）；其他：时间驱动
 	if _is_walk_anim(_current_anim):
 		_advance_walk_by_distance()
+		# 随行猫：走路时脚下弹脚印
+		if _footprint_timer > 0.0:
+			_footprint_timer -= delta
+		else:
+			_spawn_footprint()
+			_footprint_timer = 0.35
 	else:
 		_advance_animation(delta)
 
@@ -776,6 +783,32 @@ func _play_click_feedback() -> void:
 	ht.tween_property(heart, "position:y", heart.position.y - 44.0, 0.7).set_ease(Tween.EASE_OUT)
 	ht.tween_property(heart, "modulate:a", 0.0, 0.7).set_ease(Tween.EASE_IN)
 	ht.chain().tween_callback(heart.queue_free)
+
+
+# 随行猫脚印粒子：走路时脚下弹出 🐾 浮标，上升淡出
+func _spawn_footprint() -> void:
+	if not _is_companion():
+		return
+	var fp := Label.new()
+	fp.text = "🐾"
+	fp.add_theme_font_size_override("font_size", 14)
+	fp.add_theme_color_override("font_color", Color(0.4, 0.6, 0.3, 0.7))
+	fp.position = Vector2(-8, 4)  # 脚底位置
+	fp.size = Vector2(16, 16)
+	fp.z_index = -1  # 在猫身后
+	add_child(fp)
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(fp, "position:y", fp.position.y - 30.0, 0.8).set_ease(Tween.EASE_OUT)
+	t.tween_property(fp, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN)
+	t.chain().tween_callback(fp.queue_free)
+
+
+func _is_companion() -> bool:
+	if not HatchEngine or cat_data == null:
+		return false
+	var cid: String = String(cat_data.id)
+	return cid != "" and cid == HatchEngine.current_companion_cat_id
 
 
 func _draw() -> void:
