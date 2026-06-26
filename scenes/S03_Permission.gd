@@ -44,22 +44,40 @@ func _open_settings() -> void:
 		push_error("StepCounter singleton is null — plugin not registered in APK")
 		return
 
-	# 先尝试弹出标准权限对话框
-	if sc.has_method("requestActivityRecognitionPermission"):
+	# 调试：列出所有可用方法
+	var methods: Array = []
+	for m in sc.get_method_list():
+		methods.append(String(m.get("name", "")))
+	print("[Permission] StepCounter methods: ", methods)
+
+	# 优先尝试系统设置页（最可靠：跳转到系统应用信息 → 用户手动开权限）
+	if _try_call(sc, "openAppSettings"):
+		_set_status("跳转系统设置…")
+		return
+
+	# 降级：尝试标准权限对话框（部分 ROM 可能拦截）
+	if _try_call(sc, "requestActivityRecognitionPermission"):
 		_set_status("弹出授权对话框…")
-		sc.call("requestActivityRecognitionPermission")
-		# 监听权限结果，最多等 3 秒
 		_check_permission_result()
 		return
 
-	# 降级：直接打开系统应用设置页
-	if sc.has_method("openAppSettings"):
-		_set_status("跳转系统设置…")
-		sc.call("openAppSettings")
-		return
-
 	_set_status("插件缺少所需方法")
-	push_error("StepCounter plugin missing requestActivityRecognitionPermission and openAppSettings")
+	push_error("StepCounter plugin missing both openAppSettings and requestActivityRecognitionPermission")
+
+# 安全调用插件方法，返回 true 表示方法存在且调用成功
+func _try_call(sc, method: String) -> bool:
+	if sc == null:
+		return false
+	# 先用 has_method 检查（Godot 反射机制）
+	if sc.has_method(method):
+		sc.call(method)
+		return true
+	# 兜底：get_method_list 可能有但 has_method 不认
+	for m in sc.get_method_list():
+		if String(m.get("name", "")) == method:
+			sc.call(method)
+			return true
+	return false
 
 func _check_permission_result() -> void:
 	for i in range(6):
