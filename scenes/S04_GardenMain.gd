@@ -143,13 +143,20 @@ func _build_garden_layer() -> void:
 	var garden_vp := SubViewport.new()
 	garden_vp.name = "GardenViewport"
 	garden_vp.size = Vector2(720, 1280 - int(HUD_HEIGHT))  # 与 SubViewportContainer 实际高度一致（顶部被 HUD 占 130）
-	garden_vp.transparent_bg = false
+	garden_vp.transparent_bg = true
 	garden_vp.handle_input_locally = false
 	_garden_viewport = garden_vp
 	
 	garden_layer = Node2D.new()
 	garden_layer.name = "GardenLayer"
 	garden_vp.add_child(garden_layer)
+	
+	# 天空底色（透明背景不露黑）
+	var sky := ColorRect.new()
+	sky.color = Color(0.82, 0.87, 0.92, 1.0)  # 浅蓝天
+	sky.size = Vector2(10000, 10000)
+	sky.position = Vector2(-5000, -5000)
+	garden_layer.add_child(sky)
 	
 	_camera = Camera2D.new()
 	garden_layer.add_child(_camera)
