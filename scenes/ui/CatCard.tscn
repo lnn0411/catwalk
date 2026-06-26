@@ -73,10 +73,10 @@ unique_name_in_owner = true
 custom_minimum_size = Vector2(36, 36)
 layout_mode = 1
 anchors_preset = 0
-offset_left = 564.0
-offset_top = 10.0
-offset_right = 600.0
-offset_bottom = 46.0
+offset_left = 548.0
+offset_top = 14.0
+offset_right = 584.0
+offset_bottom = 50.0
 ignore_texture_size = true
 stretch_mode = 0
 texture_normal = ExtResource("23")
@@ -87,35 +87,36 @@ texture_pressed = ExtResource("24")
 unique_name_in_owner = true
 position = Vector2(300, 240)
 
-[node name="InfoRow" type="HBoxContainer" parent="CardTexture"]
+[node name="InfoCenter" type="VBoxContainer" parent="CardTexture"]
 unique_name_in_owner = true
 layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 40.0
-offset_top = 460.0
-offset_right = -40.0
-offset_bottom = 500.0
+anchors_preset = 0
+offset_left = 150.0
+offset_top = 446.0
+offset_right = 450.0
+offset_bottom = 486.0
 grow_horizontal = 2
-theme_override_constants/separation = 16
+grow_vertical = 0
+alignment = 1
 
-[node name="CatName" type="Label" parent="CardTexture/InfoRow"]
+[node name="CatName" type="Label" parent="CardTexture/InfoCenter"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
 theme_override_font_sizes/font_size = 24
 text = "猫咪"
+horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="BreedRarityLabel" type="Label" parent="CardTexture/InfoRow"]
+[node name="BreedRarityLabel" type="Label" parent="CardTexture/InfoCenter"]
 unique_name_in_owner = true
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 4
 theme_override_colors/font_color = Color(0.635294, 0.592157, 0.54902, 1)
 theme_override_font_sizes/font_size = 16
 text = "橘猫 · 普通"
-horizontal_alignment = 2
+horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="ButtonRow" type="HBoxContainer" parent="CardTexture"]
@@ -123,15 +124,15 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 510.0
-offset_bottom = 562.0
+offset_top = 500.0
+offset_bottom = 575.0
 grow_horizontal = 2
 alignment = 1
 theme_override_constants/separation = 12
 
 [node name="FeedButton" type="TextureButton" parent="CardTexture/ButtonRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 52)
+custom_minimum_size = Vector2(126, 68)
 layout_mode = 2
 ignore_texture_size = true
 stretch_mode = 0
@@ -156,7 +157,7 @@ vertical_alignment = 1
 
 [node name="PetButton" type="TextureButton" parent="CardTexture/ButtonRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 52)
+custom_minimum_size = Vector2(126, 68)
 layout_mode = 2
 ignore_texture_size = true
 stretch_mode = 0
@@ -181,7 +182,7 @@ vertical_alignment = 1
 
 [node name="PlayButton" type="TextureButton" parent="CardTexture/ButtonRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(180, 52)
+custom_minimum_size = Vector2(126, 68)
 layout_mode = 2
 ignore_texture_size = true
 stretch_mode = 0
@@ -209,15 +210,15 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 580.0
-offset_bottom = 628.0
+offset_top = 590.0
+offset_bottom = 660.0
 grow_horizontal = 2
 alignment = 1
 theme_override_constants/separation = 12
 
 [node name="ExploreButton" type="TextureButton" parent="CardTexture/FuncRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(280, 48)
+custom_minimum_size = Vector2(196, 62)
 layout_mode = 2
 ignore_texture_size = true
 stretch_mode = 0
@@ -243,7 +244,7 @@ vertical_alignment = 1
 
 [node name="AdRefreshBtn" type="TextureButton" parent="CardTexture/FuncRow"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(280, 48)
+custom_minimum_size = Vector2(196, 62)
 layout_mode = 2
 ignore_texture_size = true
 stretch_mode = 0
@@ -274,7 +275,7 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 40.0
-offset_top = 505.0
+offset_top = 500.0
 offset_right = -40.0
 offset_bottom = 575.0
 grow_horizontal = 2
@@ -313,9 +314,9 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 40.0
-offset_top = 648.0
+offset_top = 654.0
 offset_right = -40.0
-offset_bottom = 678.0
+offset_bottom = 686.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0.635294, 0.592157, 0.54902, 1)
 theme_override_font_sizes/font_size = 14
@@ -327,9 +328,9 @@ unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_left = 40.0
-offset_top = 692.0
-offset_right = -40.0
+offset_left = 56.0
+offset_top = 696.0
+offset_right = -56.0
 offset_bottom = 732.0
 grow_horizontal = 2
 alignment = 1
