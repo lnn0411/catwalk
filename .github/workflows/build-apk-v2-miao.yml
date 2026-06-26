@@ -119,13 +119,13 @@ jobs:
       - name: Clean duplicate res
         run: find android/build/res \( -name "*.png" -o -name "*.webp" \) -delete
 
-      - name: Set compress_native_libraries=true
+      - name: Set compress_native_libraries=true and disable Godot signing
         run: |
           sed -i 's/gradle_build\/compress_native_libraries=false/gradle_build\/compress_native_libraries=true/' export_presets.cfg
-          grep "compress_native_libraries=true" export_presets.cfg || {
-            echo "⚠️ 未找到 compress_native_libraries=true，检查当前值"
-            grep "compress_native_libraries" export_presets.cfg
-          }
+          sed -i 's/package\/signed=true/package\/signed=false/' export_presets.cfg
+          sed -i '/keystore\/debug/d' export_presets.cfg
+          grep "compress_native_libraries=true" export_presets.cfg || echo "⚠️ compress_native_libraries 检查"
+          grep "package/signed=false" export_presets.cfg && echo "✅ Godot signing disabled" || echo "❌ 禁用签名失败"
 
       - name: Export APK
         run: |
