@@ -127,19 +127,6 @@ jobs:
             grep "compress_native_libraries" export_presets.cfg
           }
 
-      - name: Write registration files
-        run: |
-          mkdir -p addons/step_counter android/plugins/step_counter .godot
-          printf 'res://addons/step_counter/StepCounter.gdextension\nres://android/plugins/step_counter/StepCounter.gdextension\n' > .godot/extension_list.cfg
-          printf '%s\n' \
-            '[configuration]' '' \
-            'android_plugin_name="StepCounter"' \
-            'android_plugin_type="v2"' \
-            'android_plugin_binary_type="local"' \
-            'android_plugin_binary="com/catwalk/stepcounter/StepCounterPlugin.kt"' \
-            > addons/step_counter/StepCounter.gdextension
-          cp addons/step_counter/StepCounter.gdextension android/plugins/step_counter/StepCounter.gdextension
-
       - name: Export APK
         run: |
           rm -f catwalk-debug.apk
@@ -174,12 +161,6 @@ jobs:
           COMPRESS=$(unzip -lv $APK 2>/dev/null | grep libgodot | awk '{print $2}')
           echo "大小: $SIZE | libgodot: $COMPRESS"
           [ "$COMPRESS" != "Stored" ] || { echo "❌ lib 未压缩"; ERR=$((ERR+1)); }
-
-          echo ""
-          echo "── 注册文件 ──"
-          unzip -p $APK assets/.godot/extension_list.cfg >/dev/null 2>&1 && echo "✅ extension_list.cfg" || { echo "❌"; ERR=$((ERR+1)); }
-          GFILES=$(unzip -l $APK 2>/dev/null | grep -c "gdextension" || true)
-          [ "$GFILES" -ge 2 ] && echo "✅ gdextension × $GFILES" || { echo "❌ 不足 ($GFILES/2)"; ERR=$((ERR+1)); }
 
           echo ""
           echo "── StepCounter DEX ──"
