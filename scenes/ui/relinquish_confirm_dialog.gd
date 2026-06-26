@@ -83,10 +83,10 @@ func _build_ui() -> void:
 
 	var cancel := TextureButton.new()
 	cancel.custom_minimum_size = Vector2(126, 68)
-	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_cancel_normal.png")
-	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_cancel_hover.png")
-	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_cancel_pressed.png")
-	cancel.texture_disabled = load("res://assets/art/ui/catcard/btn_cancel_disabled.png")
+	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
+	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
+	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
+	cancel.texture_disabled = load("res://assets/art/ui/catcard/btn_feed_disabled.png")
 	cancel.ignore_texture_size = true
 	cancel.stretch_mode = TextureButton.STRETCH_SCALE
 	cancel.pressed.connect(func() -> void:
@@ -106,10 +106,10 @@ func _build_ui() -> void:
 
 	var ok := TextureButton.new()
 	ok.custom_minimum_size = Vector2(126, 68)
-	ok.texture_normal = load("res://assets/art/ui/catcard/btn_confirm_normal.png")
-	ok.texture_hover = load("res://assets/art/ui/catcard/btn_confirm_hover.png")
-	ok.texture_pressed = load("res://assets/art/ui/catcard/btn_confirm_pressed.png")
-	ok.texture_disabled = load("res://assets/art/ui/catcard/btn_confirm_disabled.png")
+	ok.texture_normal = load("res://assets/art/ui/catcard/btn_play_normal.png")
+	ok.texture_hover = load("res://assets/art/ui/catcard/btn_play_hover.png")
+	ok.texture_pressed = load("res://assets/art/ui/catcard/btn_play_pressed.png")
+	ok.texture_disabled = load("res://assets/art/ui/catcard/btn_play_disabled.png")
 	ok.ignore_texture_size = true
 	ok.stretch_mode = TextureButton.STRETCH_SCALE
 	ok.pressed.connect(func() -> void:
