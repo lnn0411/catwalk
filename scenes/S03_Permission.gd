@@ -44,27 +44,14 @@ func _open_settings() -> void:
 		push_error("StepCounter singleton is null — plugin not registered in APK")
 		return
 
-	# 调试：列出所有可用方法
-	var methods: Array = []
-	for m in sc.get_method_list():
-		methods.append(String(m.get("name", "")))
-	#print("[Permission] StepCounter methods: ", methods)
+	# Godot 4 Android 插件上 has_method 有已知 bug（#46673），
+	# 改用直接 call，方法存在即可正常工作。
+	# 方法已通过 @UsedByGodot + getPluginMethods 双重注册。
 
 	# 优先尝试系统设置页
-	if sc.has_method("openAppSettings"):
-		_set_status("跳转系统设置…")
-		sc.call("openAppSettings")
-		return
-
-	# 降级：标准权限对话框
-	if sc.has_method("requestActivityRecognitionPermission"):
-		_set_status("弹出授权对话框…")
-		sc.call("requestActivityRecognitionPermission")
-		_check_permission_result()
-		return
-
-	_set_status("插件缺少所需方法")
-	push_error("StepCounter plugin missing both openAppSettings and requestActivityRecognitionPermission")
+	_set_status("跳转系统设置…")
+	sc.call("openAppSettings")
+	return
 
 func _check_permission_result() -> void:
 	for i in range(6):
@@ -86,9 +73,7 @@ func _check_permission() -> bool:
 	var sc := Engine.get_singleton("StepCounter")
 	if sc == null:
 		return true  # editor
-	if sc.has_method("hasActivityRecognitionPermission"):
-		return bool(sc.call("hasActivityRecognitionPermission"))
-	return true
+	return bool(sc.call("hasActivityRecognitionPermission"))
 
 var _retry_count := 0
 

@@ -15,9 +15,9 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.godotengine.godot.Godot
 import org.godotengine.godot.plugin.GodotPlugin
+import org.godotengine.godot.plugin.MethodInfo
 import org.godotengine.godot.plugin.SignalInfo
 import org.godotengine.godot.plugin.UsedByGodot
-import kotlin.jvm.JvmName
 
 class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener {
 
@@ -31,13 +31,20 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
     // 硬件累计步数（TYPE_STEP_COUNTER：自设备开机以来的总步数）。
     // -1 表示尚未拿到任何传感器读数 —— 此时 getSteps() 返回 -1，
     // Godot 侧 StepEngine 会跳过，避免把"还没读到"误判为设备重启。
-    // 不要在这里维护"本次会话基准/增量"，否则进程被杀重启后基准重置，
-    // 进程死亡期间走的步会被吸收进新基准而丢失（这是原实现的 bug）。
     private var rawSensorSteps = -1
 
     override fun getPluginName() = "StepCounter"
 
     override fun getPluginSignals() = setOf(stepsChangedSignal, permissionResultSignal)
+
+    override fun getPluginMethods(): MutableList<MethodInfo> {
+        return mutableListOf(
+            MethodInfo("getSteps"),
+            MethodInfo("hasActivityRecognitionPermission"),
+            MethodInfo("requestActivityRecognitionPermission"),
+            MethodInfo("openAppSettings"),
+        )
+    }
 
     override fun onGodotMainLoopStarted() {
         super.onGodotMainLoopStarted()
@@ -48,8 +55,6 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 
     override fun onMainPause() {
         super.onMainPause()
-        // 退后台时注销监听省电；硬件计步器仍在固件层继续累计，
-        // 回前台重新注册后第一帧读数即为最新累计值，不会丢步。
         sensorManager?.unregisterListener(this)
     }
 
@@ -60,14 +65,10 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
         }
     }
 
-    // 返回硬件累计步数（自开机）。-1 = 尚无读数。
-    // 差值与每日重置由 Godot 侧 StepEngine 负责。
     @UsedByGodot
-    @JvmName("getSteps")
     fun getSteps() = rawSensorSteps
 
     @UsedByGodot
-    @JvmName("hasActivityRecognitionPermission")
     fun hasActivityRecognitionPermission(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
             return true
@@ -80,7 +81,6 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
     }
 
     @UsedByGodot
-    @JvmName("requestActivityRecognitionPermission")
     fun requestActivityRecognitionPermission() {
         val hostActivity = activity ?: return
         if (hasActivityRecognitionPermission()) {
@@ -107,8 +107,6 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
     }
 
     override fun onSensorChanged(event: SensorEvent) {
-        // event.values[0] = 自设备开机以来的累计步数（Float，硬件维护，进程死了也照常累加）。
-        // 直接透传，由 StepEngine 做差值/重启判断。
         rawSensorSteps = event.values[0].toInt().coerceAtLeast(0)
         emitSignal(stepsChangedSignal, Integer(rawSensorSteps))
     }
@@ -125,7 +123,6 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
     }
 
     @UsedByGodot
-    @JvmName("openAppSettings")
     fun openAppSettings() {
         val hostActivity = activity ?: return
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
