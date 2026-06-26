@@ -116,8 +116,6 @@ func on_enter(_data: Dictionary = {}) -> void:
 			var cat_node = CatSpawner.get_cat_node(focus_cat)
 			if cat_node != null and cat_node.has_method("_play_click_feedback"):
 				cat_node._play_click_feedback()
-		# 孵化回来：显示引导提示
-		call_deferred("_show_hatch_guide_tip")
 
 func _load_frame_textures() -> void:
 	_frame_empty = _try_load("res://assets/art/ui/panels/slot_frame_empty.png")

@@ -196,8 +196,7 @@ func _update_phase() -> void:
 	if _phase == 3:
 		_show_name_popup_once()
 	if _phase == 4 and _elapsed >= _phase4_start() + 1.5:
-		var cat_id := String(_cat.id) if _cat != null else ""
-		UIManager.pop_to_root({"focus_cat": cat_id})
+		UIManager.pop_to_root()
 
 func _phase4_start() -> float:
 	return 5.0 if _is_first_orange() else 8.5 + _leg_hold
