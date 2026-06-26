@@ -1,10 +1,7 @@
 extends "res://ui/UIPage.gd"
 
 const CatData := preload("res://core/CatData.gd")
-const CAT_ICON_SIZE := 64.0
-const DRAWER_HEIGHT := 400.0
 
-var _drawer: Control
 var _scrim: ColorRect
 var _list_container: VBoxContainer
 var _cat_items: Array = []
@@ -13,6 +10,7 @@ func _ready() -> void:
 	super._ready()
 	_build_ui()
 	_refresh_list()
+
 
 func _build_ui() -> void:
 	# 暗化遮罩
@@ -23,77 +21,62 @@ func _build_ui() -> void:
 	_scrim.gui_input.connect(_on_scrim_input)
 	add_child(_scrim)
 
-	# 抽屉面板 — 锚定底部
-	_drawer = Control.new()
-	_drawer.anchor_left = 0.0
-	_drawer.anchor_right = 1.0
-	_drawer.anchor_top = 1.0
-	_drawer.anchor_bottom = 1.0
-	_drawer.offset_top = -DRAWER_HEIGHT
-	_drawer.mouse_filter = Control.MOUSE_FILTER_STOP
-	add_child(_drawer)
+	# 弹窗底板（居中 560x500）
+	var panel := TextureRect.new()
+	panel.texture = load("res://assets/art/ui/companion/panel_companion.png")
+	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	panel.stretch_mode = TextureRect.STRETCH_SCALE
+	_center_control(panel, Vector2(560, 500))
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(panel)
 
-	var bg := StyleBoxFlat.new()
-	bg.bg_color = Color(0.14, 0.12, 0.10, 0.95)
-	bg.set_corner_radius_all(16)
-	var panel := Panel.new()
-	panel.add_theme_stylebox_override("panel", bg)
-	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_drawer.add_child(panel)
-
-	# 标题栏
-	var title_bar := HBoxContainer.new()
-	title_bar.anchor_left = 0.0
-	title_bar.anchor_right = 1.0
-	title_bar.offset_bottom = 50.0
-	title_bar.add_theme_constant_override("separation", 0)
-	_drawer.add_child(title_bar)
-
+	# 标题
 	var title := Label.new()
-	title.text = "📋 选择随行猫咪"
-	title.add_theme_color_override("font_color", Color.WHITE)
-	title.add_theme_font_size_override("font_size", 20)
-	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	title_bar.add_child(title)
+	title.text = "选择随行猫咪"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_color_override("font_color", Color("#4F453C"))
+	title.add_theme_font_size_override("font_size", 22)
+	title.position = Vector2(0, 20)
+	title.size = Vector2(560, 36)
+	panel.add_child(title)
 
-	var close_btn := Button.new()
-	close_btn.text = "\u2715"
-	close_btn.add_theme_font_size_override("font_size", 22)
-	close_btn.add_theme_color_override("font_color", Color.WHITE)
-	close_btn.custom_minimum_size = Vector2(50, 50)
+	# 关闭按钮 — 右上角
+	var close_btn := TextureButton.new()
+	close_btn.texture_normal = load("res://assets/art/ui/catcard/btn_close_normal.png")
+	close_btn.texture_hover = load("res://assets/art/ui/catcard/btn_close_hover.png")
+	close_btn.texture_pressed = load("res://assets/art/ui/catcard/btn_close_pressed.png")
+	close_btn.ignore_texture_size = true
+	close_btn.custom_minimum_size = Vector2(44, 44)
+	close_btn.position = Vector2(506, 8)
 	close_btn.pressed.connect(_close)
-	title_bar.add_child(close_btn)
+	panel.add_child(close_btn)
 
-	# 猫列表
+	# 猫列表（滚动容器）
 	var scroll := ScrollContainer.new()
-	scroll.anchor_left = 0.0
-	scroll.anchor_right = 1.0
-	scroll.anchor_top = 0.0
-	scroll.anchor_bottom = 1.0
-	scroll.offset_top = 50.0
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_drawer.add_child(scroll)
+	scroll.position = Vector2(40, 60)
+	scroll.size = Vector2(480, 410)
+	panel.add_child(scroll)
 
 	_list_container = VBoxContainer.new()
 	_list_container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_list_container.add_theme_constant_override("separation", 4)
+	_list_container.add_theme_constant_override("separation", 6)
 	scroll.add_child(_list_container)
 
-	# 空状态
+	# 空状态文字
 	var empty := Label.new()
 	empty.name = "EmptyLabel"
-	empty.text = "\u8FD8\u6CA1\u6709\u732B\u5496\uFF0C\u5148\u53BB\u5B75\u5316\u4E00\u53EA\u5427~"
+	empty.text = "还没有猫咪，先去孵化一只吧~"
 	empty.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	empty.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
+	empty.add_theme_color_override("font_color", Color("#4F453C"))
 	empty.add_theme_font_size_override("font_size", 16)
 	empty.visible = false
 	_list_container.add_child(empty)
 
-	# 入场动画：抽屉从底部滑入
-	var final_top := -DRAWER_HEIGHT
-	_drawer.offset_top = 0.0
+	# 入场动画（淡入）
+	modulate = Color(1, 1, 1, 0)
 	var t := create_tween()
-	t.tween_property(_drawer, "offset_top", final_top, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	t.tween_property(self, "modulate", Color.WHITE, 0.2)
+
 
 func _refresh_list() -> void:
 	for item in _cat_items:
@@ -114,60 +97,70 @@ func _refresh_list() -> void:
 		_list_container.add_child(row)
 		_cat_items.append(row)
 
+
 func _build_cat_row(cat_data, companion_id: String) -> Control:
 	var cat_id: String = String(cat_data.id)
 	var is_companion := cat_id == companion_id
 
-	var row := Button.new()
+	var row := TextureButton.new()
 	row.custom_minimum_size = Vector2(0, 72)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.texture_normal = load("res://assets/art/ui/companion/btn_cat_row_normal.png")
+	row.texture_hover = load("res://assets/art/ui/companion/btn_cat_row_hover.png")
+	row.texture_pressed = load("res://assets/art/ui/companion/btn_cat_row_pressed.png")
+	row.texture_disabled = load("res://assets/art/ui/companion/btn_cat_row_disabled.png")
+	row.ignore_texture_size = true
+	row.stretch_mode = TextureButton.STRETCH_SCALE
 	row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color(0.22, 0.20, 0.17, 0.8)
-	sb.set_corner_radius_all(8)
-	sb.content_margin_left = 12
-	sb.content_margin_right = 12
-	row.add_theme_stylebox_override("normal", sb)
-
+	# 内容容器（铺满按钮，叠在贴图上）
 	var hb := HBoxContainer.new()
 	hb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	hb.add_theme_constant_override("separation", 12)
+	hb.add_theme_constant_override("separation", 8)
 	row.add_child(hb)
 
 	# 猫图标（品种色圆形）
-	var icon := Panel.new()
-	icon.custom_minimum_size = Vector2(CAT_ICON_SIZE, CAT_ICON_SIZE)
+	var icon := ColorRect.new()
+	icon.custom_minimum_size = Vector2(52, 52)
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.color = _breed_color(String(cat_data.species))
+	# 圆角通过 theme 实现
 	var icon_sb := StyleBoxFlat.new()
-	icon_sb.bg_color = _breed_color(String(cat_data.species))
-	icon_sb.set_corner_radius_all(32)
+	icon_sb.bg_color = icon.color
+	icon_sb.set_corner_radius_all(26)
 	icon.add_theme_stylebox_override("panel", icon_sb)
+	# 左边距补偿
+	var icon_margin := Control.new()
+	icon_margin.custom_minimum_size = Vector2(20, 1)
+	hb.add_child(icon_margin)
 	hb.add_child(icon)
 
 	# 名字 + 品种
 	var info := VBoxContainer.new()
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	info.add_theme_constant_override("separation", 2)
+	info.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	hb.add_child(info)
 
 	var name_label := Label.new()
 	name_label.text = cat_data.display_name
-	name_label.add_theme_color_override("font_color", Color.WHITE if not is_companion else Palette.AMBER)
+	name_label.add_theme_color_override("font_color", Color("#4F453C") if not is_companion else Color("#C4894A"))
 	name_label.add_theme_font_size_override("font_size", 18)
 	info.add_child(name_label)
 
 	var breed_label := Label.new()
 	breed_label.text = _breed_text(String(cat_data.species))
-	breed_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5))
+	breed_label.add_theme_color_override("font_color", Color("#8B7355"))
 	breed_label.add_theme_font_size_override("font_size", 13)
 	info.add_child(breed_label)
 
 	# 随行标记
 	if is_companion:
 		var check := Label.new()
-		check.text = "\u2705 \u968F\u884C\u4E2D"
-		check.add_theme_color_override("font_color", Color(0.3, 0.9, 0.3))
+		check.text = "✅ 随行中"
+		check.add_theme_color_override("font_color", Color("#C4894A"))
 		check.add_theme_font_size_override("font_size", 14)
+		check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		hb.add_child(check)
 
 	row.pressed.connect(func():
@@ -175,6 +168,7 @@ func _build_cat_row(cat_data, companion_id: String) -> Control:
 	)
 
 	return row
+
 
 func _on_cat_selected(cat_id: String, is_current: bool) -> void:
 	if is_current:
@@ -184,19 +178,34 @@ func _on_cat_selected(cat_id: String, is_current: bool) -> void:
 		HatchEngine.set_companion_cat_id(cat_id)
 	_close()
 
+
 func _on_scrim_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
 		_close()
 
+
 func _close() -> void:
 	var t := create_tween()
-	t.tween_property(_drawer, "offset_top", 0.0, 0.25)
+	t.tween_property(self, "modulate", Color(1, 1, 1, 0), 0.15)
 	await t.finished
 	UIManager.go_back()
+
 
 func handle_back() -> bool:
 	_close()
 	return true
+
+
+func _center_control(control: Control, control_size: Vector2) -> void:
+	control.anchor_left = 0.5
+	control.anchor_top = 0.5
+	control.anchor_right = 0.5
+	control.anchor_bottom = 0.5
+	control.offset_left = -control_size.x * 0.5
+	control.offset_top = -control_size.y * 0.5
+	control.offset_right = control_size.x * 0.5
+	control.offset_bottom = control_size.y * 0.5
+
 
 func _breed_color(species: String) -> Color:
 	match species:
@@ -205,9 +214,10 @@ func _breed_color(species: String) -> Color:
 		CatData.BREED_SIAMESE: return Color(0.8, 0.7, 0.5)
 		_: return Color(0.6, 0.6, 0.6)
 
+
 func _breed_text(species: String) -> String:
 	match species:
-		CatData.BREED_ORANGE: return "\u6A58\u732B"
-		CatData.BREED_BRITISH: return "\u82F1\u77ED"
-		CatData.BREED_SIAMESE: return "\u66B9\u7F57"
+		CatData.BREED_ORANGE: return "橘猫"
+		CatData.BREED_BRITISH: return "英短"
+		CatData.BREED_SIAMESE: return "暹罗"
 		_: return species
