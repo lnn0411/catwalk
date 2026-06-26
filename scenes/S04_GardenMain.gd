@@ -467,25 +467,23 @@ func _build_hud() -> void:
 	else:
 		workshop_btn.pressed.connect(_on_workshop_button)
 
-	# 「随行猫」按钮 — 底部栏左侧，常驻可见
-	var companion_btn := Button.new()
+	# 「随行猫」图标 — 底部导航栏左上方
+	var companion_btn := TextureButton.new()
 	companion_btn.name = "CompanionBtn"
-	companion_btn.text = "🐱 随行猫"
-	companion_btn.flat = true
+	companion_btn.texture_normal = load("res://assets/art/ui/companion/icon_follow_cat_normal.png")
+	companion_btn.texture_hover = load("res://assets/art/ui/companion/icon_follow_cat_hover.png")
+	companion_btn.texture_pressed = load("res://assets/art/ui/companion/icon_follow_cat_pressed.png")
+	companion_btn.texture_disabled = load("res://assets/art/ui/companion/icon_follow_cat_disabled.png")
+	companion_btn.ignore_texture_size = true
+	companion_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	companion_btn.anchor_left = 0.0
 	companion_btn.anchor_right = 0.0
-	companion_btn.anchor_top = 0.0
-	companion_btn.anchor_bottom = 0.0
-	companion_btn.offset_left = 620.0
-	companion_btn.offset_right = 706.0
-	companion_btn.offset_top = 900.0
-	companion_btn.offset_bottom = 940.0
-	companion_btn.add_theme_font_size_override("font_size", 15)
-	companion_btn.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
-	var comp_bg := StyleBoxFlat.new()
-	comp_bg.bg_color = Color(0.0, 0.0, 0.0, 0.35)
-	comp_bg.set_corner_radius_all(12)
-	companion_btn.add_theme_stylebox_override("normal", comp_bg)
+	companion_btn.anchor_top = 1.0
+	companion_btn.anchor_bottom = 1.0
+	companion_btn.offset_left = 12.0
+	companion_btn.offset_right = 108.0
+	companion_btn.offset_top = -164.0
+	companion_btn.offset_bottom = -68.0
 	companion_btn.pressed.connect(_on_companion_pressed)
 	root.add_child(companion_btn)
 
