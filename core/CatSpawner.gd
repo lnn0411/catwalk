@@ -188,7 +188,12 @@ func _pick_spawn_position(in_view: bool = true) -> Vector2:
 	if in_view:
 		var view := _camera_view_rect()
 		if view.size != Vector2.ZERO:
-			# 收 15% 边距：避免出生在屏幕边缘只露半个身位
+			# 首猫：直接出生在屏幕正中央（x=镜头中心，y=走行区中间高度）
+			if spawned_cat_ids.is_empty():
+				var center_x := view.get_center().x
+				var ground_y := (min_y + max_y) * 0.5
+				return Vector2(center_x, ground_y)
+			# 非首猫：收 15% 边距随机出生
 			var inset := view.grow_individual(-view.size.x * 0.15, -view.size.y * 0.15, -view.size.x * 0.15, -view.size.y * 0.15)
 			min_x = maxf(min_x, inset.position.x)
 			max_x = minf(max_x, inset.end.x)
