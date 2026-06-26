@@ -341,22 +341,6 @@ func _build_hud() -> void:
 	debug_btn.pressed.connect(_toggle_debug_panel)
 	root.add_child(debug_btn)
 
-	# 顶栏背景：nav_bg.png 铺底
-	var top_bg := TextureRect.new()
-	top_bg.texture = load("res://assets/art/ui/nav/nav_bg.png")
-	top_bg.stretch_mode = TextureRect.STRETCH_SCALE
-	top_bg.anchor_left = 0.0
-	top_bg.anchor_right = 1.0
-	top_bg.anchor_top = 0.0
-	top_bg.anchor_bottom = 0.0
-	top_bg.offset_left = 0.0
-	top_bg.offset_right = 0.0
-	top_bg.offset_top = 0.0
-	top_bg.offset_bottom = 50.0
-	top_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_bg.modulate.a = 0.7
-	root.add_child(top_bg)
-
 	# 顶栏：HBoxContainer，用两个 spacer 实现 左|中|右 布局
 	var top_row := HBoxContainer.new()
 	top_row.anchor_right = 1.0
@@ -366,6 +350,11 @@ func _build_hud() -> void:
 	top_row.add_theme_constant_override("separation", 0)
 	top_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(top_row)
+
+	# 左侧间距（步数不贴边）
+	var left_margin := Control.new()
+	left_margin.custom_minimum_size = Vector2(16, 1)
+	top_row.add_child(left_margin)
 
 	# 步数
 	var steps_box := HBoxContainer.new()
@@ -381,7 +370,7 @@ func _build_hud() -> void:
 	_steps_label = Label.new()
 	_steps_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_steps_label.mouse_filter = Control.MOUSE_FILTER_STOP
-	_steps_label.add_theme_font_size_override("font_size", 18)
+	_steps_label.add_theme_font_size_override("font_size", 19)
 	_steps_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_steps_label.gui_input.connect(_on_steps_label_input)
 	steps_box.add_child(_steps_label)
@@ -398,13 +387,13 @@ func _build_hud() -> void:
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	energy_box.add_child(energy_icon)
 	_energy_label = Label.new()
-	_energy_label.add_theme_font_size_override("font_size", 16)
+	_energy_label.add_theme_font_size_override("font_size", 17)
 	_energy_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_energy_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_energy_label.text = "0/0"
 	energy_box.add_child(_energy_label)
 
-	# spacer-left：steps 贴左，推 energy 居中
+	# 左 → 中：steps 贴左，推 energy 居中
 	top_row.add_child(steps_box)
 
 	var spacer_mid := Control.new()
@@ -414,7 +403,7 @@ func _build_hud() -> void:
 
 	top_row.add_child(energy_box)
 
-	# spacer-right：推 currency 贴右
+	# 中 → 右：推 currency 贴右
 	var spacer_right := Control.new()
 	spacer_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -441,6 +430,11 @@ func _build_hud() -> void:
 		label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 		item_box.add_child(label)
 		currency_box.add_child(item_box)
+
+	# 右侧间距（货币不贴边）
+	var right_margin := Control.new()
+	right_margin.custom_minimum_size = Vector2(16, 1)
+	top_row.add_child(right_margin)
 
 	_empty_label = Label.new()
 	_empty_label.text = "多走几步，猫咪就来了"
