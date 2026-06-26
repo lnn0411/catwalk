@@ -654,6 +654,16 @@ func _on_detail_link_pressed() -> void:
 		UIManager.push("res://ui/pages/S10_CatDetail.tscn", {"cat": _get_full_cat_data()})
 
 
+func _on_companion_pressed() -> void:
+	if cat_id.is_empty():
+		return
+	if HatchEngine:
+		HatchEngine.set_companion_cat_id(cat_id)
+		_show_feedback("已设为随行猫 🐾")
+		if SaveManager:
+			SaveManager.save_all()
+
+
 # 按钮按压缩放反馈：按下缩到 0.95，松开弹回 1.0
 func _connect_button_feedback(button: BaseButton) -> void:
 	if button == null:
