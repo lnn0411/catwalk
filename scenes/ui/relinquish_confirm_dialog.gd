@@ -35,13 +35,23 @@ func _build_ui() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(dim)
 
-	var panel := PanelContainer.new()
+	var panel := TextureRect.new()
+	panel.texture = load("res://assets/art/ui/adopt/adopt_panel.png")
+	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	panel.stretch_mode = TextureRect.STRETCH_SCALE
 	_center_control(panel, Vector2(560, 360))
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	_style_panel(panel, Color("#3C2A1C"), Color("#D4A85A"))
 	add_child(panel)
 
 	var box := VBoxContainer.new()
+	box.anchor_left = 0.0
+	box.anchor_top = 0.0
+	box.anchor_right = 1.0
+	box.anchor_bottom = 1.0
+	box.offset_left = 24
+	box.offset_top = 20
+	box.offset_right = -24
+	box.offset_bottom = -16
 	box.add_theme_constant_override("separation", 14)
 	panel.add_child(box)
 
@@ -160,38 +170,8 @@ func _refresh_text() -> void:
 
 
 func _style_label(label: Label, font_size: int) -> void:
-	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_color", Color("#4F453C"))
 	label.add_theme_font_size_override("font_size", font_size)
-
-
-func _style_button(button: Button, color: Color) -> void:
-	button.add_theme_color_override("font_color", Color.WHITE)
-	button.add_theme_font_size_override("font_size", 18)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = color
-	normal.set_corner_radius_all(8)
-	button.add_theme_stylebox_override("normal", normal)
-	var hover := StyleBoxFlat.new()
-	hover.bg_color = color.lightened(0.08)
-	hover.set_corner_radius_all(8)
-	button.add_theme_stylebox_override("hover", hover)
-	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = color.darkened(0.08)
-	pressed.set_corner_radius_all(8)
-	button.add_theme_stylebox_override("pressed", pressed)
-
-
-func _style_panel(panel: PanelContainer, fill: Color, border: Color) -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = fill
-	style.border_color = border
-	style.set_border_width_all(2)
-	style.set_corner_radius_all(10)
-	style.content_margin_left = 24
-	style.content_margin_top = 24
-	style.content_margin_right = 24
-	style.content_margin_bottom = 24
-	panel.add_theme_stylebox_override("panel", style)
 
 
 func _center_control(control: Control, control_size: Vector2) -> void:
