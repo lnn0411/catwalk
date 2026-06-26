@@ -482,8 +482,8 @@ func _build_hud() -> void:
 	companion_btn.anchor_bottom = 1.0
 	companion_btn.offset_left = 12.0
 	companion_btn.offset_right = 108.0
-	companion_btn.offset_top = -164.0
-	companion_btn.offset_bottom = -68.0
+	companion_btn.offset_top = -174.0
+	companion_btn.offset_bottom = -78.0
 	companion_btn.pressed.connect(_on_companion_pressed)
 	root.add_child(companion_btn)
 
