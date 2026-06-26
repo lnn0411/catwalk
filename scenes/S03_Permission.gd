@@ -73,7 +73,10 @@ func _check_permission() -> bool:
 	var sc := Engine.get_singleton("StepCounter")
 	if sc == null:
 		return true  # editor
-	return bool(sc.call("hasActivityRecognitionPermission"))
+	var result = sc.call("hasActivityRecognitionPermission")
+	if result == null:
+		return true  # 方法未注册，跳过权限检查
+	return bool(result)
 
 var _retry_count := 0
 
