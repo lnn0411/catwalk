@@ -13,7 +13,7 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	# 暗化遮罩
+	# 暗化遮罩（点击关闭）
 	_scrim = ColorRect.new()
 	_scrim.color = Color(0, 0, 0, 0.5)
 	_scrim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -30,31 +30,32 @@ func _build_ui() -> void:
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(panel)
 
-	# 标题
+	# 顶部文案
+	var head := VBoxContainer.new()
+	head.position = Vector2(40, 20)
+	head.size = Vector2(480, 64)
+	head.add_theme_constant_override("separation", 4)
+	panel.add_child(head)
+
 	var title := Label.new()
-	title.text = "选择随行猫咪"
+	title.text = "谁来陪你散步？"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_color_override("font_color", Color("#4F453C"))
-	title.add_theme_font_size_override("font_size", 22)
-	title.position = Vector2(0, 20)
-	title.size = Vector2(560, 36)
-	panel.add_child(title)
+	title.add_theme_font_size_override("font_size", 20)
+	head.add_child(title)
 
-	# 关闭按钮 — 右上角
-	var close_btn := TextureButton.new()
-	close_btn.texture_normal = load("res://assets/art/ui/catcard/btn_close_normal.png")
-	close_btn.texture_hover = load("res://assets/art/ui/catcard/btn_close_hover.png")
-	close_btn.texture_pressed = load("res://assets/art/ui/catcard/btn_close_pressed.png")
-	close_btn.ignore_texture_size = true
-	close_btn.custom_minimum_size = Vector2(44, 44)
-	close_btn.position = Vector2(506, 8)
-	close_btn.pressed.connect(_close)
-	panel.add_child(close_btn)
+	var subtitle := Label.new()
+	subtitle.text = "随行的那只，享受你今天走过的所有步数"
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	subtitle.add_theme_color_override("font_color", Color("#8B7355"))
+	subtitle.add_theme_font_size_override("font_size", 12)
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	head.add_child(subtitle)
 
 	# 猫列表（滚动容器）
 	var scroll := ScrollContainer.new()
-	scroll.position = Vector2(40, 60)
-	scroll.size = Vector2(480, 410)
+	scroll.position = Vector2(40, 90)
+	scroll.size = Vector2(480, 380)
 	panel.add_child(scroll)
 
 	_list_container = VBoxContainer.new()
@@ -111,29 +112,27 @@ func _build_cat_row(cat_data, companion_id: String) -> Control:
 	row.texture_disabled = load("res://assets/art/ui/companion/btn_cat_row_disabled.png")
 	row.ignore_texture_size = true
 	row.stretch_mode = TextureButton.STRETCH_SCALE
-	row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
-	# 内容容器（铺满按钮，叠在贴图上）
+	# 内容容器
 	var hb := HBoxContainer.new()
 	hb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	hb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	hb.add_theme_constant_override("separation", 8)
 	row.add_child(hb)
 
-	# 猫图标（品种色圆形）
-	var icon := ColorRect.new()
-	icon.custom_minimum_size = Vector2(52, 52)
-	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	icon.color = _breed_color(String(cat_data.species))
-	# 圆角通过 theme 实现
-	var icon_sb := StyleBoxFlat.new()
-	icon_sb.bg_color = icon.color
-	icon_sb.set_corner_radius_all(26)
-	icon.add_theme_stylebox_override("panel", icon_sb)
-	# 左边距补偿
-	var icon_margin := Control.new()
-	icon_margin.custom_minimum_size = Vector2(20, 1)
-	hb.add_child(icon_margin)
-	hb.add_child(icon)
+	# 左边距 + 品种色圆头像（Panel 才能正确渲染圆角）
+	var left_pad := Control.new()
+	left_pad.custom_minimum_size = Vector2(14, 1)
+	hb.add_child(left_pad)
+
+	var avatar := Panel.new()
+	avatar.custom_minimum_size = Vector2(48, 48)
+	avatar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var avatar_sb := StyleBoxFlat.new()
+	avatar_sb.bg_color = _breed_color(String(cat_data.species))
+	avatar_sb.set_corner_radius_all(24)
+	avatar.add_theme_stylebox_override("panel", avatar_sb)
+	hb.add_child(avatar)
 
 	# 名字 + 品种
 	var info := VBoxContainer.new()
@@ -162,6 +161,11 @@ func _build_cat_row(cat_data, companion_id: String) -> Control:
 		check.add_theme_font_size_override("font_size", 14)
 		check.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		hb.add_child(check)
+	else:
+		# 右侧留白占位
+		var right_pad := Control.new()
+		right_pad.custom_minimum_size = Vector2(12, 1)
+		hb.add_child(right_pad)
 
 	row.pressed.connect(func():
 		_on_cat_selected(cat_id, is_companion)
