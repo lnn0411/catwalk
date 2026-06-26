@@ -45,9 +45,6 @@ func _build_pages() -> void:
 		move_child(page, i)  # keep dynamic pages behind the scene-defined buttons
 		_pages.append(page)
 
-func _on_skip_pressed() -> void:
-	UIManager.replace("res://scenes/S03_Permission.tscn")
-
 func _on_start_pressed() -> void:
 	UIManager.replace("res://scenes/S03_Permission.tscn")
 
