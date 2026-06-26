@@ -12,6 +12,12 @@ func _ready() -> void:
 	_set_status("")
 	%AuthBtn.pressed.connect(handle_authorize)
 	%SkipBtn.pressed.connect(handle_skip)
+	call_deferred("_skip_if_authorized")
+
+func _skip_if_authorized() -> void:
+	if _check_permission():
+		SaveManager.save_all()
+		UIManager.replace("res://scenes/S02_Loading.tscn")
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_IN and _returning_from_settings:
