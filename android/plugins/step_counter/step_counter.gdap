@@ -1,7 +1,7 @@
 [config]
 
 name="StepCounter"
-binary_type="kotlin_source"
+binary_type="local"
 binary="StepCounterPlugin.kt"
 
 [dependencies]
