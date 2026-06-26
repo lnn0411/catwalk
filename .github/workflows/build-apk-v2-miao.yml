@@ -155,7 +155,8 @@ jobs:
         run: |
           ${ANDROID_SDK_ROOT}/build-tools/36.1.0/apksigner sign \
             --ks debug.keystore --ks-pass pass:android \
-            --ks-key-alias debug --key-pass pass:android catwalk-debug.apk
+            --ks-key-alias debug --key-pass pass:android \
+            --v1-signing-enabled true catwalk-debug.apk
           echo "✅ 签名完成"
 
       # ═══ #2 APK 自检 ═══
