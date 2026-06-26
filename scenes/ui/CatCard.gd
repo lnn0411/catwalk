@@ -650,8 +650,8 @@ func _on_detail_link_pressed() -> void:
 		interaction_system._close_cat_card()
 	else:
 		_play_close_animation()
-	if UIManager and UIManager.has_method("replace"):
-		UIManager.replace("res://scenes/S10_Album.tscn")
+	if UIManager and UIManager.has_method("push"):
+		UIManager.push("res://ui/pages/S10_CatDetail.tscn", {"cat": _get_full_cat_data()})
 
 
 # 按钮按压缩放反馈：按下缩到 0.95，松开弹回 1.0
