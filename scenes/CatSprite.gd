@@ -793,7 +793,7 @@ func _spawn_footprint() -> void:
 	fp.text = "🐾"
 	fp.add_theme_font_size_override("font_size", 18)
 	fp.add_theme_color_override("font_color", Color(0.95, 0.78, 0.45, 0.85))
-	fp.position = Vector2(-9, -5)
+	fp.position = Vector2(-9, 2)
 	fp.size = Vector2(18, 18)
 	fp.z_index = -1
 	add_child(fp)
@@ -802,7 +802,7 @@ func _spawn_footprint() -> void:
 	glow.text = "🐾"
 	glow.add_theme_font_size_override("font_size", 24)
 	glow.add_theme_color_override("font_color", Color(0.95, 0.78, 0.45, 0.2))
-	glow.position = Vector2(-12, -8)
+	glow.position = Vector2(-12, -1)
 	glow.size = Vector2(24, 24)
 	glow.z_index = -2
 	add_child(glow)
