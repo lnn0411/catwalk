@@ -226,9 +226,13 @@ func _on_ad_refresh_pressed() -> void:
 		interaction_system.clear_cat_cooldowns(cat_id)
 	count += 1
 	_save_ad_refresh_count(count)
-	_show_feedback("⚡ 冷却已刷新")
 	_update_ad_refresh_button()
 	refresh_interaction_buttons()
+	# 刷新后如果猫处于烦躁/睡觉状态，给出提示
+	if _is_annoyed():
+		_show_feedback("⚡ 冷却已刷新，但猫咪还在烦躁中…")
+	elif _is_sleeping():
+		_show_feedback("⚡ 冷却已刷新，但猫咪还在睡觉😴")
 
 
 func _update_ad_refresh_button() -> void:
