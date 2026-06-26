@@ -142,21 +142,21 @@ func _build_garden_layer() -> void:
 	# SubViewport 隔离花园和 UI 渲染，彻底解决层级问题
 	var garden_vp := SubViewport.new()
 	garden_vp.name = "GardenViewport"
-	garden_vp.size = Vector2(720, 1280 - int(HUD_HEIGHT))  # 与 SubViewportContainer 实际高度一致（顶部被 HUD 占 130）
-	garden_vp.transparent_bg = true
+	# 自适应真机分辨率：取实际视口大小，而非固定设计尺寸
+	var vp_size := Vector2(720, 1280)
+	var vp_ref := get_viewport()
+	if vp_ref != null:
+		var vr := vp_ref.get_visible_rect().size
+		if vr.x > 0 and vr.y > 0:
+			vp_size = vr
+	garden_vp.size = vp_size
+	garden_vp.transparent_bg = false
 	garden_vp.handle_input_locally = false
 	_garden_viewport = garden_vp
 	
 	garden_layer = Node2D.new()
 	garden_layer.name = "GardenLayer"
 	garden_vp.add_child(garden_layer)
-	
-	# 天空底色（透明背景不露黑）
-	var sky := ColorRect.new()
-	sky.color = Color(0.82, 0.87, 0.92, 1.0)  # 浅蓝天
-	sky.size = Vector2(10000, 10000)
-	sky.position = Vector2(-5000, -5000)
-	garden_layer.add_child(sky)
 	
 	_camera = Camera2D.new()
 	garden_layer.add_child(_camera)
@@ -306,6 +306,12 @@ func _build_parallax_background() -> void:
 	_bg_sprite = sprite
 	_bg_index = idx
 	garden_layer.add_child(sprite)
+	# 按实际背景图尺寸锁相机，防止露黑
+	var tex_size := tex.get_size()
+	_camera.limit_left = 0
+	_camera.limit_right = int(tex_size.x)
+	_camera.limit_top = 0
+	_camera.limit_bottom = int(tex_size.y)
 	# 同步更新猫咪走行区
 	if CatSpawner and CatSpawner.has_method("set_wander_zone"):
 		CatSpawner.set_wander_zone(idx)
