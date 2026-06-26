@@ -15,7 +15,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import org.godotengine.godot.Godot
 import org.godotengine.godot.plugin.GodotPlugin
-import org.godotengine.godot.plugin.MethodInfo
 import org.godotengine.godot.plugin.SignalInfo
 import org.godotengine.godot.plugin.UsedByGodot
 
@@ -36,15 +35,6 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
     override fun getPluginName() = "StepCounter"
 
     override fun getPluginSignals() = setOf(stepsChangedSignal, permissionResultSignal)
-
-    override fun getPluginMethods(): MutableList<MethodInfo> {
-        return mutableListOf(
-            MethodInfo("getSteps"),
-            MethodInfo("hasActivityRecognitionPermission"),
-            MethodInfo("requestActivityRecognitionPermission"),
-            MethodInfo("openAppSettings"),
-        )
-    }
 
     override fun onGodotMainLoopStarted() {
         super.onGodotMainLoopStarted()
