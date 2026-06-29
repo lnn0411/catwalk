@@ -9,6 +9,7 @@ const WEATHER_VALS := [0, 1, 2]
 
 func _ready() -> void:
 	_build_weather_toggle()
+	_build_schedule_toggle()
 	_build_sliders()
 	_build_output_button()
 
@@ -33,6 +34,26 @@ func _on_weather_toggle() -> void:
 	var btn := get_child(0) as Button
 	if btn:
 		btn.text = "天气: " + WEATHER_NAMES[_weather_idx]
+
+var _sleep_override := false
+func _build_schedule_toggle() -> void:
+	var btn := Button.new()
+	btn.text = "🌙 猫咪睡觉"
+	btn.position = Vector2(240, 20)
+	btn.size = Vector2(160, 40)
+	btn.pressed.connect(_on_sleep_toggle)
+	add_child(btn)
+
+func _on_sleep_toggle() -> void:
+	_sleep_override = not _sleep_override
+	var btn := get_child(1) as Button  # schedule toggle 是第 2 个 child
+	if btn:
+		btn.text = "☀️ 猫咪醒来" if _sleep_override else "🌙 猫咪睡觉"
+	if CatSchedule:
+		if _sleep_override:
+			CatSchedule.set_time_override(22)  # 夜间 → 猫睡觉
+		else:
+			CatSchedule.reset_all()
 
 func _build_sliders() -> void:
 	var labels := ["Offset X", "Offset Y", "Scale X", "Scale Y"]
