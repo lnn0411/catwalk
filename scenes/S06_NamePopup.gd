@@ -80,6 +80,8 @@ func _confirm_name() -> void:
 	var j := get_node_or_null("/root/Juice")
 	if j: j.hit()
 	confirmed.emit(value)
+	if _hatch_show != null and _hatch_show.has_method(&"resume_after_name_popup"):
+		_hatch_show.resume_after_name_popup()
 	UIManager.close_overlay()
 
 
@@ -89,4 +91,6 @@ func _on_overlay_clicked(event: InputEvent) -> void:
 			return
 		_closing = true
 		canceled.emit()
+		if _hatch_show != null and _hatch_show.has_method(&"resume_after_name_popup"):
+			_hatch_show.resume_after_name_popup()
 		UIManager.close_overlay()
