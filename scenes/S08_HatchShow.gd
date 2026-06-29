@@ -572,7 +572,8 @@ func _draw_reveal(center: Vector2, zoom: float) -> void:
 	if not _art_reveal:
 		_draw_cat_shape(cat_point, _cat_color_mid(), zoom)
 	var cat_name: String = String(_cat.display_name) if _cat != null else "New Cat"
-	_draw_centered_text(cat_name, cat_point.y + 300.0 * zoom, 36, Palette.TEXT_PRIMARY)
+	if not _waiting_for_name:
+		_draw_centered_text(cat_name, cat_point.y + 300.0 * zoom, 36, Palette.TEXT_PRIMARY)
 
 # 各稀有度特效仅在对应 fx 贴图未就位时走代码绘制（就位则由 _update_fx_nodes 接管）。
 func _draw_rarity_fx(center: Vector2, zoom: float) -> void:
