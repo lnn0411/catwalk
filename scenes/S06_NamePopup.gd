@@ -74,7 +74,7 @@ func _random_name_clicked() -> void:
 func _random_name() -> String:
 	var pools := NAME_POOLS_CN if OS.get_locale_language() == "zh" else NAME_POOLS_EN
 	var species := _species()
-	var pool := Array(pools.get(species, pools[CatData.BREED_ORANGE]))
+	var pool: Array = Array(pools.get(species, pools[CatData.BREED_ORANGE]))
 	return String(pool[_rng.randi_range(0, pool.size() - 1)])
 
 
