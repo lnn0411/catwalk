@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" path="res://assets/art/ui/panels/overlay_mask.png" id="2"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/panels/popup_bg.png" id="3"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/incubation/components/btn_secondary_blank.png" id="4"]
-[ext_resource type="Texture2D" path="res://assets/art/ui/incubation/components/btn_primary_green_blank.png" id="5"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/incubation/components/btn_confirm_name.png" id="5"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBox_input"]
 bg_color = Color(0.98, 0.96, 0.93, 1)
