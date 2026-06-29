@@ -59,7 +59,7 @@ func _show_portrait() -> void:
 		_portrait.visible = false
 		return
 	var species := String(_cat.get("species", _cat.get("breed", "british")))
-	var path := PORTRAIT_PATHS.get(species, PORTRAIT_PATHS["british"])
+	var path: String = PORTRAIT_PATHS.get(species, PORTRAIT_PATHS["british"])
 	if ResourceLoader.exists(path):
 		_portrait.texture = load(path)
 		_portrait.visible = true
