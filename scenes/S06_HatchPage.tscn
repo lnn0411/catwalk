@@ -105,12 +105,12 @@ mouse_filter = 2
 [node name="EnergyTitle" type="Label" parent="EnergyCard"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 210.0
-offset_top = 92.0
+offset_left = 310.0
+offset_top = 102.0
 offset_right = 440.0
-offset_bottom = 114.0
+offset_bottom = 124.0
 theme_override_colors/font_color = Color(0.360784, 0.227451, 0.117647, 1)
-theme_override_font_sizes/font_size = 17
+theme_override_font_sizes/font_size = 18
 text = "备用能量槽"
 horizontal_alignment = 0
 vertical_alignment = 1
