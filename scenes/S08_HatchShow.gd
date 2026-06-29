@@ -50,10 +50,10 @@ const EGG_SIZE := Vector2(150.0, 150.0)
 const SIL_SIZE := Vector2(240.0, 280.0)
 const REVEAL_SIZE := Vector2(360.0, 360.0)
 const SHARD_SIZE := Vector2(90.0, 54.0)
-const FX_COMMON_SIZE := Vector2(320.0, 320.0)
-const FX_RARE_SIZE := Vector2(360.0, 360.0)
-const FX_EPIC_SIZE := Vector2(140.0, 480.0)
-const FX_LEGENDARY_SIZE := Vector2(420.0, 420.0)
+const FX_COMMON_SIZE := Vector2(100.0, 100.0)
+const FX_RARE_SIZE := Vector2(120.0, 120.0)
+const FX_EPIC_SIZE := Vector2(80.0, 360.0)
+const FX_LEGENDARY_SIZE := Vector2(200.0, 200.0)
 
 # —— 美术资源路径 ——
 const ART_BG_PATH := "res://assets/art/ui/hatch_show/hatch_show_bg.png"
@@ -216,8 +216,9 @@ func _setup_fx_node(node: TextureRect, path: String, node_size: Vector2) -> bool
 	var ok := ResourceLoader.exists(path)
 	if ok:
 		node.texture = load(path)
+		node.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		_init_texture_node(node, node_size)
-	node.visible = false
+	node.visible = False
 	return ok
 
 # 统一初始化 TextureRect 的尺寸 / 轴心（缩放绕中心）。
