@@ -19,3 +19,101 @@ mouse_filter = 2
 expand_mode = 3
 stretch_mode = 0
 
+[node name="EggWhole" type="TextureRect" parent="."]
+unique_name_in_owner = true
+show_behind_parent = true
+offset_left = 285.0
+offset_top = 405.0
+offset_right = 435.0
+offset_bottom = 555.0
+mouse_filter = 2
+expand_mode = 3
+stretch_mode = 5
+
+[node name="CatSilhouette" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+offset_left = 240.0
+offset_top = 420.0
+offset_right = 480.0
+offset_bottom = 700.0
+mouse_filter = 2
+expand_mode = 3
+stretch_mode = 5
+
+[node name="FxCommon" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+offset_left = 200.0
+offset_top = 400.0
+offset_right = 520.0
+offset_bottom = 720.0
+mouse_filter = 2
+expand_mode = 3
+stretch_mode = 5
+
+[node name="FxRare" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+offset_left = 180.0
+offset_top = 380.0
+offset_right = 540.0
+offset_bottom = 740.0
+mouse_filter = 2
+expand_mode = 3
+stretch_mode = 5
+
+[node name="FxEpic" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+offset_left = 290.0
+offset_top = 320.0
+offset_right = 430.0
+offset_bottom = 800.0
+mouse_filter = 2
+expand_mode = 3
+stretch_mode = 5
+
+[node name="FxLegendary" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+offset_left = 150.0
+offset_top = 350.0
+offset_right = 570.0
+offset_bottom = 770.0
+mouse_filter = 2
+expand_mode = 3
+stretch_mode = 5
+
+[node name="CatReveal" type="TextureRect" parent="."]
+unique_name_in_owner = true
+visible = false
+offset_left = 180.0
+offset_top = 380.0
+offset_right = 540.0
+offset_bottom = 740.0
+mouse_filter = 2
+expand_mode = 3
+stretch_mode = 5
+
+[node name="ShardContainer" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="WhiteFlash" type="ColorRect" parent="."]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(1, 1, 1, 1)
