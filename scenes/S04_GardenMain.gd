@@ -540,6 +540,7 @@ func _build_hud() -> void:
 		["注入数据", func() -> void: _inject_data()],
 		["☀️ 切换天气", func() -> void: _toggle_weather()],
 		["🌓 切换时段", func() -> void: _toggle_period()],
+		["🌙 猫咪睡觉", func() -> void: _toggle_sleep()],
 	]:
 		var button := Button.new()
 		button.text = String(item[0])
@@ -762,6 +763,25 @@ func _toggle_period() -> void:
 	var cur: int = wtm.current_period
 	var next: int = (cur + 1) % 3
 	wtm.dbg_set_period(next)
+
+
+var _sleep_override := false
+func _toggle_sleep() -> void:
+	_sleep_override = not _sleep_override
+	if CatSchedule:
+		if _sleep_override:
+			CatSchedule.set_time_override(22)
+		else:
+			CatSchedule.reset_all()
+	# 刷新调试按钮文字
+	var box := _debug_panel.get_child(0) as Container
+	if box == null:
+		return
+	for i in box.get_child_count():
+		var btn := box.get_child(i) as Button
+		if btn and (btn.text.begins_with("🌙") or btn.text.begins_with("☀️")):
+			btn.text = "☀️ 猫咪醒来" if _sleep_override else "🌙 猫咪睡觉"
+			break
 
 
 func _replay_onboarding() -> void:
