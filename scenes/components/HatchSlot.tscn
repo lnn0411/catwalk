@@ -67,7 +67,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-texture = ExtResource("2_slot_empty")
 expand_mode = 1
 stretch_mode = 3
 
