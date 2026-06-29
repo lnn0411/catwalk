@@ -105,7 +105,7 @@ mouse_filter = 2
 [node name="EnergyTitle" type="Label" parent="EnergyCard"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 310.0
+offset_left = 295.0
 offset_top = 102.0
 offset_right = 440.0
 offset_bottom = 124.0
