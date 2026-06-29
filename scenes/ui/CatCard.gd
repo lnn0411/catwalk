@@ -10,6 +10,7 @@ const AD_REFRESH_SECTION := "ad_refresh"
 const AD_REFRESH_MAX := 2
 # 立绘动画帧率（8 帧/动作）
 const ANIM_FPS := 4.0
+const SLEEP_ANIM_FPS := 2.0
 
 var cat_id: String = ""
 var cat_data
@@ -962,7 +963,7 @@ func _ensure_breed_frames(breed: String) -> SpriteFrames:
 	for action in ["idle", "feed", "pet", "play", "sleep"]:
 		sf.add_animation(action)
 		sf.set_animation_loop(action, action == "idle" or action == "sleep")
-		sf.set_animation_speed(action, ANIM_FPS)
+		sf.set_animation_speed(action, SLEEP_ANIM_FPS if action == "sleep" else ANIM_FPS)
 		for i in range(8):
 			var p := "res://assets/art/cats/portraits/catcard/%s/catcard_%s_%s_frame_%02d.png" % [dir, dir, action, i]
 			if ResourceLoader.exists(p):
