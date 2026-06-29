@@ -12,7 +12,6 @@ const WORKSHOP_SCENE := "res://scenes/WorkshopPage.gd"
 @onready var _ad_btn: TextureButton = %AdBtn
 @onready var _workshop_link: Label = %WorkshopLink
 @onready var _energy_card: TextureRect = %EnergyCard
-@onready var _reserve_bar_bg: TextureRect = %ReserveBarBg
 @onready var _reserve_bar_fill: ColorRect = %ReserveBarFill
 @onready var _reserve_value: Label = %EnergyValue
 @onready var _slots_parent: Array = [%Slot0, %Slot1, %Slot2, %Slot3]

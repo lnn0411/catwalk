@@ -1,13 +1,11 @@
-[gd_scene load_steps=9 format=3 uid="uid://catwalk_s06_hatch"]
+[gd_scene load_steps=6 format=3 uid="uid://catwalk_s06_hatch"]
 
 [ext_resource type="Script" path="res://scenes/S06_HatchPage.gd" id="1"]
 [ext_resource type="PackedScene" path="res://scenes/components/HatchSlot.tscn" id="2"]
 [ext_resource type="Texture2D" uid="uid://catwalk_hatch_bg" path="res://assets/art/ui/incubation/background/incubation_room_bg_720x1280.png" id="3"]
 [ext_resource type="Texture2D" uid="uid://catwalk_btn_back" path="res://assets/art/ui/incubation/components/btn_back.png" id="4"]
 [ext_resource type="Texture2D" uid="uid://catwalk_panel_energy" path="res://assets/art/ui/incubation/components/panel_energy_slot.png" id="5"]
-[ext_resource type="Texture2D" uid="uid://catwalk_progress_empty" path="res://assets/art/ui/incubation/components/progress_bar_empty.png" id="6"]
-[ext_resource type="Texture2D" uid="uid://catwalk_btn_secondary" path="res://assets/art/ui/incubation/components/btn_secondary_blank.png" id="7"]
-[ext_resource type="Texture2D" uid="uid://catwalk_btn_primary_green" path="res://assets/art/ui/incubation/components/btn_primary_green_blank.png" id="8"]
+[ext_resource type="Texture2D" uid="uid://catwalk_btn_primary_green" path="res://assets/art/ui/incubation/components/btn_primary_green_blank.png" id="6"]
 
 [node name="S06_HatchPage" type="Control"]
 layout_mode = 3
@@ -120,9 +118,9 @@ vertical_alignment = 1
 [node name="ReserveBarFill" type="ColorRect" parent="EnergyCard"]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 214.0
-offset_top = 112.0
-offset_right = 214.0
+offset_left = 213.0
+offset_top = 114.0
+offset_right = 213.0
 offset_bottom = 130.0
 mouse_filter = 2
 color = Color(0.94902, 0.772549, 0.447059, 1)
@@ -191,7 +189,7 @@ offset_left = 50.0
 offset_top = 1090.0
 offset_right = 670.0
 offset_bottom = 1190.0
-texture_normal = ExtResource("8")
+texture_normal = ExtResource("6")
 expand_mode = 1
 stretch_mode = 5
 ignore_texture_size = true
