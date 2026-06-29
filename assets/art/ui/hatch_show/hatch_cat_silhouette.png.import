@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://drevi8jrsf60r"
-path="res://.godot/imported/hatch_cat_silhouette.png-facd159f36aac8536438c59e95c7a07b.ctex"
+uid="uid://ht_0105"
+path="res://.godot/imported/hatch_cat_silhouette-facd159f36aac853.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/hatch_show/hatch_cat_silhouette.png"
-dest_files=["res://.godot/imported/hatch_cat_silhouette.png-facd159f36aac8536438c59e95c7a07b.ctex"]
+dest_files=["res://.godot/imported/hatch_cat_silhouette-facd159f36aac853.ctex"]
 
 [params]
 
@@ -33,7 +33,6 @@ process/channel_remap/blue=2
 process/channel_remap/alpha=3
 process/fix_alpha_border=true
 process/premult_alpha=false
-process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0

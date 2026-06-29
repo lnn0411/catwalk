@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cv36hgtgl1l62"
-path="res://.godot/imported/fx_common_glow.png-fd3ac14c0b0ea2793f09db5107cf4454.ctex"
+uid="uid://ht_0101"
+path="res://.godot/imported/fx_common_glow-fd3ac14c0b0ea279.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/hatch_show/fx_common_glow.png"
-dest_files=["res://.godot/imported/fx_common_glow.png-fd3ac14c0b0ea2793f09db5107cf4454.ctex"]
+dest_files=["res://.godot/imported/fx_common_glow-fd3ac14c0b0ea279.ctex"]
 
 [params]
 
@@ -33,7 +33,6 @@ process/channel_remap/blue=2
 process/channel_remap/alpha=3
 process/fix_alpha_border=true
 process/premult_alpha=false
-process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0

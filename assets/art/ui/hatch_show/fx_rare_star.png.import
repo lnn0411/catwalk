@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dl4vyep3nwi4"
-path="res://.godot/imported/fx_rare_star.png-08b087c0340d2cdf313b725d9f3986da.ctex"
+uid="uid://ht_0104"
+path="res://.godot/imported/fx_rare_star-08b087c0340d2cdf.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/hatch_show/fx_rare_star.png"
-dest_files=["res://.godot/imported/fx_rare_star.png-08b087c0340d2cdf313b725d9f3986da.ctex"]
+dest_files=["res://.godot/imported/fx_rare_star-08b087c0340d2cdf.ctex"]
 
 [params]
 
@@ -33,7 +33,6 @@ process/channel_remap/blue=2
 process/channel_remap/alpha=3
 process/fix_alpha_border=true
 process/premult_alpha=false
-process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0
