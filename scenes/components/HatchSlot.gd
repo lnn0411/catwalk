@@ -72,7 +72,7 @@ func set_data(slot: Dictionary) -> void:
 	if max_energy > 0.0:
 		progress = clamp(energy / max_energy, 0.0, 1.0)
 
-	_frame_art.texture = SLOT_CARD_TEXTURES.get(status, SLOT_CARD_TEXTURES["incubating"])
+	#_frame_art.texture = SLOT_CARD_TEXTURES.get(status, SLOT_CARD_TEXTURES["incubating"])
 	_is_ready_state = status == "ready"
 	set_process(_is_ready_state)
 	if not _is_ready_state:
