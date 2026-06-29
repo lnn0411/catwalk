@@ -124,6 +124,10 @@ func _on_slot_pressed(index: int) -> void:
 	var slot_node = _slots_parent[index].get_child(0) if _slots_parent[index].get_child_count() > 0 else null
 	if slot_node and slot_node.has_method("_effective_status") and slot_node._effective_status(Dictionary(slots[index])) != "ready":
 		return
+	# 背包满时阻止收取并提示
+	if HatchEngine and HatchEngine._get_max_capacity() and HatchEngine.get_cats().size() >= HatchEngine._get_max_capacity():
+		if Popups: Popups.show_toast("🏠 猫咪住满了，先去送养或扩容吧")
+		return
 	var j := get_node_or_null("/root/Juice")
 	if j: j.hit()
 	HatchEngine.collect_ready_slot(index)
