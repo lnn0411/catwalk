@@ -72,7 +72,7 @@ func _random_name_clicked() -> void:
 
 
 func _random_name() -> String:
-	var pools := NAME_POOLS_CN if OS.get_locale_language() == "zh" else NAME_POOLS_EN
+	var pools: Dictionary = NAME_POOLS_CN if OS.get_locale_language() == "zh" else NAME_POOLS_EN
 	var species := _species()
 	var pool: Array = Array(pools.get(species, pools[CatData.BREED_ORANGE]))
 	return String(pool[_rng.randi_range(0, pool.size() - 1)])
@@ -86,7 +86,7 @@ func _confirm_name() -> void:
 	if _cat == null:
 		UIManager.close_overlay()
 		return
-	var value := _name_input.text.strip_edges()
+	var value: String = _name_input.text.strip_edges()
 	if value.length() < 2:
 		value = _random_name()
 	if value.length() > 16:
