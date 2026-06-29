@@ -13,8 +13,8 @@ extends "res://ui/UIPage.gd"
 
 signal egg_drop_complete
 
-const EGG_W := 160.0
-const EGG_H := 160.0
+const EGG_W := 280.0
+const EGG_H := 280.0
 
 # 收尾后是否自动跳转孵化屋（父级要自己接管时设 false）
 @export var auto_navigate: bool = true

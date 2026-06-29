@@ -31,9 +31,9 @@ stretch_mode = 5
 [node name="Egg" type="TextureRect" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 280.0
-offset_top = -160.0
-offset_right = 440.0
+offset_left = 220.0
+offset_top = -280.0
+offset_right = 500.0
 offset_bottom = 0.0
 mouse_filter = 2
 texture = ExtResource("3")
