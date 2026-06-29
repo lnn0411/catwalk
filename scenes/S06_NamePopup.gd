@@ -25,6 +25,7 @@ signal canceled
 
 var _cat
 var _hatch_show
+var _closing := false
 var _rng := RandomNumberGenerator.new()
 
 @onready var _overlay: TextureRect = %OverlayBg
@@ -58,7 +59,7 @@ func _show_portrait() -> void:
 	if _cat == null:
 		_portrait.visible = false
 		return
-	var species := _cat.species
+	var species: String = _cat.species
 	var path: String = PORTRAIT_PATHS.get(species, PORTRAIT_PATHS["british"])
 	if ResourceLoader.exists(path):
 		_portrait.texture = load(path)
@@ -86,6 +87,9 @@ func _confirm_name() -> void:
 	if _cat == null:
 		UIManager.close_overlay()
 		return
+	if _closing:
+		return
+	_closing = true
 	var value: String = _name_input.text.strip_edges()
 	if value.length() < 2:
 		value = _random_name()
@@ -105,5 +109,8 @@ func _confirm_name() -> void:
 
 func _on_overlay_clicked(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
+		if _closing:
+			return
+		_closing = true
 		canceled.emit()
 		UIManager.close_overlay()
