@@ -19,7 +19,7 @@ const EGG_H := 160.0
 # 收尾后是否自动跳转孵化屋（父级要自己接管时设 false）
 @export var auto_navigate: bool = true
 
-@onready var _egg: Label = %Egg
+@onready var _egg: TextureRect = %Egg
 @onready var _bar_fill: ColorRect = %BarFill
 @onready var _ready_text: Label = %ReadyText
 @onready var _back_btn: Button = %BackBtn
@@ -29,7 +29,7 @@ var _completed := false
 
 func _ready() -> void:
 	super._ready()
-	_style()
+	_bar_fill.color = Palette.AMBER
 	if _back_btn:
 		_back_btn.pressed.connect(_finish)
 	# 蛋水平居中、起点在画外上方
