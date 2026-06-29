@@ -14,12 +14,6 @@ const NAME_POOLS_EN := {
 	CatData.BREED_SIAMESE: ["Coco", "Pepper", "Mochi", "Sable", "Latte"],
 }
 
-const PORTRAIT_PATHS := {
-	"orange": "res://assets/art/cats/portraits/reveal/portrait_orange.png",
-	"british": "res://assets/art/cats/portraits/reveal/portrait_british.png",
-	"siamese": "res://assets/art/cats/portraits/reveal/portrait_siamese.png",
-}
-
 signal confirmed(name: String)
 signal canceled
 
@@ -30,7 +24,6 @@ var _rng := RandomNumberGenerator.new()
 
 @onready var _overlay: TextureRect = %OverlayBg
 @onready var _popup_bg: TextureRect = %PopupBg
-@onready var _portrait: TextureRect = %CatPortrait
 @onready var _name_input: LineEdit = %NameInput
 @onready var _random_btn: TextureButton = %RandomBtn
 @onready var _confirm_btn: TextureButton = %ConfirmBtn
@@ -42,30 +35,13 @@ func _ready() -> void:
 	_overlay.gui_input.connect(_on_overlay_clicked)
 	_random_btn.pressed.connect(_random_name_clicked)
 	_confirm_btn.pressed.connect(_confirm_name)
-	_show_portrait()
 	_name_input.grab_focus()
 
 
 func on_enter(_data: Dictionary = {}) -> void:
 	_cat = _data.get("cat", null)
 	_hatch_show = _data.get("hatch_show", null)
-	_show_portrait()
 	_name_input.grab_focus()
-
-
-func _show_portrait() -> void:
-	if _portrait == null:
-		return
-	if _cat == null:
-		_portrait.visible = false
-		return
-	var species: String = _cat.species
-	var path: String = PORTRAIT_PATHS.get(species, PORTRAIT_PATHS["british"])
-	if ResourceLoader.exists(path):
-		_portrait.texture = load(path)
-		_portrait.visible = true
-	else:
-		_portrait.visible = false
 
 
 func _random_name_clicked() -> void:
