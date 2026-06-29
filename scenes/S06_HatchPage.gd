@@ -1,37 +1,39 @@
 extends "res://ui/UIPage.gd"
 # ============================================================
-# S06 孵化屋 —— 卡片化重构 v2（节点版）
+# S06 孵化屋 —— 概念图 1:1 布局（贴图驱动）
 # 结构在 S06_HatchPage.tscn；本脚本负责绑定节点 + 状态驱动 + 交互。
-# 玩法逻辑（孵化/注入/加速/导航/信号）与原版完全一致，未改数值。
-# 配色走新 Palette（Style Bible v2.2 §3.1）：PAPER_CREAM 底 + 白卡 + AMBER 主色。
-# 美术接入点：HatchSlot 内部的 %FrameArt %EggArt；各按钮可换 TextureButton。
 # ============================================================
 
 const CatData := preload("res://core/CatData.gd")
 const WORKSHOP_SCENE := "res://scenes/WorkshopPage.gd"
 
-@onready var _back_btn: Button = %BackBtn
-@onready var _inject_btn: Button = %InjectBtn
-@onready var _ad_btn: Button = %AdBtn
-@onready var _workshop_link: Button = %WorkshopLink
-@onready var _energy_card: Panel = %EnergyCard
-@onready var _reserve_bar_bg: Panel = %ReserveBarBg
+@onready var _back_btn: TextureButton = %BackBtn
+@onready var _inject_btn: TextureButton = %InjectBtn
+@onready var _ad_btn: TextureButton = %AdBtn
+@onready var _workshop_link: Label = %WorkshopLink
+@onready var _energy_card: TextureRect = %EnergyCard
+@onready var _reserve_bar_bg: TextureRect = %ReserveBarBg
 @onready var _reserve_bar_fill: ColorRect = %ReserveBarFill
-@onready var _reserve_value: Label = %ReserveValue
-@onready var _slots: Array = [%Slot0, %Slot1, %Slot2, %Slot3]
+@onready var _reserve_value: Label = %EnergyValue
+@onready var _slots_parent: Array = [%Slot0, %Slot1, %Slot2, %Slot3]
 
 
 func _ready() -> void:
 	super._ready()
-	_style()
 	_back_btn.pressed.connect(_on_back_pressed)
 	_inject_btn.pressed.connect(_inject_energy)
 	_ad_btn.pressed.connect(_speed_up)
-	_workshop_link.pressed.connect(_on_workshop_pressed)
-	for i in range(_slots.size()):
-		_slots[i].slot_index = i
-		if not _slots[i].slot_pressed.is_connected(_on_slot_pressed):
-			_slots[i].slot_pressed.connect(_on_slot_pressed)
+	_workshop_link.gui_input.connect(_on_workshop_clicked)
+	for i in range(_slots_parent.size()):
+		var slot_node = _slots_parent[i]
+		# 实例化 HatchSlot 到占位节点
+		if slot_node.get_child_count() == 0:
+			var packed := load("res://scenes/components/HatchSlot.tscn")
+			var slot = packed.instantiate()
+			slot.slot_index = i
+			if not slot.slot_pressed.is_connected(_on_slot_pressed):
+				slot.slot_pressed.connect(_on_slot_pressed)
+			slot_node.add_child(slot)
 	_connect_data()
 	_refresh_all()
 
@@ -41,7 +43,6 @@ func on_enter(_data: Dictionary = {}) -> void:
 
 
 func handle_back() -> bool:
-	# 返回花园（与原版一致用 replace；Android 返回键也走这里）
 	UIManager.replace("res://scenes/S04_GardenMain.tscn")
 	return true
 
@@ -76,16 +77,18 @@ func _refresh_all() -> void:
 
 func _refresh_slots() -> void:
 	var slots: Array = HatchEngine.get_slots() if HatchEngine else []
-	for i in range(_slots.size()):
+	for i in range(_slots_parent.size()):
 		var data: Dictionary = Dictionary(slots[i]) if i < slots.size() else {}
-		_slots[i].set_data(data)
+		var slot_node = _slots_parent[i].get_child(0) if _slots_parent[i].get_child_count() > 0 else null
+		if slot_node and slot_node.has_method("set_data"):
+			slot_node.set_data(data)
 
 
 func _refresh_reserve() -> void:
 	var current := EnergyEngine.reserve_tank if EnergyEngine else 0.0
 	var max_value := EnergyEngine.MAX_RESERVE_TANK if EnergyEngine else 6000.0
 	var ratio: float = clamp(current / max_value, 0.0, 1.0) if max_value > 0.0 else 0.0
-	# 用 anchor_right 比例填充，天然随卡片宽度自适配（不再依赖固定像素宽）
+	# ProgressFill 是 ReserveBarBg 的子节点，用 anchor_right 比例填充
 	_reserve_bar_fill.anchor_right = ratio
 	_reserve_bar_fill.offset_right = 0.0
 	_reserve_value.text = "%.0f / %.0f" % [current, max_value]
@@ -93,8 +96,10 @@ func _refresh_reserve() -> void:
 
 func _refresh_ad_button() -> void:
 	var remaining: int = HatchEngine.ad_speedup_remaining() if HatchEngine else 0
-	_ad_btn.text = "📺 补充能量 +3,000  今日还可 %d次" % remaining
-	_ad_btn.add_theme_color_override("font_color", Palette.TEXT_SECONDARY if remaining <= 0 else Palette.MOSS)
+	var label := _ad_btn.get_node_or_null("AdLabel") as Label
+	if label:
+		label.text = "补充能量 +3,000  今日还可%d次" % remaining
+		label.add_theme_color_override("font_color", Color(1,1,1,0.5) if remaining <= 0 else Color(1,1,1,1))
 	_ad_btn.disabled = false
 
 
@@ -104,8 +109,11 @@ func _on_back_pressed() -> void:
 	UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 
-func _on_workshop_pressed() -> void:
-	UIManager.push(WORKSHOP_SCENE)
+func _on_workshop_clicked(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		UIManager.push(WORKSHOP_SCENE)
+	elif event is InputEventScreenTouch and event.pressed:
+		UIManager.push(WORKSHOP_SCENE)
 
 
 func _on_slot_pressed(index: int) -> void:
@@ -114,7 +122,8 @@ func _on_slot_pressed(index: int) -> void:
 	var slots: Array = HatchEngine.get_slots()
 	if index >= slots.size():
 		return
-	if _slots[index]._effective_status(Dictionary(slots[index])) != "ready":
+	var slot_node = _slots_parent[index].get_child(0) if _slots_parent[index].get_child_count() > 0 else null
+	if slot_node and slot_node.has_method("_effective_status") and slot_node._effective_status(Dictionary(slots[index])) != "ready":
 		return
 	var j := get_node_or_null("/root/Juice")
 	if j: j.hit()
@@ -185,63 +194,3 @@ func _on_hatch_complete(cat_data) -> void:
 
 func _on_energy_changed(_current: float, _pool_max: float, _backup: float) -> void:
 	_refresh_reserve()
-
-
-# ── 样式（Palette 上色，美术图就位后可逐步替换）──
-
-func _style() -> void:
-	_style_card(_energy_card)
-	_set_panel_bg(_reserve_bar_bg, Color("EDE7D8"), 5)
-	_reserve_bar_fill.color = Palette.MOSS
-	# 返回键：白底圆形
-	_style_button(_back_btn, Color.WHITE, Palette.BORDER, Palette.TEXT_PRIMARY, 17, 1)
-	# 注入：幽灵按钮（白底 + AMBER 描边）
-	_style_button(_inject_btn, Color.WHITE, Palette.AMBER, Palette.TEXT_PRIMARY, 12, 2)
-	# 看广告补能量：浅 moss 底 + MOSS 字
-	_style_button(_ad_btn, Palette.MOSS.lerp(Color.WHITE, 0.82), Palette.MOSS.lerp(Color.WHITE, 0.55), Palette.MOSS, 14, 1)
-	# 工坊链接：扁平文字链
-	_workshop_link.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
-	_workshop_link.add_theme_color_override("font_hover_color", Palette.TEXT_PRIMARY)
-
-
-func _style_card(p: Panel) -> void:
-	if p == null:
-		return
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color.WHITE
-	sb.set_corner_radius_all(18)
-	sb.set_border_width_all(1)
-	sb.border_color = Palette.BORDER
-	sb.shadow_color = Palette.UI_SHADOW
-	sb.shadow_size = 8
-	sb.shadow_offset = Vector2(0, 4)
-	p.add_theme_stylebox_override("panel", sb)
-
-
-func _set_panel_bg(p: Panel, c: Color, radius: int) -> void:
-	if p == null:
-		return
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = c
-	sb.set_corner_radius_all(radius)
-	p.add_theme_stylebox_override("panel", sb)
-
-
-func _style_button(b: Button, bg: Color, border: Color, fg: Color, radius: int, border_w: int) -> void:
-	if b == null:
-		return
-	b.add_theme_color_override("font_color", fg)
-	b.add_theme_color_override("font_hover_color", fg)
-	b.add_theme_color_override("font_pressed_color", fg)
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = bg if state != "pressed" else bg.darkened(0.10)
-		sb.set_corner_radius_all(radius)
-		if border_w > 0:
-			sb.set_border_width_all(border_w)
-			sb.border_color = border
-		sb.content_margin_left = 10.0
-		sb.content_margin_right = 10.0
-		sb.content_margin_top = 6.0
-		sb.content_margin_bottom = 6.0
-		b.add_theme_stylebox_override(state, sb)

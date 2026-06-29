@@ -1,60 +1,56 @@
 extends Control
 # ============================================================
-# HatchSlot —— 可复用孵化槽组件（节点版，卡片化重构 v2）
-# 结构在 HatchSlot.tscn，样式/状态驱动在这里。
-# 视觉对齐 Style Bible v2.2：白卡 + 18px 圆角 + 暖棕阴影，配色走新 Palette。
+# HatchSlot —— 可复用孵化槽组件
 # 状态：locked / empty / incubating / ready
-# 美术接入点（拖图即可，无需改代码）：
-#   %FrameArt  —— 卡片边框/底纹贴图（贴了图会盖在 Card 之上）
-#   %EggArt    —— 蛋壳贴图（孵化中 / ready 显示）；贴图就位时回退层 %EggFallback 让位。
+# 卡片与蛋的主体视觉由 incubation 目录下的贴图驱动。
 # ============================================================
 
 signal slot_pressed(slot_index: int)
 
 const CatData := preload("res://core/CatData.gd")
 
-# 蛋壳回退色（Palette 已移除 CAT_* 系列，组件内自带一套暖色蛋壳）
-const EGG_ORANGE := Color("F2C572")
-const EGG_BRITISH := Color("C9D6DE")
-const EGG_SIAMESE := Color("EAD9C2")
-const EGG_CREAM := Color("F3E7D2")
+const SLOT_CARD_TEXTURES: Dictionary = {
+	"locked": preload("res://assets/art/ui/incubation/slots/slot_card_locked.png"),
+	"empty": preload("res://assets/art/ui/incubation/slots/slot_card_empty.png"),
+	"incubating": preload("res://assets/art/ui/incubation/slots/slot_card_incubating.png"),
+	"ready": preload("res://assets/art/ui/incubation/slots/slot_card_ready.png"),
+}
+
+const EGG_TEXTURES: Dictionary = {
+	"orange": preload("res://assets/art/ui/incubation/eggs/egg_orange_tabby.png"),
+	"orange_tabby": preload("res://assets/art/ui/incubation/eggs/egg_orange_tabby.png"),
+	"british": preload("res://assets/art/ui/incubation/eggs/egg_british_shorthair.png"),
+	"british_shorthair": preload("res://assets/art/ui/incubation/eggs/egg_british_shorthair.png"),
+	"siamese": preload("res://assets/art/ui/incubation/eggs/egg_siamese.png"),
+}
+
+const DARK_BROWN := Color("5C3A1E")
+const PROGRESS_INSET := 4.0
 
 var slot_index: int = 0
 
-var _card: Panel
-var _frame_art: TextureRect
-var _glow: Panel
-var _egg: Control
-var _egg_fallback: Panel
-var _egg_art: TextureRect
-var _lock_icon: Label
-var _title: Label
-var _prog_bg: Panel
-var _prog_fill: ColorRect
-var _status: Label
-var _hint: Label
+@onready var _card: Panel = %Card
+@onready var _frame_art: TextureRect = %FrameArt
+@onready var _glow: Panel = %Glow
+@onready var _title_row: HBoxContainer = %TitleRow
+@onready var _title: Label = %Title
+@onready var _egg: Control = %Egg
+@onready var _egg_fallback: Panel = %EggFallback
+@onready var _egg_art: TextureRect = %EggArt
+@onready var _prog_bg: TextureRect = %ProgressBg
+@onready var _prog_fill: ColorRect = %ProgressFill
+@onready var _status: Label = %StatusLabel
+@onready var _hint: Label = %HintLabel
 
 var _is_ready_state := false
 var _anim := 0.0
-var _egg_home := Vector2.ZERO   # 蛋的静止局部坐标（ready 抖动以此为基准）
+var _egg_home := Vector2.ZERO
 
 
 func _ready() -> void:
-	_card = %Card
-	_frame_art = %FrameArt
-	_glow = %Glow
-	_egg = %Egg
-	_egg_fallback = %EggFallback
-	_egg_art = %EggArt
-	_lock_icon = %LockIcon
-	_title = %Title
-	_prog_bg = %ProgressBg
-	_prog_fill = %ProgressFill
-	_status = %StatusLabel
-	_hint = %HintLabel
 	_egg_home = _egg.position
 	_apply_base_style()
-	set_process(false)  # 仅 ready 态才开 _process 做抖动/呼吸
+	set_process(false)
 
 
 func _gui_input(event: InputEvent) -> void:
@@ -71,11 +67,12 @@ func set_data(slot: Dictionary) -> void:
 	var status := _effective_status(slot)
 	var energy := float(slot.get("energy", 0.0))
 	var max_energy := float(slot.get("max_energy", 0.0))
-	var species: String = String(slot.get("species", CatData.BREED_ORANGE))
+	var species: String = String(slot.get("species", slot.get("breed", CatData.BREED_ORANGE)))
 	var progress := 0.0
 	if max_energy > 0.0:
 		progress = clamp(energy / max_energy, 0.0, 1.0)
 
+	_frame_art.texture = SLOT_CARD_TEXTURES.get(status, SLOT_CARD_TEXTURES["incubating"])
 	_is_ready_state = status == "ready"
 	set_process(_is_ready_state)
 	if not _is_ready_state:
@@ -88,10 +85,10 @@ func set_data(slot: Dictionary) -> void:
 			_style_card(false)
 			_egg.visible = false
 			_glow.visible = false
-			_lock_icon.visible = true
-			_title.text = ""
+			_title_row.visible = false
 			_hint.visible = false
 			_prog_bg.visible = false
+			_status.visible = true
 			_status.text = "孵%d只解锁" % _unlock_count()
 			_status.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
 		"empty":
@@ -99,10 +96,10 @@ func set_data(slot: Dictionary) -> void:
 			_set_egg_color(species, true)
 			_egg.visible = true
 			_glow.visible = false
-			_lock_icon.visible = false
-			_title.text = ""
+			_title_row.visible = false
 			_hint.visible = false
 			_prog_bg.visible = false
+			_status.visible = true
 			_status.text = "等待中"
 			_status.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
 		"ready":
@@ -111,25 +108,27 @@ func set_data(slot: Dictionary) -> void:
 			_egg.visible = true
 			_egg.scale = Vector2(1.12, 1.12)
 			_glow.visible = true
-			_lock_icon.visible = false
+			_title_row.visible = true
 			_title.text = "蛋 %d" % (slot_index + 1)
 			_hint.visible = true
 			_hint.add_theme_color_override("font_color", Palette.AMBER_PRESS)
 			_prog_bg.visible = false
+			_status.visible = false
 			_status.text = "好像要出来了"
-			_status.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+			_status.add_theme_color_override("font_color", DARK_BROWN)
 		_:  # incubating
 			_style_card(true)
 			_set_egg_color(species, false)
 			_egg.visible = true
 			_glow.visible = false
-			_lock_icon.visible = false
+			_title_row.visible = true
 			_title.text = "蛋 %d" % (slot_index + 1)
 			_hint.visible = false
 			_prog_bg.visible = true
 			_set_progress(progress)
+			_status.visible = true
 			_status.text = "%d%%" % int(progress * 100.0) if progress > 0.0 else "等待能量"
-			_status.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+			_status.add_theme_color_override("font_color", DARK_BROWN)
 
 
 # incubating 且已满 → 视为 ready（沿用原 _slot_status 语义）
@@ -162,82 +161,52 @@ func _process(delta: float) -> void:
 	_glow.modulate.a = 0.22 + pulse * 0.26
 
 
-# ── 进度条填充（ProgressFill 为 ProgressBg 子节点，靠 anchor_right 比例填充，天然随宽度自适配）──
+# 进度填充保留比例逻辑，并避开进度槽贴图四周的 4px 边框。
 func _set_progress(p: float) -> void:
 	var ratio: float = clamp(p, 0.0, 1.0)
-	_prog_fill.anchor_right = ratio
-	_prog_fill.offset_right = 0.0
+	var inner_width := maxf(_prog_bg.size.x - PROGRESS_INSET * 2.0, 0.0)
+	_prog_fill.anchor_right = 0.0
+	_prog_fill.offset_left = PROGRESS_INSET
+	_prog_fill.offset_right = PROGRESS_INSET + inner_width * ratio
 
 
+# 品种色现由对应的完整蛋巢贴图表达；faint 仅用于空槽淡化。
 func _set_egg_color(species: String, faint: bool) -> void:
-	var c := EGG_ORANGE
-	match species:
-		CatData.BREED_BRITISH:
-			c = EGG_BRITISH
-		CatData.BREED_SIAMESE:
-			c = EGG_SIAMESE
-		CatData.BREED_ORANGE:
-			c = EGG_ORANGE
-		_:
-			c = EGG_CREAM
-	# 空槽：蛋影淡淡的剪影
-	if faint:
-		c = EGG_CREAM
-		_egg.modulate.a = 0.45
-	else:
-		_egg.modulate.a = 1.0
-	_style_egg(c)
+	var breed_key := species.to_lower()
+	_egg_art.texture = EGG_TEXTURES.get(breed_key, EGG_TEXTURES["orange_tabby"])
+	_egg_art.visible = _egg_art.texture != null
+	_egg_fallback.visible = not _egg_art.visible
+	_egg.modulate.a = 0.45 if faint else 1.0
 
 
-# ── 基础样式（一次性）──
 func _apply_base_style() -> void:
 	_style_card(false)
 	_set_panel_bg(_glow, Palette.AMBER, 80)
 	_glow.modulate.a = 0.2
 	_glow.visible = false
-	_style_egg(EGG_CREAM)
-	# 进度槽
-	_set_panel_bg(_prog_bg, Color("EDE7D8"), 5)
 	_prog_fill.color = Palette.AMBER
-	_lock_icon.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
-	_title.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+	_title.add_theme_color_override("font_color", DARK_BROWN)
+	_status.add_theme_color_override("font_color", DARK_BROWN)
 
 
-# 卡片样式：active=孵化中/ready 用纯白卡 + 描边；否则浅奶油 + 浅描边（空/锁）
+# 卡片主体由 FrameArt 绘制，这里只切换边框色。
 func _style_card(active: bool) -> void:
 	if _card == null:
 		return
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = Color.WHITE if active else Palette.PAPER_CREAM
-	sb.set_corner_radius_all(18)
-	sb.set_border_width_all(2 if active else 1)
+	var sb := _card.get_theme_stylebox("panel").duplicate() as StyleBoxFlat
+	if sb == null:
+		sb = StyleBoxFlat.new()
+		sb.bg_color = Color.TRANSPARENT
+		sb.set_corner_radius_all(18)
+		sb.set_border_width_all(1)
 	sb.border_color = Palette.AMBER if active else Palette.BORDER
-	# 暖棕柔阴影
-	sb.shadow_color = Palette.UI_SHADOW
-	sb.shadow_size = 6
-	sb.shadow_offset = Vector2(0, 3)
 	_card.add_theme_stylebox_override("panel", sb)
 
 
-# 蛋壳回退面板：椭圆感（高圆角）
-func _style_egg(c: Color) -> void:
-	if _egg_fallback == null:
+func _set_panel_bg(panel: Panel, color: Color, radius: int) -> void:
+	if panel == null:
 		return
 	var sb := StyleBoxFlat.new()
-	sb.bg_color = c
-	sb.corner_radius_top_left = 34
-	sb.corner_radius_top_right = 34
-	sb.corner_radius_bottom_left = 40
-	sb.corner_radius_bottom_right = 40
-	sb.border_color = c.darkened(0.12)
-	sb.set_border_width_all(2)
-	_egg_fallback.add_theme_stylebox_override("panel", sb)
-
-
-func _set_panel_bg(p: Panel, c: Color, radius: int) -> void:
-	if p == null:
-		return
-	var sb := StyleBoxFlat.new()
-	sb.bg_color = c
+	sb.bg_color = color
 	sb.set_corner_radius_all(radius)
-	p.add_theme_stylebox_override("panel", sb)
+	panel.add_theme_stylebox_override("panel", sb)
