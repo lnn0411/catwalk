@@ -2,17 +2,33 @@ extends UIPage
 class_name S10_Album
 
 enum Tab { CATS, CARDS, ACH }
+
+const CARD_W := 330.0
+const CARD_H := 220.0
+const SLOT_COUNT := 10
+
+const CARD_FILLED := preload("res://assets/art/ui/cat_house/cat_card_filled.png")
+const CARD_EMPTY := preload("res://assets/art/ui/cat_house/cat_card_empty.png")
+const LEVEL_BADGE := preload("res://assets/art/ui/cat_house/level_badge.png")
+const TAB_SELECTED := preload("res://assets/art/ui/cat_house/tab_selected.png")
+const TAB_UNSELECTED := preload("res://assets/art/ui/cat_house/tab_unselected.png")
+const PORTRAIT_ORANGE := preload("res://assets/art/cats/portraits/reveal/portrait_orange.png")
+const PORTRAIT_BRITISH := preload("res://assets/art/cats/portraits/reveal/portrait_british.png")
+const PORTRAIT_SIAMESE := preload("res://assets/art/cats/portraits/reveal/portrait_siamese.png")
+
 var _current_tab := Tab.CATS
 var _cats: Array = []
-var _card_buttons: Array[Button] = []
+
 
 func _ready() -> void:
 	super._ready()
 	_switch_tab(Tab.CATS)
 
+
 func on_enter(_data: Dictionary = {}) -> void:
 	super.on_enter(_data)
 	_refresh_cats()
+
 
 func _refresh_cats() -> void:
 	if HatchEngine:
@@ -21,19 +37,26 @@ func _refresh_cats() -> void:
 		_cats = []
 	_populate_cat_cards()
 
+
 func _switch_tab(tab: Tab) -> void:
 	_current_tab = tab
-	$VBox/Body/Margin/CatsGrid.visible = tab == Tab.CATS
-	$VBox/Body/Margin/PostcardsBox.visible = tab == Tab.CARDS
-	$VBox/Body/Margin/AchBox.visible = tab == Tab.ACH
+	$CardScroll.visible = tab == Tab.CATS
+	$PostcardsBox.visible = tab == Tab.CARDS
+	$AchBox.visible = tab == Tab.ACH
 
-	for i in 3:
-		var btn := $VBox/Tabs.get_child(i) as Button
-		if btn:
-			btn.modulate = Color(1, 1, 1, 1.0) if i == tab else Color(1, 1, 1, 0.5)
+	var buttons: Array[TextureButton] = [
+		$TabBar/TabCats,
+		$TabBar/TabCards,
+		$TabBar/TabAch,
+	]
+	for i in buttons.size():
+		var selected := i == tab
+		buttons[i].texture_normal = TAB_SELECTED if selected else TAB_UNSELECTED
+		buttons[i].modulate = Color.WHITE if selected else Color(1.0, 1.0, 1.0, 0.78)
 
 	if tab == Tab.CATS:
 		_refresh_cats()
+
 
 static func _cat_str(cat, field: String, fallback: String = "") -> String:
 	if cat is Dictionary:
@@ -41,11 +64,13 @@ static func _cat_str(cat, field: String, fallback: String = "") -> String:
 	var v = cat.get(field)
 	return String(v) if v != null else fallback
 
+
 static func _cat_int(cat, field: String, fallback: int = 0) -> int:
 	if cat is Dictionary:
 		return int(cat.get(field, fallback))
 	var v = cat.get(field)
 	return int(v) if v != null else fallback
+
 
 func _cat_to_dict(cat) -> Dictionary:
 	if cat is Dictionary:
@@ -59,219 +84,182 @@ func _cat_to_dict(cat) -> Dictionary:
 	d["breed"] = d.get("species", "")
 	return d
 
-# ── 稀有度 / 品种配色 ──
-static func _rarity_color(rarity: String) -> Color:
-	match rarity:
-		"legendary":  return Color(0.95, 0.75, 0.06)  # gold
-		"epic":       return Color(0.56, 0.27, 0.68)  # purple
-		"rare":       return Color(0.25, 0.48, 0.82)  # blue
-		_:            return Color(0.65, 0.65, 0.65)  # common gray
-
-static func _rarity_bg(rarity: String) -> Color:
-	match rarity:
-		"legendary":  return Color(0.98, 0.94, 0.75)
-		"epic":       return Color(0.92, 0.82, 0.96)
-		"rare":       return Color(0.85, 0.90, 0.98)
-		_:            return Color(0.93, 0.93, 0.93)
-
-static func _breed_color(species: String) -> Color:
-	match species:
-		"british_shorthair", "british":  return Color(0.65, 0.75, 0.85)
-		"siamese":         return Color(0.92, 0.85, 0.75)
-		_:                 return Color(0.95, 0.72, 0.26)  # orange
-
-static func _breed_short(species: String) -> String:
-	match species:
-		"british_shorthair", "british":  return "英"
-		"siamese":         return "暹"
-		_:                 return "橘"
 
 func _populate_cat_cards() -> void:
-	var grid := $VBox/Body/Margin/CatsGrid as GridContainer
+	var grid := $CardScroll/CatsGrid as GridContainer
 	if grid == null:
 		return
+
 	for child in grid.get_children():
-		if is_instance_valid(child):
-			child.queue_free()
-	_card_buttons.clear()
+		grid.remove_child(child)
+		child.queue_free()
 
-	if _cats.is_empty():
-		return
+	var owned_count: int = mini(_cats.size(), SLOT_COUNT)
+	for i in SLOT_COUNT:
+		if i < owned_count:
+			grid.add_child(_create_cat_card(_cats[i]))
+		else:
+			grid.add_child(_create_empty_card())
 
-	for i in range(_cats.size()):
-		var cat = _cats[i]
-		var card := _create_cat_card(cat, i)
-		grid.add_child(card)
-		_card_buttons.append(card)
 
-const CARD_W := 165
-const CARD_H := 120
+func _create_cat_card(cat) -> TextureButton:
+	var species := _cat_str(cat, "species", _cat_str(cat, "breed", "orange"))
+	var name_text := _cat_str(cat, "name", _cat_str(cat, "display_name", _breed_label(species)))
+	var level := _cat_int(cat, "level", 1)
+	var cat_data := _cat_to_dict(cat)
 
-func _create_cat_card(cat, index: int) -> Button:
-	var species: String = _cat_str(cat, "species", "orange")
-	var rarity: String = _cat_str(cat, "rarity", "common")
-	var name_str: String = _cat_str(cat, "name", _cat_str(cat, "display_name", "猫咪"))
-	var lv: int = _cat_int(cat, "level", 1)
-
-	var card := Button.new()
-	card.flat = true
-	card.focus_mode = Control.FOCUS_NONE
+	var card := TextureButton.new()
+	card.name = "CatCard"
 	card.custom_minimum_size = Vector2(CARD_W, CARD_H)
-	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.texture_normal = CARD_FILLED
+	card.ignore_texture_size = true
+	card.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	card.focus_mode = Control.FOCUS_NONE
 	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	card.pressed.connect(func() -> void: _open_cat_detail(index))
+	card.pressed.connect(func() -> void:
+		_open_cat_detail(cat_data)
+	)
 
-	# Background
-	var bg := ColorRect.new()
-	bg.name = "Bg"
-	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	bg.color = _rarity_bg(rarity)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(bg)
+	_add_avatar(card, species)
+	_add_name(card, name_text, species)
+	_add_level_badge(card, level)
+	return card
 
-	# Rarity stripe (top 4px)
-	var stripe := ColorRect.new()
-	stripe.name = "Stripe"
-	stripe.anchor_left = 0.0
-	stripe.anchor_right = 1.0
-	stripe.anchor_top = 0.0
-	stripe.anchor_bottom = 0.0
-	stripe.offset_left = 0.0
-	stripe.offset_right = 0.0
-	stripe.offset_top = 0.0
-	stripe.offset_bottom = 4.0
-	stripe.color = _rarity_color(rarity)
-	stripe.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(stripe)
 
-	# Breed icon (colored circle placeholder)
-	var icon := ColorRect.new()
-	icon.name = "Icon"
-	icon.anchor_left = 0.0
-	icon.anchor_right = 0.0
-	icon.anchor_top = 0.0
-	icon.anchor_bottom = 0.0
-	icon.offset_left = (CARD_W - 46.0) * 0.5
-	icon.offset_top = 16.0
-	icon.offset_right = icon.offset_left + 46.0
-	icon.offset_bottom = icon.offset_top + 46.0
-	icon.color = _breed_color(species)
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(icon)
+func _create_empty_card() -> TextureRect:
+	var card := TextureRect.new()
+	card.name = "EmptyCard"
+	card.custom_minimum_size = Vector2(CARD_W, CARD_H)
+	card.texture = CARD_EMPTY
+	card.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	card.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	card.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return card
 
-	var letter := Label.new()
-	letter.name = "IconLetter"
-	letter.anchor_left = 0.0
-	letter.anchor_right = 1.0
-	letter.anchor_top = 0.0
-	letter.anchor_bottom = 1.0
-	letter.offset_left = 0.0
-	letter.offset_right = 0.0
-	letter.offset_top = 0.0
-	letter.offset_bottom = 0.0
-	letter.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	letter.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	letter.text = _breed_short(species)
-	letter.add_theme_font_size_override("font_size", 20)
-	letter.theme_type_variation = &""
-	letter.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
-	letter.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.3))
-	letter.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	icon.add_child(letter)
 
-	# Level badge (top-right)
-	var badge := ColorRect.new()
-	badge.name = "LevelBadge"
-	badge.anchor_left = 0.0
-	badge.anchor_right = 0.0
-	badge.anchor_top = 0.0
-	badge.anchor_bottom = 0.0
-	badge.offset_left = CARD_W - 42.0
-	badge.offset_top = 4.0
-	badge.offset_right = badge.offset_left + 36.0
-	badge.offset_bottom = badge.offset_top + 18.0
-	badge.color = _rarity_color(rarity)
-	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	card.add_child(badge)
+func _add_avatar(card: Control, species: String) -> void:
+	var diameter := CARD_W * 0.22
+	var center := Vector2(CARD_W * 0.22, CARD_H * 0.5)
 
-	var lv_label := Label.new()
-	lv_label.name = "LvText"
-	lv_label.anchor_left = 0.0
-	lv_label.anchor_right = 1.0
-	lv_label.anchor_top = 0.0
-	lv_label.anchor_bottom = 1.0
-	lv_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lv_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lv_label.text = "Lv.%d" % lv
-	lv_label.add_theme_font_size_override("font_size", 11)
-	lv_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	lv_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_child(lv_label)
+	var clip := Control.new()
+	clip.name = "AvatarClip"
+	clip.position = center - Vector2.ONE * diameter * 0.5
+	clip.size = Vector2.ONE * diameter
+	clip.clip_contents = true
+	clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(clip)
 
-	# Name label
+	var portrait := TextureRect.new()
+	portrait.name = "Portrait"
+	portrait.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	portrait.texture = _portrait_for_species(species)
+	portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	portrait.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var circle_material := ShaderMaterial.new()
+	var circle_shader := Shader.new()
+	circle_shader.code = """
+shader_type canvas_item;
+void fragment() {
+	vec4 color = texture(TEXTURE, UV);
+	float edge = 1.0 - smoothstep(0.485, 0.5, distance(UV, vec2(0.5)));
+	COLOR = vec4(color.rgb, color.a * edge);
+}
+"""
+	circle_material.shader = circle_shader
+	portrait.material = circle_material
+	clip.add_child(portrait)
+
+
+func _add_name(card: Control, name_text: String, species: String) -> void:
 	var name_label := Label.new()
 	name_label.name = "Name"
-	name_label.anchor_left = 0.0
-	name_label.anchor_right = 1.0
-	name_label.anchor_top = 0.0
-	name_label.anchor_bottom = 0.0
-	name_label.offset_left = 4.0
-	name_label.offset_right = -4.0
-	name_label.offset_top = 68.0
-	name_label.offset_bottom = 88.0
+	name_label.position = Vector2(132.0, 82.0)
+	name_label.size = Vector2(162.0, 38.0)
+	name_label.text = name_text
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	name_label.text = name_str
-	name_label.add_theme_font_size_override("font_size", 12)
-	name_label.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2, 1))
+	name_label.add_theme_font_size_override("font_size", 22)
+	name_label.add_theme_color_override("font_color", Color("#4f453c"))
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(name_label)
 
-	# Breed label
 	var breed_label := Label.new()
 	breed_label.name = "Breed"
-	breed_label.anchor_left = 0.0
-	breed_label.anchor_right = 1.0
-	breed_label.anchor_top = 0.0
-	breed_label.anchor_bottom = 0.0
-	breed_label.offset_left = 4.0
-	breed_label.offset_right = -4.0
-	breed_label.offset_top = 90.0
-	breed_label.offset_bottom = 106.0
+	breed_label.position = Vector2(132.0, 119.0)
+	breed_label.size = Vector2(162.0, 28.0)
+	breed_label.text = _breed_label(species)
 	breed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	breed_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	breed_label.text = _breed_label(species)
-	breed_label.add_theme_font_size_override("font_size", 10)
-	breed_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.5, 1))
+	breed_label.add_theme_font_size_override("font_size", 15)
+	breed_label.add_theme_color_override("font_color", Color(0.42, 0.35, 0.29, 0.78))
 	breed_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	card.add_child(breed_label)
 
-	return card
 
-func _open_cat_detail(index: int) -> void:
-	if index < 0 or index >= _cats.size():
-		return
-	var cat_data: Dictionary = _cat_to_dict(_cats[index])
-	var ui := get_node_or_null("/root/UIManager") as UIManager
-	if ui:
-		ui.push("res://ui/pages/S10_CatDetail.tscn", {"cat": cat_data})
+func _add_level_badge(card: Control, level: int) -> void:
+	var badge := TextureRect.new()
+	badge.name = "LevelBadge"
+	badge.position = Vector2(250.0, 35.0)
+	badge.size = Vector2(58.0, 29.0)
+	badge.texture = LEVEL_BADGE
+	badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(badge)
+
+	var level_label := Label.new()
+	level_label.name = "Level"
+	level_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	level_label.text = "Lv.%d" % level
+	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	level_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	level_label.add_theme_font_size_override("font_size", 14)
+	level_label.add_theme_color_override("font_color", Color("#4f453c"))
+	level_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	badge.add_child(level_label)
+
+
+func _portrait_for_species(species: String) -> Texture2D:
+	match species:
+		"british", "british_shorthair":
+			return PORTRAIT_BRITISH
+		"siamese":
+			return PORTRAIT_SIAMESE
+		_:
+			return PORTRAIT_ORANGE
+
 
 func _breed_label(species: String) -> String:
 	match species:
-		"british_shorthair":
+		"british", "british_shorthair":
 			return "英短"
 		"siamese":
 			return "暹罗"
 		_:
 			return "橘猫"
 
-func _on_tab_cats_pressed() -> void: _switch_tab(Tab.CATS)
-func _on_tab_cards_pressed() -> void: _switch_tab(Tab.CARDS)
-func _on_tab_ach_pressed() -> void: _switch_tab(Tab.ACH)
+
+func _open_cat_detail(cat_data: Dictionary) -> void:
+	var ui := get_node_or_null("/root/UIManager") as UIManager
+	if ui:
+		ui.push("res://ui/pages/S10_CatDetail.tscn", {"cat": cat_data})
+
+
+func _on_tab_cats_pressed() -> void:
+	_switch_tab(Tab.CATS)
+
+
+func _on_tab_cards_pressed() -> void:
+	_switch_tab(Tab.CARDS)
+
+
+func _on_tab_ach_pressed() -> void:
+	_switch_tab(Tab.ACH)
+
 
 func _on_back_pressed() -> void:
-	# Bottom nav uses replace, so stack may have only 1 item → pop does nothing
-	# Navigate back to garden directly
 	var ui := get_node_or_null("/root/UIManager") as UIManager
 	if ui and ui.get_stack_depth() <= 1:
 		ui.replace("res://scenes/S04_GardenMain.tscn")
