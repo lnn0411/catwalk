@@ -524,18 +524,18 @@ func _draw_cracking_egg(center: Vector2) -> void:
 		cos(_elapsed * 37.0) * shake_amp * 0.6
 	)
 	var egg_center := center + EGG_OFFSET + shake
-	if not _art_egg:  # 蛋贴图未就位时才画椭圆蛋兜底
+	if not _art_egg:  # 蛋贴图未就位时才画椭圆蛋 + 裂纹折线
 		draw_ellipse(egg_center, 150.0, 200.0, _cat_color_light())
-	# 裂纹随蛋一起抖（始终绘制）
-	for i in range(4):
-		var x := egg_center.x - 36.0 + i * 24.0
-		var start := Vector2(x, egg_center.y - 100.0 + i * 28.0)
-		var points := PackedVector2Array([start])
-		var offsets: Array = _crack_seeds[i] if i < _crack_seeds.size() else []
-		for j in range(1, 5):
-			var t := float(j) / 4.0
-			var zigzag := float(offsets[j - 1]) if j - 1 < offsets.size() else 0.0
-			points.append(start + Vector2(28.0 * t, -32.0 * t + zigzag) * crack)
+		# 裂纹随蛋一起抖
+		for i in range(4):
+			var x := egg_center.x - 36.0 + i * 24.0
+			var start := Vector2(x, egg_center.y - 100.0 + i * 28.0)
+			var points := PackedVector2Array([start])
+			var offsets: Array = _crack_seeds[i] if i < _crack_seeds.size() else []
+			for j in range(1, 5):
+				var t := float(j) / 4.0
+				var zigzag := float(offsets[j - 1]) if j - 1 < offsets.size() else 0.0
+				points.append(start + Vector2(28.0 * t, -32.0 * t + zigzag) * crack)
 		draw_polyline(points, Palette.TEXT_PRIMARY, 5.0)
 	# 末段：蛋底部透出稀有度光（预告，憋张力）
 	if crack > 0.75:
