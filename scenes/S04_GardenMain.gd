@@ -773,7 +773,7 @@ func _toggle_sleep() -> void:
 	_sleep_override = not _sleep_override
 	if CatSchedule:
 		if _sleep_override:
-			CatSchedule.set_time_override(22)
+			CatSchedule.set_time_override(12)  # 中午 → 橘猫/英短睡觉
 		else:
 			CatSchedule.reset_all()
 	if _sleep_dbg_btn:
