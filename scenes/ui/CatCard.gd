@@ -123,6 +123,9 @@ func refresh_interaction_buttons() -> void:
 		_set_button_disabled(_pet_button, false)
 		_set_button_disabled(_play_button, true)
 		status_text = "猫咪在睡觉 😴"
+		# 切换到睡觉动画
+		if _cat_display and _cat_display.animation != "sleep":
+			_play_breed_animation("sleep")
 
 	for interaction_type in ["feed", "pet", "play"]:
 		var button := _button_for_type(interaction_type)
@@ -166,6 +169,10 @@ func refresh_interaction_buttons() -> void:
 		_set_button_disabled(_relinquish_button, is_last or is_exploring)
 		if _relinquish_label:
 			_relinquish_label.text = "💕 送养" if not is_last else "最后一只"
+	
+	# 猫醒来时切回 idle 动画
+	if not annoyed and not sleeping and _cat_display and _cat_display.animation == "sleep":
+		_play_breed_animation("idle")
 
 
 func _on_feed_pressed() -> void:
@@ -898,8 +905,8 @@ func _setup_anim_timer() -> void:
 		_cat_display.animation_finished.connect(_on_anim_finished)
 
 func _on_anim_finished() -> void:
-	# idle 为循环动画不会触发本信号；feed/pet/play 播完后回到 idle
-	_play_breed_animation("idle")
+	# idle/sleep 为循环动画不会触发本信号；feed/pet/play 播完后回到当前状态
+	_play_breed_animation("sleep" if _is_sleeping() else "idle")
 
 func _current_breed() -> String:
 	if cat_data == null:
@@ -931,9 +938,9 @@ func _ensure_breed_frames(breed: String) -> SpriteFrames:
 	var sf := SpriteFrames.new()
 	if sf.has_animation("default"):
 		sf.remove_animation("default")
-	for action in ["idle", "feed", "pet", "play"]:
+	for action in ["idle", "feed", "pet", "play", "sleep"]:
 		sf.add_animation(action)
-		sf.set_animation_loop(action, action == "idle")
+		sf.set_animation_loop(action, action == "idle" or action == "sleep")
 		sf.set_animation_speed(action, ANIM_FPS)
 		for i in range(8):
 			var p := "res://assets/art/cats/portraits/catcard/%s/catcard_%s_%s_frame_%02d.png" % [dir, dir, action, i]
@@ -964,7 +971,7 @@ func _load_cat_frames() -> void:
 	if _cat_display == null:
 		return
 	_ensure_breed_frames(_current_breed())
-	_play_breed_animation("idle")
+	_play_breed_animation("sleep" if _is_sleeping() else "idle")
 
 # _on_feed/pet/play_pressed 传入 eating/petting/playing，映射到立绘动作并播放一次
 func _play_action_anim(action: String) -> void:
