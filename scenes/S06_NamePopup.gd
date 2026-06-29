@@ -14,54 +14,73 @@ const NAME_POOLS_EN := {
 	CatData.BREED_SIAMESE: ["Coco", "Pepper", "Mochi", "Sable", "Latte"],
 }
 
+const PORTRAIT_PATHS := {
+	"orange": "res://assets/art/cats/portraits/reveal/portrait_orange.png",
+	"british": "res://assets/art/cats/portraits/reveal/portrait_british.png",
+	"siamese": "res://assets/art/cats/portraits/reveal/portrait_siamese.png",
+}
+
+signal confirmed(name: String)
+signal canceled
+
 var _cat
 var _hatch_show
-var _panel: Control
-var _name_input: LineEdit
 var _rng := RandomNumberGenerator.new()
+
+@onready var _overlay: TextureRect = %OverlayBg
+@onready var _popup_bg: TextureRect = %PopupBg
+@onready var _portrait: TextureRect = %CatPortrait
+@onready var _name_input: LineEdit = %NameInput
+@onready var _random_btn: TextureButton = %RandomBtn
+@onready var _confirm_btn: TextureButton = %ConfirmBtn
+
 
 func _ready() -> void:
 	super._ready()
 	_rng.randomize()
-	_build_ui()
-	_apply_cat()
-	# M5：弹窗从底部滑入（300ms ease-out，GDD §3.8 同款节奏）
-	var final_y := _panel.position.y
-	_panel.position.y = get_viewport_rect().size.y
-	var t := create_tween()
-	t.tween_property(_panel, "position:y", final_y, 0.3).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	_overlay.gui_input.connect(_on_overlay_clicked)
+	_random_btn.pressed.connect(_random_name_clicked)
+	_confirm_btn.pressed.connect(_confirm_name)
+	_show_portrait()
+	_name_input.grab_focus()
 
-func _on_page_setup(data: Dictionary) -> void:
-	_cat = data.get("cat", null)
-	_hatch_show = data.get("hatch_show", null)
 
-func handle_back() -> bool:
-	return true
+func on_enter(_data: Dictionary = {}) -> void:
+	_cat = _data.get("cat", null)
+	_hatch_show = _data.get("hatch_show", null)
+	_show_portrait()
+	_name_input.grab_focus()
 
-func _draw() -> void:
-	# %OverlayBg 已提供暗化遮罩；缺该节点时才回退到代码绘制
-	if not has_node("%OverlayBg"):
-		draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(Palette.BG_NIGHT_OVERLAY, 0.72))
 
-func _build_ui() -> void:
-	_panel = %PopupBg
-	(%NameLabel as Label).text = "给猫咪取名"
+func _show_portrait() -> void:
+	if _portrait == null:
+		return
+	if _cat == null:
+		_portrait.visible = false
+		return
+	var species := String(_cat.get("species", _cat.get("breed", "british")))
+	var path := PORTRAIT_PATHS.get(species, PORTRAIT_PATHS["british"])
+	if ResourceLoader.exists(path):
+		_portrait.texture = load(path)
+		_portrait.visible = true
+	else:
+		_portrait.visible = false
 
-	_name_input = %NameInput
+
+func _random_name_clicked() -> void:
 	_name_input.text = _random_name()
 
-	(%RandomBtn as TextureButton).pressed.connect(func() -> void: _name_input.text = _random_name())
-	(%ConfirmBtn as TextureButton).pressed.connect(_confirm_name)
 
-func _apply_cat() -> void:
-	if _name_input == null:
-		return
-	var current: String = String(_cat.display_name) if _cat != null else ""
-	# 「未命名+品种」默认名视为尚未命名 → 预填一个随机建议名给玩家
-	if current.length() >= 2 and not CatData.is_default_name(current):
-		_name_input.text = current
-	else:
-		_name_input.text = _random_name()
+func _random_name() -> String:
+	var pools := NAME_POOLS_CN if OS.get_locale_language() == "zh" else NAME_POOLS_EN
+	var species := _species()
+	var pool := Array(pools.get(species, pools[CatData.BREED_ORANGE]))
+	return String(pool[_rng.randi_range(0, pool.size() - 1)])
+
+
+func _species() -> String:
+	return String(_cat.species) if _cat != null else CatData.BREED_ORANGE
+
 
 func _confirm_name() -> void:
 	if _cat == null:
@@ -78,22 +97,13 @@ func _confirm_name() -> void:
 	if HatchEngine and HatchEngine.current_companion_cat_id == "":
 		HatchEngine.current_companion_cat_id = _cat.id
 		SaveManager.save_all()
-	# M5：确认瞬间——触觉 + 面板弹一下（"这是我的猫了"的时刻），再继续
 	var j := get_node_or_null("/root/Juice")
 	if j: j.hit()
-	_panel.pivot_offset = _panel.size * 0.5
-	var t := create_tween()
-	t.tween_property(_panel, "scale", Vector2(1.06, 1.06), 0.12).set_ease(Tween.EASE_OUT)
-	t.tween_property(_panel, "scale", Vector2.ONE, 0.12).set_ease(Tween.EASE_IN)
-	await t.finished
-	if _hatch_show != null and is_instance_valid(_hatch_show) and _hatch_show.has_method("resume_after_name_popup"):
-		_hatch_show.call_deferred("resume_after_name_popup")
+	confirmed.emit(value)
 	UIManager.close_overlay()
 
-func _random_name() -> String:
-	var pools := NAME_POOLS_CN if OS.get_locale_language() == "zh" else NAME_POOLS_EN
-	var pool := Array(pools.get(_species(), pools[CatData.BREED_ORANGE]))
-	return String(pool[_rng.randi_range(0, pool.size() - 1)])
 
-func _species() -> String:
-	return String(_cat.species) if _cat != null else CatData.BREED_ORANGE
+func _on_overlay_clicked(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		canceled.emit()
+		UIManager.close_overlay()
