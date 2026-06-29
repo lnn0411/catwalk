@@ -46,7 +46,7 @@ var _shard_time := 0.0           # 碎片已飞行时长
 # —— 演出主体相对屏幕中心的布局偏移 ——
 const EGG_OFFSET := Vector2(0.0, -160.0)   # 蛋中心（720×1280 → 360,480）
 const CAT_OFFSET := Vector2(0.0, -80.0)    # 猫/剪影/立绘中心（→ 360,560）
-const EGG_SIZE := Vector2(150.0, 150.0)
+const EGG_SIZE := Vector2(360.0, 360.0)
 const SIL_SIZE := Vector2(240.0, 280.0)
 const REVEAL_SIZE := Vector2(360.0, 360.0)
 const SHARD_SIZE := Vector2(90.0, 54.0)
