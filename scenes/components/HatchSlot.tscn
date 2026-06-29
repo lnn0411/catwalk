@@ -69,7 +69,7 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("2_slot_empty")
 expand_mode = 1
-stretch_mode = 5
+stretch_mode = 3
 
 [node name="Glow" type="Panel" parent="."]
 unique_name_in_owner = true
