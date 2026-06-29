@@ -218,7 +218,7 @@ func _setup_fx_node(node: TextureRect, path: String, node_size: Vector2) -> bool
 		node.texture = load(path)
 		node.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		_init_texture_node(node, node_size)
-	node.visible = False
+	node.visible = false
 	return ok
 
 # 统一初始化 TextureRect 的尺寸 / 轴心（缩放绕中心）。
