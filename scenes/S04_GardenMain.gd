@@ -553,6 +553,8 @@ func _build_hud() -> void:
 		button.pressed.connect(item[1])
 		box.add_child(button)
 	
+	# 保存睡眠测试按钮引用
+	_sleep_dbg_btn = box.get_child(box.get_child_count() - 1) as Button
 	# ── 花园背景切换 ──
 	var bg_label := Label.new()
 	bg_label.text = "── 花园背景 ──"
@@ -765,6 +767,7 @@ func _toggle_period() -> void:
 	wtm.dbg_set_period(next)
 
 
+var _sleep_dbg_btn: Button
 var _sleep_override := false
 func _toggle_sleep() -> void:
 	_sleep_override = not _sleep_override
@@ -773,15 +776,8 @@ func _toggle_sleep() -> void:
 			CatSchedule.set_time_override(22)
 		else:
 			CatSchedule.reset_all()
-	# 刷新调试按钮文字
-	var box := _debug_panel.get_child(0) as Container
-	if box == null:
-		return
-	for i in box.get_child_count():
-		var btn := box.get_child(i) as Button
-		if btn and (btn.text.begins_with("🌙") or btn.text.begins_with("☀️")):
-			btn.text = "☀️ 猫咪醒来" if _sleep_override else "🌙 猫咪睡觉"
-			break
+	if _sleep_dbg_btn:
+		_sleep_dbg_btn.text = "☀️ 猫咪醒来" if _sleep_override else "🌙 猫咪睡觉"
 
 
 func _replay_onboarding() -> void:
