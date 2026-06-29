@@ -57,6 +57,7 @@ func _ready() -> void:
 	_setup_cooldown_timer()
 	_setup_explore_countdown_timer()
 	_setup_anim_timer()
+	_setup_sleep_anim_timer()
 	_connect_button_feedback(_feed_button)
 	_connect_button_feedback(_pet_button)
 	_connect_button_feedback(_play_button)
@@ -708,6 +709,26 @@ func _setup_cooldown_timer() -> void:
 	_cooldown_timer.one_shot = false
 	_cooldown_timer.timeout.connect(refresh_interaction_buttons)
 	add_child(_cooldown_timer)
+
+
+var _sleep_anim_timer: Timer
+func _setup_sleep_anim_timer() -> void:
+	_sleep_anim_timer = Timer.new()
+	_sleep_anim_timer.name = "SleepAnimTimer"
+	_sleep_anim_timer.wait_time = 0.5
+	_sleep_anim_timer.one_shot = false
+	_sleep_anim_timer.timeout.connect(_on_sleep_anim_check)
+	add_child(_sleep_anim_timer)
+	_sleep_anim_timer.start()
+
+func _on_sleep_anim_check() -> void:
+	if _cat_display == null:
+		return
+	var sleeping := _is_sleeping()
+	if sleeping and _cat_display.animation != "sleep":
+		_play_breed_animation("sleep")
+	elif not sleeping and _cat_display.animation == "sleep":
+		_play_breed_animation("idle")
 
 
 func _refresh_cat_info() -> void:
