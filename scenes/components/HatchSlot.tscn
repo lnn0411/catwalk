@@ -127,12 +127,12 @@ vertical_alignment = 1
 [node name="Egg" type="Control" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
-offset_left = 44.0
-offset_top = 36.0
-offset_right = 284.0
-offset_bottom = 276.0
+offset_left = 68.0
+offset_top = 50.0
+offset_right = 260.0
+offset_bottom = 242.0
 mouse_filter = 2
-pivot_offset = Vector2(120, 120)
+pivot_offset = Vector2(96, 96)
 
 [node name="EggFallback" type="Panel" parent="Egg"]
 unique_name_in_owner = true
