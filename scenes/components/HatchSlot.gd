@@ -96,11 +96,12 @@ func set_data(slot: Dictionary) -> void:
 			_set_egg_color(species, true)
 			_egg.visible = true
 			_glow.visible = false
-			_title_row.visible = false
+			_title_row.visible = true
+			_title.text = "蛋 %d" % (slot_index + 1)
 			_hint.visible = false
 			_prog_bg.visible = false
 			_status.visible = true
-			_status.text = "等待中"
+			_status.text = "等待能量"
 			_status.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
 		"ready":
 			_style_card(true)
