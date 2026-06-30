@@ -97,12 +97,12 @@ vertical_scroll_mode = 3
 [node name="Body" type="VBoxContainer" parent="VBox/Scroll"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 14
+theme_override_constants/separation = 0
 
 [node name="CatImageArea" type="TextureRect" parent="VBox/Scroll/Body"]
-custom_minimum_size = Vector2(0, 320)
+custom_minimum_size = Vector2(576, 320)
 layout_mode = 2
-size_flags_horizontal = 3
+size_flags_horizontal = 4
 texture = ExtResource("5_portrait_bg")
 expand_mode = 0
 stretch_mode = 0
@@ -126,8 +126,8 @@ mouse_filter = 2
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 22.0
-offset_bottom = 44.0
+offset_top = 12.0
+offset_bottom = 34.0
 grow_horizontal = 2
 mouse_filter = 2
 text = "等级"
@@ -139,8 +139,8 @@ theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 50.0
-offset_bottom = 92.0
+offset_top = 40.0
+offset_bottom = 82.0
 grow_horizontal = 2
 mouse_filter = 2
 text = "Lv.1"
@@ -181,8 +181,8 @@ mouse_filter = 2
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 22.0
-offset_bottom = 44.0
+offset_top = 12.0
+offset_bottom = 34.0
 grow_horizontal = 2
 mouse_filter = 2
 text = "好感"
@@ -194,8 +194,8 @@ theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 50.0
-offset_bottom = 92.0
+offset_top = 40.0
+offset_bottom = 82.0
 grow_horizontal = 2
 mouse_filter = 2
 text = "Lv.1"
@@ -237,8 +237,8 @@ mouse_filter = 2
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 22.0
-offset_bottom = 44.0
+offset_top = 12.0
+offset_bottom = 34.0
 grow_horizontal = 2
 mouse_filter = 2
 text = "羁绊"
@@ -250,8 +250,8 @@ theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 50.0
-offset_bottom = 92.0
+offset_top = 40.0
+offset_bottom = 82.0
 grow_horizontal = 2
 mouse_filter = 2
 text = "🔒"
@@ -434,10 +434,7 @@ horizontal_alignment = 1
 theme_override_font_sizes/font_size = 13
 theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
 
-[node name="Spacer" type="Control" parent="VBox/Scroll/Body"]
-custom_minimum_size = Vector2(0, 30)
-layout_mode = 2
-size_flags_horizontal = 3
+
 
 [connection signal="pressed" from="VBox/Head/BackBtn" to="." method="_on_back_pressed"]
 [connection signal="pressed" from="VBox/Scroll/Body/Actions/RenameBtn" to="." method="_on_rename_pressed"]
