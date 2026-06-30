@@ -4,6 +4,9 @@
 *.uid
 export_presets.cfg.gradle
 
+# Godot export pack
+android/build/src/main/assets/
+
 # Gradle
 android/build/.gradle/
 android/build/build/
