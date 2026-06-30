@@ -162,9 +162,9 @@ class InputOverlay:
 		# Cancel button
 		var cancel_btn := TextureButton.new()
 		cancel_btn.texture_normal = BTN_SEC_TEX
-		cancel_btn.offset_left = 55
+		cancel_btn.offset_left = 75
 		cancel_btn.offset_top = 210
-		cancel_btn.offset_right = 210
+		cancel_btn.offset_right = 230
 		cancel_btn.offset_bottom = 274
 		cancel_btn.ignore_texture_size = true
 		cancel_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
@@ -175,9 +175,9 @@ class InputOverlay:
 		cancel_label.text = "取消"
 		cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		cancel_label.offset_left = 55
+		cancel_label.offset_left = 75
 		cancel_label.offset_top = 210
-		cancel_label.offset_right = 210
+		cancel_label.offset_right = 230
 		cancel_label.offset_bottom = 274
 		cancel_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		cancel_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -310,9 +310,9 @@ class DialogOverlay:
 		# Cancel button
 		var cancel_btn := TextureButton.new()
 		cancel_btn.texture_normal = BTN_SEC_TEX
-		cancel_btn.offset_left = 55
+		cancel_btn.offset_left = 75
 		cancel_btn.offset_top = 210
-		cancel_btn.offset_right = 210
+		cancel_btn.offset_right = 230
 		cancel_btn.offset_bottom = 274
 		cancel_btn.ignore_texture_size = true
 		cancel_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
@@ -323,9 +323,9 @@ class DialogOverlay:
 		cancel_label.text = "取消"
 		cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		cancel_label.offset_left = 55
+		cancel_label.offset_left = 75
 		cancel_label.offset_top = 210
-		cancel_label.offset_right = 210
+		cancel_label.offset_right = 230
 		cancel_label.offset_bottom = 274
 		cancel_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		cancel_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
