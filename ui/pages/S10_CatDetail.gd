@@ -141,14 +141,18 @@ func _on_rename_pressed() -> void:
 func _on_companion_pressed() -> void:
 	if _cat_id.is_empty() or not HatchEngine:
 		return
-	HatchEngine.set_companion_cat_id(_cat_id)
-	Popups.show_toast("已设为随行猫")
-	UIManager.replace("res://scenes/S04_GardenMain.tscn")
+	Popups.show_confirm("随行", "确定将这只猫咪设为随行猫吗？", func() -> void:
+		HatchEngine.set_companion_cat_id(_cat_id)
+		Popups.show_toast("已设为随行猫")
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
+	)
 
 func _on_let_out_pressed() -> void:
 	if _cat_data.is_empty():
 		return
-	UIManager.replace("res://scenes/S04_GardenMain.tscn", {"focus_cat": _cat_data})
+	Popups.show_confirm("放出", "确定将这只猫咪放到花园吗？", func() -> void:
+		UIManager.replace("res://scenes/S04_GardenMain.tscn", {"focus_cat": _cat_data})
+	)
 
 func _on_giveaway_pressed() -> void:
 	if _cat_id.is_empty():
