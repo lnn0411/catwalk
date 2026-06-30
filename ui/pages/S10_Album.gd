@@ -175,7 +175,7 @@ void fragment() {
 func _add_name(card: Control, name_text: String, species: String) -> void:
 	var name_label := Label.new()
 	name_label.name = "Name"
-	name_label.position = Vector2(126.0, 44.0)
+	name_label.position = Vector2(126.0, 64.0)
 	name_label.size = Vector2(162.0, 38.0)
 	name_label.text = name_text
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -187,7 +187,7 @@ func _add_name(card: Control, name_text: String, species: String) -> void:
 
 	var breed_label := Label.new()
 	breed_label.name = "Breed"
-	breed_label.position = Vector2(126.0, 87.0)
+	breed_label.position = Vector2(126.0, 107.0)
 	breed_label.size = Vector2(162.0, 28.0)
 	breed_label.text = _breed_label(species)
 	breed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
