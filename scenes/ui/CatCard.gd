@@ -196,6 +196,8 @@ func _on_pet_pressed() -> void:
 	if _pet_button.disabled:
 		print("[CatCard]   pet ignored: button disabled")
 		return
+	if Juice and Juice.has_method(&"tap"):
+		Juice.tap()
 	var cd_before = _get_cooldown_remaining("pet")
 	var ok = _do_interaction("pet")
 	var cd_after = _get_cooldown_remaining("pet")
