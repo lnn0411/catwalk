@@ -125,8 +125,9 @@ func refresh_interaction_buttons() -> void:
 		_set_button_disabled(_pet_button, false)
 		_set_button_disabled(_play_button, true)
 		status_text = "猫咪在睡觉 😴"
-		# 切换到睡觉动画
-		if _cat_display and _cat_display.animation != "sleep":
+		# 切换到睡觉动画 (正在播放一次性动作动画时不强制覆盖)
+		if _cat_display and _cat_display.animation != "sleep" \
+				and not (_cat_display.animation in ["feed", "pet", "play"]):
 			_play_breed_animation("sleep")
 
 	for interaction_type in ["feed", "pet", "play"]:
@@ -726,6 +727,9 @@ func _on_sleep_anim_check() -> void:
 	if _cat_display == null:
 		return
 	var sleeping := _is_sleeping()
+	# 正在播放一次性动作动画时不强制覆盖, 由 _on_anim_finished() 负责回到 sleep
+	if _cat_display.animation in ["feed", "pet", "play"]:
+		return
 	if sleeping and _cat_display.animation != "sleep":
 		_play_breed_animation("sleep")
 	elif not sleeping and _cat_display.animation == "sleep":
