@@ -25,7 +25,7 @@ const EGG_TEXTURES: Dictionary = {
 }
 
 const DARK_BROWN := Color("5C3A1E")
-const PROGRESS_INSET := 4.0
+const PROGRESS_INSET := 19.0
 
 var slot_index: int = 0
 
