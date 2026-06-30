@@ -3,10 +3,10 @@ extends Node
 const DIALOG_SIZE := Vector2(507.0, 240.0)
 const TOAST_SIZE := Vector2(507.0, 64.0)
 
-const POPUP_BG_TEX := preload("res://assets/art/ui/panels/popup_bg.png")
-const OVERLAY_MASK_TEX := preload("res://assets/art/ui/panels/overlay_mask.png")
-const BTN_CONFIRM_TEX := preload("res://assets/art/ui/incubation/components/btn_confirm_name.png")
-const BTN_SEC_TEX := preload("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
+static var POPUP_BG_TEX: Texture2D = load("res://assets/art/ui/panels/popup_bg.png")
+static var OVERLAY_MASK_TEX: Texture2D = load("res://assets/art/ui/panels/overlay_mask.png")
+static var BTN_CONFIRM_TEX: Texture2D = load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
+static var BTN_SEC_TEX: Texture2D = load("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
 
 static func show_exit_confirm() -> void:
 	show_confirm("离开花园", "确定要离开花园吗？", func() -> void:
