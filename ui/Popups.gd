@@ -92,25 +92,26 @@ class InputOverlay:
 		# Shade
 		var shade := TextureRect.new()
 		shade.texture = OVERLAY_MASK_TEX
-		shade.modulate.a = 0.5
+		shade.modulate.a = 0.2
 		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(shade)
 
-		# Popup container
+		# Popup container — 600×300
 		var popup := Control.new()
 		popup.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-		popup.offset_left = -200
+		popup.offset_left = -300
 		popup.offset_top = -150
-		popup.offset_right = 200
+		popup.offset_right = 300
 		popup.offset_bottom = 150
 		popup.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(popup)
 
-		# Popup bg
+		# Popup bg — stretch to 600×300
 		var bg := TextureRect.new()
 		bg.texture = POPUP_BG_TEX
 		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		bg.stretch_mode = TextureRect.STRETCH_SCALE
 		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		popup.add_child(bg)
 
@@ -119,21 +120,22 @@ class InputOverlay:
 		title_label.text = title
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		title_label.offset_left = 30
-		title_label.offset_right = -30
+		title_label.offset_left = 60
+		title_label.offset_right = -60
 		title_label.offset_top = 35
 		title_label.offset_bottom = 75
+		title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		title_label.add_theme_font_size_override("font_size", 22)
 		title_label.add_theme_color_override("font_color", Color(0.36, 0.23, 0.12, 1))
 		popup.add_child(title_label)
 
-		# Input field
+		# Input field — 560px wide
 		_input = LineEdit.new()
 		_input.placeholder_text = placeholder
-		_input.offset_left = 50
-		_input.offset_right = -50
-		_input.offset_top = 100
+		_input.offset_left = 20
+		_input.offset_right = -20
+		_input.offset_top = 95
 		_input.offset_bottom = 136
 		_input.add_theme_font_size_override("font_size", 16)
 		_input.add_theme_color_override("font_color", Color(0.36, 0.23, 0.12, 1))
@@ -169,8 +171,11 @@ class InputOverlay:
 		cancel_label.text = "取消"
 		cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		cancel_label.position = Vector2(35, 210)
-		cancel_label.size = Vector2(155, 64)
+		cancel_label.offset_left = 35
+		cancel_label.offset_top = 210
+		cancel_label.offset_right = 190
+		cancel_label.offset_bottom = 274
+		cancel_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		cancel_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cancel_label.add_theme_font_size_override("font_size", 18)
 		cancel_label.add_theme_color_override("font_color", Color(0.36, 0.23, 0.12, 1))
@@ -179,9 +184,9 @@ class InputOverlay:
 		# Confirm button
 		var confirm_btn := TextureButton.new()
 		confirm_btn.texture_normal = BTN_CONFIRM_TEX
-		confirm_btn.offset_left = 210
+		confirm_btn.offset_left = 350
 		confirm_btn.offset_top = 210
-		confirm_btn.offset_right = 365
+		confirm_btn.offset_right = 505
 		confirm_btn.offset_bottom = 274
 		confirm_btn.ignore_texture_size = true
 		confirm_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
@@ -192,8 +197,11 @@ class InputOverlay:
 		confirm_label.text = "确认"
 		confirm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		confirm_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		confirm_label.position = Vector2(210, 210)
-		confirm_label.size = Vector2(155, 64)
+		confirm_label.offset_left = 350
+		confirm_label.offset_top = 210
+		confirm_label.offset_right = 505
+		confirm_label.offset_bottom = 274
+		confirm_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		confirm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		confirm_label.add_theme_font_size_override("font_size", 18)
 		confirm_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
@@ -238,25 +246,26 @@ class DialogOverlay:
 		# Shade
 		var shade := TextureRect.new()
 		shade.texture = OVERLAY_MASK_TEX
-		shade.modulate.a = 0.5
+		shade.modulate.a = 0.2
 		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(shade)
 
-		# Popup container
+		# Popup container — 600×300
 		var popup := Control.new()
 		popup.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-		popup.offset_left = -200
+		popup.offset_left = -300
 		popup.offset_top = -150
-		popup.offset_right = 200
+		popup.offset_right = 300
 		popup.offset_bottom = 150
 		popup.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(popup)
 
-		# Popup bg
+		# Popup bg — stretch to 600×300
 		var bg := TextureRect.new()
 		bg.texture = POPUP_BG_TEX
 		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		bg.stretch_mode = TextureRect.STRETCH_SCALE
 		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		popup.add_child(bg)
 
@@ -265,10 +274,11 @@ class DialogOverlay:
 		title_label.text = title
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		title_label.offset_left = 30
-		title_label.offset_right = -30
+		title_label.offset_left = 60
+		title_label.offset_right = -60
 		title_label.offset_top = 35
 		title_label.offset_bottom = 75
+		title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		title_label.add_theme_font_size_override("font_size", 22)
 		title_label.add_theme_color_override("font_color", Color(0.36, 0.23, 0.12, 1))
@@ -280,8 +290,8 @@ class DialogOverlay:
 		content_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		content_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		content_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		content_label.offset_left = 30
-		content_label.offset_right = -30
+		content_label.offset_left = 60
+		content_label.offset_right = -60
 		content_label.offset_top = 85
 		content_label.offset_bottom = 185
 		content_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -305,8 +315,11 @@ class DialogOverlay:
 		cancel_label.text = "取消"
 		cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		cancel_label.position = Vector2(35, 210)
-		cancel_label.size = Vector2(155, 64)
+		cancel_label.offset_left = 35
+		cancel_label.offset_top = 210
+		cancel_label.offset_right = 190
+		cancel_label.offset_bottom = 274
+		cancel_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		cancel_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		cancel_label.add_theme_font_size_override("font_size", 18)
 		cancel_label.add_theme_color_override("font_color", Color(0.36, 0.23, 0.12, 1))
@@ -315,9 +328,9 @@ class DialogOverlay:
 		# Confirm button
 		var confirm_btn := TextureButton.new()
 		confirm_btn.texture_normal = BTN_CONFIRM_TEX
-		confirm_btn.offset_left = 210
+		confirm_btn.offset_left = 350
 		confirm_btn.offset_top = 210
-		confirm_btn.offset_right = 365
+		confirm_btn.offset_right = 505
 		confirm_btn.offset_bottom = 274
 		confirm_btn.ignore_texture_size = true
 		confirm_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
@@ -331,8 +344,11 @@ class DialogOverlay:
 		confirm_label.text = "确认"
 		confirm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		confirm_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		confirm_label.position = Vector2(210, 210)
-		confirm_label.size = Vector2(155, 64)
+		confirm_label.offset_left = 350
+		confirm_label.offset_top = 210
+		confirm_label.offset_right = 505
+		confirm_label.offset_bottom = 274
+		confirm_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		confirm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		confirm_label.add_theme_font_size_override("font_size", 18)
 		confirm_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
