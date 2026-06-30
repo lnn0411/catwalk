@@ -143,9 +143,9 @@ horizontal_scroll_mode = 0
 
 [node name="GridMargin" type="MarginContainer" parent="CardScroll"]
 layout_mode = 2
-theme_override_constants/margin_left = 41
+theme_override_constants/margin_left = 36
 theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 11
+theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 8
 
 [node name="CatsGrid" type="GridContainer" parent="CardScroll/GridMargin"]
