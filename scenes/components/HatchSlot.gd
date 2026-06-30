@@ -25,7 +25,7 @@ const EGG_TEXTURES: Dictionary = {
 }
 
 const DARK_BROWN := Color("5C3A1E")
-const PROGRESS_INSET := 2.0
+const PROGRESS_INSET := 5.5   # 贴图腔体从x=6开始, SCALE下 6*(268/291)=5.53→5.5
 
 var slot_index: int = 0
 
@@ -169,6 +169,8 @@ func _set_progress(p: float) -> void:
 	_prog_fill.anchor_right = 0.0
 	_prog_fill.offset_left = PROGRESS_INSET
 	_prog_fill.offset_right = PROGRESS_INSET + inner_width * ratio
+	_prog_fill.offset_top = 3.0      # 贴图腔体垂直范围 y≈3.5→24, SCALE下对齐
+	_prog_fill.offset_bottom = 21.0
 
 
 # 品种色现由对应的完整蛋巢贴图表达；faint 仅用于空槽淡化。
