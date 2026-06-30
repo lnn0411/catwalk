@@ -46,21 +46,17 @@ custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="NameBg" type="NinePatchRect" parent="VBox/Head"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+[node name="NameBg" type="TextureRect" parent="VBox/Head"]
+layout_mode = 0
+offset_left = 209.0
+offset_top = 10.0
+offset_right = 512.0
+offset_bottom = 170.0
+mouse_filter = 2
 texture = ExtResource("6_name_bg")
 expand_mode = 0
-stretch_mode = 0
+stretch_mode = 6
 mouse_filter = 2
-patch_margin_left = 12
-patch_margin_top = 16
-patch_margin_right = 12
-patch_margin_bottom = 18
 
 [node name="BackBtn" type="TextureButton" parent="VBox/Head"]
 layout_mode = 1
@@ -110,6 +106,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
+vertical_scroll_mode = 2
 
 [node name="Body" type="VBoxContainer" parent="VBox/Scroll"]
 layout_mode = 2
@@ -308,7 +305,7 @@ theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.3, 0.26, 0.22, 1)
 
 [node name="Diary1" type="NinePatchRect" parent="VBox/Scroll/Body"]
-custom_minimum_size = Vector2(0, 200)
+custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("10_diary")
@@ -319,47 +316,19 @@ patch_margin_top = 30
 patch_margin_right = 10
 patch_margin_bottom = 20
 
-[node name="D1Title" type="Label" parent="VBox/Scroll/Body/Diary1"]
+[node name="ScrollView" type="ScrollContainer" parent="VBox/Scroll/Body/Diary1"]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = 28.0
-offset_top = 14.0
-offset_right = -130.0
-offset_bottom = 36.0
+anchor_bottom = 1.0
 grow_horizontal = 2
-mouse_filter = 2
-theme_override_font_sizes/font_size = 15
-theme_override_colors/font_color = Color(0.3, 0.26, 0.22, 1)
+grow_vertical = 2
+vertical_scroll_mode = 2
 
-[node name="D1Status" type="Label" parent="VBox/Scroll/Body/Diary1"]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -118.0
-offset_top = 14.0
-offset_right = -28.0
-offset_bottom = 36.0
-grow_horizontal = 0
-mouse_filter = 2
-theme_override_font_sizes/font_size = 12
-theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
-horizontal_alignment = 2
-
-[node name="D1Text" type="Label" parent="VBox/Scroll/Body/Diary1"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 28.0
-offset_top = 40.0
-offset_right = -28.0
-offset_bottom = 80.0
-grow_horizontal = 2
-mouse_filter = 2
-theme_override_font_sizes/font_size = 13
-theme_override_colors/font_color = Color(0.45, 0.4, 0.36, 1)
-autowrap_mode = 2
+[node name="DiaryList" type="VBoxContainer" parent="VBox/Scroll/Body/Diary1/ScrollView"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
 
 [node name="Actions" type="HBoxContainer" parent="VBox/Scroll/Body"]
 custom_minimum_size = Vector2(0, 60)
