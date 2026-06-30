@@ -16,7 +16,36 @@ func _on_page_setup(data: Dictionary) -> void:
 	_cat_data = data.get("cat", {})
 	_cat_id = String(_cat_data.get("id", ""))
 	_refresh()
+	_build_stat_dividers()
 	_render_diary()
+
+# Draw two vertical dashed dividers that split the stats panel into 3 columns,
+# matching the concept art. Idempotent so re-setup doesn't stack duplicates.
+func _build_stat_dividers() -> void:
+	var panel: NinePatchRect = $VBox/Scroll/Body/StatsRow
+	for child in panel.get_children():
+		if String(child.name).begins_with("Divider"):
+			child.queue_free()
+	for fx in [0.3333, 0.6667]:
+		var line := Control.new()
+		line.name = "Divider_%d" % int(fx * 1000)
+		line.anchor_left = fx
+		line.anchor_right = fx
+		line.anchor_top = 0.0
+		line.anchor_bottom = 1.0
+		line.offset_top = 30.0
+		line.offset_bottom = -30.0
+		line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(line)
+		var y := 0.0
+		while y < 112.0:
+			var dash := ColorRect.new()
+			dash.color = Color(0.72, 0.6, 0.42, 0.55)
+			dash.position = Vector2(-1.0, y)
+			dash.size = Vector2(2.0, 8.0)
+			dash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			line.add_child(dash)
+			y += 14.0
 
 func _refresh() -> void:
 	var name_str: String = String(_cat_data.get("name", String(_cat_data.get("display_name", "猫咪"))))
@@ -44,46 +73,46 @@ func _render_diary() -> void:
 	for i in range(count):
 		var unlocked: bool = i < diary_unlocked
 
-		var entry := Control.new()
-		entry.custom_minimum_size = Vector2(0, 36)
+		# One entry = title row (title left, lock status right) + preview text below.
+		var entry := VBoxContainer.new()
 		entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		entry.add_theme_constant_override("separation", 2)
+
+		var top := HBoxContainer.new()
+		top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
 		var title_label := Label.new()
 		title_label.name = "Title"
-		title_label.offset_left = 20.0
-		title_label.offset_top = 4.0
-		title_label.offset_right = 220.0
-		title_label.offset_bottom = 32.0
+		title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		title_label.text = DIARY_DATA[i][0]
 		title_label.add_theme_font_size_override("font_size", 15)
-		title_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1))
-		entry.add_child(title_label)
+		title_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1) if unlocked else Color(0.55, 0.5, 0.45, 1))
+		top.add_child(title_label)
 
 		var status_label := Label.new()
 		status_label.name = "Status"
-		status_label.offset_left = 500.0
-		status_label.offset_top = 4.0
-		status_label.offset_right = -12.0
-		status_label.offset_bottom = 32.0
 		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		status_label.text = "已解锁" if unlocked else "🔒 好感Lv%d解锁" % (i + 3)
 		status_label.add_theme_font_size_override("font_size", 12)
-		status_label.add_theme_color_override("font_color", Color(0.5, 0.45, 0.4, 1))
-		entry.add_child(status_label)
+		status_label.add_theme_color_override("font_color", Color(0.6, 0.45, 0.3, 1) if unlocked else Color(0.5, 0.45, 0.4, 1))
+		top.add_child(status_label)
+
+		entry.add_child(top)
 
 		var text_label := Label.new()
 		text_label.name = "Text"
-		text_label.offset_left = 20.0
-		text_label.offset_top = 36.0
-		text_label.offset_right = -20.0
-		text_label.offset_bottom = 64.0
+		text_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		text_label.text = DIARY_DATA[i][1] if unlocked else "再亲密一点点，就能读到啦"
 		text_label.add_theme_font_size_override("font_size", 13)
-		text_label.add_theme_color_override("font_color", Color(0.45, 0.4, 0.36, 1))
+		text_label.add_theme_color_override("font_color", Color(0.45, 0.4, 0.36, 1) if unlocked else Color(0.6, 0.56, 0.52, 1))
 		entry.add_child(text_label)
 
 		list.add_child(entry)
+
+		if i < count - 1:
+			var sep := HSeparator.new()
+			list.add_child(sep)
 
 func _find_cat() -> Variant:
 	if _cat_id.is_empty() or not HatchEngine:

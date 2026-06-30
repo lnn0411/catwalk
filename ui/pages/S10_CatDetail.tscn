@@ -340,7 +340,7 @@ theme_override_constants/separation = 10
 custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 size_flags_horizontal = 3
-texture_normal = ExtResource("7_card")
+texture_normal = ExtResource("4_tab")
 ignore_texture_size = true
 stretch_mode = 5
 
@@ -374,7 +374,7 @@ theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
 custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 size_flags_horizontal = 3
-texture_normal = ExtResource("7_card")
+texture_normal = ExtResource("4_tab")
 ignore_texture_size = true
 stretch_mode = 5
 
@@ -408,7 +408,7 @@ theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
 custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 size_flags_horizontal = 3
-texture_normal = ExtResource("7_card")
+texture_normal = ExtResource("4_tab")
 ignore_texture_size = true
 stretch_mode = 5
 
@@ -442,7 +442,7 @@ theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
 custom_minimum_size = Vector2(0, 96)
 layout_mode = 2
 size_flags_horizontal = 3
-texture_normal = ExtResource("7_card")
+texture_normal = ExtResource("4_tab")
 ignore_texture_size = true
 stretch_mode = 5
 
