@@ -144,9 +144,9 @@ horizontal_scroll_mode = 0
 [node name="CatsGrid" type="GridContainer" parent="CardScroll"]
 custom_minimum_size = Vector2(668, 1000)
 layout_mode = 2
-offset_left = 26.0
+offset_left = 36.0
 offset_top = 8.0
-offset_right = -26.0
+offset_right = -16.0
 offset_bottom = -8.0
 columns = 2
 theme_override_constants/h_separation = 8
