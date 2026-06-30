@@ -9,6 +9,14 @@ const DIARY_DATA := [
 	["#5 星空下的告白", "🔒 好感Lv6解锁"],
 ]
 
+const PORTRAIT_PATHS := {
+	"orange": "res://assets/art/cats/portraits/reveal/portrait_orange.png",
+	"orange_tabby": "res://assets/art/cats/portraits/reveal/portrait_orange.png",
+	"british": "res://assets/art/cats/portraits/reveal/portrait_british.png",
+	"british_shorthair": "res://assets/art/cats/portraits/reveal/portrait_british.png",
+	"siamese": "res://assets/art/cats/portraits/reveal/portrait_siamese.png",
+}
+
 var _cat_data: Dictionary = {}
 var _cat_id: String = ""
 
@@ -50,6 +58,13 @@ func _build_stat_dividers() -> void:
 func _refresh() -> void:
 	var name_str: String = String(_cat_data.get("name", String(_cat_data.get("display_name", "猫咪"))))
 	var breed: String = String(_cat_data.get("breed", String(_cat_data.get("species", "普通"))))
+	# Load portrait by breed
+	var portrait_path: String = PORTRAIT_PATHS.get(breed, "")
+	if not portrait_path.is_empty():
+		var tex := load(portrait_path) as Texture2D
+		if tex != null:
+			$VBox/Scroll/Body/CatImageArea.texture = tex
+
 	var lv: int = int(_cat_data.get("level", 1))
 	var aff_lv: int = int(_cat_data.get("affection_lv", min(lv, 3)))
 

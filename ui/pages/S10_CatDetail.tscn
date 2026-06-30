@@ -1,9 +1,8 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://ui/pages/S10_CatDetail.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/cat_house_bg.png" id="2_bg"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/incubation/components/btn_back.png" id="3_back"]
-[ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/立绘背景.png" id="5_portrait_bg"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/名字背景.png" id="6_name_bg"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/等级贴图.png" id="7_card"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/tab_selected.png" id="4_tab"]
@@ -104,9 +103,9 @@ theme_override_constants/separation = 0
 custom_minimum_size = Vector2(576, 320)
 layout_mode = 2
 size_flags_horizontal = 4
-texture = ExtResource("5_portrait_bg")
-expand_mode = 0
-stretch_mode = 0
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
 
 [node name="StatsRow" type="Control" parent="VBox/Scroll/Body"]
 custom_minimum_size = Vector2(0, 170)
