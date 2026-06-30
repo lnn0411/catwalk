@@ -83,6 +83,11 @@ class InputOverlay:
 	var _input: LineEdit
 
 	func _ready() -> void:
+		var _popup_bg: Texture2D = load("res://assets/art/ui/panels/popup_bg.png")
+		var _overlay_mask: Texture2D = load("res://assets/art/ui/panels/overlay_mask.png")
+		var _btn_confirm: Texture2D = load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
+		var _btn_sec: Texture2D = load("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
+
 		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		mouse_filter = Control.MOUSE_FILTER_STOP
 		modulate.a = 0.0
@@ -91,7 +96,7 @@ class InputOverlay:
 
 		# Shade
 		var shade := TextureRect.new()
-		shade.texture = OVERLAY_MASK_TEX
+		shade.texture = _overlay_mask
 		shade.modulate.a = 1.0
 		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -109,7 +114,7 @@ class InputOverlay:
 
 		# Popup bg — stretch to 600×300
 		var bg := TextureRect.new()
-		bg.texture = POPUP_BG_TEX
+		bg.texture = _popup_bg
 		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		bg.stretch_mode = TextureRect.STRETCH_SCALE
 		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -161,7 +166,7 @@ class InputOverlay:
 
 		# Cancel button
 		var cancel_btn := TextureButton.new()
-		cancel_btn.texture_normal = BTN_SEC_TEX
+		cancel_btn.texture_normal = _btn_sec
 		cancel_btn.offset_left = 75
 		cancel_btn.offset_top = 210
 		cancel_btn.offset_right = 230
@@ -187,7 +192,7 @@ class InputOverlay:
 
 		# Confirm button
 		var confirm_btn := TextureButton.new()
-		confirm_btn.texture_normal = BTN_CONFIRM_TEX
+		confirm_btn.texture_normal = _btn_confirm
 		confirm_btn.offset_left = 350
 		confirm_btn.offset_top = 210
 		confirm_btn.offset_right = 505
@@ -241,6 +246,11 @@ class DialogOverlay:
 	var confirm_callback: Callable
 
 	func _ready() -> void:
+		var _popup_bg: Texture2D = load("res://assets/art/ui/panels/popup_bg.png")
+		var _overlay_mask: Texture2D = load("res://assets/art/ui/panels/overlay_mask.png")
+		var _btn_confirm: Texture2D = load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
+		var _btn_sec: Texture2D = load("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
+
 		set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		mouse_filter = Control.MOUSE_FILTER_STOP
 		modulate.a = 0.0
@@ -249,7 +259,7 @@ class DialogOverlay:
 
 		# Shade
 		var shade := TextureRect.new()
-		shade.texture = OVERLAY_MASK_TEX
+		shade.texture = _overlay_mask
 		shade.modulate.a = 1.0
 		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -267,7 +277,7 @@ class DialogOverlay:
 
 		# Popup bg — stretch to 600×300
 		var bg := TextureRect.new()
-		bg.texture = POPUP_BG_TEX
+		bg.texture = _popup_bg
 		bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		bg.stretch_mode = TextureRect.STRETCH_SCALE
 		bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -309,7 +319,7 @@ class DialogOverlay:
 
 		# Cancel button
 		var cancel_btn := TextureButton.new()
-		cancel_btn.texture_normal = BTN_SEC_TEX
+		cancel_btn.texture_normal = _btn_sec
 		cancel_btn.offset_left = 75
 		cancel_btn.offset_top = 210
 		cancel_btn.offset_right = 230
@@ -335,7 +345,7 @@ class DialogOverlay:
 
 		# Confirm button
 		var confirm_btn := TextureButton.new()
-		confirm_btn.texture_normal = BTN_CONFIRM_TEX
+		confirm_btn.texture_normal = _btn_confirm
 		confirm_btn.offset_left = 350
 		confirm_btn.offset_top = 210
 		confirm_btn.offset_right = 505
