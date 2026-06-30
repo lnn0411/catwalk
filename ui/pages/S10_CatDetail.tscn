@@ -103,7 +103,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
-vertical_scroll_mode = 2
+vertical_scroll_mode = 3
 
 [node name="Body" type="VBoxContainer" parent="VBox/Scroll"]
 layout_mode = 2
@@ -111,7 +111,7 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 14
 
 [node name="CatImageArea" type="TextureRect" parent="VBox/Scroll/Body"]
-custom_minimum_size = Vector2(0, 460)
+custom_minimum_size = Vector2(0, 320)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("5_portrait_bg")
@@ -289,7 +289,7 @@ theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
 
 [node name="Diary1" type="NinePatchRect" parent="VBox/Scroll/Body"]
-custom_minimum_size = Vector2(0, 360)
+custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("10_diary")
@@ -302,8 +302,8 @@ patch_margin_bottom = 40
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 26.0
-offset_bottom = 78.0
+offset_top = 10.0
+offset_bottom = 62.0
 grow_horizontal = 2
 mouse_filter = 2
 text = "它的日记"
@@ -356,13 +356,6 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 2
 
-[node name="Icon" type="Label" parent="VBox/Scroll/Body/Actions/RenameBtn/VBox"]
-layout_mode = 2
-mouse_filter = 2
-text = "🏷️"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 30
-
 [node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/RenameBtn/VBox"]
 layout_mode = 2
 mouse_filter = 2
@@ -389,13 +382,6 @@ grow_vertical = 2
 mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 2
-
-[node name="Icon" type="Label" parent="VBox/Scroll/Body/Actions/CompanionBtn/VBox"]
-layout_mode = 2
-mouse_filter = 2
-text = "🐾"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 30
 
 [node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/CompanionBtn/VBox"]
 layout_mode = 2
@@ -424,13 +410,6 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 2
 
-[node name="Icon" type="Label" parent="VBox/Scroll/Body/Actions/LetOutBtn/VBox"]
-layout_mode = 2
-mouse_filter = 2
-text = "🚪"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 30
-
 [node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/LetOutBtn/VBox"]
 layout_mode = 2
 mouse_filter = 2
@@ -457,13 +436,6 @@ grow_vertical = 2
 mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 2
-
-[node name="Icon" type="Label" parent="VBox/Scroll/Body/Actions/GiveawayBtn/VBox"]
-layout_mode = 2
-mouse_filter = 2
-text = "💌"
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 30
 
 [node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/GiveawayBtn/VBox"]
 layout_mode = 2
