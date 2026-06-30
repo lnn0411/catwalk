@@ -34,7 +34,7 @@ func _refresh() -> void:
 	$VBox/Scroll/Body/StatsRow/AffCard/AffBar/AffBarFill.size.x = 90.0 * aff_pct
 	
 	# Diary entries
-	for i in range(3):
+	for i in range(1):
 		var unlocked: bool = i < diary_unlocked
 		var card_path: String = "$VBox/Scroll/Body/Diary%d" % (i + 1)
 		var card = get_node(card_path)
