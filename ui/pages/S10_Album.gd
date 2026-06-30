@@ -114,6 +114,8 @@ func _create_cat_card(cat) -> TextureButton:
 	card.texture_normal = CARD_FILLED
 	card.ignore_texture_size = true
 	card.stretch_mode = TextureButton.STRETCH_SCALE
+	card.region_enabled = true
+	card.region_rect = Rect2(156, 245, 1217, 526)
 	card.focus_mode = Control.FOCUS_NONE
 	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	card.pressed.connect(func() -> void:
@@ -138,8 +140,8 @@ func _create_empty_card() -> TextureRect:
 
 
 func _add_avatar(card: Control, species: String) -> void:
-	var diameter := 73.0
-	var center := Vector2(88.0, 97.0)
+	var diameter := 143.0
+	var center := Vector2(68.0, 97.0)
 
 	var clip := Control.new()
 	clip.name = "AvatarClip"
@@ -175,7 +177,7 @@ void fragment() {
 func _add_name(card: Control, name_text: String, species: String) -> void:
 	var name_label := Label.new()
 	name_label.name = "Name"
-	name_label.position = Vector2(132.0, 86.0)
+	name_label.position = Vector2(126.0, 40.0)
 	name_label.size = Vector2(162.0, 38.0)
 	name_label.text = name_text
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -187,7 +189,7 @@ func _add_name(card: Control, name_text: String, species: String) -> void:
 
 	var breed_label := Label.new()
 	breed_label.name = "Breed"
-	breed_label.position = Vector2(132.0, 119.0)
+	breed_label.position = Vector2(126.0, 154.0)
 	breed_label.size = Vector2(162.0, 28.0)
 	breed_label.text = _breed_label(species)
 	breed_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -201,8 +203,8 @@ func _add_name(card: Control, name_text: String, species: String) -> void:
 func _add_level_badge(card: Control, level: int) -> void:
 	var badge := TextureRect.new()
 	badge.name = "LevelBadge"
-	badge.position = Vector2(250.0, 58.0)
-	badge.size = Vector2(36.0, 20.0)
+	badge.position = Vector2(250.0, 21.0)
+	badge.size = Vector2(44.0, 34.0)
 	badge.texture = LEVEL_BADGE
 	badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://ui/pages/S10_Album.gd" id="1_script"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/cat_house_bg.png" id="2_bg"]
-[ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/btn_back.png" id="3_back"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/incubation/components/btn_back.png" id="3_back"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/tab_selected.png" id="4_tab_selected"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/tab_unselected.png" id="5_tab_unselected"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/cat_card_filled.png" id="6_card_filled"]
