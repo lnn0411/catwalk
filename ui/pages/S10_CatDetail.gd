@@ -22,7 +22,7 @@ func _on_page_setup(data: Dictionary) -> void:
 # Draw two vertical dashed dividers that split the stats panel into 3 columns,
 # matching the concept art. Idempotent so re-setup doesn't stack duplicates.
 func _build_stat_dividers() -> void:
-	var panel: NinePatchRect = $VBox/Scroll/Body/StatsRow
+	var panel: Control = $VBox/Scroll/Body/StatsRow
 	for child in panel.get_children():
 		if String(child.name).begins_with("Divider"):
 			child.queue_free()
