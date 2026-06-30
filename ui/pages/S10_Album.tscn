@@ -32,10 +32,10 @@ stretch_mode = 3
 
 [node name="BackBtn" type="TextureButton" parent="."]
 layout_mode = 0
-offset_left = 10.0
+offset_left = 30.0
 offset_top = 10.0
-offset_right = 86.0
-offset_bottom = 86.0
+offset_right = 110.0
+offset_bottom = 90.0
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("3_back")
 ignore_texture_size = true
@@ -58,13 +58,13 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_top = 80.0
-offset_bottom = 140.0
+offset_bottom = 190.0
 grow_horizontal = 2
 theme_override_constants/separation = 8
 alignment = 1
 
 [node name="TabCats" type="TextureButton" parent="TabBar"]
-custom_minimum_size = Vector2(200, 54)
+custom_minimum_size = Vector2(235, 100)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("4_tab_selected")
@@ -87,7 +87,7 @@ vertical_alignment = 1
 
 [node name="TabCards" type="TextureButton" parent="TabBar"]
 modulate = Color(1, 1, 1, 0.78)
-custom_minimum_size = Vector2(200, 54)
+custom_minimum_size = Vector2(235, 100)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("5_tab_unselected")
@@ -110,7 +110,7 @@ vertical_alignment = 1
 
 [node name="TabAch" type="TextureButton" parent="TabBar"]
 modulate = Color(1, 1, 1, 0.78)
-custom_minimum_size = Vector2(200, 54)
+custom_minimum_size = Vector2(235, 100)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("5_tab_unselected")
@@ -136,13 +136,13 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 145.0
+offset_top = 195.0
 grow_horizontal = 2
 grow_vertical = 2
 horizontal_scroll_mode = 0
 
 [node name="CatsGrid" type="GridContainer" parent="CardScroll"]
-custom_minimum_size = Vector2(668, 1100)
+custom_minimum_size = Vector2(668, 1000)
 layout_mode = 2
 offset_left = 26.0
 offset_top = 8.0
@@ -153,61 +153,61 @@ theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 0
 
 [node name="Placeholder01" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
 [node name="Placeholder02" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
 [node name="Placeholder03" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
 [node name="Placeholder04" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
 [node name="Placeholder05" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
 [node name="Placeholder06" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
 [node name="Placeholder07" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
 [node name="Placeholder08" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
 [node name="Placeholder09" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
 [node name="Placeholder10" type="ColorRect" parent="CardScroll/CatsGrid"]
-custom_minimum_size = Vector2(330, 220)
+custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
@@ -218,7 +218,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 135.0
+offset_top = 195.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -238,7 +238,7 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = 135.0
+offset_top = 195.0
 grow_horizontal = 2
 grow_vertical = 2
 
