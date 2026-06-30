@@ -25,7 +25,7 @@ const EGG_TEXTURES: Dictionary = {
 }
 
 const DARK_BROWN := Color("5C3A1E")
-const PROGRESS_INSET := 5.5   # 贴图腔体从x=6开始, SCALE下 6*(268/291)=5.53→5.5
+const PROGRESS_INSET := 3.0   # 裁剪后腔体从x=3开始, SCALE下 3*(268/285)=2.82→3.0
 
 var slot_index: int = 0
 
