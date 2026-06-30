@@ -86,7 +86,7 @@ func _cat_to_dict(cat) -> Dictionary:
 
 
 func _populate_cat_cards() -> void:
-	var grid := $CardScroll/CatsGrid as GridContainer
+	var grid := $CardScroll/GridMargin/CatsGrid as GridContainer
 	if grid == null:
 		return
 

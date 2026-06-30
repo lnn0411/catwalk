@@ -141,73 +141,74 @@ grow_horizontal = 2
 grow_vertical = 2
 horizontal_scroll_mode = 0
 
-[node name="CatsGrid" type="GridContainer" parent="CardScroll"]
-custom_minimum_size = Vector2(668, 1000)
+[node name="GridMargin" type="MarginContainer" parent="CardScroll"]
 layout_mode = 2
-offset_left = 36.0
-offset_top = 8.0
-offset_right = 16.0
-offset_bottom = -8.0
-size_flags_horizontal = 4
+theme_override_constants/margin_left = 46
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 8
+
+[node name="CatsGrid" type="GridContainer" parent="CardScroll/GridMargin"]
+layout_mode = 2
 columns = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = -55
 
-[node name="Placeholder01" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder01" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
-[node name="Placeholder02" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder02" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
-[node name="Placeholder03" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder03" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
-[node name="Placeholder04" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder04" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
-[node name="Placeholder05" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder05" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
-[node name="Placeholder06" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder06" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
-[node name="Placeholder07" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder07" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
-[node name="Placeholder08" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder08" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
-[node name="Placeholder09" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder09" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
 color = Color(0.956863, 0.913725, 0.819608, 1)
 
-[node name="Placeholder10" type="ColorRect" parent="CardScroll/CatsGrid"]
+[node name="Placeholder10" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
 layout_mode = 2
 mouse_filter = 2
