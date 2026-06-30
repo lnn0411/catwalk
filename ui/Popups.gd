@@ -92,7 +92,7 @@ class InputOverlay:
 		# Shade
 		var shade := TextureRect.new()
 		shade.texture = OVERLAY_MASK_TEX
-		shade.modulate.a = 0.7
+		shade.modulate.a = 1.0
 		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(shade)
@@ -246,7 +246,7 @@ class DialogOverlay:
 		# Shade
 		var shade := TextureRect.new()
 		shade.texture = OVERLAY_MASK_TEX
-		shade.modulate.a = 0.7
+		shade.modulate.a = 1.0
 		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(shade)
