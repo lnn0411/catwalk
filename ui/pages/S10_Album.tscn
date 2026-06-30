@@ -150,7 +150,7 @@ offset_right = -26.0
 offset_bottom = -8.0
 columns = 2
 theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 0
+theme_override_constants/v_separation = -55
 
 [node name="Placeholder01" type="ColorRect" parent="CardScroll/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
