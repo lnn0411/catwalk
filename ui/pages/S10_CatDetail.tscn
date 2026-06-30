@@ -46,7 +46,7 @@ custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="NameBg" type="TextureRect" parent="VBox/Head"]
+[node name="NameBg" type="NinePatchRect" parent="VBox/Head"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -57,6 +57,10 @@ texture = ExtResource("6_name_bg")
 expand_mode = 0
 stretch_mode = 0
 mouse_filter = 2
+patch_margin_left = 12
+patch_margin_top = 16
+patch_margin_right = 12
+patch_margin_bottom = 18
 
 [node name="BackBtn" type="TextureButton" parent="VBox/Head"]
 layout_mode = 1
@@ -112,27 +116,35 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="CatImageArea" type="TextureRect" parent="VBox/Scroll/Body"]
+[node name="CatImageArea" type="NinePatchRect" parent="VBox/Scroll/Body"]
 custom_minimum_size = Vector2(0, 550)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("5_portrait_bg")
-expand_mode = 1
-stretch_mode = 6
+expand_mode = 0
+stretch_mode = 0
+patch_margin_left = 30
+patch_margin_top = 30
+patch_margin_right = 30
+patch_margin_bottom = 30
 
 [node name="StatsRow" type="HBoxContainer" parent="VBox/Scroll/Body"]
-custom_minimum_size = Vector2(0, 140)
+custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="LevelCard" type="TextureRect" parent="VBox/Scroll/Body/StatsRow"]
-custom_minimum_size = Vector2(0, 130)
+[node name="LevelCard" type="NinePatchRect" parent="VBox/Scroll/Body/StatsRow"]
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("7_level")
-expand_mode = 1
-stretch_mode = 6
+expand_mode = 0
+stretch_mode = 0
+patch_margin_left = 50
+patch_margin_top = 50
+patch_margin_right = 50
+patch_margin_bottom = 50
 
 [node name="LvTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
 layout_mode = 1
@@ -178,13 +190,17 @@ offset_right = 50.0
 offset_bottom = 6.0
 color = Color(0.8, 0.55, 0.25, 1)
 
-[node name="AffCard" type="TextureRect" parent="VBox/Scroll/Body/StatsRow"]
-custom_minimum_size = Vector2(0, 130)
+[node name="AffCard" type="NinePatchRect" parent="VBox/Scroll/Body/StatsRow"]
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("8_affection")
-expand_mode = 1
-stretch_mode = 6
+expand_mode = 0
+stretch_mode = 0
+patch_margin_left = 50
+patch_margin_top = 50
+patch_margin_right = 50
+patch_margin_bottom = 50
 
 [node name="AffTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/AffCard"]
 layout_mode = 1
@@ -230,13 +246,17 @@ offset_right = 30.0
 offset_bottom = 6.0
 color = Color(0.9, 0.5, 0.65, 1)
 
-[node name="BondCard" type="TextureRect" parent="VBox/Scroll/Body/StatsRow"]
-custom_minimum_size = Vector2(0, 130)
+[node name="BondCard" type="NinePatchRect" parent="VBox/Scroll/Body/StatsRow"]
+custom_minimum_size = Vector2(0, 160)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("9_bond")
-expand_mode = 1
-stretch_mode = 6
+expand_mode = 0
+stretch_mode = 0
+patch_margin_left = 50
+patch_margin_top = 50
+patch_margin_right = 50
+patch_margin_bottom = 50
 
 [node name="BondTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
 layout_mode = 1
@@ -287,13 +307,17 @@ vertical_alignment = 1
 theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.3, 0.26, 0.22, 1)
 
-[node name="Diary1" type="TextureRect" parent="VBox/Scroll/Body"]
-custom_minimum_size = Vector2(0, 80)
+[node name="Diary1" type="NinePatchRect" parent="VBox/Scroll/Body"]
+custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("10_diary")
-expand_mode = 1
+expand_mode = 0
 stretch_mode = 0
+patch_margin_left = 10
+patch_margin_top = 30
+patch_margin_right = 10
+patch_margin_bottom = 20
 
 [node name="D1Title" type="Label" parent="VBox/Scroll/Body/Diary1"]
 layout_mode = 1
