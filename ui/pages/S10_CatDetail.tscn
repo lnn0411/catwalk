@@ -1,9 +1,15 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://ui/pages/S10_CatDetail.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/cat_house_bg.png" id="2_bg"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/incubation/components/btn_back.png" id="3_back"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/tab_selected.png" id="4_tab"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/立绘背景.png" id="5_portrait_bg"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/名字背景.png" id="6_name_bg"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/等级贴图.png" id="7_level"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/好感贴图.png" id="8_affection"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/羁绊贴图.png" id="9_bond"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/日记贴图.png" id="10_diary"]
 
 [node name="S10_CatDetail" type="Control"]
 layout_mode = 3
@@ -36,14 +42,26 @@ grow_vertical = 2
 
 [node name="Head" type="Control" parent="VBox"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 56)
+custom_minimum_size = Vector2(0, 80)
 size_flags_horizontal = 3
+
+[node name="NameBg" type="TextureRect" parent="VBox/Head"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("6_name_bg")
+expand_mode = 0
+stretch_mode = 0
+mouse_filter = 2
 
 [node name="BackBtn" type="TextureButton" parent="VBox/Head"]
 layout_mode = 1
 anchors_preset = 0
 offset_left = 12.0
-offset_top = 12.0
+offset_top = 24.0
 offset_right = 52.0
 offset_bottom = 52.0
 texture_normal = ExtResource("3_back")
@@ -55,9 +73,9 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 0.0
-offset_top = 12.0
+offset_top = 22.0
 offset_right = 0.0
-offset_bottom = 32.0
+offset_bottom = 42.0
 grow_horizontal = 2
 horizontal_alignment = 1
 theme_override_font_sizes/font_size = 17
@@ -67,9 +85,9 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 52.0
-offset_top = 34.0
+offset_top = 44.0
 offset_right = -12.0
-offset_bottom = 50.0
+offset_bottom = 64.0
 grow_horizontal = 2
 theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
@@ -85,23 +103,14 @@ custom_minimum_size = Vector2(0, 0)
 size_flags_horizontal = 3
 theme_override_constants/separation = 0
 
-[node name="CatImageArea" type="ColorRect" parent="VBox/Scroll/Body"]
+[node name="CatImageArea" type="TextureRect" parent="VBox/Scroll/Body"]
 layout_mode = 2
-custom_minimum_size = Vector2(0, 140)
+custom_minimum_size = Vector2(0, 420)
 size_flags_horizontal = 3
 size_flags_vertical = 0
-color = Color(1, 0.95, 0.88, 1)
-
-[node name="CatPlaceholder" type="Label" parent="VBox/Scroll/Body/CatImageArea"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 50.0
-offset_bottom = 80.0
-grow_horizontal = 2
-text = "立绘位置"
-horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
+texture = ExtResource("5_portrait_bg")
+expand_mode = 0
+stretch_mode = 6
 
 [node name="StatsRow" type="HBoxContainer" parent="VBox/Scroll/Body"]
 layout_mode = 2
@@ -109,11 +118,13 @@ custom_minimum_size = Vector2(0, 100)
 size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
-[node name="LevelCard" type="ColorRect" parent="VBox/Scroll/Body/StatsRow"]
+[node name="LevelCard" type="TextureRect" parent="VBox/Scroll/Body/StatsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 100)
-color = Color(0.98, 0.95, 0.92, 1)
+texture = ExtResource("7_level")
+expand_mode = 0
+stretch_mode = 6
 
 [node name="LvTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
 layout_mode = 1
@@ -157,11 +168,13 @@ offset_right = 50.0
 offset_bottom = 4.0
 color = Color(0.8, 0.55, 0.25, 1)
 
-[node name="AffCard" type="ColorRect" parent="VBox/Scroll/Body/StatsRow"]
+[node name="AffCard" type="TextureRect" parent="VBox/Scroll/Body/StatsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 100)
-color = Color(0.98, 0.95, 0.92, 1)
+texture = ExtResource("8_affection")
+expand_mode = 0
+stretch_mode = 6
 
 [node name="AffTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/AffCard"]
 layout_mode = 1
@@ -205,11 +218,13 @@ offset_right = 30.0
 offset_bottom = 4.0
 color = Color(0.9, 0.5, 0.65, 1)
 
-[node name="BondCard" type="ColorRect" parent="VBox/Scroll/Body/StatsRow"]
+[node name="BondCard" type="TextureRect" parent="VBox/Scroll/Body/StatsRow"]
 layout_mode = 2
 size_flags_horizontal = 3
 custom_minimum_size = Vector2(0, 100)
-color = Color(0.98, 0.95, 0.92, 1)
+texture = ExtResource("9_bond")
+expand_mode = 0
+stretch_mode = 6
 
 [node name="BondTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
 layout_mode = 1
@@ -252,11 +267,13 @@ custom_minimum_size = Vector2(0, 30)
 size_flags_horizontal = 3
 text = "它的日记"
 
-[node name="Diary1" type="ColorRect" parent="VBox/Scroll/Body"]
+[node name="Diary1" type="TextureRect" parent="VBox/Scroll/Body"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 60)
 size_flags_horizontal = 3
-color = Color(1, 1, 1, 1)
+texture = ExtResource("10_diary")
+expand_mode = 0
+stretch_mode = 6
 
 [node name="D1Title" type="Label" parent="VBox/Scroll/Body/Diary1"]
 layout_mode = 1
@@ -296,11 +313,13 @@ theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 autowrap_mode = 2
 
-[node name="Diary2" type="ColorRect" parent="VBox/Scroll/Body"]
+[node name="Diary2" type="TextureRect" parent="VBox/Scroll/Body"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 60)
 size_flags_horizontal = 3
-color = Color(1, 1, 1, 1)
+texture = ExtResource("10_diary")
+expand_mode = 0
+stretch_mode = 6
 
 [node name="D2Title" type="Label" parent="VBox/Scroll/Body/Diary2"]
 layout_mode = 1
@@ -340,11 +359,13 @@ theme_override_font_sizes/font_size = 10
 theme_override_colors/font_color = Color(0.6, 0.6, 0.6, 1)
 autowrap_mode = 2
 
-[node name="Diary3" type="ColorRect" parent="VBox/Scroll/Body"]
+[node name="Diary3" type="TextureRect" parent="VBox/Scroll/Body"]
 layout_mode = 2
 custom_minimum_size = Vector2(0, 60)
 size_flags_horizontal = 3
-color = Color(0.95, 0.95, 0.95, 1)
+texture = ExtResource("10_diary")
+expand_mode = 0
+stretch_mode = 6
 
 [node name="D3Title" type="Label" parent="VBox/Scroll/Body/Diary3"]
 layout_mode = 1
