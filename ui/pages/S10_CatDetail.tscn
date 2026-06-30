@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://ui/pages/S10_CatDetail.gd" id="1"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/cat_house_bg.png" id="2_bg"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/立绘背景.png" id="5_portrait_bg"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/名字背景.png" id="6_name_bg"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/等级贴图.png" id="7_card"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/tab_selected.png" id="4_tab"]
 [ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/日记贴图.png" id="10_diary"]
 
 [node name="S10_CatDetail" type="Control"]
