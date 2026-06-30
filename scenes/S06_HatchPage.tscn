@@ -53,30 +53,6 @@ text = "孵化屋"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="TitleDecorLeft" type="Label" parent="."]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 310.0
-offset_top = 90.0
-offset_right = 330.0
-offset_bottom = 110.0
-theme_override_font_sizes/font_size = 18
-text = "🌱"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="TitleDecorRight" type="Label" parent="."]
-unique_name_in_owner = true
-layout_mode = 0
-offset_left = 390.0
-offset_top = 88.0
-offset_right = 410.0
-offset_bottom = 108.0
-theme_override_font_sizes/font_size = 18
-text = "🌸"
-horizontal_alignment = 1
-vertical_alignment = 1
-
 [node name="PageSubtitle" type="Label" parent="."]
 unique_name_in_owner = true
 layout_mode = 0
