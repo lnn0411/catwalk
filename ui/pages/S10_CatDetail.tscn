@@ -44,17 +44,6 @@ custom_minimum_size = Vector2(0, 180)
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="NameBg" type="TextureRect" parent="VBox/Head"]
-layout_mode = 0
-offset_left = 209.0
-offset_top = 10.0
-offset_right = 512.0
-offset_bottom = 170.0
-mouse_filter = 2
-texture = ExtResource("6_name_bg")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="BackBtn" type="TextureButton" parent="VBox/Head"]
 layout_mode = 1
 anchors_preset = 0
@@ -115,8 +104,8 @@ custom_minimum_size = Vector2(0, 320)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("5_portrait_bg")
-expand_mode = 1
-stretch_mode = 5
+expand_mode = 0
+stretch_mode = 0
 
 [node name="StatsRow" type="Control" parent="VBox/Scroll/Body"]
 custom_minimum_size = Vector2(0, 170)
@@ -166,9 +155,9 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -45.0
-offset_top = -36.0
+offset_top = -56.0
 offset_right = 45.0
-offset_bottom = -30.0
+offset_bottom = -50.0
 grow_horizontal = 2
 grow_vertical = 0
 color = Color(0.94, 0.9, 0.82, 1)
@@ -221,9 +210,9 @@ anchor_top = 1.0
 anchor_right = 0.5
 anchor_bottom = 1.0
 offset_left = -45.0
-offset_top = -36.0
+offset_top = -56.0
 offset_right = 45.0
-offset_bottom = -30.0
+offset_bottom = -50.0
 grow_horizontal = 2
 grow_vertical = 0
 color = Color(0.95, 0.87, 0.9, 1)
@@ -289,14 +278,14 @@ theme_override_font_sizes/font_size = 11
 theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
 
 [node name="Diary1" type="NinePatchRect" parent="VBox/Scroll/Body"]
-custom_minimum_size = Vector2(0, 300)
+custom_minimum_size = Vector2(0, 360)
 layout_mode = 2
 size_flags_horizontal = 3
 texture = ExtResource("10_diary")
-patch_margin_left = 70
-patch_margin_top = 104
-patch_margin_right = 70
-patch_margin_bottom = 40
+patch_margin_left = 40
+patch_margin_top = 50
+patch_margin_right = 40
+patch_margin_bottom = 20
 
 [node name="Banner" type="Label" parent="VBox/Scroll/Body/Diary1"]
 layout_mode = 1
