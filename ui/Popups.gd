@@ -118,6 +118,8 @@ class InputOverlay:
 		# Title
 		var title_label := Label.new()
 		title_label.text = title
+		title_label.anchor_left = 0.0
+		title_label.anchor_right = 1.0
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title_label.offset_left = 60
@@ -133,6 +135,8 @@ class InputOverlay:
 		# Input field — 560px wide
 		_input = LineEdit.new()
 		_input.placeholder_text = placeholder
+		_input.anchor_left = 0.0
+		_input.anchor_right = 1.0
 		_input.offset_left = 20
 		_input.offset_right = -20
 		_input.offset_top = 95
@@ -272,6 +276,8 @@ class DialogOverlay:
 		# Title
 		var title_label := Label.new()
 		title_label.text = title
+		title_label.anchor_left = 0.0
+		title_label.anchor_right = 1.0
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title_label.offset_left = 60
@@ -287,6 +293,8 @@ class DialogOverlay:
 		# Content
 		var content_label := Label.new()
 		content_label.text = content
+		content_label.anchor_left = 0.0
+		content_label.anchor_right = 1.0
 		content_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		content_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		content_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
