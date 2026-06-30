@@ -69,7 +69,7 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("4_tab_selected")
 ignore_texture_size = true
-stretch_mode = 0
+stretch_mode = 5
 
 [node name="Label" type="Label" parent="TabBar/TabCats"]
 layout_mode = 1
@@ -92,7 +92,7 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("5_tab_unselected")
 ignore_texture_size = true
-stretch_mode = 0
+stretch_mode = 5
 
 [node name="Label" type="Label" parent="TabBar/TabCards"]
 layout_mode = 1
@@ -115,7 +115,7 @@ layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("5_tab_unselected")
 ignore_texture_size = true
-stretch_mode = 0
+stretch_mode = 5
 
 [node name="Label" type="Label" parent="TabBar/TabAch"]
 layout_mode = 1
