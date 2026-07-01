@@ -5,7 +5,8 @@ enum Tab { CATS, CARDS, ACH }
 
 const CARD_W := 330.0
 const CARD_H := 200.0
-const SLOT_COUNT := 10
+const SLOT_COUNT := 10  # default if dynamic fails
+const SLOT_MIN := 6      # minimum visible slots
 
 const CARD_FILLED := preload("res://assets/art/ui/cat_house/cat_card_filled.png")
 const CARD_EMPTY := preload("res://assets/art/ui/cat_house/cat_card_empty.png")
@@ -94,8 +95,9 @@ func _populate_cat_cards() -> void:
 		grid.remove_child(child)
 		child.queue_free()
 
-	var owned_count: int = mini(_cats.size(), SLOT_COUNT)
-	for i in SLOT_COUNT:
+	var total_slots: int = maxi(_cats.size(), SLOT_MIN)
+	var owned_count: int = _cats.size()
+	for i in total_slots:
 		if i < owned_count:
 			grid.add_child(_create_cat_card(_cats[i]))
 		else:
