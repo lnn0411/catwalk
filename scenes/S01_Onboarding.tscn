@@ -30,7 +30,7 @@ texture_normal = ExtResource("2")
 
 [node name="StartLabel" type="Label" parent="StartBtn"]
 layout_mode = 0
-offset_left = 70.0
+offset_left = 80.0
 offset_right = -10.0
 offset_top = 15.0
 offset_bottom = 0.0
