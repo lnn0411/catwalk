@@ -1,442 +1,441 @@
-1|[gd_scene load_steps=8 format=3]
-2|
-3|[ext_resource type="Script" path="res://ui/pages/S10_CatDetail.gd" id="1"]
-4|[ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/cat_house_bg.png" id="2_bg"]
-5|[ext_resource type="Texture2D" path="res://assets/art/ui/incubation/components/btn_back.png" id="3_back"]
-6|[ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/tab_selected.png" id="4_tab"]
-7|[ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/日记贴图.png" id="10_diary"]
-8|
-9|[node name="S10_CatDetail" type="Control"]
-10|layout_mode = 3
-11|anchors_preset = 15
-12|anchor_right = 1.0
-13|anchor_bottom = 1.0
-14|grow_horizontal = 2
-15|grow_vertical = 2
-16|script = ExtResource("1")
-17|
-18|[node name="Bg" type="TextureRect" parent="."]
-19|layout_mode = 1
-20|anchors_preset = 15
-21|anchor_right = 1.0
-22|anchor_bottom = 1.0
-23|grow_horizontal = 2
-24|grow_vertical = 2
-25|texture = ExtResource("2_bg")
-26|expand_mode = 1
-27|stretch_mode = 6
-28|mouse_filter = 2
-29|
-30|[node name="VBox" type="VBoxContainer" parent="."]
-31|layout_mode = 1
-32|anchors_preset = 15
-33|anchor_right = 1.0
-34|anchor_bottom = 1.0
-35|offset_top = -20
-36|grow_horizontal = 2
-37|grow_vertical = 2
-38|theme_override_constants/separation = 0
-39|
-40|[node name="Head" type="Control" parent="VBox"]
-41|custom_minimum_size = Vector2(0, 150)
-42|layout_mode = 2
-43|size_flags_horizontal = 3
-44|
-45|[node name="BackBtn" type="TextureButton" parent="VBox/Head"]
-46|layout_mode = 1
-47|anchors_preset = 0
-48|offset_left = 20.0
-49|offset_top = 44.0
-50|offset_right = 68.0
-51|offset_bottom = 92.0
-52|texture_normal = ExtResource("3_back")
-53|ignore_texture_size = true
-54|stretch_mode = 5
-55|
-56|[node name="CatName" type="Label" parent="VBox/Head"]
-57|layout_mode = 1
-58|anchors_preset = 10
-59|anchor_right = 1.0
-60|offset_left = 80.0
-61|offset_top = 62.0
-62|offset_right = -80.0
-63|offset_bottom = 100.0
-64|grow_horizontal = 2
-65|mouse_filter = 2
-66|text = "猫咪"
-67|horizontal_alignment = 1
-68|vertical_alignment = 1
-69|theme_override_font_sizes/font_size = 26
-70|theme_override_colors/font_color = Color(0.25, 0.2, 0.16, 1)
-71|
-72|[node name="BreedSub" type="Label" parent="VBox/Head"]
-73|layout_mode = 1
-74|anchors_preset = 10
-75|anchor_right = 1.0
-76|offset_left = 80.0
-77|offset_top = 104.0
-78|offset_right = -80.0
-79|offset_bottom = 128.0
-80|grow_horizontal = 2
-81|mouse_filter = 2
-82|text = "普通"
-83|horizontal_alignment = 1
-84|vertical_alignment = 1
-85|theme_override_font_sizes/font_size = 15
-86|theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
-87|
-88|[node name="Scroll" type="ScrollContainer" parent="VBox"]
-89|layout_mode = 2
-90|size_flags_horizontal = 3
-91|size_flags_vertical = 3
-92|horizontal_scroll_mode = 0
-93|vertical_scroll_mode = 3
-94|
-95|[node name="Body" type="VBoxContainer" parent="VBox/Scroll"]
-96|layout_mode = 2
-97|size_flags_horizontal = 3
-98|theme_override_constants/separation = 0
-99|
-100|[node name="CatImageArea" type="TextureRect" parent="VBox/Scroll/Body"]
-101|custom_minimum_size = Vector2(576, 320)
-102|layout_mode = 2
-103|size_flags_horizontal = 4
-104|expand_mode = 1
-105|stretch_mode = 5
-106|mouse_filter = 2
-107|
-108|[node name="StatsRow" type="Control" parent="VBox/Scroll/Body"]
-109|custom_minimum_size = Vector2(0, 170)
-110|layout_mode = 2
-111|size_flags_horizontal = 3
-112|mouse_filter = 2
-113|
-114|[node name="LevelCard" type="Control" parent="VBox/Scroll/Body/StatsRow"]
-115|layout_mode = 1
-116|anchors_preset = 0
-117|anchor_bottom = 1.0
-118|offset_left = 24.0
-119|offset_right = 240.0
-120|grow_vertical = 2
-121|mouse_filter = 2
-122|
-123|[node name="LvTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
-124|layout_mode = 1
-125|anchors_preset = 10
-126|anchor_right = 1.0
-127|offset_top = 12.0
-128|offset_bottom = 34.0
-129|grow_horizontal = 2
-130|mouse_filter = 2
-131|text = "等级"
-132|horizontal_alignment = 1
-133|theme_override_font_sizes/font_size = 14
-134|theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
-135|
-136|[node name="LvValue" type="Label" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
-137|layout_mode = 1
-138|anchors_preset = 10
-139|anchor_right = 1.0
-140|offset_top = 40.0
-141|offset_bottom = 82.0
-142|grow_horizontal = 2
-143|mouse_filter = 2
-144|text = "Lv.1"
-145|horizontal_alignment = 1
-146|theme_override_font_sizes/font_size = 28
-147|theme_override_colors/font_color = Color(0.8, 0.55, 0.25, 1)
-148|
-149|[node name="LvBar" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
-150|layout_mode = 1
-151|anchor_left = 0.5
-152|anchor_top = 1.0
-153|anchor_right = 0.5
-154|anchor_bottom = 1.0
-155|offset_left = -45.0
-156|offset_top = -70.0
-157|offset_right = 45.0
-158|offset_bottom = -64.0
-159|grow_horizontal = 2
-160|grow_vertical = 0
-161|color = Color(0.94, 0.9, 0.82, 1)
-162|
-163|[node name="LvBarFill" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/LevelCard/LvBar"]
-164|layout_mode = 0
-165|offset_right = 50.0
-166|offset_bottom = 6.0
-167|color = Color(0.8, 0.55, 0.25, 1)
-168|
-169|[node name="AffCard" type="Control" parent="VBox/Scroll/Body/StatsRow"]
-170|layout_mode = 1
-171|anchors_preset = 0
-172|anchor_left = 0.3333
-173|anchor_right = 0.6667
-174|anchor_bottom = 1.0
-175|grow_vertical = 2
-176|mouse_filter = 2
-177|
-178|[node name="AffTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/AffCard"]
-179|layout_mode = 1
-180|anchors_preset = 10
-181|anchor_right = 1.0
-182|offset_top = 12.0
-183|offset_bottom = 34.0
-184|grow_horizontal = 2
-185|mouse_filter = 2
-186|text = "好感"
-187|horizontal_alignment = 1
-188|theme_override_font_sizes/font_size = 14
-189|theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
-190|
-191|[node name="AffValue" type="Label" parent="VBox/Scroll/Body/StatsRow/AffCard"]
-192|layout_mode = 1
-193|anchors_preset = 10
-194|anchor_right = 1.0
-195|offset_top = 40.0
-196|offset_bottom = 82.0
-197|grow_horizontal = 2
-198|mouse_filter = 2
-199|text = "Lv.1"
-200|horizontal_alignment = 1
-201|theme_override_font_sizes/font_size = 28
-202|theme_override_colors/font_color = Color(0.9, 0.5, 0.65, 1)
-203|
-204|[node name="AffBar" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/AffCard"]
-205|layout_mode = 1
-206|anchor_left = 0.5
-207|anchor_top = 1.0
-208|anchor_right = 0.5
-209|anchor_bottom = 1.0
-210|offset_left = -45.0
-211|offset_top = -70.0
-212|offset_right = 45.0
-213|offset_bottom = -64.0
-214|grow_horizontal = 2
-215|grow_vertical = 0
-216|color = Color(0.95, 0.87, 0.9, 1)
-217|
-218|[node name="AffBarFill" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/AffCard/AffBar"]
-219|layout_mode = 0
-220|offset_right = 30.0
-221|offset_bottom = 6.0
-222|color = Color(0.9, 0.5, 0.65, 1)
-223|
-224|[node name="BondCard" type="Control" parent="VBox/Scroll/Body/StatsRow"]
-225|layout_mode = 1
-226|anchors_preset = 0
-227|anchor_left = 0.6667
-228|anchor_right = 1.0
-229|anchor_bottom = 1.0
-230|offset_right = -24.0
-231|grow_vertical = 2
-232|mouse_filter = 2
-233|
-234|[node name="BondTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
-235|layout_mode = 1
-236|anchors_preset = 10
-237|anchor_right = 1.0
-238|offset_top = 12.0
-239|offset_bottom = 34.0
-240|grow_horizontal = 2
-241|mouse_filter = 2
-242|text = "羁绊"
-243|horizontal_alignment = 1
-244|theme_override_font_sizes/font_size = 14
-245|theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
-246|
-247|[node name="BondValue" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
-248|layout_mode = 1
-249|anchors_preset = 10
-250|anchor_right = 1.0
-251|offset_top = 40.0
-252|offset_bottom = 82.0
-253|grow_horizontal = 2
-254|mouse_filter = 2
-255|text = "🔒"
-256|horizontal_alignment = 1
-257|theme_override_font_sizes/font_size = 28
-258|theme_override_colors/font_color = Color(0.45, 0.55, 0.7, 1)
-259|
-260|[node name="BondSub" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
-261|layout_mode = 1
-262|anchor_left = 0.5
-263|anchor_top = 1.0
-264|anchor_right = 0.5
-265|anchor_bottom = 1.0
-266|offset_left = -70.0
-267|offset_top = -70.0
-268|offset_right = 70.0
-269|offset_bottom = -50.0
-270|grow_horizontal = 2
-271|grow_vertical = 0
-272|mouse_filter = 2
-273|text = "满级后激活"
-274|horizontal_alignment = 1
-275|theme_override_font_sizes/font_size = 11
-276|theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
-277|
-278|[node name="Diary1" type="NinePatchRect" parent="VBox/Scroll/Body"]
-279|custom_minimum_size = Vector2(0, 540)
-280|layout_mode = 2
-281|size_flags_horizontal = 3
-282|texture = ExtResource("10_diary")
-283|patch_margin_left = 40
-284|patch_margin_top = 50
-285|patch_margin_right = 40
-286|patch_margin_bottom = 20
-287|
-288|[node name="Banner" type="Label" parent="VBox/Scroll/Body/Diary1"]
-289|layout_mode = 1
-290|anchors_preset = 10
-291|anchor_right = 1.0
-292|offset_top = 10.0
-293|offset_bottom = 62.0
-294|grow_horizontal = 2
-295|mouse_filter = 2
-296|text = "它的日记"
-297|horizontal_alignment = 1
-298|vertical_alignment = 1
-299|theme_override_font_sizes/font_size = 20
-300|theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
-301|
-302|[node name="ScrollView" type="ScrollContainer" parent="VBox/Scroll/Body/Diary1"]
-303|layout_mode = 1
-304|anchors_preset = 15
-305|anchor_right = 1.0
-306|anchor_bottom = 1.0
-307|offset_left = 44.0
-308|offset_top = 104.0
-309|offset_right = -44.0
-310|offset_bottom = -28.0
-311|grow_horizontal = 2
-312|grow_vertical = 2
-313|horizontal_scroll_mode = 0
-314|vertical_scroll_mode = 3
-315|
-316|[node name="DiaryList" type="VBoxContainer" parent="VBox/Scroll/Body/Diary1/ScrollView"]
-317|layout_mode = 2
-318|size_flags_horizontal = 3
-319|theme_override_constants/separation = 10
-320|
-321|[node name="Actions" type="HBoxContainer" parent="VBox/Scroll/Body"]
-322|custom_minimum_size = Vector2(0, 135)
-323|layout_mode = 2
-324|size_flags_horizontal = 3
-325|theme_override_constants/separation = 10
-326|
-327|[node name="RenameBtn" type="TextureButton" parent="VBox/Scroll/Body/Actions"]
-328|custom_minimum_size = Vector2(0, 125)
-329|layout_mode = 2
-330|size_flags_horizontal = 3
-331|texture_normal = ExtResource("4_tab")
-332|ignore_texture_size = true
-333|stretch_mode = 5
-334|
-335|[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/RenameBtn"]
-336|layout_mode = 1
-337|anchors_preset = 15
-338|anchor_right = 1.0
-339|anchor_bottom = 1.0
-340|grow_horizontal = 2
-341|grow_vertical = 2
-342|mouse_filter = 2
-343|alignment = 1
-344|theme_override_constants/separation = 2
-345|
-346|[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/RenameBtn/VBox"]
-347|layout_mode = 2
-348|mouse_filter = 2
-349|text = "改名"
-350|horizontal_alignment = 1
-351|theme_override_font_sizes/font_size = 13
-352|theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
-353|
-354|[node name="CompanionBtn" type="TextureButton" parent="VBox/Scroll/Body/Actions"]
-355|custom_minimum_size = Vector2(0, 125)
-356|layout_mode = 2
-357|size_flags_horizontal = 3
-358|texture_normal = ExtResource("4_tab")
-359|ignore_texture_size = true
-360|stretch_mode = 5
-361|
-362|[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/CompanionBtn"]
-363|layout_mode = 1
-364|anchors_preset = 15
-365|anchor_right = 1.0
-366|anchor_bottom = 1.0
-367|grow_horizontal = 2
-368|grow_vertical = 2
-369|mouse_filter = 2
-370|alignment = 1
-371|theme_override_constants/separation = 2
-372|
-373|[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/CompanionBtn/VBox"]
-374|layout_mode = 2
-375|mouse_filter = 2
-376|text = "随行"
-377|horizontal_alignment = 1
-378|theme_override_font_sizes/font_size = 13
-379|theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
-380|
-381|[node name="LetOutBtn" type="TextureButton" parent="VBox/Scroll/Body/Actions"]
-382|custom_minimum_size = Vector2(0, 125)
-383|layout_mode = 2
-384|size_flags_horizontal = 3
-385|texture_normal = ExtResource("4_tab")
-386|ignore_texture_size = true
-387|stretch_mode = 5
-388|
-389|[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/LetOutBtn"]
-390|layout_mode = 1
-391|anchors_preset = 15
-392|anchor_right = 1.0
-393|anchor_bottom = 1.0
-394|grow_horizontal = 2
-395|grow_vertical = 2
-396|mouse_filter = 2
-397|alignment = 1
-398|theme_override_constants/separation = 2
-399|
-400|[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/LetOutBtn/VBox"]
-401|layout_mode = 2
-402|mouse_filter = 2
-403|text = "放出"
-404|horizontal_alignment = 1
-405|theme_override_font_sizes/font_size = 13
-406|theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
-407|
-408|[node name="GiveawayBtn" type="TextureButton" parent="VBox/Scroll/Body/Actions"]
-409|custom_minimum_size = Vector2(0, 125)
-410|layout_mode = 2
-411|size_flags_horizontal = 3
-412|texture_normal = ExtResource("4_tab")
-413|ignore_texture_size = true
-414|stretch_mode = 5
-415|
-416|[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/GiveawayBtn"]
-417|layout_mode = 1
-418|anchors_preset = 15
-419|anchor_right = 1.0
-420|anchor_bottom = 1.0
-421|grow_horizontal = 2
-422|grow_vertical = 2
-423|mouse_filter = 2
-424|alignment = 1
-425|theme_override_constants/separation = 2
-426|
-427|[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/GiveawayBtn/VBox"]
-428|layout_mode = 2
-429|mouse_filter = 2
-430|text = "送养"
-431|horizontal_alignment = 1
-432|theme_override_font_sizes/font_size = 13
-433|theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
-434|
-435|
-436|
-437|[connection signal="pressed" from="VBox/Head/BackBtn" to="." method="_on_back_pressed"]
-438|[connection signal="pressed" from="VBox/Scroll/Body/Actions/RenameBtn" to="." method="_on_rename_pressed"]
-439|[connection signal="pressed" from="VBox/Scroll/Body/Actions/CompanionBtn" to="." method="_on_companion_pressed"]
-440|[connection signal="pressed" from="VBox/Scroll/Body/Actions/LetOutBtn" to="." method="_on_let_out_pressed"]
-441|[connection signal="pressed" from="VBox/Scroll/Body/Actions/GiveawayBtn" to="." method="_on_giveaway_pressed"]
-442|
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://ui/pages/S10_CatDetail.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/cat_house_bg.png" id="2_bg"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/incubation/components/btn_back.png" id="3_back"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_house/tab_selected.png" id="4_tab"]
+[ext_resource type="Texture2D" path="res://assets/art/ui/cat_detail/日记贴图.png" id="10_diary"]
+
+[node name="S10_CatDetail" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1")
+
+[node name="Bg" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 6
+mouse_filter = 2
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -20
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="Head" type="Control" parent="VBox"]
+custom_minimum_size = Vector2(0, 150)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BackBtn" type="TextureButton" parent="VBox/Head"]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 20.0
+offset_top = 44.0
+offset_right = 68.0
+offset_bottom = 92.0
+texture_normal = ExtResource("3_back")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="CatName" type="Label" parent="VBox/Head"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 80.0
+offset_top = 62.0
+offset_right = -80.0
+offset_bottom = 100.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "猫咪"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 26
+theme_override_colors/font_color = Color(0.25, 0.2, 0.16, 1)
+
+[node name="BreedSub" type="Label" parent="VBox/Head"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 80.0
+offset_top = 104.0
+offset_right = -80.0
+offset_bottom = 128.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "普通"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 15
+theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
+
+[node name="Scroll" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="Body" type="VBoxContainer" parent="VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="CatImageArea" type="TextureRect" parent="VBox/Scroll/Body"]
+custom_minimum_size = Vector2(576, 320)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+mouse_filter = 2
+
+[node name="StatsRow" type="Control" parent="VBox/Scroll/Body"]
+custom_minimum_size = Vector2(0, 170)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+
+[node name="LevelCard" type="Control" parent="VBox/Scroll/Body/StatsRow"]
+layout_mode = 1
+anchors_preset = 0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_right = 240.0
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="LvTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 12.0
+offset_bottom = 34.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "等级"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
+
+[node name="LvValue" type="Label" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 40.0
+offset_bottom = 82.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "Lv.1"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.8, 0.55, 0.25, 1)
+
+[node name="LvBar" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -45.0
+offset_top = -70.0
+offset_right = 45.0
+offset_bottom = -64.0
+grow_horizontal = 2
+grow_vertical = 0
+color = Color(0.94, 0.9, 0.82, 1)
+
+[node name="LvBarFill" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/LevelCard/LvBar"]
+layout_mode = 0
+offset_right = 50.0
+offset_bottom = 6.0
+color = Color(0.8, 0.55, 0.25, 1)
+
+[node name="AffCard" type="Control" parent="VBox/Scroll/Body/StatsRow"]
+layout_mode = 1
+anchors_preset = 0
+anchor_left = 0.3333
+anchor_right = 0.6667
+anchor_bottom = 1.0
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="AffTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/AffCard"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 12.0
+offset_bottom = 34.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "好感"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
+
+[node name="AffValue" type="Label" parent="VBox/Scroll/Body/StatsRow/AffCard"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 40.0
+offset_bottom = 82.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "Lv.1"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.9, 0.5, 0.65, 1)
+
+[node name="AffBar" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/AffCard"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -45.0
+offset_top = -70.0
+offset_right = 45.0
+offset_bottom = -64.0
+grow_horizontal = 2
+grow_vertical = 0
+color = Color(0.95, 0.87, 0.9, 1)
+
+[node name="AffBarFill" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/AffCard/AffBar"]
+layout_mode = 0
+offset_right = 30.0
+offset_bottom = 6.0
+color = Color(0.9, 0.5, 0.65, 1)
+
+[node name="BondCard" type="Control" parent="VBox/Scroll/Body/StatsRow"]
+layout_mode = 1
+anchors_preset = 0
+anchor_left = 0.6667
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -24.0
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="BondTitle" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 12.0
+offset_bottom = 34.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "羁绊"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 14
+theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
+
+[node name="BondValue" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 40.0
+offset_bottom = 82.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "🔒"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.45, 0.55, 0.7, 1)
+
+[node name="BondSub" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -70.0
+offset_top = -70.0
+offset_right = 70.0
+offset_bottom = -50.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+text = "满级后激活"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 11
+theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
+
+[node name="Diary1" type="NinePatchRect" parent="VBox/Scroll/Body"]
+custom_minimum_size = Vector2(0, 540)
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("10_diary")
+patch_margin_left = 40
+patch_margin_top = 50
+patch_margin_right = 40
+patch_margin_bottom = 20
+
+[node name="Banner" type="Label" parent="VBox/Scroll/Body/Diary1"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 10.0
+offset_bottom = 62.0
+grow_horizontal = 2
+mouse_filter = 2
+text = "它的日记"
+horizontal_alignment = 1
+vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
+
+[node name="ScrollView" type="ScrollContainer" parent="VBox/Scroll/Body/Diary1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 44.0
+offset_top = 104.0
+offset_right = -44.0
+offset_bottom = -28.0
+grow_horizontal = 2
+grow_vertical = 2
+horizontal_scroll_mode = 0
+vertical_scroll_mode = 3
+
+[node name="DiaryList" type="VBoxContainer" parent="VBox/Scroll/Body/Diary1/ScrollView"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="Actions" type="HBoxContainer" parent="VBox/Scroll/Body"]
+custom_minimum_size = Vector2(0, 135)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="RenameBtn" type="TextureButton" parent="VBox/Scroll/Body/Actions"]
+custom_minimum_size = Vector2(0, 125)
+layout_mode = 2
+size_flags_horizontal = 3
+texture_normal = ExtResource("4_tab")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/RenameBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 2
+
+[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/RenameBtn/VBox"]
+layout_mode = 2
+mouse_filter = 2
+text = "改名"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
+
+[node name="CompanionBtn" type="TextureButton" parent="VBox/Scroll/Body/Actions"]
+custom_minimum_size = Vector2(0, 125)
+layout_mode = 2
+size_flags_horizontal = 3
+texture_normal = ExtResource("4_tab")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/CompanionBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 2
+
+[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/CompanionBtn/VBox"]
+layout_mode = 2
+mouse_filter = 2
+text = "随行"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
+
+[node name="LetOutBtn" type="TextureButton" parent="VBox/Scroll/Body/Actions"]
+custom_minimum_size = Vector2(0, 125)
+layout_mode = 2
+size_flags_horizontal = 3
+texture_normal = ExtResource("4_tab")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/LetOutBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 2
+
+[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/LetOutBtn/VBox"]
+layout_mode = 2
+mouse_filter = 2
+text = "放出"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
+
+[node name="GiveawayBtn" type="TextureButton" parent="VBox/Scroll/Body/Actions"]
+custom_minimum_size = Vector2(0, 125)
+layout_mode = 2
+size_flags_horizontal = 3
+texture_normal = ExtResource("4_tab")
+ignore_texture_size = true
+stretch_mode = 5
+
+[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/GiveawayBtn"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+alignment = 1
+theme_override_constants/separation = 2
+
+[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/GiveawayBtn/VBox"]
+layout_mode = 2
+mouse_filter = 2
+text = "送养"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 13
+theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
+
+
+
+[connection signal="pressed" from="VBox/Head/BackBtn" to="." method="_on_back_pressed"]
+[connection signal="pressed" from="VBox/Scroll/Body/Actions/RenameBtn" to="." method="_on_rename_pressed"]
+[connection signal="pressed" from="VBox/Scroll/Body/Actions/CompanionBtn" to="." method="_on_companion_pressed"]
+[connection signal="pressed" from="VBox/Scroll/Body/Actions/LetOutBtn" to="." method="_on_let_out_pressed"]
+[connection signal="pressed" from="VBox/Scroll/Body/Actions/GiveawayBtn" to="." method="_on_giveaway_pressed"]
