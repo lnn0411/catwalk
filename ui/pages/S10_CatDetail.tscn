@@ -320,13 +320,14 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
-[node name="Actions" type="HBoxContainer" parent="VBox/Scroll/Body"]
+[node name="Actions" type="HBoxContainer" parent="VBox"]
 custom_minimum_size = Vector2(0, 135)
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 0
 theme_override_constants/separation = 10
 
-[node name="RenameBtn" type="TextureButton" parent="VBox/Scroll/Body/Actions"]
+[node name="RenameBtn" type="TextureButton" parent="VBox/Actions"]
 custom_minimum_size = Vector2(0, 125)
 layout_mode = 2
 size_flags_horizontal = 3
@@ -334,7 +335,7 @@ texture_normal = ExtResource("4_tab")
 ignore_texture_size = true
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/RenameBtn"]
+[node name="VBox" type="VBoxContainer" parent="VBox/Actions/RenameBtn"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -345,7 +346,7 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 2
 
-[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/RenameBtn/VBox"]
+[node name="Text" type="Label" parent="VBox/Actions/RenameBtn/VBox"]
 layout_mode = 2
 mouse_filter = 2
 text = "改名"
@@ -361,7 +362,7 @@ texture_normal = ExtResource("4_tab")
 ignore_texture_size = true
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/CompanionBtn"]
+[node name="VBox" type="VBoxContainer" parent="VBox/Actions/CompanionBtn"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -372,7 +373,7 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 2
 
-[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/CompanionBtn/VBox"]
+[node name="Text" type="Label" parent="VBox/Actions/CompanionBtn/VBox"]
 layout_mode = 2
 mouse_filter = 2
 text = "随行"
@@ -388,7 +389,7 @@ texture_normal = ExtResource("4_tab")
 ignore_texture_size = true
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/LetOutBtn"]
+[node name="VBox" type="VBoxContainer" parent="VBox/Actions/LetOutBtn"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -399,7 +400,7 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 2
 
-[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/LetOutBtn/VBox"]
+[node name="Text" type="Label" parent="VBox/Actions/LetOutBtn/VBox"]
 layout_mode = 2
 mouse_filter = 2
 text = "放出"
@@ -415,7 +416,7 @@ texture_normal = ExtResource("4_tab")
 ignore_texture_size = true
 stretch_mode = 5
 
-[node name="VBox" type="VBoxContainer" parent="VBox/Scroll/Body/Actions/GiveawayBtn"]
+[node name="VBox" type="VBoxContainer" parent="VBox/Actions/GiveawayBtn"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -426,7 +427,7 @@ mouse_filter = 2
 alignment = 1
 theme_override_constants/separation = 2
 
-[node name="Text" type="Label" parent="VBox/Scroll/Body/Actions/GiveawayBtn/VBox"]
+[node name="Text" type="Label" parent="VBox/Actions/GiveawayBtn/VBox"]
 layout_mode = 2
 mouse_filter = 2
 text = "送养"
@@ -437,7 +438,7 @@ theme_override_colors/font_color = Color(0.35, 0.3, 0.24, 1)
 
 
 [connection signal="pressed" from="VBox/Head/BackBtn" to="." method="_on_back_pressed"]
-[connection signal="pressed" from="VBox/Scroll/Body/Actions/RenameBtn" to="." method="_on_rename_pressed"]
-[connection signal="pressed" from="VBox/Scroll/Body/Actions/CompanionBtn" to="." method="_on_companion_pressed"]
-[connection signal="pressed" from="VBox/Scroll/Body/Actions/LetOutBtn" to="." method="_on_let_out_pressed"]
-[connection signal="pressed" from="VBox/Scroll/Body/Actions/GiveawayBtn" to="." method="_on_giveaway_pressed"]
+[connection signal="pressed" from="VBox/Actions/RenameBtn" to="." method="_on_rename_pressed"]
+[connection signal="pressed" from="VBox/Actions/CompanionBtn" to="." method="_on_companion_pressed"]
+[connection signal="pressed" from="VBox/Actions/LetOutBtn" to="." method="_on_let_out_pressed"]
+[connection signal="pressed" from="VBox/Actions/GiveawayBtn" to="." method="_on_giveaway_pressed"]
