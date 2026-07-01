@@ -42,6 +42,14 @@ const FOOT_Y := 131
 const ARCHED_GROUND_Y := 1.0  # 脚底略高于阴影，避免垂直压在阴影上
 const WALK_PX_BRITISH := 4.0
 
+# 英短walk帧脚底像素透明度偏低(alpha≈66-87),需要额外下移补偿
+const BREED_FOOT_BIAS := {
+	"british": 2.0,
+	"orange": 0.0,
+	"orange_tabby": 0.0,
+	"siamese": 0.0,
+}
+
 var _per_frame_foot_y := FOOT_Y
 var _per_frame_x_center := 0.0
 const WALK_PX_ORANGE := 6.5
@@ -532,9 +540,10 @@ func _apply_visual_motion(_delta: float) -> void:
 func _apply_sprite_anchor(sx: float, sy: float) -> void:
 	# Sprite2D centered=false 时，纹理局部坐标 (50, foot_y) 是脚底像素位置。
 	# 这里根据每帧实际脚底像素高度定位，确保脚底落在 ARChED_GROUND_Y 处。
+	var foot_bias: float = BREED_FOOT_BIAS.get(breed, 0.0)
 	_sprite.position = Vector2(
 		-FRAME_SIZE.x * 0.5 * sx + _per_frame_x_center,
-		-_per_frame_foot_y * sy + ARCHED_GROUND_Y
+		-_per_frame_foot_y * sy + ARCHED_GROUND_Y + foot_bias
 	)
 
 
