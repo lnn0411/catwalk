@@ -44,7 +44,7 @@ const WALK_PX_BRITISH := 4.0
 
 # 英短walk帧脚底像素透明度偏低(alpha≈66-87),需要额外下移补偿
 const BREED_FOOT_BIAS := {
-	"british": 2.0,
+	"british": 4.0,
 	"orange": 0.0,
 	"orange_tabby": 0.0,
 	"siamese": 0.0,
