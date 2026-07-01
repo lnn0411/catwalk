@@ -89,7 +89,7 @@ func _confirm_name() -> void:
 	if value.length() > 16:
 		value = value.substr(0, 16)
 	if _is_name_taken(value):
-		Popups.show_toast("已有同名猫咪，请换一个名字")
+		Popups.show_toast("已有同名猫咪，请重新选一个")
 		return
 	_closing = true
 	_cat.display_name = value

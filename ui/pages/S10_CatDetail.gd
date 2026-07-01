@@ -154,7 +154,7 @@ func _on_rename_pressed() -> void:
 			Popups.show_toast("找不到这只猫了")
 			return
 		if _is_name_taken(new_name):
-			Popups.show_toast("已有同名猫咪，请换一个名字")
+			Popups.show_toast("已有同名猫咪，请重新选一个")
 			return
 		# CatData has display_name, Dictionary has "name"
 		if cat is Dictionary:
