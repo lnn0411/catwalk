@@ -134,11 +134,27 @@ func _find_cat() -> Variant:
 		return null
 	return HatchEngine.get_cat_by_id(_cat_id)
 
+
+func _is_name_taken(name: String) -> bool:
+	if not HatchEngine:
+		return false
+	for c in HatchEngine.get_cats():
+		var cid: String = String(c.id)
+		if cid == _cat_id:
+			continue
+		var cname: String = String(c.display_name) if "display_name" in c else String(c.get("name", ""))
+		if cname == name:
+			return true
+	return false
+
 func _on_rename_pressed() -> void:
 	Popups.show_input("改名", "请输入新名字", func(new_name: String) -> void:
 		var cat = _find_cat()
 		if cat == null:
 			Popups.show_toast("找不到这只猫了")
+			return
+		if _is_name_taken(new_name):
+			Popups.show_toast("已有同名猫咪，请换一个名字")
 			return
 		# CatData has display_name, Dictionary has "name"
 		if cat is Dictionary:
