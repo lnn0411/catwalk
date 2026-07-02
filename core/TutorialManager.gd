@@ -30,6 +30,7 @@ var _hatch_timeout_timer: Timer = null
 var _hatch_signal_connected := false
 var _waiting_for_actual_hatch := false
 var _hatch_completed_during_transition := false  # 场景切换期间孵化已完成
+var _waiting_for_cat_detail_close := false
 
 
 func _ready() -> void:
@@ -545,7 +546,38 @@ func _on_cat_hitbox_input(event: InputEvent) -> void:
 	elif event is InputEventScreenTouch:
 		pressed = event.pressed
 	if pressed:
+		_show_cat_detail_for_tutorial()
+
+## 引导 Step 4：点猫后弹出猫咪详情页，让用户真正看到互动面板。
+## 用户关闭详情页后（tree_exited），推进到 Step 5。
+func _show_cat_detail_for_tutorial() -> void:
+	_clear_step_ui()
+	_waiting_for_cat_detail_close = true
+	var he := _hatch_engine()
+	var cats: Array = he.get_cats() if he != null else []
+	if cats.is_empty():
+		_waiting_for_cat_detail_close = false
 		_step_05_explore()
+		return
+	
+	var cat_page := UIManager.show_overlay("res://ui/pages/S10_CatDetail.tscn", {"cat": _cat_to_dict(cats[0])})
+	if cat_page != null:
+		cat_page.tree_exited.connect(_on_cat_detail_closed)
+	else:
+		_waiting_for_cat_detail_close = false
+		_step_05_explore()
+
+func _on_cat_detail_closed() -> void:
+	_waiting_for_cat_detail_close = false
+	_step_05_explore()
+
+## 猫数据统一转为 Dictionary（CatData 对象或已有 Dict 都能处理）
+func _cat_to_dict(cat_data) -> Dictionary:
+	if typeof(cat_data) == TYPE_DICTIONARY:
+		return cat_data
+	if cat_data != null and cat_data.has_method("serialize"):
+		return cat_data.serialize()
+	return {}
 
 
 func _update_cat_hitbox() -> void:
