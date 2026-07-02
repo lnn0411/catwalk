@@ -578,7 +578,9 @@ func _show_cat_detail_for_tutorial() -> void:
 		return
 	var card = packed.instantiate()
 	card.cat_data = cats[0]
-	if cats[0] is Object and cats[0].has("id"):
+	if typeof(cats[0]) == TYPE_DICTIONARY:
+		card.cat_id = cats[0].get("id", "")
+	elif cats[0] != null:
 		card.cat_id = cats[0].id
 	card.tree_exited.connect(_on_cat_detail_closed)
 	if _garden_ok():
