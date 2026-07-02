@@ -8,8 +8,8 @@ const MIN_TOUCH := 48.0
 const UI_TEXTURE_PATH := "res://assets/temp/ui/"
 const TABS := [
 	{"icon": "garden",   "page": "res://scenes/S04_GardenMain.tscn"},
-	{"icon": "album",    "page": "res://ui/pages/S10_Album.tscn"},
-	{"icon": "home",     "page": "res://scenes/S06_HatchPage.tscn"},      # 孵化（居中·图标待替换）
+	{"icon": "home",     "page": "res://ui/pages/S10_Album.tscn"},
+	{"icon": "album",    "page": "res://scenes/S06_HatchPage.tscn"},      # 孵化（居中·图标待替换）
 	{"icon": "shop",     "page": "res://scenes/S12_Shop.tscn"},
 	{"icon": "settings", "page": "res://scenes/S11_Settings.tscn"},
 ]
