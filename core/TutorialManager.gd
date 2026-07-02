@@ -31,6 +31,10 @@ var _hatch_signal_connected := false
 var _waiting_for_actual_hatch := false
 var _hatch_completed_during_transition := false  # 场景切换期间孵化已完成
 var _waiting_for_cat_detail_close := false
+var _last_cat_tap_time := -1.0
+
+## 双击间隔阈值（秒）——与花园一致
+const DOUBLE_TAP_TIME := 0.3
 
 
 func _ready() -> void:
@@ -545,8 +549,21 @@ func _on_cat_hitbox_input(event: InputEvent) -> void:
 		pressed = event.pressed and event.button_index == MOUSE_BUTTON_LEFT
 	elif event is InputEventScreenTouch:
 		pressed = event.pressed
-	if pressed:
+	if not pressed:
+		return
+	var now := Time.get_ticks_msec() / 1000.0
+	if now - _last_cat_tap_time < DOUBLE_TAP_TIME:
+		# 双击：弹出猫咪详情页
+		_last_cat_tap_time = -1.0
 		_show_cat_detail_for_tutorial()
+	else:
+		# 首次点击：记录时间，显示"再点一次"引导
+		_last_cat_tap_time = now
+		if _bubble_label != null and is_instance_valid(_bubble_label):
+			_bubble_label.text = "👆 再点一次进入猫咪详情~"
+		else:
+			# 气泡可能已消失，补一个短暂的
+			_create_bubble("👆 再点一次进入猫咪详情~", false, 1.5, _bubble_near_cat())
 
 ## 引导 Step 4：点猫后弹出猫咪详情页，让用户真正看到互动面板。
 ## 用户关闭详情页后（tree_exited），推进到 Step 5。
