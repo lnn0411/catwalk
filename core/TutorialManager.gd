@@ -566,7 +566,7 @@ func _on_cat_hitbox_input(event: InputEvent) -> void:
 ## 引导 Step 4：双击猫后弹出 CatCard 互动面板
 ## 用户关闭后（tree_exited），推进到 Step 5。
 func _show_cat_detail_for_tutorial() -> void:
-	_clear_step_ui()
+	_cleanup_ui()
 	var he := _hatch_engine()
 	var cats: Array = he.get_cats() if he != null else []
 	if cats.is_empty():
