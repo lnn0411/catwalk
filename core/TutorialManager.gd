@@ -40,6 +40,17 @@ func start(garden_page: Node) -> void:
 	var save_manager := _save_manager()
 	if save_manager != null and bool(save_manager._config.get_value("tutorial", "has_completed_garden_tutorial", false)):
 		return
+
+	# 方案 C：如果在 HATCH 步骤时用户去了孵化页并完成了孵化，
+	# 场景切换后重新进入此处，跳过 Step 3 直接进 Step 4。
+	# 必须放在 hatched_count 迁移检查之前，否则新孵完猫会被当成老用户跳过。
+	if _hatch_completed_during_transition:
+		_hatch_completed_during_transition = false
+		_connect_hatch_signal()
+		_garden_page = garden_page
+		call_deferred("_step_04_interact")
+		return
+
 	# 迁移：已有历史孵化数据的用户自动完成引导
 	var hatch_engine := _hatch_engine()
 	if hatch_engine != null and hatch_engine.get_hatched_count() > 0:
@@ -49,15 +60,6 @@ func start(garden_page: Node) -> void:
 		return
 	var was_running := current_step != Step.OFF and current_step != Step.DONE
 	if _garden_page == garden_page and was_running and _garden_ok():
-		return
-
-	# 方案 C：如果在 HATCH 步骤时用户去了孵化页并完成了孵化，
-	# 场景切换后重新进入此处，跳过 Step 3 直接进 Step 4
-	if _hatch_completed_during_transition:
-		_hatch_completed_during_transition = false
-		_connect_hatch_signal()
-		_garden_page = garden_page
-		call_deferred("_step_04_interact")
 		return
 
 	_cleanup_ui()
