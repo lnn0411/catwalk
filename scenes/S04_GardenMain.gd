@@ -672,6 +672,11 @@ func _get_cooldown_remaining_text(cat_id: String, type: String) -> String:
 
 func _on_bottom_nav_tab_selected(index: int) -> void:
 	if TutorialManager and TutorialManager.is_running():
+		# 方案 C：Step 3 (HATCH) 阶段允许用户点孵化 tab
+		if TutorialManager.current_step == TutorialManager.Step.HATCH:
+			var page: String = String(BottomNav.TABS[index]["page"])
+			if page == "res://scenes/S06_HatchPage.tscn":
+				UIManager.replace(page)
 		return
 	if index < 0 or index >= BottomNav.TABS.size():
 		return
