@@ -216,13 +216,17 @@ func _step_04_interact() -> void:
 	current_step = Step.INTERACT
 	tutorial_step_changed.emit(current_step)
 	_clear_step_ui()
-	_center_camera_on_first_cat()
 	_create_overlay()
-	_create_cat_hitbox()
-	_update_cat_hitbox()
+	# call_deferred 确保 GardenMain 完全加载、猫已生成渲染
+	call_deferred("_center_camera_on_first_cat")
+	call_deferred("_create_cat_hitbox")
+	call_deferred("_update_cat_hitbox")
+	call_deferred("_create_interact_bubble")
+
+func _create_interact_bubble() -> void:
 	_create_bubble("👆 点击猫咪可以和它互动哦~", false, 0.0, _bubble_near_cat())
 
-## 镜头移动到第一只猫的附近
+## 镜头移动到第一只猫的前方（猫在屏幕左1/3，右侧留气泡空间）
 func _center_camera_on_first_cat() -> void:
 	if not _garden_ok() or _garden_page._camera == null:
 		return
@@ -236,20 +240,25 @@ func _center_camera_on_first_cat() -> void:
 	if not cat_spawner.has_method("get_cat_world_position"):
 		return
 	var cat_world_pos: Vector2 = cat_spawner.get_cat_world_position(cats[0])
+	# 如果猫还没生成（位置为零），等一帧再试
+	if cat_world_pos == Vector2.ZERO or (abs(cat_world_pos.x) < 1.0 and abs(cat_world_pos.y) < 1.0):
+		await get_tree().process_frame
+		if not _garden_ok() or _garden_page._camera == null:
+			return
+		cat_world_pos = cat_spawner.get_cat_world_position(cats[0])
 	var cam: Camera2D = _garden_page._camera
 	var view := _get_garden_view_size()
 	var zoom := maxf(cam.zoom.x, 0.0001)
-	# 让猫在屏幕左1/3处，留出右侧空间给气泡
+	# 猫在屏幕左1/3处（猫 x + 1/3 视口 = 画面中心）
 	var target := Vector2(
-		cat_world_pos.x - view.x * 0.5 / zoom + 80.0 / zoom,
+		cat_world_pos.x - view.x * 0.33 / zoom,
 		cat_world_pos.y
 	)
-	# 不超出花园边界
-	var garden := _find_node_by_name(_garden_page, "Garden") as Control
-	if garden != null:
-		var world := Vector2(garden.size.x, garden.size.y)
-		target.x = clampf(target.x, view.x * 0.5 / zoom, world.x - view.x * 0.5 / zoom)
-		target.y = clampf(target.y, view.y * 0.5 / zoom, world.y - view.y * 0.5 / zoom)
+	# 不超出花园边界（用 WorldWidth/Height 常量，不从节点名查找）
+	var world_w := 3072.0
+	var world_h := 1024.0
+	target.x = clampf(target.x, view.x * 0.5 / zoom, world_w - view.x * 0.5 / zoom)
+	target.y = clampf(target.y, view.y * 0.5 / zoom, world_h - view.y * 0.5 / zoom)
 	var tween := create_tween()
 	tween.set_trans(Tween.TRANS_CUBIC)
 	tween.set_ease(Tween.EASE_OUT)
