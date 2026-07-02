@@ -3,7 +3,7 @@ extends "res://ui/UIPage.gd"
 const BTN_PERMISSION := preload("res://assets/art/ui/btn_permission.png")
 const BTN_SKIP := preload("res://assets/art/ui/btn_skip.png")
 
-var _returning_from_settings := false
+var _signal_connected := false
 
 @onready var _status_label: Label = %StatusLabel
 
@@ -12,28 +12,86 @@ func _ready() -> void:
 	_set_status("")
 	%AuthBtn.pressed.connect(handle_authorize)
 	%SkipBtn.pressed.connect(handle_skip)
+	_connect_permission_signal()
 	call_deferred("_skip_if_authorized")
+
+func _connect_permission_signal() -> void:
+	if _signal_connected:
+		return
+	var sc := Engine.get_singleton("StepCounter")
+	if sc == null:
+		return
+	if sc.has_signal("permission_result"):
+		sc.connect("permission_result", _on_permission_result)
+		_signal_connected = true
 
 func _skip_if_authorized() -> void:
 	if _check_permission():
 		SaveManager.save_all()
 		UIManager.replace("res://scenes/S02_Loading.tscn")
 
-func _notification(what: int) -> void:
-	if what == NOTIFICATION_APPLICATION_FOCUS_IN and _returning_from_settings:
-		_returning_from_settings = false
-		_set_status("检测授权结果…")
-		call_deferred("_check_and_proceed")
-
 func handle_back() -> bool:
 	return true
 
+## 授权流程（两步走）：
+## 第一步：in-app 系统对话框（`requestActivityRecognitionPermission`）
+##         用户在当前页面直接看到 Android 原生授权弹窗，无需跳转。
+## 第二步：如果用户曾在系统对话框上勾选「不再询问」，
+##         系统自动拒绝且 `shouldShowRequestPermissionRationale` 返回 false，
+##         此时降级跳系统设置页（`openAppSettings`）。
 func handle_authorize() -> void:
-	_set_status("正在尝试获取权限…")
-	_open_settings()
+	_set_status("正在请求授权…")
+	var sc := Engine.get_singleton("StepCounter")
+	if sc == null:
+		_set_status("插件未加载")
+		push_error("StepCounter singleton is null — plugin not registered in APK")
+		return
+	_connect_permission_signal()
+
+	# 若系统已自动拒绝（用户曾勾选「不再询问」），直接跳设置页
+	if not _can_show_in_app_dialog():
+		_set_status("请到系统设置页手动开启步数权限")
+		_open_settings()
+		return
+
+	sc.call("requestActivityRecognitionPermission")
+
+## 检测系统是否允许弹出 in-app 权限对话框。
+## `shouldShowRequestPermissionRationale` 在以下情况返回 false：
+##   - 用户勾选了「不再询问」
+##   - 或设备策略禁止运行时权限弹窗
+func _can_show_in_app_dialog() -> bool:
+	var sc := Engine.get_singleton("StepCounter")
+	if sc == null:
+		return false
+	if not sc.has_method("shouldShowRequestPermissionRationale"):
+		return true  # 保守：可能有野方法
+	var rationale = sc.call("shouldShowRequestPermissionRationale")
+	if rationale == null:
+		return true
+	return bool(rationale)
 
 func handle_skip() -> void:
 	UIManager.replace("res://scenes/S02_Loading.tscn")
+
+## —— 信号回调 ——
+
+func _on_permission_result(granted: bool) -> void:
+	if granted:
+		_set_status("授权成功，进入游戏…")
+		SaveManager.save_all()
+		UIManager.replace("res://scenes/S02_Loading.tscn")
+		return
+
+	# 用户拒绝了对话框
+	if _can_show_in_app_dialog():
+		# 还有机会：系统下次还会弹出对话框
+		_set_status("需要授权才能记录步数，再试一次？")
+	else:
+		# Android 判定「不再询问」，系统不再弹 Dialog，
+		# 必须跳系统设置页手动打开权限。
+		_set_status("已拒绝多次，请到系统设置页手动开启")
+		_open_settings()
 
 ## —— 内部函数 ——
 
@@ -42,61 +100,17 @@ func _set_status(text: String) -> void:
 		_status_label.text = text
 
 func _open_settings() -> void:
-	_returning_from_settings = true
 	var sc := Engine.get_singleton("StepCounter")
-
 	if sc == null:
-		_set_status("插件未加载，无法打开设置页")
-		push_error("StepCounter singleton is null — plugin not registered in APK")
+		_set_status("插件未加载")
 		return
-
-	# Godot 4 Android 插件上 has_method 有已知 bug（#46673），
-	# 改用直接 call，方法存在即可正常工作。
-	# 方法已通过 @UsedByGodot + getPluginMethods 双重注册。
-
-	# 优先尝试系统设置页
-	_set_status("跳转系统设置…")
 	sc.call("openAppSettings")
-	return
-
-func _check_permission_result() -> void:
-	for i in range(6):
-		if _check_permission():
-			_set_status("授权成功，进入游戏…")
-			SaveManager.save_all()
-			UIManager.replace("res://scenes/S02_Loading.tscn")
-			return
-		await get_tree().create_timer(0.5).timeout
-	# 弹窗无反应，改用系统设置页
-	_set_status("弹窗无响应，尝试系统设置…")
-	var sc := Engine.get_singleton("StepCounter")
-	if sc and sc.has_method("openAppSettings"):
-		sc.call("openAppSettings")
-	else:
-		_set_status("无法跳转设置，请手动授权")
 
 func _check_permission() -> bool:
 	var sc := Engine.get_singleton("StepCounter")
 	if sc == null:
-		return true  # editor
+		return true  # editor 模式没有插件，跳过权限检查
 	var result = sc.call("hasActivityRecognitionPermission")
 	if result == null:
-		return true  # 方法未注册，跳过权限检查
+		return true
 	return bool(result)
-
-var _retry_count := 0
-
-func _check_and_proceed() -> void:
-	if _check_permission():
-		_set_status("")
-		SaveManager.save_all()
-		UIManager.replace("res://scenes/S02_Loading.tscn")
-		return
-	_retry_count += 1
-	if _retry_count < 3:
-		_set_status("授权未刷新，重试中…")
-		await get_tree().create_timer(0.5).timeout
-		_check_and_proceed()
-	else:
-		_retry_count = 0
-		_set_status("授权未通过，可再次点击授权按钮")

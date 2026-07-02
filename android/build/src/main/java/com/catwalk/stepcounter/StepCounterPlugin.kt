@@ -113,6 +113,15 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
     }
 
     @UsedByGodot
+    fun shouldShowRequestPermissionRationale(): Boolean {
+        val hostActivity = activity ?: return true
+        return ActivityCompat.shouldShowRequestPermissionRationale(
+            hostActivity,
+            Manifest.permission.ACTIVITY_RECOGNITION
+        )
+    }
+
+    @UsedByGodot
     fun openAppSettings() {
         val hostActivity = activity ?: return
         val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
