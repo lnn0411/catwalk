@@ -156,7 +156,6 @@ func _step_02_energy() -> void:
 func _step_03_hatch() -> void:
 	## 方案 C：蛋已 ready（_assign_tutorial_first_egg 直接灌满），
 	## 引导用户去孵化页亲手点击蛋完成孵化。
-	## 不设「知道了」按钮、不自动消失——等真正的孵化完成信号。
 	current_step = Step.HATCH
 	tutorial_step_changed.emit(current_step)
 	_clear_step_ui()
@@ -166,6 +165,35 @@ func _step_03_hatch() -> void:
 	_waiting_for_actual_hatch = true
 	_hatch_completed_during_transition = false
 	_create_bubble("🐣 蛋已经准备好了！点击底部导航的蛋图标，亲手孵化你的第一只猫咪吧~", false, 0.0, _above_highlight())
+	# 方案 C：给气泡添加"去孵化"按钮（不用 _create_bubble 默认的"知道了"）
+	call_deferred("_add_hatch_action_button")
+
+func _add_hatch_action_button() -> void:
+	if _bubble == null or not is_instance_valid(_bubble):
+		return
+	var box := _find_bubble_content_box()
+	if box == null:
+		return
+	var btn := Button.new()
+	btn.text = "去孵化 ▶"
+	btn.custom_minimum_size = Vector2(140.0, 44.0)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_END
+	btn.pressed.connect(_on_dismiss_hatch_bubble)
+	box.add_child(btn)
+
+func _find_bubble_content_box() -> VBoxContainer:
+	if _bubble == null or not is_instance_valid(_bubble):
+		return null
+	for child in _bubble.get_children():
+		if child is VBoxContainer:
+			return child
+	return null
+
+## 用户点击"去孵化"：关闭气泡和遮罩，保持在 HATCH 步骤，
+## 让用户可以自由点击底部导航进入孵化页。
+func _on_dismiss_hatch_bubble() -> void:
+	_clear_step_ui()
+	# 遮罩清除后用户可自由操作。孵化完成后 _on_actual_hatch_completed 推进到 Step 4
 
 
 func _step_04_interact() -> void:
