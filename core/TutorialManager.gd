@@ -217,13 +217,11 @@ func _above_hatch_tab() -> Vector2:
 
 
 func _step_04_interact() -> void:
-	## 方案 C：孵化回来后，镜头对准新猫，引导用户互动
+	## 方案 C：孵化回来后，镜头已由 GardenMain.on_enter focus_cat 对准猫咪
 	current_step = Step.INTERACT
 	tutorial_step_changed.emit(current_step)
 	_clear_step_ui()
-	_create_overlay()
-	# call_deferred 确保 GardenMain 完全加载、猫已生成渲染
-	call_deferred("_center_camera_on_first_cat")
+	call_deferred("_create_overlay")
 	call_deferred("_create_cat_hitbox")
 	call_deferred("_update_cat_hitbox")
 	call_deferred("_create_interact_bubble")

@@ -465,9 +465,13 @@ func _update_phase() -> void:
 			call_deferred("_navigate_to_garden")
 
 ## 孵化结束后返回花园。call_deferred 确保不在 _process 帧中间切换场景。
+## 传 focus_cat 让 GardenMain.on_enter 的镜头聚焦机制定位猫咪。
 func _navigate_to_garden() -> void:
-	UIManager.pop_to_root({}, true)
-	UIManager.replace("res://scenes/S04_GardenMain.tscn", {}, true)
+	var data := {}
+	if _cat != null:
+		data["focus_cat"] = _cat
+	UIManager.pop_to_root(data, true)
+	UIManager.replace("res://scenes/S04_GardenMain.tscn", data, true)
 
 func _phase4_start() -> float:
 	return 5.0 if _is_first_orange() else 8.5 + _leg_hold
