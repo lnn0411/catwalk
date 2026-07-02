@@ -28,6 +28,7 @@ var _elapsed := 0.0
 var _overlay_shown := false
 var _waiting_for_name := false
 var _phase := 1
+var _returning_to_garden := false
 
 # —— 演出状态 ——
 var _flash_alpha := 0.0          # 全屏白闪剩余强度
@@ -459,8 +460,14 @@ func _update_phase() -> void:
 	if _phase == 3:
 		_show_name_popup_once()
 	if _phase == 4 and _elapsed >= _phase4_start() + 1.5:
-		# 方案 C：孵化完成后直接回到花园，不走 pop_to_root（会回到 HatchPage）
-		UIManager.replace("res://scenes/S04_GardenMain.tscn")
+		if not _returning_to_garden:
+			_returning_to_garden = true
+			call_deferred("_navigate_to_garden")
+
+## 孵化结束后返回花园。call_deferred 确保不在 _process 帧中间切换场景。
+func _navigate_to_garden() -> void:
+	UIManager.pop_to_root({}, true)
+	UIManager.replace("res://scenes/S04_GardenMain.tscn", {}, true)
 
 func _phase4_start() -> float:
 	return 5.0 if _is_first_orange() else 8.5 + _leg_hold
