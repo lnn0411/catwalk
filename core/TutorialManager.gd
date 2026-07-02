@@ -577,14 +577,17 @@ func _show_cat_detail_for_tutorial() -> void:
 		_step_05_explore()
 		return
 	var card = packed.instantiate()
-	card.cat_data = cats[0]
-	if typeof(cats[0]) == TYPE_DICTIONARY:
-		card.cat_id = cats[0].get("id", "")
-	elif cats[0] != null:
-		card.cat_id = cats[0].id
 	card.tree_exited.connect(_on_cat_detail_closed)
-	if _garden_ok():
-		_garden_page.add_child(card)
+	if not _garden_ok():
+		return
+	_garden_page.add_child(card)
+	# 用 CatCard.setup() 初始化（_ready 之后再设数据确保有序）
+	var cid := ""
+	if typeof(cats[0]) == TYPE_DICTIONARY:
+		cid = cats[0].get("id", "")
+	elif cats[0] != null:
+		cid = cats[0].id
+	card.setup(cid, cats[0], Vector2.ZERO)
 
 func _on_cat_detail_closed() -> void:
 	_step_05_explore()
