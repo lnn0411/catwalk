@@ -189,11 +189,25 @@ func _find_bubble_content_box() -> VBoxContainer:
 			return child
 	return null
 
-## 用户点击"去孵化"：关闭气泡和遮罩，保持在 HATCH 步骤，
-## 让用户可以自由点击底部导航进入孵化页。
+## 用户点击"去孵化"：关闭气泡和遮罩，高亮底部导航的孵化图标，
+## 引导用户进入孵化室。
 func _on_dismiss_hatch_bubble() -> void:
 	_clear_step_ui()
-	# 遮罩清除后用户可自由操作。孵化完成后 _on_actual_hatch_completed 推进到 Step 4
+	_highlight_hatch_tab()
+	_create_bubble("👉 点击这里进入孵化室，蛋在等你~", true, 5.0, _above_hatch_tab())
+
+## 高亮底部导航孵化 tab（索引 2，居中 tab）
+func _highlight_hatch_tab() -> void:
+	var rect := _get_bottom_nav_global_rect(2)
+	if rect.size != Vector2.ZERO:
+		_highlight_rect(rect)
+
+## 气泡定位到孵化 tab 上方
+func _above_hatch_tab() -> Vector2:
+	var rect := _get_bottom_nav_global_rect(2)
+	if rect.size == Vector2.ZERO:
+		return Vector2(360.0, 1100.0)
+	return Vector2(rect.position.x + rect.size.x * 0.5 - 230.0, rect.position.y - 100.0)
 
 
 func _step_04_interact() -> void:
@@ -324,6 +338,9 @@ func _create_bubble(text: String, has_button: bool, auto_dismiss: float, preferr
 func _advance_from_ack() -> void:
 	if current_step == Step.ENERGY:
 		_step_03_hatch()
+	elif current_step == Step.HATCH:
+		# 用户看到了孵化 tab 高亮，关闭提示气泡，高亮保持
+		_clear_bubble()
 	elif current_step == Step.EXPLORE:
 		_complete()
 
