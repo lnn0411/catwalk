@@ -189,10 +189,9 @@ func _find_bubble_content_box() -> VBoxContainer:
 			return child
 	return null
 
-## 用户点击"去孵化"：关闭气泡和遮罩，高亮底部导航的孵化图标，
-## 引导用户进入孵化室。
+## 用户点击"去孵化"：关闭气泡、遮罩和高亮，然后显示孵化 tab 指引
 func _on_dismiss_hatch_bubble() -> void:
-	_clear_step_ui()
+	_cleanup_ui()
 	_highlight_hatch_tab()
 	_create_bubble("👉 点击这里进入孵化室，蛋在等你~", true, 5.0, _above_hatch_tab())
 
