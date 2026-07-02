@@ -459,7 +459,8 @@ func _update_phase() -> void:
 	if _phase == 3:
 		_show_name_popup_once()
 	if _phase == 4 and _elapsed >= _phase4_start() + 1.5:
-		UIManager.pop_to_root()
+		# 方案 C：孵化完成后直接回到花园，不走 pop_to_root（会回到 HatchPage）
+		UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 func _phase4_start() -> float:
 	return 5.0 if _is_first_orange() else 8.5 + _leg_hold

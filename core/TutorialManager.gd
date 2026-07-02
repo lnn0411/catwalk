@@ -212,12 +212,48 @@ func _above_hatch_tab() -> Vector2:
 
 
 func _step_04_interact() -> void:
+	## 方案 C：孵化回来后，镜头对准新猫，引导用户互动
 	current_step = Step.INTERACT
 	tutorial_step_changed.emit(current_step)
 	_clear_step_ui()
+	_center_camera_on_first_cat()
+	_create_overlay()
 	_create_cat_hitbox()
 	_update_cat_hitbox()
 	_create_bubble("👆 点击猫咪可以和它互动哦~", false, 0.0, _bubble_near_cat())
+
+## 镜头移动到第一只猫的附近
+func _center_camera_on_first_cat() -> void:
+	if not _garden_ok() or _garden_page._camera == null:
+		return
+	var cat_spawner := _cat_spawner()
+	var hatch_engine := _hatch_engine()
+	if cat_spawner == null or hatch_engine == null:
+		return
+	var cats: Array = hatch_engine.get_cats()
+	if cats.is_empty():
+		return
+	if not cat_spawner.has_method("get_cat_world_position"):
+		return
+	var cat_world_pos: Vector2 = cat_spawner.get_cat_world_position(cats[0])
+	var cam: Camera2D = _garden_page._camera
+	var view := _get_garden_view_size()
+	var zoom := maxf(cam.zoom.x, 0.0001)
+	# 让猫在屏幕左1/3处，留出右侧空间给气泡
+	var target := Vector2(
+		cat_world_pos.x - view.x * 0.5 / zoom + 80.0 / zoom,
+		cat_world_pos.y
+	)
+	# 不超出花园边界
+	var garden := _find_node_by_name(_garden_page, "Garden") as Control
+	if garden != null:
+		var world := Vector2(garden.size.x, garden.size.y)
+		target.x = clampf(target.x, view.x * 0.5 / zoom, world.x - view.x * 0.5 / zoom)
+		target.y = clampf(target.y, view.y * 0.5 / zoom, world.y - view.y * 0.5 / zoom)
+	var tween := create_tween()
+	tween.set_trans(Tween.TRANS_CUBIC)
+	tween.set_ease(Tween.EASE_OUT)
+	tween.tween_property(cam, "position", target, 0.6)
 
 
 func _step_05_explore() -> void:
