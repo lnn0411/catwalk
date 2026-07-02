@@ -3,7 +3,10 @@ extends "res://ui/UIPage.gd"
 const BTN_PERMISSION := preload("res://assets/art/ui/btn_permission.png")
 const BTN_SKIP := preload("res://assets/art/ui/btn_skip.png")
 
+const SIGNAL_TIMEOUT_SECONDS := 3.0
+
 var _signal_connected := false
+var _waiting_for_result := false
 
 @onready var _status_label: Label = %StatusLabel
 
@@ -36,11 +39,13 @@ func handle_back() -> bool:
 ## 授权流程（两步走）：
 ## 第一步：in-app 系统对话框（`requestActivityRecognitionPermission`）
 ##         用户在当前页面直接看到 Android 原生授权弹窗，无需跳转。
+##         同时启动 3s 超时计时器，信号未返回则降级。
 ## 第二步：如果用户曾在系统对话框上勾选「不再询问」，
 ##         系统自动拒绝且 `shouldShowRequestPermissionRationale` 返回 false，
 ##         此时降级跳系统设置页（`openAppSettings`）。
 func handle_authorize() -> void:
 	_set_status("正在请求授权…")
+	_waiting_for_result = false
 	var sc := Engine.get_singleton("StepCounter")
 	if sc == null:
 		_set_status("插件未加载")
@@ -54,7 +59,20 @@ func handle_authorize() -> void:
 		_open_settings()
 		return
 
+	# 尝试 in-app 弹窗 —— 同时启动超时兜底
+	_waiting_for_result = true
 	sc.call("requestActivityRecognitionPermission")
+	_start_signal_timeout()
+
+func _start_signal_timeout() -> void:
+	await get_tree().create_timer(SIGNAL_TIMEOUT_SECONDS).timeout
+	if not _waiting_for_result:
+		return  # 信号已正常返回
+	# 信号超时未收到 → in-app 弹窗不可靠，降级跳系统设置页
+	push_warning("permission_result signal timed out after %ds — falling back to system settings" % SIGNAL_TIMEOUT_SECONDS)
+	_waiting_for_result = false
+	_set_status("弹窗未响应，跳转系统设置…")
+	_open_settings()
 
 ## 检测系统是否允许弹出 in-app 权限对话框。
 ## `shouldShowRequestPermissionRationale` 在以下情况返回 false：
@@ -72,11 +90,13 @@ func _can_show_in_app_dialog() -> bool:
 	return bool(rationale)
 
 func handle_skip() -> void:
+	_waiting_for_result = false
 	UIManager.replace("res://scenes/S02_Loading.tscn")
 
 ## —— 信号回调 ——
 
 func _on_permission_result(granted: bool) -> void:
+	_waiting_for_result = false
 	if granted:
 		_set_status("授权成功，进入游戏…")
 		SaveManager.save_all()
@@ -85,11 +105,9 @@ func _on_permission_result(granted: bool) -> void:
 
 	# 用户拒绝了对话框
 	if _can_show_in_app_dialog():
-		# 还有机会：系统下次还会弹出对话框
 		_set_status("需要授权才能记录步数，再试一次？")
 	else:
-		# Android 判定「不再询问」，系统不再弹 Dialog，
-		# 必须跳系统设置页手动打开权限。
+		# Android 判定「不再询问」，系统不再弹 Dialog
 		_set_status("已拒绝多次，请到系统设置页手动开启")
 		_open_settings()
 
