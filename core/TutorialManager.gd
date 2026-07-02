@@ -27,6 +27,9 @@ var _scan_tween: Tween = null
 var _hatch_pending := false
 var _hatch_fired := false
 var _hatch_timeout_timer: Timer = null
+var _hatch_signal_connected := false
+var _waiting_for_actual_hatch := false
+var _hatch_completed_during_transition := false  # 场景切换期间孵化已完成
 
 
 func _ready() -> void:
@@ -47,6 +50,16 @@ func start(garden_page: Node) -> void:
 	var was_running := current_step != Step.OFF and current_step != Step.DONE
 	if _garden_page == garden_page and was_running and _garden_ok():
 		return
+
+	# 方案 C：如果在 HATCH 步骤时用户去了孵化页并完成了孵化，
+	# 场景切换后重新进入此处，跳过 Step 3 直接进 Step 4
+	if _hatch_completed_during_transition:
+		_hatch_completed_during_transition = false
+		_connect_hatch_signal()
+		_garden_page = garden_page
+		call_deferred("_step_04_interact")
+		return
+
 	_cleanup_ui()
 	_garden_page = garden_page
 	_create_overlay()
@@ -72,7 +85,33 @@ func notify_hatch_requested() -> void:
 		return
 	_clear_step_ui()
 	_hatch_pending = true
+	# 用户已到孵化页，等点击蛋。超时无操作则重新提示。
 	_start_hatch_timeout()
+
+
+## 方案 C：连接 HatchEngine.hatch_complete 信号，
+## 等待用户真正完成孵化。
+func _connect_hatch_signal() -> void:
+	if _hatch_signal_connected:
+		return
+	var he := _hatch_engine()
+	if he == null:
+		return
+	if not he.hatch_complete.is_connected(_on_actual_hatch_completed):
+		he.hatch_complete.connect(_on_actual_hatch_completed)
+	_hatch_signal_connected = true
+
+
+## 真实孵化完成回调。
+## 如果当前正在等待孵化（_waiting_for_actual_hatch），直接进入 Step 4。
+## 如果场景切换导致 garden_page 失效，设置标记等重新 start() 时处理。
+func _on_actual_hatch_completed(_cat_data) -> void:
+	if _waiting_for_actual_hatch:
+		_waiting_for_actual_hatch = false
+		_hatch_completed_during_transition = true
+		if _garden_ok():
+			_hatch_completed_during_transition = false
+			call_deferred("_step_04_interact")
 
 
 func _on_cat_hatched() -> void:
@@ -115,12 +154,18 @@ func _step_02_energy() -> void:
 
 
 func _step_03_hatch() -> void:
+	## 方案 C：蛋已 ready（_assign_tutorial_first_egg 直接灌满），
+	## 引导用户去孵化页亲手点击蛋完成孵化。
+	## 不设「知道了」按钮、不自动消失——等真正的孵化完成信号。
 	current_step = Step.HATCH
 	tutorial_step_changed.emit(current_step)
 	_clear_step_ui()
 	_hatch_pending = false
 	_hatch_fired = false
-	_create_bubble("🐣 点击底部导航的蛋图标，去看看猫咪是怎么孵出来的~", true, 0.0, _above_highlight())
+	_connect_hatch_signal()
+	_waiting_for_actual_hatch = true
+	_hatch_completed_during_transition = false
+	_create_bubble("🐣 蛋已经准备好了！点击底部导航的蛋图标，亲手孵化你的第一只猫咪吧~", false, 0.0, _above_highlight())
 
 
 func _step_04_interact() -> void:
@@ -251,8 +296,6 @@ func _create_bubble(text: String, has_button: bool, auto_dismiss: float, preferr
 func _advance_from_ack() -> void:
 	if current_step == Step.ENERGY:
 		_step_03_hatch()
-	elif current_step == Step.HATCH:
-		_on_cat_hatched()
 	elif current_step == Step.EXPLORE:
 		_complete()
 
@@ -301,7 +344,7 @@ func _start_hatch_timeout() -> void:
 	_stop_hatch_timeout()
 	_hatch_timeout_timer = Timer.new()
 	_hatch_timeout_timer.one_shot = true
-	_hatch_timeout_timer.wait_time = 10.0
+	_hatch_timeout_timer.wait_time = 30.0
 	_hatch_timeout_timer.timeout.connect(_on_hatch_timeout)
 	add_child(_hatch_timeout_timer)
 	_hatch_timeout_timer.start()
@@ -318,10 +361,9 @@ func _on_hatch_timeout() -> void:
 	if current_step != Step.HATCH or not _hatch_pending:
 		return
 	_hatch_pending = false
+	# 用户超时未操作蛋 → 回退到花园重新显示引导气泡
 	if _garden_ok():
-		var garden_page := _garden_page
-		current_step = Step.OFF
-		start(garden_page)
+		_step_03_hatch()
 
 
 func _clear_highlight() -> void:
