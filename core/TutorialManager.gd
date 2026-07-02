@@ -581,7 +581,11 @@ func _show_cat_detail_for_tutorial() -> void:
 	if not _garden_ok():
 		return
 	_garden_page.add_child(card)
-	# 用 CatCard.setup() 初始化（_ready 之后再设数据确保有序）
+	# 把卡片注册到 InteractionSystem，这样关闭动画时 _close_cat_card 能真正 free 它
+	var isys := _interaction_system()
+	if isys != null:
+		isys.current_cat_card = card
+	# 用 CatCard.setup() 初始化
 	var cid := ""
 	if typeof(cats[0]) == TYPE_DICTIONARY:
 		cid = cats[0].get("id", "")
@@ -645,6 +649,10 @@ func _hatch_engine() -> Node:
 
 func _cat_spawner() -> Node:
 	return CatSpawner
+
+
+func _interaction_system() -> Node:
+	return InteractionSystem
 
 
 func _get_bottom_nav_global_rect(index: int) -> Rect2:
