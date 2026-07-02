@@ -577,21 +577,26 @@ func _show_cat_detail_for_tutorial() -> void:
 		_step_05_explore()
 		return
 	var card = packed.instantiate()
-	card.tree_exited.connect(_on_cat_detail_closed)
+	# 弹出 CatCard 后引导结束，玩家自由探索
+	card.tree_exited.connect(_complete)
 	if not _garden_ok():
+		_complete()
 		return
 	_garden_page.add_child(card)
-	# 把卡片注册到 InteractionSystem，这样关闭动画时 _close_cat_card 能真正 free 它
+	# 注册到 InteractionSystem 确保关闭动画能正确 free 卡片
 	var isys := _interaction_system()
 	if isys != null:
 		isys.current_cat_card = card
-	# 用 CatCard.setup() 初始化
 	var cid := ""
 	if typeof(cats[0]) == TYPE_DICTIONARY:
 		cid = cats[0].get("id", "")
 	elif cats[0] != null:
 		cid = cats[0].id
 	card.setup(cid, cats[0], Vector2.ZERO)
+
+## CatCard 弹出时的操作提示气泡
+func _show_catcard_hint() -> void:
+	_create_bubble("🎉 在这里可以喂食、抚摸、玩耍，和你的猫咪互动！", true, 4.0, Vector2(360.0, 200.0))
 
 func _on_cat_detail_closed() -> void:
 	_step_05_explore()
