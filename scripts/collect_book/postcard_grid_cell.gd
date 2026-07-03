@@ -3,12 +3,19 @@ extends Control
 signal cell_pressed(postcard_id: String)
 
 const LOCATION_COLORS := {
-	"park": Color(0.6, 0.8, 0.5),
-	"street": Color(0.7, 0.7, 0.7),
-	"cafe": Color(0.8, 0.6, 0.4),
-	"sea": Color(0.4, 0.6, 0.8),
-	"bookstore": Color(0.7, 0.5, 0.4),
-	"flower": Color(0.9, 0.6, 0.7),
+	"convenience_store": Color(0.9, 0.7, 0.3),
+	"park_bench": Color(0.5, 0.8, 0.5),
+	"subway_station": Color(0.6, 0.6, 0.7),
+	"bookstore": Color(0.6, 0.5, 0.4),
+	"cafe": Color(0.8, 0.5, 0.4),
+	"hospital_corridor": Color(0.7, 0.7, 0.8),
+	"sky_bridge": Color(0.4, 0.6, 0.8),
+	"night_market": Color(0.8, 0.5, 0.5),
+	"playground": Color(0.7, 0.8, 0.4),
+	"rainy_day": Color(0.5, 0.6, 0.7),
+	"hidden": Color(0.8, 0.6, 0.8),
+	"seasonal": Color(0.6, 0.8, 0.8),
+	"achievement": Color(0.8, 0.7, 0.3),
 }
 
 var _postcard_id: String = ""
