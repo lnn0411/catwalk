@@ -11,6 +11,27 @@ const SLOT_COUNT := 2
 const SLOT1_HATCH_REQ := 5
 const SECONDS_PER_HOUR := 3600
 const VALID_DURATIONS := [1, 2, 4]
+const CITY_LOCATION_TYPES := [
+	"convenience_store", "park_bench", "subway_station", "bookstore", "cafe",
+	"hospital_corridor", "sky_bridge", "night_market", "playground", "rainy_day",
+]
+const BREED_LOCATION_PREFERENCES := {
+	"orange": {
+		"high": ["convenience_store", "park_bench"],
+		"medium": ["bookstore", "cafe"],
+		"low": ["hospital_corridor", "subway_station"],
+	},
+	"british": {
+		"high": ["bookstore", "cafe"],
+		"medium": ["park_bench", "cafe"],
+		"low": ["convenience_store", "night_market"],
+	},
+	"siamese": {
+		"high": ["subway_station", "night_market", "playground"],
+		"medium": ["convenience_store"],
+		"low": ["bookstore", "hospital_corridor"],
+	},
+}
 
 # cat_id -> { departure_time, return_time, duration_hours, is_exploring }
 static var _explorers: Dictionary = {}
@@ -74,13 +95,28 @@ static func is_returned(cat_id: String) -> bool:
 	var return_time := float(_explorers[cat_id].get("return_time", 0.0))
 	return _safe_unix_time() >= return_time
 
-static func collect(cat_id: String) -> Dictionary:
+static func collect(cat_id: String, cat_species: String = "") -> Dictionary:
 	if not _explorers.has(cat_id):
 		return {}
 	if not is_returned(cat_id):
 		return {}
 	var entry: Dictionary = _explorers[cat_id].duplicate()
 	_explorers.erase(cat_id)
+	var reward_type := _roll_reward_type(cat_id)
+	var postcard_id := ""
+	if reward_type == "postcard":
+		var species_of_cat := cat_species if cat_species != "" else _get_cat_species(cat_id)
+		postcard_id = _pick_postcard_for_cat(species_of_cat)
+		if postcard_id != "":
+			_collected_postcards.append(postcard_id)
+			var postcard = PostcardData.get_by_id(postcard_id)
+			var location_type := String(postcard.location_type) if postcard != null else ""
+			if EventBus:
+				EventBus.emit_postcard_obtained(postcard_id, location_type)
+		else:
+			reward_type = "ingredient"
+	entry["reward_type"] = reward_type
+	entry["postcard_id"] = postcard_id
 	_save()
 	return entry
 
@@ -101,6 +137,46 @@ static func _roll_reward_type(cat_id: String) -> String:
 		t = "ingredient"
 	_last_reward_type[cat_id] = t
 	return t
+
+
+static func _pick_postcard_for_cat(cat_species: String) -> String:
+	# High probability locations per breed (GDD §14.4)
+	var pref_map = {
+		"orange": {"high": ["convenience_store", "park_bench"], "medium": ["bookstore", "cafe"], "low": ["hospital_corridor", "subway_station"]},
+		"british": {"high": ["bookstore", "cafe"], "medium": ["park_bench"], "low": ["convenience_store", "night_market"]},
+		"siamese": {"high": ["subway_station", "night_market", "playground"], "medium": ["convenience_store"], "low": ["bookstore", "hospital_corridor"]}
+	}
+	var pref = pref_map.get(cat_species, pref_map["orange"])
+	# Get PostcardData class
+	var PD = load("res://scripts/collect_book/postcard_data.gd")
+	var all_ids = PD.get_all_ids()
+	# Filter already collected
+	var available = []
+	for pid in all_ids:
+		if pid not in _collected_postcards:
+			available.append(pid)
+	if available.is_empty():
+		return ""
+	# Try by breed preference tiers
+	for tier in ["high", "medium", "low"]:
+		var preferred = pref[tier]
+		var candidates = []
+		for pid in available:
+			var pd = PD.get_by_id(pid)
+			if pd and pd.sender_cat_species == cat_species and pd.location_type in preferred:
+				candidates.append(pid)
+		if not candidates.is_empty():
+			return candidates[_rng.randi() % candidates.size()]
+	# Fallback: any uncollected for this breed
+	var breed_candidates = []
+	for pid in available:
+		var pd = PD.get_by_id(pid)
+		if pd and pd.sender_cat_species == cat_species:
+			breed_candidates.append(pid)
+	if not breed_candidates.is_empty():
+		return breed_candidates[_rng.randi() % breed_candidates.size()]
+	# Last fallback: any postcard
+	return available[_rng.randi() % available.size()]
 
 # ---- 测试辅助 ----
 static func get_remaining_seconds(cat_id: String) -> int:
@@ -145,6 +221,24 @@ static func _active_count() -> int:
 		if bool(_explorers[cat_id].get("is_exploring", false)):
 			n += 1
 	return n
+
+
+static func _get_cat_species(cat_id: String) -> String:
+	if HatchEngine and HatchEngine.has_method("get_cat_by_id"):
+		var cat = HatchEngine.get_cat_by_id(cat_id)
+		if cat is Dictionary:
+			return _normalize_species(String(cat.get("species", cat.get("breed", "orange"))))
+		if cat != null and "species" in cat:
+			return _normalize_species(String(cat.species))
+	return "orange"
+
+
+static func _normalize_species(cat_species: String) -> String:
+	if cat_species == "british_shorthair":
+		return "british"
+	if cat_species in BREED_LOCATION_PREFERENCES:
+		return cat_species
+	return "orange"
 
 static func _safe_unix_time() -> float:
 	if Engine.has_singleton("TimeGuard") and Engine.get_singleton("TimeGuard").has_method("get_safe_unix_time"):
