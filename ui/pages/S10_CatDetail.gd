@@ -95,6 +95,10 @@ func _render_diary() -> void:
 	var list: VBoxContainer = $VBox/Scroll/Body/Diary1/ScrollView/DiaryList
 	for child in list.get_children():
 		child.queue_free()
+	# 顶部留白，避免第一条日记贴到标题栏
+	var top_spacer := Control.new()
+	top_spacer.custom_minimum_size = Vector2(0.0, 16.0)
+	list.add_child(top_spacer)
 	var count: int = min(DIARY_DATA.size(), 5)
 	for i in range(count):
 		var unlocked: bool = i < diary_unlocked
