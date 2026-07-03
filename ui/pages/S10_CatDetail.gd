@@ -247,7 +247,7 @@ func _show_diary_popup(index: int) -> void:
 	close_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	close_label.text = "关闭"
 	close_label.add_theme_font_size_override("font_size", 18)
-	close_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1))
+	close_label.add_theme_color_override("font_color", Color(0.36, 0.23, 0.12, 1))
 	close_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	close_button.add_child(close_label)
 	close_button.pressed.connect(func() -> void:
