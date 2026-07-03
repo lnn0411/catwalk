@@ -389,6 +389,7 @@ func _build_hud() -> void:
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	steps_box.add_child(steps_icon)
 	_steps_label = Label.new()
+	_steps_label.text = "0"
 	_steps_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_steps_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	_steps_label.add_theme_font_size_override("font_size", 19)
@@ -678,7 +679,7 @@ func _refresh_steps() -> void:
 	var steps := 0
 	if StepEngine:
 		steps = StepEngine.get_today_steps()
-	_steps_label.text = "%s 步" % _format_int(steps)
+	_steps_label.text = "今日 %s 步" % _format_int(steps)
 
 func _refresh_energy() -> void:
 	var current := 0.0
