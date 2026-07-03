@@ -116,9 +116,9 @@ func _render_diary() -> void:
 		title_label.name = "Title"
 		title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		title_label.offset_top = 10
+		title_label.offset_top = 30
 		title_label.text = DIARY_DATA[i][0]
-		title_label.add_theme_font_size_override("font_size", 17)
+		title_label.add_theme_font_size_override("font_size", 19)
 		title_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1) if unlocked else Color(0.55, 0.5, 0.45, 1))
 		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		top.add_child(title_label)
@@ -128,7 +128,7 @@ func _render_diary() -> void:
 		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		status_label.text = "查看 ›" if unlocked else "🔒 好感Lv%d解锁" % (i + 3)
-		status_label.add_theme_font_size_override("font_size", 14)
+		status_label.add_theme_font_size_override("font_size", 16)
 		status_label.add_theme_color_override("font_color", Color(0.6, 0.45, 0.3, 1) if unlocked else Color(0.5, 0.45, 0.4, 1))
 		status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		top.add_child(status_label)
@@ -234,6 +234,14 @@ func _show_diary_popup(index: int) -> void:
 		close_button.texture_normal = btn_tex
 		close_button.texture_pressed = btn_tex
 		close_button.texture_hover = btn_tex
+	var close_label := Label.new()
+	close_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	close_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	close_label.text = "关闭"
+	close_label.add_theme_font_size_override("font_size", 18)
+	close_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1))
+	close_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	close_button.add_child(close_label)
 	close_button.pressed.connect(func() -> void:
 		layer.queue_free()
 	)
