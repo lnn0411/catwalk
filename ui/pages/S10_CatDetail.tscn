@@ -295,9 +295,8 @@ grow_horizontal = 2
 mouse_filter = 2
 text = "它的日记"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 18
 vertical_alignment = 1
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 22
 theme_override_colors/font_color = Color(1, 0.97, 0.9, 1)
 
 [node name="ScrollView" type="ScrollContainer" parent="VBox/Scroll/Body/Diary1"]
