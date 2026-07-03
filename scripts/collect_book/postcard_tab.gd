@@ -3,7 +3,7 @@ extends Control
 signal postcard_cell_pressed(postcard_id: String)
 
 const PostcardGridCellScript = preload("res://scripts/collect_book/postcard_grid_cell.gd")
-const CELL_SIZE := Vector2(300, 220)
+const CELL_SIZE := Vector2(330, 200)
 const COLUMNS := 2
 
 var _grid: GridContainer
