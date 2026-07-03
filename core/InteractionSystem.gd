@@ -184,6 +184,19 @@ func _update_cat_stats(cat_id: String, type: String) -> void:
 			cat.friendship += 2
 		"photo":
 			cat.friendship += 1
+	# Diary draw: check if friendship crossed any grade threshold
+	if cat is CatData:
+		var diary_pools = preload("res://config/diary_pools.gd")
+		for g in range(diary_pools.GRADE_COUNT):
+			var threshold = diary_pools.GRADE_THRESHOLDS[g + 1]
+			var old_val = cat.friendship
+			# Determine old friendship before this interaction
+			var delta = {"feed": 1, "pet": 1, "play": 2, "photo": 1}.get(type, 1)
+			if old_val - delta < threshold and old_val >= threshold:
+				if g < cat.diary_picks.size() and cat.diary_picks[g] < 0:
+					var pick = diary_pools.draw_for_grade(cat.species, g, cat.diary_picks)
+					cat.diary_picks[g] = pick
+					cat.diary_has_unread = true
 	# 经验
 	var exp_gain = {"feed": 50, "pet": 30, "play": 80, "photo": 20}.get(type, 20)
 	cat.exp += exp_gain

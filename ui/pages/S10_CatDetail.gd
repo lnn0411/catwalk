@@ -1,13 +1,7 @@
 extends UIPage
 class_name S10_CatDetail
 
-const DIARY_DATA := [
-	["#1 第一次观察你", "「你走路的样子，不像有什么目的地。嗯……我喜欢这样的人。」"],
-	["#2 等待的哲学", "「等你回来不是一件难事。难的是不知道等多久——但我从来不数。」"],
-	["#3 关于食物的诚实", "🔒 好感Lv4解锁"],
-	["#4 温暖的午后", "🔒 好感Lv5解锁"],
-	["#5 星空下的告白", "🔒 好感Lv6解锁"],
-]
+const DiaryPools := preload("res://config/diary_pools.gd")
 
 const PORTRAIT_PATHS := {
 	"orange": "res://assets/art/cats/portraits/reveal/portrait_orange.png",
@@ -77,7 +71,7 @@ func _refresh() -> void:
 			$VBox/Scroll/Body/CatImageArea.texture = tex
 
 	var lv: int = int(_cat_data.get("level", 1))
-	var aff_lv: int = int(_cat_data.get("affection_lv", min(lv, 3)))
+	var aff_lv: int = int(_cat_data.get("affection_lv", max(1, DiaryPools.get_grade_for_friendship(int(_cat_data.get("friendship", 0))) + 2)))
 
 	$VBox/Head/CatName.text = name_str
 	$VBox/Head/BreedSub.text = breed
@@ -91,7 +85,9 @@ func _refresh() -> void:
 	$VBox/Scroll/Body/StatsRow/AffCard/AffBar/AffBarFill.size.x = 90.0 * aff_pct
 
 func _render_diary() -> void:
-	var diary_unlocked: int = int(_cat_data.get("diary_unlocked", min(int(_cat_data.get("level", 1)) - 1, 2)))
+	var breed: String = String(_cat_data.get("breed", _cat_data.get("species", "orange")))
+	var friendship: int = int(_cat_data.get("friendship", 0))
+	var diary_picks: Array = Array(_cat_data.get("diary_picks", [-1, -1, -1, -1, -1]))
 	var list: VBoxContainer = $VBox/Scroll/Body/Diary1/ScrollView/DiaryList
 	for child in list.get_children():
 		child.queue_free()
@@ -99,9 +95,11 @@ func _render_diary() -> void:
 	var top_spacer := Control.new()
 	top_spacer.custom_minimum_size = Vector2(0.0, 16.0)
 	list.add_child(top_spacer)
-	var count: int = min(DIARY_DATA.size(), 5)
+	var count: int = 5
 	for i in range(count):
-		var unlocked: bool = i < diary_unlocked
+		var pick_index: int = int(diary_picks[i]) if i < diary_picks.size() else -1
+		var diary: Array = DiaryPools.get_diary(breed, i, pick_index)
+		var unlocked: bool = pick_index >= 0
 
 		# 每条日记 = 单行可点击按钮：标题（左）+ 状态（右），点击弹出全文/提示
 		var row := TextureButton.new()
@@ -121,7 +119,7 @@ func _render_diary() -> void:
 		title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title_label.offset_top = 30
-		title_label.text = DIARY_DATA[i][0]
+		title_label.text = String(diary[0])
 		title_label.add_theme_font_size_override("font_size", 19)
 		title_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1) if unlocked else Color(0.55, 0.5, 0.45, 1))
 		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -131,7 +129,7 @@ func _render_diary() -> void:
 		status_label.name = "Status"
 		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		status_label.text = "查看 ›" if unlocked else "🔒 好感Lv%d解锁" % (i + 3)
+		status_label.text = "查看 ›" if unlocked else "🔒 好感Lv%d解锁" % (i + 2)
 		status_label.add_theme_font_size_override("font_size", 16)
 		status_label.add_theme_color_override("font_color", Color(0.6, 0.45, 0.3, 1) if unlocked else Color(0.5, 0.45, 0.4, 1))
 		status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -143,7 +141,7 @@ func _render_diary() -> void:
 			if is_unlocked:
 				_show_diary_popup(idx)
 			else:
-				Popups.show_toast("好感Lv%d解锁" % (idx + 3))
+				Popups.show_toast("好感Lv%d解锁" % (idx + 2))
 		)
 
 		list.add_child(row)
@@ -158,10 +156,13 @@ func _render_diary() -> void:
 			list.add_child(sep)
 
 func _show_diary_popup(index: int) -> void:
-	if index < 0 or index >= DIARY_DATA.size():
+	var breed: String = String(_cat_data.get("breed", _cat_data.get("species", "orange")))
+	var diary_picks: Array = Array(_cat_data.get("diary_picks", [-1, -1, -1, -1, -1]))
+	if index < 0 or index >= diary_picks.size():
 		return
-	var title_text: String = String(DIARY_DATA[index][0])
-	var content_text: String = String(DIARY_DATA[index][1])
+	var diary: Array = DiaryPools.get_diary(breed, index, int(diary_picks[index]))
+	var title_text: String = String(diary[0])
+	var content_text: String = String(diary[1])
 
 	var layer := CanvasLayer.new()
 	layer.layer = 100

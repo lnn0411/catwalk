@@ -166,6 +166,11 @@ func _read_hatch() -> Dictionary:
 	var cats: Array = []
 	for i in range(cat_count):
 		cats.append(_read_cat("cat_%d" % i))
+	for i in range(cats.size()):
+		if not _config.has_section_key("cat_%d" % i, "diary_picks"):
+			var diary_picks: Array = Array(cats[i].get("diary_picks", [-1, -1, -1, -1, -1]))
+			diary_picks[0] = 0
+			cats[i]["diary_picks"] = diary_picks
 
 	return {
 		"slots": Array(_config.get_value("hatch", "slots", [])),
@@ -206,6 +211,7 @@ func _read_cat(section: String) -> Dictionary:
 		"exp": int(_config.get_value(section, "exp", 0)),
 		"friendship": int(_config.get_value(section, "friendship", 0)),
 		"created_at": float(_config.get_value(section, "created_at", Time.get_unix_time_from_system())),
+		"diary_picks": _config.get_value(section, "diary_picks", [-1, -1, -1, -1, -1]),
 		"diary_has_unread": bool(_config.get_value(section, "diary_has_unread", false)),
 	}
 
@@ -220,6 +226,7 @@ func _write_cat(section: String, cat_value) -> void:
 	_config.set_value(section, "exp", int(data.get("exp", 0)))
 	_config.set_value(section, "friendship", int(data.get("friendship", 0)))
 	_config.set_value(section, "created_at", float(data.get("created_at", Time.get_unix_time_from_system())))
+	_config.set_value(section, "diary_picks", Array(data.get("diary_picks", [-1, -1, -1, -1, -1])))
 	_config.set_value(section, "diary_has_unread", bool(data.get("diary_has_unread", false)))
 
 func _clear_cat_sections() -> void:
