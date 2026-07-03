@@ -78,7 +78,7 @@ func _build_ui() -> void:
 	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
 	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
 	cancel.ignore_texture_size = true
-	cancel.stretch_mode = TextureButton.STRETCH_SCALE
+	cancel.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	cancel.pressed.connect(func() -> void:
 		canceled.emit()
 	)

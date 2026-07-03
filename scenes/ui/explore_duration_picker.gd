@@ -87,17 +87,22 @@ func _build_ui() -> void:
 	sep.modulate = Color("#D4A85A", 0.4)
 	box.add_child(sep)
 
+	var cancel_row := HBoxContainer.new()
+	cancel_row.add_theme_constant_override("separation", 12)
+	cancel_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(cancel_row)
+
 	var cancel := TextureButton.new()
-	cancel.custom_minimum_size = Vector2(160, 56)
+	cancel.custom_minimum_size = Vector2(126, 68)
 	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
 	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
 	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
 	cancel.ignore_texture_size = true
-	cancel.stretch_mode = TextureButton.STRETCH_SCALE
+	cancel.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	cancel.pressed.connect(func() -> void:
 		canceled.emit()
 	)
-	box.add_child(cancel)
+	cancel_row.add_child(cancel)
 
 	var cancel_label := Label.new()
 	cancel_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
