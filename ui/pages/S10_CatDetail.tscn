@@ -74,9 +74,9 @@ layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_left = 80.0
-offset_top = 104.0
+offset_top = 135.0
 offset_right = -80.0
-offset_bottom = 128.0
+offset_bottom = 160.0
 grow_horizontal = 2
 mouse_filter = 2
 text = "普通"
@@ -130,7 +130,7 @@ grow_horizontal = 2
 mouse_filter = 2
 text = "等级"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
 
 [node name="LvValue" type="Label" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
@@ -143,7 +143,7 @@ grow_horizontal = 2
 mouse_filter = 2
 text = "Lv.1"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.8, 0.55, 0.25, 1)
 
 [node name="LvBar" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/LevelCard"]
@@ -185,7 +185,7 @@ grow_horizontal = 2
 mouse_filter = 2
 text = "好感"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
 
 [node name="AffValue" type="Label" parent="VBox/Scroll/Body/StatsRow/AffCard"]
@@ -198,7 +198,7 @@ grow_horizontal = 2
 mouse_filter = 2
 text = "Lv.1"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.9, 0.5, 0.65, 1)
 
 [node name="AffBar" type="ColorRect" parent="VBox/Scroll/Body/StatsRow/AffCard"]
@@ -241,7 +241,7 @@ grow_horizontal = 2
 mouse_filter = 2
 text = "羁绊"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 theme_override_colors/font_color = Color(0.5, 0.45, 0.4, 1)
 
 [node name="BondValue" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
@@ -254,7 +254,7 @@ grow_horizontal = 2
 mouse_filter = 2
 text = "🔒"
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 32
 theme_override_colors/font_color = Color(0.45, 0.55, 0.7, 1)
 
 [node name="BondSub" type="Label" parent="VBox/Scroll/Body/StatsRow/BondCard"]
