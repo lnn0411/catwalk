@@ -7,7 +7,6 @@ const DESIGN_SIZE := Vector2(720.0, 1280.0)
 var _cat = null
 var _back_rect: Rect2 = Rect2()
 var _rename_rect: Rect2 = Rect2()
-var _diary_rect: Rect2 = Rect2()
 var _release_rect: Rect2 = Rect2()
 
 # 美术图占位框架：art 就位则显示 TextureRect/TextureButton 层，否则回退到 _draw() 代码绘制
@@ -66,9 +65,6 @@ func _gui_input(event: InputEvent) -> void:
 	elif _rename_rect.has_point(point):
 		Popups.show_toast("改名功能即将开放")
 		accept_event()
-	elif _diary_rect.has_point(point):
-		Popups.show_toast("日记还在整理中")
-		accept_event()
 	elif _release_rect.has_point(point):
 		accept_event()
 		if _cat == null:
@@ -87,10 +83,9 @@ func _draw() -> void:
 	_draw_cat_panel()
 	_draw_stats()
 	_draw_buttons()
-	_draw_diary()
 
 func _draw_top_bar() -> void:
-	_back_rect = Rect2(Vector2(28.0, 59.0), Vector2(85.0, 48.0))
+	_back_rect = Rect2(Vector2(28.0, 89.0), Vector2(85.0, 48.0))
 	if _art_back_btn and _art_back_node:
 		_art_back_node.position = _back_rect.position
 		_art_back_node.size = _back_rect.size
@@ -126,21 +121,11 @@ func _draw_stats() -> void:
 
 func _draw_buttons() -> void:
 	_rename_rect = Rect2(Vector2(64.0, 891.0), Vector2(181.0, 52.0))
-	_diary_rect = Rect2(Vector2(269.0, 891.0), Vector2(181.0, 52.0))
 	_release_rect = Rect2(Vector2(475.0, 891.0), Vector2(181.0, 52.0))
 	# 底部互动按钮：美术（btn_feed/btn_play）就位则贴图替换，否则代码绘制
 	_draw_button(_rename_rect, "改名", Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
-	_draw_button(_diary_rect, "日记", Palette.BG_CEMENT, Palette.BORDER_DEFAULT, Palette.TEXT_PRIMARY)
 	_draw_button(_release_rect, "让它出来", Palette.AMBER, Palette.AMBER, Palette.TEXT_ON_AMBER)
 
-func _draw_diary() -> void:
-	var rect: Rect2 = Rect2(Vector2(64.0, 982.0), Vector2(592.0, 212.0))
-	_draw_round_rect(rect, 5.0, Palette.BG_CEMENT, Palette.BORDER_DEFAULT, 1.0)
-	_draw_text("日记", rect.position + Vector2(24.0, 39.0), 20, Palette.TEXT_PRIMARY)
-	_draw_text("今天还没有新的记录", rect.position + Vector2(24.0, 77.0), 16, Palette.TEXT_SECONDARY)
-	_draw_text("锁定 · 一起散步后解锁更多故事", rect.position + Vector2(24.0, 123.0), 16, Palette.TEXT_SECONDARY)
-	draw_line(rect.position + Vector2(24.0, 155.0), rect.position + Vector2(rect.size.x - 24.0, 155.0), Palette.BORDER_DEFAULT, 1.0)
-	_draw_text("锁定 · 达到 Lv.3 解锁", rect.position + Vector2(24.0, 188.0), 15, Palette.TEXT_SECONDARY)
 
 func _cat_name() -> String:
 	if _cat == null:
