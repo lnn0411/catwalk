@@ -222,12 +222,9 @@ func _show_diary_popup(index: int) -> void:
 	body_label.add_theme_color_override("font_color", Color(0.45, 0.4, 0.36, 1))
 	content.add_child(body_label)
 
-	var close_row := HBoxContainer.new()
-	close_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var close_spacer := Control.new()
-	close_spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	close_row.add_child(close_spacer)
 	var close_button := TextureButton.new()
+	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	close_button.offset_left = 30
 	close_button.offset_top = 10
 	close_button.custom_minimum_size = Vector2(180.0, 64.0)
 	close_button.ignore_texture_size = true
@@ -248,11 +245,10 @@ func _show_diary_popup(index: int) -> void:
 	close_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1))
 	close_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	close_button.add_child(close_label)
-	close_row.add_child(close_button)
 	close_button.pressed.connect(func() -> void:
 		layer.queue_free()
 	)
-	content.add_child(close_row)
+	content.add_child(close_button)
 
 
 func _find_cat() -> Variant:
