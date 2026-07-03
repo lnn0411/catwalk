@@ -217,13 +217,15 @@ func _show_diary_popup(index: int) -> void:
 	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	body_label.offset_top = 20
+	body_label.offset_top = 50
 	body_label.add_theme_font_size_override("font_size", 16)
 	body_label.add_theme_color_override("font_color", Color(0.45, 0.4, 0.36, 1))
 	content.add_child(body_label)
 
 	var close_button := TextureButton.new()
 	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	close_button.offset_left = 30
+	close_button.offset_top = 10
 	close_button.custom_minimum_size = Vector2(180.0, 64.0)
 	close_button.ignore_texture_size = true
 	close_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
@@ -238,8 +240,6 @@ func _show_diary_popup(index: int) -> void:
 	var close_label := Label.new()
 	close_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	close_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	close_label.offset_left = 30
-	close_label.offset_top = 10
 	close_label.text = "关闭"
 	close_label.add_theme_font_size_override("font_size", 18)
 	close_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1))
