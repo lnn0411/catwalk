@@ -48,15 +48,20 @@ func _build_ui() -> void:
 	_style_label(title, 24)
 	box.add_child(title)
 
+	# spacer — 提示文案下移20px
+	var hint_spacer := Control.new()
+	hint_spacer.custom_minimum_size = Vector2(0, 20)
+	box.add_child(hint_spacer)
+
 	var hint := Label.new()
 	hint.text = "时间越久，猫咪带回稀有发现的机会越高"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(hint, 16)
+	_style_label(hint, 18)
 	box.add_child(hint)
 
-	# spacer — 按钮下移50px
+	# spacer — 按钮下移30px(原50px,提示下移20px后减20保持按钮位置不变)
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 50)
+	spacer.custom_minimum_size = Vector2(0, 30)
 	box.add_child(spacer)
 
 	var row := HBoxContainer.new()
