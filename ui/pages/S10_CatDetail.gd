@@ -1,7 +1,8 @@
 extends UIPage
 class_name S10_CatDetail
 
-const DiaryPools := preload("res://config/diary_pools.gd")
+const DiaryPools = null  # 运行时加载 见 _on_page_setup
+var _diary_pools = null
 
 const PORTRAIT_PATHS := {
 	"orange": "res://assets/art/cats/portraits/reveal/portrait_orange.png",
@@ -15,6 +16,8 @@ var _cat_data: Dictionary = {}
 var _cat_id: String = ""
 
 func _on_page_setup(data: Dictionary) -> void:
+	if _diary_pools == null:
+		_diary_pools = load("res://config/diary_pools.gd")
 	_cat_data = data.get("cat", {})
 	_cat_id = String(_cat_data.get("id", ""))
 	_refresh()
@@ -71,7 +74,9 @@ func _refresh() -> void:
 			$VBox/Scroll/Body/CatImageArea.texture = tex
 
 	var lv: int = int(_cat_data.get("level", 1))
-	var aff_lv: int = int(_cat_data.get("affection_lv", max(1, DiaryPools.get_grade_for_friendship(int(_cat_data.get("friendship", 0))) + 2)))
+	var aff_lv: int = int(_cat_data.get("affection_lv", min(lv, 3)))
+	if _diary_pools != null:
+		aff_lv = max(1, _diary_pools.get_grade_for_friendship(int(_cat_data.get("friendship", 0))) + 2)
 
 	$VBox/Head/CatName.text = name_str
 	$VBox/Head/BreedSub.text = breed
@@ -98,7 +103,7 @@ func _render_diary() -> void:
 	var count: int = 5
 	for i in range(count):
 		var pick_index: int = int(diary_picks[i]) if i < diary_picks.size() else -1
-		var diary: Array = DiaryPools.get_diary(breed, i, pick_index)
+		var diary: Array = _diary_pools.get_diary(breed, i, pick_index)
 		var unlocked: bool = pick_index >= 0
 
 		# 每条日记 = 单行可点击按钮：标题（左）+ 状态（右），点击弹出全文/提示
@@ -160,7 +165,7 @@ func _show_diary_popup(index: int) -> void:
 	var diary_picks: Array = Array(_cat_data.get("diary_picks", [-1, -1, -1, -1, -1]))
 	if index < 0 or index >= diary_picks.size():
 		return
-	var diary: Array = DiaryPools.get_diary(breed, index, int(diary_picks[index]))
+	var diary: Array = _diary_pools.get_diary(breed, index, int(diary_picks[index]))
 	var title_text: String = String(diary[0])
 	var content_text: String = String(diary[1])
 

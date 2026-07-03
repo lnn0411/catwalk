@@ -186,7 +186,7 @@ func _update_cat_stats(cat_id: String, type: String) -> void:
 			cat.friendship += 1
 	# Diary draw: check if friendship crossed any grade threshold
 	if cat is CatData:
-		var diary_pools = preload("res://config/diary_pools.gd")
+		var diary_pools = load("res://config/diary_pools.gd")
 		for g in range(diary_pools.GRADE_COUNT):
 			var threshold = diary_pools.GRADE_THRESHOLDS[g + 1]
 			var old_val = cat.friendship
