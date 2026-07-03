@@ -73,17 +73,19 @@ func _build_ui() -> void:
 	box.add_child(sep)
 
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", 24)
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(row)
 
+	# 两按钮并排：2×244 + 24 = 512。高取下限 80 → 3.05:1。
+	# feed(3.46:1) 变形 ~1.13×，explore(5.83:1) 变形 ~1.91×（较原 5.25× 大幅改善）。
 	var cancel := TextureButton.new()
-	cancel.custom_minimum_size = Vector2(120, 108)
+	cancel.custom_minimum_size = Vector2(244, 80)
 	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
 	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
 	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
 	cancel.ignore_texture_size = true
-	cancel.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	cancel.stretch_mode = TextureButton.STRETCH_SCALE
 	cancel.pressed.connect(func() -> void:
 		canceled.emit()
 	)
@@ -100,12 +102,12 @@ func _build_ui() -> void:
 	cancel.add_child(cancel_label)
 
 	var ok := TextureButton.new()
-	ok.custom_minimum_size = Vector2(120, 108)
+	ok.custom_minimum_size = Vector2(244, 80)
 	ok.texture_normal = load("res://assets/art/ui/catcard/btn_explore_normal.png")
 	ok.texture_hover = load("res://assets/art/ui/catcard/btn_explore_hover.png")
 	ok.texture_pressed = load("res://assets/art/ui/catcard/btn_explore_pressed.png")
 	ok.ignore_texture_size = true
-	ok.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	ok.stretch_mode = TextureButton.STRETCH_SCALE
 	ok.pressed.connect(func() -> void:
 		confirmed.emit(_duration_hours)
 	)
