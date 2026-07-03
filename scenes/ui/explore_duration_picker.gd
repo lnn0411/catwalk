@@ -26,7 +26,7 @@ func _build_ui() -> void:
 	panel.texture = load("res://assets/art/ui/adopt/adopt_panel.png")
 	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	panel.stretch_mode = TextureRect.STRETCH_SCALE
-	_center_control(panel, Vector2(560, 300))
+	_center_control(panel, Vector2(560, 360))
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(panel)
 
@@ -45,14 +45,19 @@ func _build_ui() -> void:
 	var title := Label.new()
 	title.text = "选择探索时长"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(title, 22)
+	_style_label(title, 24)
 	box.add_child(title)
 
 	var hint := Label.new()
 	hint.text = "时间越久，猫咪带回稀有发现的机会越高"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(hint, 14)
+	_style_label(hint, 16)
 	box.add_child(hint)
+
+	# spacer — 按钮下移50px
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 50)
+	box.add_child(spacer)
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
@@ -62,7 +67,7 @@ func _build_ui() -> void:
 
 	for duration in DURATIONS:
 		var button := TextureButton.new()
-		button.custom_minimum_size = Vector2(120, 54)
+		button.custom_minimum_size = Vector2(120, 108)
 		button.texture_normal = load("res://assets/art/ui/catcard/btn_explore_normal.png")
 		button.texture_hover = load("res://assets/art/ui/catcard/btn_explore_hover.png")
 		button.texture_pressed = load("res://assets/art/ui/catcard/btn_explore_pressed.png")
@@ -79,7 +84,7 @@ func _build_ui() -> void:
 		label.text = "%d小时" % duration
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 18)
+		label.add_theme_font_size_override("font_size", 20)
 		label.add_theme_color_override("font_color", Color("#4F453C"))
 		button.add_child(label)
 
@@ -93,7 +98,7 @@ func _build_ui() -> void:
 	box.add_child(cancel_row)
 
 	var cancel := TextureButton.new()
-	cancel.custom_minimum_size = Vector2(120, 54)
+	cancel.custom_minimum_size = Vector2(120, 108)
 	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
 	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
 	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
@@ -110,7 +115,7 @@ func _build_ui() -> void:
 	cancel_label.text = "取消"
 	cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	cancel_label.add_theme_font_size_override("font_size", 16)
+	cancel_label.add_theme_font_size_override("font_size", 18)
 	cancel_label.add_theme_color_override("font_color", Color("#4F453C"))
 	cancel.add_child(cancel_label)
 

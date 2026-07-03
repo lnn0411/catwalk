@@ -36,7 +36,7 @@ func _build_ui() -> void:
 	panel.texture = load("res://assets/art/ui/adopt/adopt_panel.png")
 	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	panel.stretch_mode = TextureRect.STRETCH_SCALE
-	_center_control(panel, Vector2(560, 280))
+	_center_control(panel, Vector2(560, 340))
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(panel)
 
@@ -54,14 +54,19 @@ func _build_ui() -> void:
 
 	_title_label = Label.new()
 	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(_title_label, 22)
+	_style_label(_title_label, 24)
 	box.add_child(_title_label)
 
 	_body_label = Label.new()
 	_body_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(_body_label, 15)
+	_style_label(_body_label, 16)
 	box.add_child(_body_label)
+
+	# spacer — 按钮下移50px
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(0, 50)
+	box.add_child(spacer)
 
 	var sep := HSeparator.new()
 	sep.modulate = Color("#D4A85A", 0.4)
@@ -73,7 +78,7 @@ func _build_ui() -> void:
 	box.add_child(row)
 
 	var cancel := TextureButton.new()
-	cancel.custom_minimum_size = Vector2(120, 54)
+	cancel.custom_minimum_size = Vector2(120, 108)
 	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
 	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
 	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
@@ -90,12 +95,12 @@ func _build_ui() -> void:
 	cancel_label.text = "再想想"
 	cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	cancel_label.add_theme_font_size_override("font_size", 16)
+	cancel_label.add_theme_font_size_override("font_size", 18)
 	cancel_label.add_theme_color_override("font_color", Color("#4F453C"))
 	cancel.add_child(cancel_label)
 
 	var ok := TextureButton.new()
-	ok.custom_minimum_size = Vector2(120, 54)
+	ok.custom_minimum_size = Vector2(120, 108)
 	ok.texture_normal = load("res://assets/art/ui/catcard/btn_explore_normal.png")
 	ok.texture_hover = load("res://assets/art/ui/catcard/btn_explore_hover.png")
 	ok.texture_pressed = load("res://assets/art/ui/catcard/btn_explore_pressed.png")
@@ -112,7 +117,7 @@ func _build_ui() -> void:
 	ok_label.text = "出发"
 	ok_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ok_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	ok_label.add_theme_font_size_override("font_size", 16)
+	ok_label.add_theme_font_size_override("font_size", 18)
 	ok_label.add_theme_color_override("font_color", Color("#4F453C"))
 	ok.add_child(ok_label)
 
