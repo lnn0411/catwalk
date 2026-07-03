@@ -131,7 +131,7 @@ func _create_cat_card(cat) -> TextureButton:
 	if has_unread:
 		var badge := TextureRect.new()
 		badge.name = "DiaryBadge"
-		badge.texture = load("res://assets/art/ui/icons/icon_diary_badge.png")
+		badge.texture = load("res://assets/art/ui/icons/icon_diary_notification.png")
 		badge.position = Vector2(294.0, 4.0)
 		badge.size = Vector2(24.0, 24.0)
 		badge.custom_minimum_size = Vector2(24.0, 24.0)
