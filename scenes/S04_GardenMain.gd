@@ -365,8 +365,8 @@ func _build_hud() -> void:
 	# 顶栏：HBoxContainer，用两个 spacer 实现 左|中|右 布局
 	var top_row := HBoxContainer.new()
 	top_row.anchor_right = 1.0
-	top_row.offset_top = 30.0
-	top_row.offset_bottom = 70.0
+	top_row.offset_top = 60.0
+	top_row.offset_bottom = 100.0
 	top_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	top_row.add_theme_constant_override("separation", 0)
 	top_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
