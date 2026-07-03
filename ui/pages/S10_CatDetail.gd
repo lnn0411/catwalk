@@ -103,7 +103,7 @@ func _render_diary() -> void:
 		var row := TextureButton.new()
 		row.name = "DiaryRow_%d" % i
 		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.custom_minimum_size = Vector2(0.0, 34.0)
+		row.custom_minimum_size = Vector2(0.0, 54.0)
 		row.focus_mode = Control.FOCUS_NONE
 		row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
@@ -116,8 +116,9 @@ func _render_diary() -> void:
 		title_label.name = "Title"
 		title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		title_label.offset_top = 10
 		title_label.text = DIARY_DATA[i][0]
-		title_label.add_theme_font_size_override("font_size", 15)
+		title_label.add_theme_font_size_override("font_size", 17)
 		title_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1) if unlocked else Color(0.55, 0.5, 0.45, 1))
 		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		top.add_child(title_label)
@@ -127,7 +128,7 @@ func _render_diary() -> void:
 		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		status_label.text = "查看 ›" if unlocked else "🔒 好感Lv%d解锁" % (i + 3)
-		status_label.add_theme_font_size_override("font_size", 12)
+		status_label.add_theme_font_size_override("font_size", 14)
 		status_label.add_theme_color_override("font_color", Color(0.6, 0.45, 0.3, 1) if unlocked else Color(0.5, 0.45, 0.4, 1))
 		status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		top.add_child(status_label)
@@ -142,6 +143,15 @@ func _render_diary() -> void:
 		)
 
 		list.add_child(row)
+
+		# 每行之间加一条细分隔线（最后一行除外）
+		if i < count - 1:
+			var sep := ColorRect.new()
+			sep.color = Color(0.72, 0.6, 0.42, 0.2)
+			sep.custom_minimum_size = Vector2(0.0, 1.0)
+			sep.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			sep.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			list.add_child(sep)
 
 func _show_diary_popup(index: int) -> void:
 	if index < 0 or index >= DIARY_DATA.size():
