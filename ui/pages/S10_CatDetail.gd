@@ -238,6 +238,7 @@ func _show_diary_popup(index: int) -> void:
 		close_button.texture_pressed = btn_tex
 		close_button.texture_hover = btn_tex
 	var close_label := Label.new()
+	close_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	close_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	close_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	close_label.text = "关闭"
