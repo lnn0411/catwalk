@@ -9,10 +9,12 @@ var total_steps: int = 0
 var last_plugin_steps: int = 0
 var last_step_date: String = ""
 var step_plugin: Object
+var _poll_attempts: int = 0
 
 func _ready() -> void:
 	last_step_date = _today_key()
 	_load_plugin()
+	_poll_for_first_reading()
 
 # app 从后台回到前台时，重读硬件累计步数，补回最小化/进程被杀期间走的步。
 # TYPE_STEP_COUNTER 在固件层计数，进程死了也照常累加，这里读一次即可对齐。
@@ -20,6 +22,9 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_RESUMED:
 		_check_daily_reset()
 		_refresh_plugin_steps()
+		await get_tree().create_timer(0.5).timeout
+		if is_inside_tree():
+			_refresh_plugin_steps()
 
 func add_mock_steps(n: int) -> void:
 	_check_daily_reset()
@@ -60,9 +65,9 @@ func _load_plugin() -> void:
 		step_plugin = Engine.get_singleton(PLUGIN_NAME)
 		if step_plugin.has_signal("steps_changed"):
 			step_plugin.steps_changed.connect(_on_plugin_steps_changed)
-		_refresh_plugin_steps()
 	else:
 		_emit_steps_updated(0)
+	# 第一次同步交给 SaveManager.load_and_apply() 末尾
 
 func _refresh_plugin_steps() -> void:
 	if step_plugin == null or not step_plugin.has_method("getSteps"):
@@ -85,15 +90,22 @@ func _on_plugin_steps_changed(raw_steps: int) -> void:
 	if delta <= 0:
 		_emit_steps_updated(0)
 		return
-	# 安全闸门：单次 delta 超过 50000 视为异常（传感器重置/首次启动），
-	# 更新基线但不累加步数，防止跨天步数爆炸（DEF-01 P0）。
-	if delta > 50000:
-		_emit_steps_updated(0)
-		return
-
 	today_steps += delta
 	total_steps += delta
 	_emit_steps_updated(delta)
+
+func _poll_for_first_reading() -> void:
+	_poll_attempts += 1
+	if _poll_attempts > 10:
+		_poll_attempts = 0
+		return
+
+	_refresh_plugin_steps()
+	if step_plugin != null and step_plugin.has_method("getSteps") and int(step_plugin.getSteps()) < 0:
+		await get_tree().create_timer(1.0).timeout
+		if is_inside_tree():
+			_poll_for_first_reading()
+
 
 func _check_daily_reset() -> void:
 	var today: String = _today_key()

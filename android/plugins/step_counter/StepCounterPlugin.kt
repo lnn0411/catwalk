@@ -45,7 +45,9 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 
     override fun onMainPause() {
         super.onMainPause()
-        sensorManager?.unregisterListener(this)
+        // 不移除：TYPE_STEP_COUNTER 是硬件级低功耗传感器，
+        // 硬件层继续累计，亮屏后读数直接恢复。
+        // sensorManager?.unregisterListener(this)
     }
 
     override fun onMainResume() {
