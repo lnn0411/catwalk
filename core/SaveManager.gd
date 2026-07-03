@@ -206,6 +206,7 @@ func _read_cat(section: String) -> Dictionary:
 		"exp": int(_config.get_value(section, "exp", 0)),
 		"friendship": int(_config.get_value(section, "friendship", 0)),
 		"created_at": float(_config.get_value(section, "created_at", Time.get_unix_time_from_system())),
+		"diary_has_unread": bool(_config.get_value(section, "diary_has_unread", false)),
 	}
 
 func _write_cat(section: String, cat_value) -> void:
@@ -219,6 +220,7 @@ func _write_cat(section: String, cat_value) -> void:
 	_config.set_value(section, "exp", int(data.get("exp", 0)))
 	_config.set_value(section, "friendship", int(data.get("friendship", 0)))
 	_config.set_value(section, "created_at", float(data.get("created_at", Time.get_unix_time_from_system())))
+	_config.set_value(section, "diary_has_unread", bool(data.get("diary_has_unread", false)))
 
 func _clear_cat_sections() -> void:
 	for section in _config.get_sections():

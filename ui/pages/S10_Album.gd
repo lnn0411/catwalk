@@ -125,6 +125,21 @@ func _create_cat_card(cat) -> TextureButton:
 	_add_avatar(card, species)
 	_add_name(card, name_text, species)
 	_add_level_badge(card, level)
+
+	# 日记未读角标（右上角），点击穿透到卡片
+	var has_unread = bool(cat.get("diary_has_unread", false)) if cat is Dictionary else false
+	if has_unread:
+		var badge := TextureRect.new()
+		badge.name = "DiaryBadge"
+		badge.texture = load("res://assets/art/ui/icons/icon_diary_badge.png")
+		badge.position = Vector2(294.0, 4.0)
+		badge.size = Vector2(24.0, 24.0)
+		badge.custom_minimum_size = Vector2(24.0, 24.0)
+		badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		card.add_child(badge)
+
 	return card
 
 

@@ -27,6 +27,17 @@ func _on_page_setup(data: Dictionary) -> void:
 	_build_stat_dividers()
 	_render_diary()
 
+	# 进入详情页即视作已读——清除该猫的日记未读标记并落盘
+	_cat_data["diary_has_unread"] = false
+	var cat = _find_cat()
+	if cat != null:
+		if cat is Dictionary:
+			cat["diary_has_unread"] = false
+		else:
+			cat.set("diary_has_unread", false)
+	if SaveManager:
+		SaveManager.save_all()
+
 # Draw two vertical dashed dividers that split the stats panel into 3 columns,
 # matching the concept art. Idempotent so re-setup doesn't stack duplicates.
 func _build_stat_dividers() -> void:
@@ -88,46 +99,136 @@ func _render_diary() -> void:
 	for i in range(count):
 		var unlocked: bool = i < diary_unlocked
 
-		# One entry = title row (title left, lock status right) + preview text below.
-		var entry := VBoxContainer.new()
-		entry.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		entry.add_theme_constant_override("separation", 2)
+		# 每条日记 = 单行可点击按钮：标题（左）+ 状态（右），点击弹出全文/提示
+		var row := TextureButton.new()
+		row.name = "DiaryRow_%d" % i
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.custom_minimum_size = Vector2(0.0, 34.0)
+		row.focus_mode = Control.FOCUS_NONE
+		row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 
 		var top := HBoxContainer.new()
-		top.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		top.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		top.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		row.add_child(top)
 
 		var title_label := Label.new()
 		title_label.name = "Title"
 		title_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		title_label.text = DIARY_DATA[i][0]
 		title_label.add_theme_font_size_override("font_size", 15)
 		title_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1) if unlocked else Color(0.55, 0.5, 0.45, 1))
+		title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		top.add_child(title_label)
 
 		var status_label := Label.new()
 		status_label.name = "Status"
 		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-		status_label.text = "已解锁" if unlocked else "🔒 好感Lv%d解锁" % (i + 3)
+		status_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		status_label.text = "查看 ›" if unlocked else "🔒 好感Lv%d解锁" % (i + 3)
 		status_label.add_theme_font_size_override("font_size", 12)
 		status_label.add_theme_color_override("font_color", Color(0.6, 0.45, 0.3, 1) if unlocked else Color(0.5, 0.45, 0.4, 1))
+		status_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		top.add_child(status_label)
 
-		entry.add_child(top)
+		var idx := i
+		var is_unlocked := unlocked
+		row.pressed.connect(func() -> void:
+			if is_unlocked:
+				_show_diary_popup(idx)
+			else:
+				Popups.show_toast("好感Lv%d解锁" % (idx + 3))
+		)
 
-		var text_label := Label.new()
-		text_label.name = "Text"
-		text_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		text_label.text = DIARY_DATA[i][1] if unlocked else "再亲密一点点，就能读到啦"
-		text_label.add_theme_font_size_override("font_size", 13)
-		text_label.add_theme_color_override("font_color", Color(0.45, 0.4, 0.36, 1) if unlocked else Color(0.6, 0.56, 0.52, 1))
-		entry.add_child(text_label)
+		list.add_child(row)
 
-		list.add_child(entry)
+func _show_diary_popup(index: int) -> void:
+	if index < 0 or index >= DIARY_DATA.size():
+		return
+	var title_text: String = String(DIARY_DATA[index][0])
+	var content_text: String = String(DIARY_DATA[index][1])
 
-		if i < count - 1:
-			var sep := HSeparator.new()
-			list.add_child(sep)
+	var layer := CanvasLayer.new()
+	layer.layer = 100
+	get_tree().root.add_child(layer)
+
+	# 半透明遮罩，点击空白处关闭
+	var mask := TextureRect.new()
+	mask.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mask.stretch_mode = TextureRect.STRETCH_SCALE
+	mask.mouse_filter = Control.MOUSE_FILTER_STOP
+	var mask_path := "res://assets/art/ui/panels/overlay_mask.png"
+	if ResourceLoader.exists(mask_path):
+		mask.texture = load(mask_path)
+	else:
+		mask.modulate = Color(0, 0, 0, 0.5)
+	mask.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventMouseButton and event.pressed:
+			layer.queue_free()
+	)
+	layer.add_child(mask)
+
+	# 弹窗主体
+	var center := CenterContainer.new()
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(center)
+
+	var card := TextureRect.new()
+	card.custom_minimum_size = Vector2(560.0, 420.0)
+	card.size = Vector2(560.0, 420.0)
+	card.stretch_mode = TextureRect.STRETCH_SCALE
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	var bg_path := "res://assets/art/ui/panels/popup_bg.png"
+	if ResourceLoader.exists(bg_path):
+		card.texture = load(bg_path)
+	center.add_child(card)
+
+	var content := VBoxContainer.new()
+	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	content.offset_left = 56.0
+	content.offset_top = 56.0
+	content.offset_right = -56.0
+	content.offset_bottom = -48.0
+	content.add_theme_constant_override("separation", 18)
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	card.add_child(content)
+
+	var title_label := Label.new()
+	title_label.text = title_text
+	title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_label.add_theme_font_size_override("font_size", 22)
+	title_label.add_theme_color_override("font_color", Color(0.3, 0.26, 0.22, 1))
+	content.add_child(title_label)
+
+	var body_label := Label.new()
+	body_label.text = content_text
+	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	body_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	body_label.add_theme_font_size_override("font_size", 16)
+	body_label.add_theme_color_override("font_color", Color(0.45, 0.4, 0.36, 1))
+	content.add_child(body_label)
+
+	var close_button := TextureButton.new()
+	close_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	close_button.custom_minimum_size = Vector2(180.0, 64.0)
+	close_button.ignore_texture_size = true
+	close_button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	close_button.focus_mode = Control.FOCUS_NONE
+	close_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var btn_path := "res://assets/art/ui/incubation/components/btn_confirm_name.png"
+	if ResourceLoader.exists(btn_path):
+		var btn_tex := load(btn_path) as Texture2D
+		close_button.texture_normal = btn_tex
+		close_button.texture_pressed = btn_tex
+		close_button.texture_hover = btn_tex
+	close_button.pressed.connect(func() -> void:
+		layer.queue_free()
+	)
+	content.add_child(close_button)
+
 
 func _find_cat() -> Variant:
 	if _cat_id.is_empty() or not HatchEngine:

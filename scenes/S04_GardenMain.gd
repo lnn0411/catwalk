@@ -63,6 +63,8 @@ var _snow_particles: CPUParticles2D
 var _weather_tween: Tween
 var _last_blend := -1.0
 var _stats_visible := false
+var _diary_notification_btn: TextureButton
+var _diary_unread_cats: Array = []
 func _ready() -> void:
 	super()
 	_load_frame_textures()
@@ -92,6 +94,7 @@ func on_enter(_data: Dictionary = {}) -> void:
 	if TutorialManager:
 		TutorialManager.start(self)
 	_hatch_navigating = false
+	_refresh_diary_notification()
 	# 无条件重申容器归属（set_cat_container 已幂等：在场的猫先登记不会重复，
 	# 漏生成/生成进旧容器的猫会补到当前容器）。
 	# 实测：孵化后猫可能生成进中间态的旧容器，有条件判断会漏触发——改为每次回页必重申。
@@ -454,6 +457,26 @@ func _build_hud() -> void:
 	right_margin.custom_minimum_size = Vector2(16, 1)
 	top_row.add_child(right_margin)
 
+	# 日记未读提醒图标（贴顶栏右侧），默认隐藏
+	_diary_notification_btn = TextureButton.new()
+	_diary_notification_btn.name = "DiaryNotificationBtn"
+	_diary_notification_btn.texture_normal = load("res://assets/art/ui/icons/icon_diary_notification.png")
+	_diary_notification_btn.ignore_texture_size = true
+	_diary_notification_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	_diary_notification_btn.focus_mode = Control.FOCUS_NONE
+	_diary_notification_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_diary_notification_btn.anchor_left = 1.0
+	_diary_notification_btn.anchor_right = 1.0
+	_diary_notification_btn.anchor_top = 0.0
+	_diary_notification_btn.anchor_bottom = 0.0
+	_diary_notification_btn.offset_left = -104.0
+	_diary_notification_btn.offset_right = -60.0
+	_diary_notification_btn.offset_top = 0.0
+	_diary_notification_btn.offset_bottom = 44.0
+	_diary_notification_btn.visible = false
+	_diary_notification_btn.pressed.connect(_on_diary_notification_pressed)
+	root.add_child(_diary_notification_btn)
+
 	_empty_label = Label.new()
 	_empty_label.text = "多走几步，猫咪就来了"
 	_empty_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -608,6 +631,48 @@ func _refresh_all() -> void:
 	_refresh_steps()
 	_refresh_energy()
 	_refresh_cat_state()
+	_refresh_diary_notification()
+
+# 扫描所有猫的日记未读标记，驱动顶栏提醒图标的显隐与点击行为
+func _refresh_diary_notification() -> void:
+	if _diary_notification_btn == null:
+		return
+	_diary_unread_cats = []
+	if HatchEngine:
+		for cat in HatchEngine.get_cats():
+			var has_unread := false
+			if cat is Dictionary:
+				has_unread = bool(cat.get("diary_has_unread", false))
+			else:
+				var v = cat.get("diary_has_unread")
+				has_unread = bool(v) if v != null else false
+			if has_unread:
+				_diary_unread_cats.append(cat)
+	_diary_notification_btn.visible = _diary_unread_cats.size() > 0
+
+func _on_diary_notification_pressed() -> void:
+	var count: int = _diary_unread_cats.size()
+	if count == 0:
+		return
+	if count == 1:
+		var cat = _diary_unread_cats[0]
+		var cat_data: Dictionary = cat if cat is Dictionary else _cat_to_dict(cat)
+		UIManager.push("res://ui/pages/S10_CatDetail.tscn", {"cat": cat_data})
+	else:
+		UIManager.replace("res://ui/pages/S10_Album.tscn")
+
+# 将 CatData / Dictionary 统一转为详情页所需的 Dictionary
+func _cat_to_dict(cat) -> Dictionary:
+	if cat is Dictionary:
+		return cat.duplicate()
+	var d := {}
+	for key in ["id", "species", "rarity", "hatch_index", "display_name", "level", "exp", "friendship", "created_at", "diary_has_unread"]:
+		var v = cat.get(key)
+		if v != null:
+			d[key] = v
+	d["name"] = d.get("display_name", "")
+	d["breed"] = d.get("species", "")
+	return d
 
 func _refresh_steps() -> void:
 	var steps := 0
