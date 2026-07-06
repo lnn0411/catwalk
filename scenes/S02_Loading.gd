@@ -110,10 +110,34 @@ func _restore_save() -> void:
 	SaveManager.load_and_apply()
 	_load_finished = true
 	if _days_since_last_open() >= 3:
-		UIManager.replace("res://scenes/S92_SleepReturn.tscn")
+		_show_return_toast()
 		return
 
 	var _cats_empty := HatchEngine == null or HatchEngine.get_cats().is_empty()
+	UIManager.replace("res://scenes/S04_GardenMain.tscn")
+
+
+func _show_return_toast() -> void:
+	var days := _days_since_last_open()
+	var toast := Label.new()
+	toast.text = "你离开了 %d 天，花园还在等你" % days
+	toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	toast.add_theme_font_size_override("font_size", 28)
+	toast.add_theme_color_override("font_color", Color.WHITE)
+	toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	toast.anchor_left = 0.5
+	toast.anchor_right = 0.5
+	toast.anchor_top = 0.0
+	toast.anchor_bottom = 0.0
+	toast.offset_left = -200.0
+	toast.offset_right = 200.0
+	toast.offset_top = 340.0
+	toast.offset_bottom = 380.0
+	add_child(toast)
+
+	await get_tree().create_timer(2.0).timeout
+	if not is_inside_tree():
+		return
 	UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 func _days_since_last_open() -> int:
