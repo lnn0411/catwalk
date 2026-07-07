@@ -362,6 +362,32 @@ func _build_hud() -> void:
 	debug_btn.pressed.connect(_toggle_debug_panel)
 	root.add_child(debug_btn)
 
+	# 棋盘入口按钮（左下角，首猫孵化后解锁占位）
+	var board_btn := Button.new()
+	board_btn.text = "🎮 合合乐"
+	board_btn.flat = true
+	board_btn.anchor_left = 0.0
+	board_btn.anchor_right = 0.0
+	board_btn.offset_left = 12.0
+	board_btn.offset_right = 110.0
+	board_btn.offset_top = 640.0
+	board_btn.offset_bottom = 680.0
+	board_btn.add_theme_color_override("font_color", Color("4F453C"))
+	board_btn.add_theme_font_size_override("font_size", 16)
+	var board_bg := StyleBoxFlat.new()
+	board_bg.bg_color = Color("FAF6F0")
+	board_bg.border_color = Color("C9C2B8")
+	board_bg.set_border_width_all(2)
+	board_bg.set_corner_radius_all(12)
+	board_btn.add_theme_stylebox_override("normal", board_bg)
+	var board_bg_hover := board_bg.duplicate()
+	board_bg_hover.bg_color = Color("EFE4D6")
+	board_btn.add_theme_stylebox_override("hover", board_bg_hover)
+	board_btn.pressed.connect(func():
+		UIManager.push("res://scenes/S14_BoardGame.tscn")
+	)
+	root.add_child(board_btn)
+
 	# 顶栏：HBoxContainer，用两个 spacer 实现 左|中|右 布局
 	var top_row := HBoxContainer.new()
 	top_row.anchor_right = 1.0
