@@ -1,6 +1,10 @@
 class_name BoardCell
 extends Control
 
+const BoardGame := preload("res://scripts/board_game/BoardGame.gd")
+const BoardGameData := preload("res://scripts/board_game/BoardGameData.gd")
+const BoardItem := preload("res://scripts/board_game/BoardItem.gd")
+
 # ============================================================
 # 猫咪合合乐 · 棋盘单格
 # 负责：物品渲染、拖拽（_get_drag_data/_can_drop_data/_drop_data）、

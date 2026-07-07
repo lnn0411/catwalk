@@ -1,6 +1,9 @@
 class_name BoardGame
 extends Node
 
+const BoardGameData := preload("res://scripts/board_game/BoardGameData.gd")
+const BoardItem := preload("res://scripts/board_game/BoardItem.gd")
+
 # ============================================================
 # 猫咪合合乐 · 棋盘核心逻辑（纯逻辑，不含 UI）
 # 5×5 棋盘，中心格为生成器；同链同星拖拽合并升级

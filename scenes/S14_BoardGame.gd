@@ -1,5 +1,11 @@
 extends "res://ui/UIPage.gd"
 
+const BoardCell := preload("res://scripts/board_game/BoardCell.gd")
+const BoardGame := preload("res://scripts/board_game/BoardGame.gd")
+const BoardGameData := preload("res://scripts/board_game/BoardGameData.gd")
+const BoardItem := preload("res://scripts/board_game/BoardItem.gd")
+const ItemChains := preload("res://scripts/board_game/ItemChains.gd")
+
 # ============================================================
 # S14_BoardGame · 猫咪合合乐 棋盘场景
 # 花园场景嵌入的迷你二合棋盘：5×5 网格，中心生成器

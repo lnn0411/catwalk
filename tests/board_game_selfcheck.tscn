@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://boardgame_selfcheck"]
+
+[ext_resource type="Script" path="res://tests/board_game_selfcheck.gd" id="1_bgcheck"]
+
+[node name="BoardGameSelfCheck" type="Node"]
+script = ExtResource("1_bgcheck")
