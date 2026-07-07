@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://catwalk_inc0011"
-path="res://.godot/imported/egg_orange_tabby-55b422a85fb95a7e.ctex"
+uid="uid://j35wyo0vmdjk"
+path="res://.godot/imported/egg_orange_tabby.png-55b422a85fb95a7ecdab3ccb195f5d92.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/incubation/eggs/egg_orange_tabby.png"
-dest_files=["res://.godot/imported/egg_orange_tabby-55b422a85fb95a7e.ctex"]
+dest_files=["res://.godot/imported/egg_orange_tabby.png-55b422a85fb95a7ecdab3ccb195f5d92.ctex"]
 
 [params]
 

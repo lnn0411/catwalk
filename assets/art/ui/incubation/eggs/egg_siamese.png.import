@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://catwalk_inc0012"
-path="res://.godot/imported/egg_siamese-edd3b94b854196e9.ctex"
+uid="uid://larg6jplb18r"
+path="res://.godot/imported/egg_siamese.png-edd3b94b854196e90e3b276baed791c3.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/incubation/eggs/egg_siamese.png"
-dest_files=["res://.godot/imported/egg_siamese-edd3b94b854196e9.ctex"]
+dest_files=["res://.godot/imported/egg_siamese.png-edd3b94b854196e90e3b276baed791c3.ctex"]
 
 [params]
 

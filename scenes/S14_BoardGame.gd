@@ -355,6 +355,7 @@ func _build_ad_rescue_dialog() -> void:
 # ---------------- 对局流程 ----------------
 
 func _start_game() -> void:
+	_exit_ad_rescue_mode()
 	if TicketManager != null:
 		if TicketManager.get_tickets() <= 0:
 			_result_label.text = "门票不足\n请先获取门票"
@@ -364,7 +365,6 @@ func _start_game() -> void:
 		TicketManager.spend_ticket()
 	board.start_new_game()
 	_result_overlay.visible = false
-	_exit_ad_rescue_mode()
 	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
 	var sub_name: String = ItemChains.get_chain_display_name(board.current_sub_chain)
 	_goal_label.text = "目标：合出 %s ⭐5 ｜ 副链：%s" % [main_name, sub_name]
@@ -398,6 +398,8 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 
 
 func _on_drop_requested(from_pos: Vector2i, to_pos: Vector2i) -> void:
+	if _ad_rescue_mode:
+		return
 	var target: BoardItem = board.get_item(to_pos)
 	if target != null:
 		if board.merge_items(from_pos, to_pos):

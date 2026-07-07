@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ht_0115"
-path="res://.godot/imported/portrait_orange-4e4555c41e1b1e7c.ctex"
+uid="uid://78rxwyclybvh"
+path="res://.godot/imported/portrait_orange.png-4e4555c41e1b1e7c1b4d8652a95ac88d.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/cats/portraits/reveal/portrait_orange.png"
-dest_files=["res://.godot/imported/portrait_orange-4e4555c41e1b1e7c.ctex"]
+dest_files=["res://.godot/imported/portrait_orange.png-4e4555c41e1b1e7c1b4d8652a95ac88d.ctex"]
 
 [params]
 
@@ -33,6 +33,7 @@ process/channel_remap/blue=2
 process/channel_remap/alpha=3
 process/fix_alpha_border=true
 process/premult_alpha=false
+process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0

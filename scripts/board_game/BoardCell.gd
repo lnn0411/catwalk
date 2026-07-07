@@ -105,7 +105,7 @@ func _build_visuals() -> void:
 
 func refresh() -> void:
 	"""按棋盘当前状态重绘本格"""
-	if board == null:
+	if board == null or _bg == null:
 		return
 	var style: StyleBoxFlat = _bg.get_theme_stylebox("panel").duplicate()
 	if is_generator:

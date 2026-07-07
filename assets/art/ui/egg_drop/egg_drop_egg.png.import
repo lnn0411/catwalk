@@ -2,14 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://eggd_egg_drop_egg"
-path="res://.godot/imported/egg_drop_egg-e34b0de092f8c7ef.ctex"
-metadata={"vram_texture": false}
+uid="uid://k0btxu1g02wc"
+path="res://.godot/imported/egg_drop_egg.png-e34b0de092f8c7ef928be03008578acb.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://assets/art/ui/egg_drop/egg_drop_egg.png"
-dest_files=["res://.godot/imported/egg_drop_egg-e34b0de092f8c7ef.ctex"]
+dest_files=["res://.godot/imported/egg_drop_egg.png-e34b0de092f8c7ef928be03008578acb.ctex"]
 
 [params]
 
@@ -31,6 +33,7 @@ process/channel_remap/blue=2
 process/channel_remap/alpha=3
 process/fix_alpha_border=true
 process/premult_alpha=false
+process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0

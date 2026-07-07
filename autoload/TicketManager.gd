@@ -23,9 +23,15 @@ var daily_interaction_tickets: int = 0
 var daily_ad_tickets: int = 0
 var daily_coin_tickets: int = 0
 var _last_ticket_date: String = ""
+var _login_claimed_today: bool = false
 
 func _ready() -> void:
 	_last_ticket_date = _today_key()
+	_connect_step_engine()
+	await get_tree().process_frame
+	_connect_step_engine()
+
+func _connect_step_engine() -> void:
 	if StepEngine != null and not StepEngine.steps_updated.is_connected(_on_steps_updated):
 		StepEngine.steps_updated.connect(_on_steps_updated)
 
@@ -48,6 +54,9 @@ func add_interaction(count: int = 1) -> void:
 
 func add_login_bonus(is_new_player: bool) -> void:
 	_check_daily_reset()
+	if _login_claimed_today:
+		return
+	_login_claimed_today = true
 	var amount = LOGIN_TICKET_NEW_PLAYER if is_new_player else LOGIN_TICKET_NORMAL
 	_add_tickets(amount, "login")
 
@@ -67,6 +76,7 @@ func buy_with_coins() -> bool:
 	return true
 
 func spend_ticket() -> bool:
+	_check_daily_reset()
 	if tickets <= 0: return false
 	tickets -= 1
 	ticket_spent.emit(1)
@@ -76,6 +86,7 @@ func spend_ticket() -> bool:
 func get_tickets() -> int: return tickets
 
 func get_daily_remaining() -> Dictionary:
+	_check_daily_reset()
 	return {
 		"steps": DAILY_STEP_TICKET_MAX - daily_step_tickets,
 		"steps_progress": daily_step_progress,
@@ -94,6 +105,7 @@ func get_save_data() -> Dictionary:
 		"daily_ad_tickets": daily_ad_tickets,
 		"daily_coin_tickets": daily_coin_tickets,
 		"last_ticket_date": _last_ticket_date,
+		"login_claimed_today": _login_claimed_today,
 	}
 
 func apply_save(data: Dictionary) -> void:
@@ -105,6 +117,7 @@ func apply_save(data: Dictionary) -> void:
 	daily_ad_tickets = int(data.get("daily_ad_tickets", 0))
 	daily_coin_tickets = int(data.get("daily_coin_tickets", 0))
 	_last_ticket_date = String(data.get("last_ticket_date", _today_key()))
+	_login_claimed_today = bool(data.get("login_claimed_today", false))
 	_check_daily_reset()
 
 func _add_tickets(amount: int, source: String) -> void:
@@ -121,6 +134,7 @@ func _check_daily_reset() -> void:
 	daily_interaction_tickets = 0
 	daily_ad_tickets = 0
 	daily_coin_tickets = 0
+	_login_claimed_today = false
 	_last_ticket_date = today
 
 func _today_key() -> String:

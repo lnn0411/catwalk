@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ht_0111"
-path="res://.godot/imported/hatch_shard_04-dcb7f7b9a74a173b.ctex"
+uid="uid://clqahyfwhf034"
+path="res://.godot/imported/hatch_shard_04.png-dcb7f7b9a74a173bc122ce2f7ee0634b.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/hatch_show/hatch_shard_04.png"
-dest_files=["res://.godot/imported/hatch_shard_04-dcb7f7b9a74a173b.ctex"]
+dest_files=["res://.godot/imported/hatch_shard_04.png-dcb7f7b9a74a173bc122ce2f7ee0634b.ctex"]
 
 [params]
 
@@ -33,6 +33,7 @@ process/channel_remap/blue=2
 process/channel_remap/alpha=3
 process/fix_alpha_border=true
 process/premult_alpha=false
+process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false
 process/size_limit=0

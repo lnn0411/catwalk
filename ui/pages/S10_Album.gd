@@ -16,13 +16,18 @@ const TAB_UNSELECTED := preload("res://assets/art/ui/cat_house/tab_unselected.pn
 const PORTRAIT_ORANGE := preload("res://assets/art/cats/portraits/reveal/portrait_orange.png")
 const PORTRAIT_BRITISH := preload("res://assets/art/cats/portraits/reveal/portrait_british.png")
 const PORTRAIT_SIAMESE := preload("res://assets/art/cats/portraits/reveal/portrait_siamese.png")
+const PostcardTabScript: GDScript = preload("res://scripts/collect_book/postcard_tab.gd")
+const AchievementTabScript: GDScript = preload("res://scripts/collect_book/achievement_tab.gd")
 
 var _current_tab := Tab.CATS
 var _cats: Array = []
+var _postcard_tab: Control
+var _achievement_tab: AchievementTab
 
 
 func _ready() -> void:
 	super._ready()
+	_setup_collection_tabs()
 	_switch_tab(Tab.CATS)
 
 
@@ -57,6 +62,42 @@ func _switch_tab(tab: Tab) -> void:
 
 	if tab == Tab.CATS:
 		_refresh_cats()
+	elif tab == Tab.CARDS and _postcard_tab:
+		var collected_ids: Array = ExploreEngine._collected_postcards if ExploreEngine else []
+		_postcard_tab.set_data(collected_ids)
+	elif tab == Tab.ACH and _achievement_tab:
+		_achievement_tab.setup()
+
+
+func _setup_collection_tabs() -> void:
+	for child in $PostcardsBox.get_children():
+		child.queue_free()
+	_postcard_tab = PostcardTabScript.new()
+	_postcard_tab.name = "PostcardTab"
+	_postcard_tab.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	$PostcardsBox.add_child(_postcard_tab)
+
+	for child in $AchBox.get_children():
+		child.queue_free()
+	var achievement_scroll := ScrollContainer.new()
+	achievement_scroll.name = "AchievementScroll"
+	achievement_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	achievement_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	$AchBox.add_child(achievement_scroll)
+
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 24)
+	margin.add_theme_constant_override("margin_right", 24)
+	margin.add_theme_constant_override("margin_top", 16)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	achievement_scroll.add_child(margin)
+
+	_achievement_tab = AchievementTabScript.new()
+	_achievement_tab.name = "AchievementTab"
+	_achievement_tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_child(_achievement_tab)
+	_achievement_tab.setup()
 
 
 static func _cat_str(cat, field: String, fallback: String = "") -> String:

@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://catwalk_inc0013"
-path="res://.godot/imported/incubation_room_bg_1080x1920-41f075dbb7925bc3.ctex"
+uid="uid://cpmig1lg7w7jl"
+path="res://.godot/imported/incubation_room_bg_1080x1920.png-41f075dbb7925bc37c8b82643ad9255c.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/incubation/background/incubation_room_bg_1080x1920.png"
-dest_files=["res://.godot/imported/incubation_room_bg_1080x1920-41f075dbb7925bc3.ctex"]
+dest_files=["res://.godot/imported/incubation_room_bg_1080x1920.png-41f075dbb7925bc37c8b82643ad9255c.ctex"]
 
 [params]
 

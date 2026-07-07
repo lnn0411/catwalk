@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://catwalk_inc0010"
-path="res://.godot/imported/egg_british_shorthair-2f967446e6dda5e0.ctex"
+uid="uid://ce1lylupe0vlc"
+path="res://.godot/imported/egg_british_shorthair.png-2f967446e6dda5e081df53946871b951.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/incubation/eggs/egg_british_shorthair.png"
-dest_files=["res://.godot/imported/egg_british_shorthair-2f967446e6dda5e0.ctex"]
+dest_files=["res://.godot/imported/egg_british_shorthair.png-2f967446e6dda5e081df53946871b951.ctex"]
 
 [params]
 

@@ -1,0 +1,83 @@
+{
+  "package": "catwalk_incubation_ui_assets_v2",
+  "engine": "Godot 4.x",
+  "style": "治愈系清爽 2D 手绘风；匹配孵化蛋与孵化室概念图",
+  "assets": [
+    {
+      "file": "assets/art/ui/incubation/background/incubation_room_bg_720x1280.png",
+      "size": "720x1280",
+      "type": "背景图"
+    },
+    {
+      "file": "assets/art/ui/incubation/background/incubation_room_bg_1080x1920.png",
+      "size": "1080x1920",
+      "type": "背景图"
+    },
+    {
+      "file": "assets/art/ui/incubation/components/btn_back.png",
+      "size": "96x96",
+      "type": "返回按钮，无文字"
+    },
+    {
+      "file": "assets/art/ui/incubation/components/btn_secondary_blank.png",
+      "size": "240x96",
+      "type": "米白按钮，无文字"
+    },
+    {
+      "file": "assets/art/ui/incubation/components/btn_primary_green_blank.png",
+      "size": "620x100",
+      "type": "绿色主按钮，无文字"
+    },
+    {
+      "file": "assets/art/ui/incubation/components/panel_energy_slot.png",
+      "size": "620x300",
+      "type": "顶部能量槽面板，无文字"
+    },
+    {
+      "file": "assets/art/ui/incubation/components/progress_bar_empty.png",
+      "size": "334x28",
+      "type": "空进度条"
+    },
+    {
+      "file": "assets/art/ui/incubation/slots/slot_card_empty.png",
+      "size": "334x178",
+      "type": "空槽卡面"
+    },
+    {
+      "file": "assets/art/ui/incubation/slots/slot_card_locked.png",
+      "size": "334x178",
+      "type": "锁态卡面"
+    },
+    {
+      "file": "assets/art/ui/incubation/slots/slot_card_incubating.png",
+      "size": "334x178",
+      "type": "孵化中卡面"
+    },
+    {
+      "file": "assets/art/ui/incubation/slots/slot_card_ready.png",
+      "size": "334x178",
+      "type": "就绪发光卡面"
+    },
+    {
+      "file": "assets/art/ui/incubation/eggs/egg_orange_tabby.png",
+      "size": "256x256",
+      "type": "橘猫蛋"
+    },
+    {
+      "file": "assets/art/ui/incubation/eggs/egg_british_shorthair.png",
+      "size": "256x256",
+      "type": "英短蛋"
+    },
+    {
+      "file": "assets/art/ui/incubation/eggs/egg_siamese.png",
+      "size": "256x256",
+      "type": "暹罗蛋"
+    }
+  ],
+  "notes": [
+    "V2：slot_card_empty / locked / incubating / ready 已统一为同一套奶油底金边卡面风格。",
+    "差异仅体现在状态层：locked 带锁图标，incubating 带底部微发光能量线，ready 带整卡柔和发光。",
+    "UI组件尽量处理为透明底 PNG；背景图为不透明整屏图。",
+    "按钮均不含文字，文字建议由 Godot Label/Theme 绘制。"
+  ]
+}

@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://catwalk_inc0008"
-path="res://.godot/imported/slot_card_locked-1734b76d185ab26b.ctex"
+uid="uid://csnf217rprqkk"
+path="res://.godot/imported/slot_card_locked.png-1734b76d185ab26b951a50a84acdc0bb.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/incubation/slots/slot_card_locked.png"
-dest_files=["res://.godot/imported/slot_card_locked-1734b76d185ab26b.ctex"]
+dest_files=["res://.godot/imported/slot_card_locked.png-1734b76d185ab26b951a50a84acdc0bb.ctex"]
 
 [params]
 

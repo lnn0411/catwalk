@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://catwalk_inc0005"
-path="res://.godot/imported/progress_bar_empty-0daccdc9b6f66ea2.ctex"
+uid="uid://bn3ha6lwxb2f7"
+path="res://.godot/imported/progress_bar_empty.png-0daccdc9b6f66ea2c38ef6537682e522.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/ui/incubation/components/progress_bar_empty.png"
-dest_files=["res://.godot/imported/progress_bar_empty-0daccdc9b6f66ea2.ctex"]
+dest_files=["res://.godot/imported/progress_bar_empty.png-0daccdc9b6f66ea2c38ef6537682e522.ctex"]
 
 [params]
 

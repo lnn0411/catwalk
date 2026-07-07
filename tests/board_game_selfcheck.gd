@@ -25,6 +25,7 @@ func _ready() -> void:
 	_t_cannot_merge()
 	_t_win_detection()
 	_t_deadlock_detection()
+	_t_no_deadlock_when_mergeable()
 	_t_serialize_restore()
 	_t_undo_merge()
 	_t_sub_chain_exit()
@@ -167,6 +168,26 @@ func _t_deadlock_detection() -> void:
 	b.queue_free()
 
 
+func _t_no_deadlock_when_mergeable() -> void:
+	print("[死局负向检测]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_remaining = 0
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	b._check_deadlock()
+	_check(b.game_state != BoardGameData.GameState.LOST, "生成器=0但有可合并对不死局")
+
+	b.grid.clear()
+	b.generator_remaining = 1
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.FIVE, p1)
+	b._check_deadlock()
+	_check(b.game_state != BoardGameData.GameState.LOST, "生成器>0且有空格不死局")
+	b.queue_free()
+
+
 func _t_serialize_restore() -> void:
 	print("[序列化恢复]")
 	var b := _fresh()
@@ -212,9 +233,9 @@ func _t_sub_chain_exit() -> void:
 	b.grid.clear()
 	b.generator_remaining = 3
 	var p := Vector2i(0, 0)
-	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.FIVE, p)
-	_check(b.sub_chain_exit(p), "点击⭐5副链成功")
-	_check(not b.grid.has(p), "副链⭐5被移除")
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	_check(b.sub_chain_exit(p), "点击⭐3副链成功")
+	_check(not b.grid.has(p), "副链⭐3被移除")
 	_check(b.generator_remaining == 5, "次数+2")
 	_check(b.sub_chain_exit_used, "副链出口标记已使用")
 	b.queue_free()

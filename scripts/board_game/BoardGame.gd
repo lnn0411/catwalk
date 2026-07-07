@@ -38,8 +38,9 @@ var current_sub_chain: int = BoardGameData.ItemChain.SNACK
 var game_state: int = BoardGameData.GameState.PLAYING
 var undo_stack: Array = []
 var undo_free_count: int = BoardGameData.UNDO_FREE_COUNT
-var sub_chain_exit_used: bool = false  # 副链出口是否已用（副链⭐5只触发一次）
+var sub_chain_exit_used: bool = false  # 副链出口是否已用（副链⭐3只触发一次）
 var ad_rescue_used: bool = false
+var is_give_up: bool = false
 
 
 func start_new_game() -> void:
@@ -55,13 +56,14 @@ func start_new_game() -> void:
 	undo_free_count = BoardGameData.UNDO_FREE_COUNT
 	sub_chain_exit_used = false
 	ad_rescue_used = false
+	is_give_up = false
 	game_state = BoardGameData.GameState.PLAYING
 	# 初始掉落
 	grid.clear()
 	var main_count := randi_range(BoardGameData.INITIAL_MAIN_MIN, BoardGameData.INITIAL_MAIN_MAX)
 	var sub_count := randi_range(BoardGameData.INITIAL_SUB_MIN, BoardGameData.INITIAL_SUB_MAX)
 	_place_initial_items(main_count, sub_count)
-	board_updated.emit(grid)
+	board_updated.emit(grid.duplicate(true))
 
 
 func can_merge(item_a: BoardItem, item_b: BoardItem) -> bool:
@@ -98,9 +100,9 @@ func merge_items(pos_a: Vector2i, pos_b: Vector2i) -> bool:
 	var new_item := BoardItem.create(item_a.chain, new_star, pos_b)
 	grid[pos_b] = new_item
 	item_merged.emit(pos_b, new_item)
-	board_updated.emit(grid)
-	# 副链⭐5：通知 UI 可走副链出口；奖励由 sub_chain_exit 负责结算
-	if new_item.chain == current_sub_chain and new_item.star == BoardGameData.StarLevel.FIVE:
+	board_updated.emit(grid.duplicate(true))
+	# 副链⭐3：通知 UI 可走副链出口；奖励由 sub_chain_exit 负责结算
+	if new_item.chain == current_sub_chain and new_item.star == BoardGameData.StarLevel.THREE:
 		sub_chain_completed.emit(new_item)
 	# 检查通关：主链⭐5出现
 	if new_item.chain == current_main_chain and new_item.star == BoardGameData.StarLevel.FIVE:
@@ -125,7 +127,7 @@ func move_item(from_pos: Vector2i, to_pos: Vector2i) -> bool:
 	grid[to_pos] = item
 	undo_stack.append({"type": "move", "from": from_pos, "to": to_pos})
 	item_moved.emit(from_pos, to_pos)
-	board_updated.emit(grid)
+	board_updated.emit(grid.duplicate(true))
 	return true
 
 
@@ -138,7 +140,7 @@ func click_generator() -> bool:
 	var empty_cells := _get_empty_cells()
 	if empty_cells.is_empty():
 		return false  # 棋盘满了
-	var index := BoardGameData.GENERATOR_TOTAL - generator_remaining  # 当前是第几次（0起）
+	var index: int = clampi(BoardGameData.GENERATOR_TOTAL - generator_remaining, 0, BoardGameData.DROP_SEQUENCE.size() - 1)
 	var is_main: bool = BoardGameData.DROP_SEQUENCE[index]
 	var target_pos := _nearest_empty(empty_cells, BoardGameData.GENERATOR_POS)
 	var chain := current_main_chain if is_main else current_sub_chain
@@ -148,7 +150,7 @@ func click_generator() -> bool:
 	undo_stack.append({"type": "generator", "pos": target_pos, "item": new_item.duplicate_item()})
 	generator_clicked.emit(target_pos, new_item)
 	generator_used.emit(generator_remaining)
-	board_updated.emit(grid)
+	board_updated.emit(grid.duplicate(true))
 	_check_deadlock()
 	return true
 
@@ -166,7 +168,7 @@ func undo() -> bool:
 	var action: Dictionary = undo_stack.pop_back()
 	_apply_undo(action)
 	undo_performed.emit(action)
-	board_updated.emit(grid)
+	board_updated.emit(grid.duplicate(true))
 	return true
 
 
@@ -180,38 +182,39 @@ func get_undo_cost() -> Dictionary:
 
 
 func give_up() -> void:
-	"""主动放弃本局：置为失败并发放安慰奖（小鱼干×1）。已通关则忽略。"""
-	if game_state == BoardGameData.GameState.WON:
+	"""主动放弃本局：置为失败并发放安慰奖（小鱼干×1）。非进行中则忽略。"""
+	if game_state != BoardGameData.GameState.PLAYING:
 		return
+	is_give_up = true
 	game_state = BoardGameData.GameState.LOST
 	consolation_prize.emit(CONSOLATION_ITEM, CONSOLATION_COUNT, CONSOLATION_TEXT)
 
 
 func ad_rescue(extra_uses: int = 5) -> bool:
 	"""看广告救场：死局后补充生成器次数，每局一次"""
-	if game_state != BoardGameData.GameState.LOST or ad_rescue_used:
+	if game_state != BoardGameData.GameState.LOST or ad_rescue_used or is_give_up:
 		return false
 	ad_rescue_used = true
 	generator_remaining += extra_uses
 	game_state = BoardGameData.GameState.PLAYING
 	generator_used.emit(generator_remaining)
-	board_updated.emit(grid)
+	board_updated.emit(grid.duplicate(true))
 	return true
 
 
 func sub_chain_exit(pos: Vector2i) -> bool:
-	"""副链出口：移除指定位置的副链⭐5；每局首次额外返还2次生成器。"""
+	"""副链出口：移除指定位置的副链⭐3；每局首次额外返还2次生成器。"""
 	if not grid.has(pos):
 		return false
 	var item: BoardItem = grid[pos]
-	if item == null or item.chain != current_sub_chain or item.star != BoardGameData.StarLevel.FIVE:
+	if item == null or item.chain != current_sub_chain or item.star != BoardGameData.StarLevel.THREE:
 		return false
 	grid.erase(pos)
 	if not sub_chain_exit_used:
 		sub_chain_exit_used = true
 		generator_remaining += 2
 		generator_used.emit(generator_remaining)
-	board_updated.emit(grid)
+	board_updated.emit(grid.duplicate(true))
 	_check_deadlock()
 	return true
 
@@ -242,6 +245,7 @@ func serialize_state() -> Dictionary:
 		"undo_free_count": undo_free_count,
 		"sub_chain_exit_used": sub_chain_exit_used,
 		"ad_rescue_used": ad_rescue_used,
+		"is_give_up": is_give_up,
 	}
 
 
@@ -261,13 +265,14 @@ func deserialize_state(data: Dictionary) -> void:
 	undo_free_count = int(data.get("undo_free_count", undo_free_count))
 	sub_chain_exit_used = bool(data.get("sub_chain_exit_used", sub_chain_exit_used))
 	ad_rescue_used = bool(data.get("ad_rescue_used", ad_rescue_used))
+	is_give_up = bool(data.get("is_give_up", is_give_up))
 	undo_stack.clear()
 	for raw_action in data.get("undo_stack", []):
 		var action := _deserialize_undo_action(raw_action)
 		if not action.is_empty():
 			undo_stack.append(action)
 	generator_used.emit(generator_remaining)
-	board_updated.emit(grid)
+	board_updated.emit(grid.duplicate(true))
 
 
 # ---------------- 内部方法 ----------------

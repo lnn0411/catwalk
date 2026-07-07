@@ -1,28 +1,31 @@
 extends "res://ui/UIPage.gd"
 ## 图鉴主面板 —— 全屏 Control。
-## 内部托管 CatTab（猫猫图鉴）与 PostcardTab（明信片占位），
-## 顶部标题 + 已发现统计 + TabBar（两个 Tab 按钮）+ 返回按钮。
+## 内部托管 CatTab、PostcardTab 与 AchievementTab，
+## 顶部标题 + 已发现统计 + TabBar（三个 Tab 按钮）+ 返回按钮。
 ## 所有 UI 全用 _draw() 代码绘制。
 
 const DESIGN_SIZE: Vector2 = Vector2(720, 1280)
 
 const CatTabScript: GDScript = preload("res://scripts/collect_book/cat_tab.gd")
 const PostcardTabScript: GDScript = preload("res://scripts/collect_book/postcard_tab.gd")
+const AchievementTabScript: GDScript = preload("res://scripts/collect_book/achievement_tab.gd")
 const DetailPopupScript: GDScript = preload("res://scripts/collect_book/cat_detail_popup.gd")
 const PostcardPopupScript: GDScript = preload("res://scripts/collect_book/postcard_detail_popup.gd")
 const CatDataScript: GDScript = preload("res://core/CatData.gd")
 
 # 点击热区（设计坐标系）
 const BACK_BTN_RECT: Rect2 = Rect2(28, 59, 85, 48)
-const TAB_CAT_RECT: Rect2 = Rect2(48, 150, 300, 66)
-const TAB_POST_RECT: Rect2 = Rect2(372, 150, 300, 66)
+const TAB_CAT_RECT: Rect2 = Rect2(30, 150, 210, 66)
+const TAB_POST_RECT: Rect2 = Rect2(255, 150, 210, 66)
+const TAB_ACH_RECT: Rect2 = Rect2(480, 150, 210, 66)
 
-enum Tab { CAT, POSTCARD }
+enum Tab { CAT, POSTCARD, ACHIEVEMENT }
 
 var active_tab: int = Tab.CAT
 
 var _cat_tab: Control
 var _postcard_tab: Control
+var _achievement_tab: AchievementTab
 
 var _discovered: int = 0
 var _total: int = 0
@@ -54,6 +57,29 @@ func _build_ui() -> void:
 	add_child(_postcard_tab)
 	_postcard_tab.postcard_cell_pressed.connect(_on_postcard_cell_pressed)
 
+	# 成就 Tab
+	var achievement_scroll := ScrollContainer.new()
+	achievement_scroll.name = "AchievementScroll"
+	achievement_scroll.position = Vector2(0, 236)
+	achievement_scroll.custom_minimum_size = Vector2(DESIGN_SIZE.x, DESIGN_SIZE.y - 236)
+	achievement_scroll.size = achievement_scroll.custom_minimum_size
+	achievement_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	add_child(achievement_scroll)
+
+	var achievement_margin := MarginContainer.new()
+	achievement_margin.add_theme_constant_override("margin_left", 28)
+	achievement_margin.add_theme_constant_override("margin_right", 28)
+	achievement_margin.add_theme_constant_override("margin_top", 20)
+	achievement_margin.add_theme_constant_override("margin_bottom", 20)
+	achievement_margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	achievement_scroll.add_child(achievement_margin)
+
+	_achievement_tab = AchievementTabScript.new()
+	_achievement_tab.name = "AchievementTab"
+	_achievement_tab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	achievement_margin.add_child(_achievement_tab)
+	_achievement_tab.setup()
+
 	_apply_tab_visibility()
 
 
@@ -77,6 +103,7 @@ func _refresh() -> void:
 	# 明信片数据
 	var collected_ids: Array = ExploreEngine._collected_postcards if ExploreEngine else []
 	_postcard_tab.set_data(collected_ids)
+	_achievement_tab.setup()
 	queue_redraw()
 
 
@@ -100,6 +127,7 @@ func _draw() -> void:
 	# Tab 按钮
 	_draw_tab_button(font, TAB_CAT_RECT, "猫猫", active_tab == Tab.CAT)
 	_draw_tab_button(font, TAB_POST_RECT, "明信片", active_tab == Tab.POSTCARD)
+	_draw_tab_button(font, TAB_ACH_RECT, "成就", active_tab == Tab.ACHIEVEMENT)
 
 
 func _draw_tab_button(font: Font, rect: Rect2, label: String, is_active: bool) -> void:
@@ -126,6 +154,9 @@ func _gui_input(event: InputEvent) -> void:
 		elif TAB_POST_RECT.has_point(p):
 			accept_event()
 			_switch_tab(Tab.POSTCARD)
+		elif TAB_ACH_RECT.has_point(p):
+			accept_event()
+			_switch_tab(Tab.ACHIEVEMENT)
 
 
 func _switch_tab(tab: int) -> void:
@@ -141,6 +172,9 @@ func _apply_tab_visibility() -> void:
 		_cat_tab.visible = active_tab == Tab.CAT
 	if _postcard_tab:
 		_postcard_tab.visible = active_tab == Tab.POSTCARD
+	var achievement_scroll := get_node_or_null("AchievementScroll") as ScrollContainer
+	if achievement_scroll:
+		achievement_scroll.visible = active_tab == Tab.ACHIEVEMENT
 
 
 func _on_cat_cell_pressed(cat_data: Variant) -> void:

@@ -491,14 +491,13 @@ func _on_explore_confirmed(duration_hours: int, dialog: Node) -> void:
 
 
 func _collect_explore_return() -> void:
-	var entry := ExploreEngine.collect(cat_id)
+	var species := _get_cat_property("species", _get_cat_property("breed", "orange"))
+	var entry := ExploreEngine.collect(cat_id, species)
 	if entry.is_empty():
 		return
-	var reward_type := ExploreEngine._roll_reward_type(cat_id)
+	var reward_type := entry.get("reward_type", "")
 	if EventBus:
 		EventBus.emit_explore_returned(cat_id, reward_type)
-		if reward_type == "postcard":
-			EventBus.emit_postcard_obtained("pc_%s_%d" % [cat_id, Time.get_unix_time_from_system()], "city")
 	_show_return_animation(reward_type)
 	_show_feedback("探索奖励已领取")
 	_check_explore_state()
