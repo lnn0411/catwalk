@@ -47,6 +47,7 @@ SigninSystem="*res://core/SigninSystem.gd"
 AchievementSystem="*res://core/AchievementSystem.gd"
 TutorialManager="*res://core/TutorialManager.gd"
 WeatherTimeManager="*res://core/WeatherTimeManager.gd"
+LevelStateManager="*res://scripts/board_game/LevelStateManager.gd"
 
 [display]
 

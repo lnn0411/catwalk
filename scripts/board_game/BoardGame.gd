@@ -20,6 +20,15 @@ signal game_lost
 signal sub_chain_completed(item: BoardItem)
 signal undo_performed(action: Dictionary)
 signal board_updated(grid_data: Dictionary)
+signal consolation_prize(item_name: String, count: int, message: String)  # 放弃本局的安慰奖
+
+# 撤销：免费次数用尽后每次撤销的钻石成本
+const UNDO_DIAMOND_COST := 10
+
+# 主动放弃本局的安慰奖（与 LevelStateManager.CONSOLATION_PRIZE 保持一致）
+const CONSOLATION_ITEM := "小鱼干"
+const CONSOLATION_COUNT := 1
+const CONSOLATION_TEXT := "猫咪们说：没关系，下次再来喵"
 
 # 棋盘状态
 var grid: Dictionary = {}  # key: Vector2i, value: BoardItem
@@ -159,6 +168,23 @@ func undo() -> bool:
 	undo_performed.emit(action)
 	board_updated.emit(grid)
 	return true
+
+
+func get_undo_cost() -> Dictionary:
+	"""下一次撤销的成本：免费额度内为 0 钻石，用尽后每次 UNDO_DIAMOND_COST 钻石。"""
+	var free_remaining: int = max(undo_free_count, 0)
+	return {
+		"free_remaining": free_remaining,
+		"diamond_cost": 0 if free_remaining > 0 else UNDO_DIAMOND_COST,
+	}
+
+
+func give_up() -> void:
+	"""主动放弃本局：置为失败并发放安慰奖（小鱼干×1）。已通关则忽略。"""
+	if game_state == BoardGameData.GameState.WON:
+		return
+	game_state = BoardGameData.GameState.LOST
+	consolation_prize.emit(CONSOLATION_ITEM, CONSOLATION_COUNT, CONSOLATION_TEXT)
 
 
 func ad_rescue(extra_uses: int = 5) -> bool:
