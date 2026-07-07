@@ -1,0 +1,424 @@
+class_name BoardGame
+extends Node
+
+# ============================================================
+# 猫咪合合乐 · 棋盘核心逻辑（纯逻辑，不含 UI）
+# 5×5 棋盘，中心格为生成器；同链同星拖拽合并升级
+# 通关：合出主链⭐5；死局：无可合并且（生成器耗尽或棋盘满）
+# ============================================================
+
+# 信号
+signal item_merged(pos: Vector2i, new_item: BoardItem)
+signal item_moved(from_pos: Vector2i, to_pos: Vector2i)
+signal generator_clicked(pos: Vector2i, item: BoardItem)
+signal generator_used(count: int)
+signal game_won
+signal game_lost
+signal sub_chain_completed(item: BoardItem)
+signal undo_performed(action: Dictionary)
+signal board_updated(grid_data: Dictionary)
+
+# 棋盘状态
+var grid: Dictionary = {}  # key: Vector2i, value: BoardItem
+var generator_remaining: int = BoardGameData.GENERATOR_TOTAL
+var current_main_chain: int = BoardGameData.ItemChain.WEAR
+var current_sub_chain: int = BoardGameData.ItemChain.SNACK
+var game_state: int = BoardGameData.GameState.PLAYING
+var undo_stack: Array = []
+var undo_free_count: int = BoardGameData.UNDO_FREE_COUNT
+var sub_chain_exit_used: bool = false  # 副链出口是否已用（副链⭐5只触发一次）
+var ad_rescue_used: bool = false
+
+
+func start_new_game() -> void:
+	"""初始化新一局：随机选链→初始掉落→生成器满"""
+	randomize()
+	# 随机选主链和副链（不同）
+	var chains: Array = BoardGameData.all_chains()
+	chains.shuffle()
+	current_main_chain = chains[0]
+	current_sub_chain = chains[1]
+	generator_remaining = BoardGameData.GENERATOR_TOTAL
+	undo_stack.clear()
+	undo_free_count = BoardGameData.UNDO_FREE_COUNT
+	sub_chain_exit_used = false
+	ad_rescue_used = false
+	game_state = BoardGameData.GameState.PLAYING
+	# 初始掉落
+	grid.clear()
+	var main_count := randi_range(BoardGameData.INITIAL_MAIN_MIN, BoardGameData.INITIAL_MAIN_MAX)
+	var sub_count := randi_range(BoardGameData.INITIAL_SUB_MIN, BoardGameData.INITIAL_SUB_MAX)
+	_place_initial_items(main_count, sub_count)
+	board_updated.emit(grid)
+
+
+func can_merge(item_a: BoardItem, item_b: BoardItem) -> bool:
+	"""判断两个物品是否可以合并：同链+同星级，且未达⭐5"""
+	if item_a == null or item_b == null:
+		return false
+	if item_a.is_max_star():
+		return false
+	return item_a.chain == item_b.chain and item_a.star == item_b.star
+
+
+func merge_items(pos_a: Vector2i, pos_b: Vector2i) -> bool:
+	"""合并两个物品：pos_a 拖到 pos_b，pos_b 处生成高一级物品"""
+	if game_state != BoardGameData.GameState.PLAYING:
+		return false
+	if pos_a == pos_b:
+		return false
+	if not (grid.has(pos_a) and grid.has(pos_b)):
+		return false
+	var item_a: BoardItem = grid[pos_a]
+	var item_b: BoardItem = grid[pos_b]
+	if not can_merge(item_a, item_b):
+		return false
+	# 保存撤销信息（快照，避免后续引用被改）
+	undo_stack.append({
+		"type": "merge",
+		"from_a": pos_a, "item_a": item_a.duplicate_item(),
+		"from_b": pos_b, "item_b": item_b.duplicate_item(),
+	})
+	# 合并：移除两个，在目标位置生成高级物品
+	grid.erase(pos_a)
+	grid.erase(pos_b)
+	var new_star: int = min(item_a.star + 1, BoardGameData.StarLevel.FIVE)
+	var new_item := BoardItem.create(item_a.chain, new_star, pos_b)
+	grid[pos_b] = new_item
+	item_merged.emit(pos_b, new_item)
+	board_updated.emit(grid)
+	# 副链⭐5：通知 UI 可走副链出口；奖励由 sub_chain_exit 负责结算
+	if new_item.chain == current_sub_chain and new_item.star == BoardGameData.StarLevel.FIVE:
+		sub_chain_completed.emit(new_item)
+	# 检查通关：主链⭐5出现
+	if new_item.chain == current_main_chain and new_item.star == BoardGameData.StarLevel.FIVE:
+		game_state = BoardGameData.GameState.WON
+		game_won.emit()
+		return true
+	_check_deadlock()
+	return true
+
+
+func move_item(from_pos: Vector2i, to_pos: Vector2i) -> bool:
+	"""移动物品到空格"""
+	if game_state != BoardGameData.GameState.PLAYING:
+		return false
+	if not BoardGameData.is_valid_pos(to_pos) or to_pos == BoardGameData.GENERATOR_POS:
+		return false
+	if not grid.has(from_pos) or grid.has(to_pos):
+		return false
+	var item: BoardItem = grid[from_pos]
+	grid.erase(from_pos)
+	item.grid_pos = to_pos
+	grid[to_pos] = item
+	undo_stack.append({"type": "move", "from": from_pos, "to": to_pos})
+	item_moved.emit(from_pos, to_pos)
+	board_updated.emit(grid)
+	return true
+
+
+func click_generator() -> bool:
+	"""点击生成器，在最近空格产出物品"""
+	if game_state != BoardGameData.GameState.PLAYING:
+		return false
+	if generator_remaining <= 0:
+		return false
+	var empty_cells := _get_empty_cells()
+	if empty_cells.is_empty():
+		return false  # 棋盘满了
+	var index := BoardGameData.GENERATOR_TOTAL - generator_remaining  # 当前是第几次（0起）
+	var is_main: bool = BoardGameData.DROP_SEQUENCE[index]
+	var target_pos := _nearest_empty(empty_cells, BoardGameData.GENERATOR_POS)
+	var chain := current_main_chain if is_main else current_sub_chain
+	var new_item := BoardItem.create(chain, BoardGameData.StarLevel.ONE, target_pos)
+	grid[target_pos] = new_item
+	generator_remaining -= 1
+	undo_stack.append({"type": "generator", "pos": target_pos, "item": new_item.duplicate_item()})
+	generator_clicked.emit(target_pos, new_item)
+	generator_used.emit(generator_remaining)
+	board_updated.emit(grid)
+	_check_deadlock()
+	return true
+
+
+func can_undo() -> bool:
+	return not undo_stack.is_empty() and game_state == BoardGameData.GameState.PLAYING
+
+
+func undo() -> bool:
+	"""撤销上一步操作。前 UNDO_FREE_COUNT 次免费，之后由 UI 层负责扣钻石后再调用"""
+	if not can_undo():
+		return false
+	if undo_free_count > 0:
+		undo_free_count -= 1
+	var action: Dictionary = undo_stack.pop_back()
+	_apply_undo(action)
+	undo_performed.emit(action)
+	board_updated.emit(grid)
+	return true
+
+
+func ad_rescue(extra_uses: int = 5) -> bool:
+	"""看广告救场：死局后补充生成器次数，每局一次"""
+	if game_state != BoardGameData.GameState.LOST or ad_rescue_used:
+		return false
+	ad_rescue_used = true
+	generator_remaining += extra_uses
+	game_state = BoardGameData.GameState.PLAYING
+	generator_used.emit(generator_remaining)
+	board_updated.emit(grid)
+	return true
+
+
+func sub_chain_exit(pos: Vector2i) -> bool:
+	"""副链出口：移除指定位置的副链⭐5；每局首次额外返还2次生成器。"""
+	if not grid.has(pos):
+		return false
+	var item: BoardItem = grid[pos]
+	if item == null or item.chain != current_sub_chain or item.star != BoardGameData.StarLevel.FIVE:
+		return false
+	grid.erase(pos)
+	if not sub_chain_exit_used:
+		sub_chain_exit_used = true
+		generator_remaining += 2
+		generator_used.emit(generator_remaining)
+	board_updated.emit(grid)
+	_check_deadlock()
+	return true
+
+
+func get_item(pos: Vector2i) -> BoardItem:
+	return grid.get(pos)
+
+
+func is_generator_pos(pos: Vector2i) -> bool:
+	return pos == BoardGameData.GENERATOR_POS
+
+
+func serialize_state() -> Dictionary:
+	"""序列化当前棋盘对局状态，供外层存档系统保存。"""
+	var grid_data: Dictionary = {}
+	for pos in grid:
+		grid_data[_pos_to_key(pos)] = _serialize_item(grid[pos])
+	var undo_data: Array = []
+	for action in undo_stack:
+		undo_data.append(_serialize_undo_action(action))
+	return {
+		"grid": grid_data,
+		"generator_remaining": generator_remaining,
+		"current_main_chain": current_main_chain,
+		"current_sub_chain": current_sub_chain,
+		"game_state": game_state,
+		"undo_stack": undo_data,
+		"undo_free_count": undo_free_count,
+		"sub_chain_exit_used": sub_chain_exit_used,
+		"ad_rescue_used": ad_rescue_used,
+	}
+
+
+func deserialize_state(data: Dictionary) -> void:
+	"""恢复 serialize_state 产生的状态。缺失字段按当前默认值兜底。"""
+	grid.clear()
+	var grid_data: Dictionary = data.get("grid", {})
+	for key in grid_data:
+		var pos := _key_to_pos(str(key))
+		var item := _deserialize_item(grid_data[key], pos)
+		if item != null:
+			grid[pos] = item
+	generator_remaining = int(data.get("generator_remaining", generator_remaining))
+	current_main_chain = int(data.get("current_main_chain", current_main_chain))
+	current_sub_chain = int(data.get("current_sub_chain", current_sub_chain))
+	game_state = int(data.get("game_state", game_state))
+	undo_free_count = int(data.get("undo_free_count", undo_free_count))
+	sub_chain_exit_used = bool(data.get("sub_chain_exit_used", sub_chain_exit_used))
+	ad_rescue_used = bool(data.get("ad_rescue_used", ad_rescue_used))
+	undo_stack.clear()
+	for raw_action in data.get("undo_stack", []):
+		var action := _deserialize_undo_action(raw_action)
+		if not action.is_empty():
+			undo_stack.append(action)
+	generator_used.emit(generator_remaining)
+	board_updated.emit(grid)
+
+
+# ---------------- 内部方法 ----------------
+
+func _pos_to_key(pos: Vector2i) -> String:
+	return "%d_%d" % [pos.x, pos.y]
+
+
+func _key_to_pos(key: String) -> Vector2i:
+	var parts := key.split("_")
+	if parts.size() < 2:
+		return Vector2i.ZERO
+	return Vector2i(int(parts[0]), int(parts[1]))
+
+
+func _serialize_pos(pos: Vector2i) -> Dictionary:
+	return {"x": pos.x, "y": pos.y}
+
+
+func _deserialize_pos(data: Variant) -> Vector2i:
+	if data is Vector2i:
+		return data
+	if data is Dictionary:
+		return Vector2i(int(data.get("x", 0)), int(data.get("y", 0)))
+	if data is String:
+		return _key_to_pos(data)
+	return Vector2i.ZERO
+
+
+func _serialize_item(item: BoardItem) -> Dictionary:
+	if item == null:
+		return {}
+	return {
+		"chain": item.chain,
+		"star": item.star,
+		"id": item.id,
+		"grid_pos": _serialize_pos(item.grid_pos),
+	}
+
+
+func _deserialize_item(data: Variant, fallback_pos: Vector2i) -> BoardItem:
+	if not (data is Dictionary):
+		return null
+	var pos := _deserialize_pos(data.get("grid_pos", fallback_pos))
+	return BoardItem.create(int(data.get("chain", current_main_chain)), int(data.get("star", BoardGameData.StarLevel.ONE)), pos)
+
+
+func _serialize_undo_action(action: Dictionary) -> Dictionary:
+	var out := {"type": action.get("type", "")}
+	match String(out.type):
+		"merge":
+			out["from_a"] = _serialize_pos(action.from_a)
+			out["item_a"] = _serialize_item(action.item_a)
+			out["from_b"] = _serialize_pos(action.from_b)
+			out["item_b"] = _serialize_item(action.item_b)
+		"move":
+			out["from"] = _serialize_pos(action.from)
+			out["to"] = _serialize_pos(action.to)
+		"generator":
+			out["pos"] = _serialize_pos(action.pos)
+			out["item"] = _serialize_item(action.item)
+	return out
+
+
+func _deserialize_undo_action(data: Variant) -> Dictionary:
+	if not (data is Dictionary):
+		return {}
+	var action := {"type": String(data.get("type", ""))}
+	match action.type:
+		"merge":
+			var from_a := _deserialize_pos(data.get("from_a", Vector2i.ZERO))
+			var from_b := _deserialize_pos(data.get("from_b", Vector2i.ZERO))
+			action["from_a"] = from_a
+			action["item_a"] = _deserialize_item(data.get("item_a", {}), from_a)
+			action["from_b"] = from_b
+			action["item_b"] = _deserialize_item(data.get("item_b", {}), from_b)
+		"move":
+			action["from"] = _deserialize_pos(data.get("from", Vector2i.ZERO))
+			action["to"] = _deserialize_pos(data.get("to", Vector2i.ZERO))
+		"generator":
+			var pos := _deserialize_pos(data.get("pos", Vector2i.ZERO))
+			action["pos"] = pos
+			action["item"] = _deserialize_item(data.get("item", {}), pos)
+		_:
+			return {}
+	return action
+
+func _apply_undo(action: Dictionary) -> void:
+	"""执行具体的撤销逻辑"""
+	match action.type:
+		"merge":
+			# 移除合并产物，还原两个原物品
+			grid.erase(action.from_b)
+			var item_a: BoardItem = action.item_a.duplicate_item()
+			item_a.grid_pos = action.from_a
+			var item_b: BoardItem = action.item_b.duplicate_item()
+			item_b.grid_pos = action.from_b
+			grid[action.from_a] = item_a
+			grid[action.from_b] = item_b
+			# 撤销的是通关/副链出口合成时，回退相应状态
+			if item_a.chain == current_sub_chain and action.item_a.star == BoardGameData.StarLevel.FOUR:
+				pass  # 副链出口奖励不回收（一次性）
+		"move":
+			var item: BoardItem = grid[action.to]
+			grid.erase(action.to)
+			item.grid_pos = action.from
+			grid[action.from] = item
+		"generator":
+			grid.erase(action.pos)
+			generator_remaining += 1
+			generator_used.emit(generator_remaining)
+
+
+func _place_initial_items(main_count: int, sub_count: int) -> void:
+	"""初始掉落：随机空格放置1星物品（避开生成器格）"""
+	var cells: Array = []
+	for pos in BoardGameData.all_cells():
+		if pos != BoardGameData.GENERATOR_POS:
+			cells.append(pos)
+	cells.shuffle()
+	var idx := 0
+	for i in range(main_count):
+		if idx >= cells.size():
+			return
+		grid[cells[idx]] = BoardItem.create(current_main_chain, BoardGameData.StarLevel.ONE, cells[idx])
+		idx += 1
+	for i in range(sub_count):
+		if idx >= cells.size():
+			return
+		grid[cells[idx]] = BoardItem.create(current_sub_chain, BoardGameData.StarLevel.ONE, cells[idx])
+		idx += 1
+
+
+func _get_empty_cells() -> Array:
+	var empty: Array = []
+	for pos in BoardGameData.all_cells():
+		if pos == BoardGameData.GENERATOR_POS:
+			continue
+		if not grid.has(pos):
+			empty.append(pos)
+	return empty
+
+
+func _nearest_empty(empty_cells: Array, origin: Vector2i) -> Vector2i:
+	"""曼哈顿距离最近的空格；距离相同时按 y、x 排序保证确定性"""
+	var best: Vector2i = empty_cells[0]
+	var best_dist := _manhattan(best, origin)
+	for pos in empty_cells:
+		var d := _manhattan(pos, origin)
+		if d < best_dist or (d == best_dist and (pos.y < best.y or (pos.y == best.y and pos.x < best.x))):
+			best = pos
+			best_dist = d
+	return best
+
+
+func _manhattan(a: Vector2i, b: Vector2i) -> int:
+	return abs(a.x - b.x) + abs(a.y - b.y)
+
+
+func _check_deadlock() -> void:
+	"""死局判定：无可合并物品，且（生成器耗尽 或 棋盘已满无法再产出）"""
+	if game_state != BoardGameData.GameState.PLAYING:
+		return
+	if _has_mergeable():
+		return  # 还有可合并项
+	var board_full := _get_empty_cells().is_empty()
+	if generator_remaining > 0 and not board_full:
+		return  # 生成器还能产出新物品
+	game_state = BoardGameData.GameState.LOST
+	game_lost.emit()
+
+
+func _has_mergeable() -> bool:
+	"""检查是否存在任意两个同链同星（<⭐5）的物品——拖拽可跨格，无需相邻"""
+	var count_by_id: Dictionary = {}
+	for pos in grid:
+		var item: BoardItem = grid[pos]
+		if item.is_max_star():
+			continue
+		count_by_id[item.id] = count_by_id.get(item.id, 0) + 1
+		if count_by_id[item.id] >= 2:
+			return true
+	return false
