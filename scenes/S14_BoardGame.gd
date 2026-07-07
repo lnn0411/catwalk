@@ -262,6 +262,13 @@ func _build_result_overlay() -> void:
 # ---------------- 对局流程 ----------------
 
 func _start_game() -> void:
+	if TicketManager != null:
+		if TicketManager.get_tickets() <= 0:
+			_result_label.text = "门票不足\n请先获取门票"
+			_show_result()
+			_refresh_ticket_label()
+			return
+		TicketManager.spend_ticket()
 	board.start_new_game()
 	_result_overlay.visible = false
 	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
@@ -277,6 +284,12 @@ func _refresh_all() -> void:
 	_generator_label.text = "生成器 ×%d" % board.generator_remaining
 	_undo_button.text = "↩ 撤销 (%d)" % board.undo_free_count
 	_undo_button.disabled = not board.can_undo()
+	_refresh_ticket_label()
+
+
+func _refresh_ticket_label() -> void:
+	if TicketManager != null:
+		_ticket_label.text = "🎟 ×%d" % TicketManager.get_tickets()
 
 
 # ---------------- 交互回调 ----------------
