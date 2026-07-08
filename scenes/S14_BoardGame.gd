@@ -37,6 +37,7 @@ var _ad_rescue_remove_button: Button
 var _ad_rescue_selected: Dictionary = {}  # Vector2i -> true
 var _ad_rescue_highlights: Dictionary = {}  # Vector2i -> Panel
 var _ad_rescue_mode: bool = false
+var _dbg_ticket_btn: Button
 
 
 func _ready() -> void:
@@ -85,6 +86,7 @@ func _build_ui() -> void:
 	root.add_child(_build_bottom_bar())
 	_build_result_overlay()
 	_build_ad_rescue_dialog()
+	_build_debug_ticket_button()
 
 
 func _build_top_bar() -> Control:
@@ -350,6 +352,37 @@ func _build_ad_rescue_dialog() -> void:
 	_ad_rescue_remove_button.add_theme_color_override("font_disabled_color", Color(UI_TEXT_COLOR, 0.45))
 	_ad_rescue_remove_button.pressed.connect(_remove_selected_items)
 	bottom.add_child(_ad_rescue_remove_button)
+
+
+func _build_debug_ticket_button() -> void:
+	# 仅 debug 构建可见：右下角快速加 3 张门票
+	if not OS.is_debug_build():
+		return
+	_dbg_ticket_btn = Button.new()
+	_dbg_ticket_btn.text = "🎟+3"
+	_dbg_ticket_btn.custom_minimum_size = Vector2(64, 40)
+	_dbg_ticket_btn.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_dbg_ticket_btn.offset_left = -80.0
+	_dbg_ticket_btn.offset_top = -60.0
+	_dbg_ticket_btn.add_theme_font_size_override("font_size", 16)
+	_dbg_ticket_btn.add_theme_color_override("font_color", Color.WHITE)
+	_dbg_ticket_btn.add_theme_color_override("font_hover_color", Color.WHITE)
+	_dbg_ticket_btn.add_theme_color_override("font_pressed_color", Color.WHITE)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0.55)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 8.0
+	style.content_margin_right = 8.0
+	style.content_margin_top = 4.0
+	style.content_margin_bottom = 4.0
+	_dbg_ticket_btn.add_theme_stylebox_override("normal", style)
+	_dbg_ticket_btn.pressed.connect(func():
+		if TicketManager != null:
+			TicketManager.tickets += 3
+			TicketManager.tickets_changed.emit(TicketManager.tickets)
+		_refresh_ticket_label()
+	)
+	add_child(_dbg_ticket_btn)
 
 
 # ---------------- 对局流程 ----------------
