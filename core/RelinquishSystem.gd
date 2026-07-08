@@ -6,19 +6,32 @@ const WEEKLY_PETAL_CAP := 500
 const GOLD_REWARD := 50
 
 const SPECIES_BASE := {
-	"orange": 10,
-	"british": 20,
-	"siamese": 30,
-	"橘猫": 10,
-	"英短": 20,
-	"暹罗": 30,
+	"orange": 5,
+	"british": 10,
+	"siamese": 15,
+	"橘猫": 5,
+	"英短": 10,
+	"暹罗": 15,
 }
 
 const RARITY_FACTOR := {
-	"common": 0.0,
+	"common": 1.0,
 	"rare": 1.5,
 	"epic": 2.0,
 	"legendary": 3.0,
+}
+
+const LEVEL_FACTOR := {
+	1: 0.0,
+	2: 1.0,
+	3: 1.0,
+	4: 1.5,
+	5: 1.5,
+	6: 1.5,
+	7: 2.0,
+	8: 2.0,
+	9: 2.0,
+	10: 3.0,
 }
 
 var this_week_petals_gained: int = 0
@@ -55,11 +68,16 @@ func relinquish_cat(cat_data: Dictionary, relinquish_event_id: String) -> Dictio
 	if HatchEngine == null or HatchEngine.get_cats().size() <= 1:
 		return {"love_petals": 0, "gold_coins": 0, "blocked": true, "reason": "不可送走最后一只猫"}
 
+	var level := int(cat_data.get("level", 1))
+	if level < 2:
+		relinquished_event_ids.append(relinquish_event_id)
+		return {"love_petals": 0, "gold_coins": GOLD_REWARD, "blocked": false, "reason": ""}
+
 	var rarity := String(cat_data.get("rarity", "common"))
 	var petals := _calculate_love_petals(cat_data)
 	var awarded_petals := 0
 
-	if rarity != "common" and petals > 0 and this_week_petals_gained < WEEKLY_PETAL_CAP:
+	if petals > 0 and this_week_petals_gained < WEEKLY_PETAL_CAP:
 		awarded_petals = min(petals, WEEKLY_PETAL_CAP - this_week_petals_gained)
 		this_week_petals_gained += awarded_petals
 		if CurrencyManager:
@@ -91,25 +109,39 @@ func reset_all() -> void:
 	relinquished_event_ids = []
 
 
+func preview_relinquish(cat_data: Dictionary) -> Dictionary:
+	var level := int(cat_data.get("level", 1))
+	if level < 2:
+		return {"love_petals": 0, "gold_coins": GOLD_REWARD}
+	var petals := _calculate_love_petals(cat_data)
+	return {"love_petals": petals, "gold_coins": GOLD_REWARD}
+
+
 func _calculate_love_petals(cat_data: Dictionary) -> int:
 	var rarity := String(cat_data.get("rarity", "common"))
-	if rarity == "common":
-		return 0
-
 	var affection_factor := _affection_factor(int(cat_data.get("friendship", cat_data.get("affection", 0))))
 	if affection_factor <= 0.0:
+		return 0
+
+	var level := int(cat_data.get("level", 1))
+	var level_factor := _level_factor(level)
+	if level_factor <= 0.0:
 		return 0
 
 	var species := String(cat_data.get("species", "orange"))
 	var base := int(SPECIES_BASE.get(species, SPECIES_BASE["orange"]))
 	var rarity_factor := float(RARITY_FACTOR.get(rarity, 0.0))
-	return int(round(float(base) * rarity_factor * affection_factor))
+	return int(round(float(base) * rarity_factor * level_factor * affection_factor))
+
+
+func _level_factor(level: int) -> float:
+	return float(LEVEL_FACTOR.get(level, 0.0))
 
 
 func _affection_factor(affection: int) -> float:
 	if affection < 100:
 		return 0.0
-	if affection <= 500:
+	if affection < 500:
 		return 1.0
 	if affection < 1500:
 		return 1.5
