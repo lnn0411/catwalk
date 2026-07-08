@@ -1,0 +1,366 @@
+{
+  "_comment": "猫步天下经济模拟器 v1.0 — 全量参数（GDD v3.1 权威源）",
+  "_version": "v3.1-2026-07-08",
+  "_key_note": "键名与 GDD §18.1 速查表及各章参数表一一对应",
+
+  "steps": {
+    "tier_thresholds": [1000, 3000, 5000],
+    "tier_coefficients": [0.3, 1.0, 1.2, 1.5],
+    "new_player_protection_days": 7,
+    "new_player_t1_coefficient": 0.8,
+    "max_energy_pool": 15000,
+    "overflow_warning_threshold": 0.9,
+    "energy_per_hatch": 4250,
+    "nurture_workshop_energy_per_box": 3000,
+    "energy_routing_priority": ["incubating_egg", "workshop_box", "main_pool", "overflow_cutoff"],
+    "_steps_energy_reference": {
+      "very_low_500": 150,
+      "low_1500": 800,
+      "medium_5000": 4700,
+      "high_8000": 9200,
+      "new_player_1500": 1300
+    }
+  },
+
+  "hatching": {
+    "slots": 4,
+    "energy_per_egg": 4250,
+    "first_cat_breed": "orange",
+    "first_cat_unlock_energy": 4250,
+    "rarity_weights": {
+      "common": 0.68,
+      "rare": 0.24,
+      "epic": 0.07,
+      "legendary": 0.01
+    },
+    "pity": {
+      "epic_every_n": 40,
+      "legendary_every_n": 120
+    },
+    "breed_unlock_chain": {
+      "orange_required_for_british": 3,
+      "british_required_for_siamese": 3
+    },
+    "breed_pool_weights": {
+      "orange_only": { "orange": 1.0, "british": 0.0, "siamese": 0.0 },
+      "british_unlocked": { "orange": 0.4, "british": 0.6, "siamese": 0.0 },
+      "siamese_unlocked": { "orange": 0.25, "british": 0.35, "siamese": 0.4 }
+    },
+    "slot_unlock": {
+      "slot_0": "initial",
+      "slot_1": "first_cat_hatched",
+      "slot_2": "total_3_cats",
+      "slot_3": "total_10_cats"
+    }
+  },
+
+  "cat_inventory": {
+    "initial_capacity": 24,
+    "expansion_tiers": [
+      { "unlock_at_pokedex": 4, "cost_gold": 5000, "new_capacity": 28 },
+      { "unlock_at_pokedex": 8, "cost_gold": 10000, "new_capacity": 32 },
+      { "unlock_at_pokedex": 12, "cost_gold": 0, "new_capacity": 36 }
+    ],
+    "adoption_revenue_formula": {
+      "base_by_breed": { "orange": 5, "british": 10, "siamese": 15 },
+      "rarity_factor": { "common": 1.0, "rare": 1.5, "epic": 2.0, "legendary": 3.0 },
+      "level_factor_tiers": [
+        { "min_lv": 1, "max_lv": 1, "factor": 0.0, "note": "Lv1断路，不返花瓣" },
+        { "min_lv": 2, "max_lv": 3, "factor": 1.0 },
+        { "min_lv": 4, "max_lv": 6, "factor": 1.5 },
+        { "min_lv": 7, "max_lv": 9, "factor": 2.0 },
+        { "min_lv": 10, "max_lv": 10, "factor": 3.0 }
+      ],
+      "affection_factor_tiers": [
+        { "min_affection": 0, "max_affection": 99, "factor": 0.0, "note": "好感<100断路" },
+        { "min_affection": 100, "max_affection": 499, "factor": 1.0 },
+        { "min_affection": 500, "max_affection": 1499, "factor": 1.5 },
+        { "min_affection": 1500, "max_affection": 99999, "factor": 2.0 }
+      ]
+    },
+    "adoption_weekly_limit": 500,
+    "adoption_lv1_fallback_gold": 50,
+    "adoption_under_threshold_fallback_gold": 50,
+    "adoption_reset_day": 0
+  },
+
+  "workshop": {
+    "energy_per_box": 3000,
+    "max_slots": 4,
+    "box_categories": ["cat_accessory", "flower_seed", "furniture_component"]
+  },
+
+  "board_game": {
+    "grid_size": 5,
+    "generator_max_uses": 20,
+    "ticket_per_steps_raw": 1500,
+    "ticket_daily_limit_by_steps": 3,
+    "ticket_per_interactions": 5,
+    "ticket_daily_limit_by_interaction": 2,
+    "ticket_login_daily": 2,
+    "ticket_login_new_player": 3,
+    "ticket_per_ad": 1,
+    "ticket_ad_daily_limit": 3,
+    "ticket_gold_cost": 50,
+    "ticket_gold_daily_limit": 2,
+    "ticket_new_player_days": 7,
+    "clear_rate": 0.9,
+    "revive_ads_enabled": true,
+    "reward_probabilities": {
+      "fish_treat_x1": 0.30,
+      "cat_can_x1": 0.20,
+      "yarn_ball_x1": 0.20,
+      "cat_wand_x1": 0.15,
+      "cat_tree_x1": 0.08,
+      "cherry_tree_x1": 0.05,
+      "cat_can_pack_x3": 0.02
+    },
+    "b6_conversion": {
+      "cat_tree_max": 3,
+      "cherry_tree_max": 1,
+      "convert_to_gold": 100
+    },
+    "consolation_prize": "fish_treat_x1"
+  },
+
+  "checkin": {
+    "cycle_length": 7,
+    "daily_rewards": [
+      { "day": 1, "gold": 100, "diamond": 0 },
+      { "day": 2, "gold": 0, "diamond": 20 },
+      { "day": 3, "gold": 150, "diamond": 0 },
+      { "day": 4, "gold": 0, "diamond": 30 },
+      { "day": 5, "gold": 200, "diamond": 0 },
+      { "day": 6, "gold": 0, "diamond": 40 },
+      { "day": 7, "gold": 350, "diamond": 0, "chest": true }
+    ],
+    "makeup_rule": {
+      "max_per_cycle": 2,
+      "retreat_on_break": 1,
+      "makeup_window_hours": 72,
+      "makeup_cost_gold": 200,
+      "makeup_cost_diamond": 10,
+      "has_makeup_card": false
+    },
+    "attendance_rate": {
+      "low_activity": 0.7,
+      "medium_activity": 0.9,
+      "high_activity": 1.0
+    }
+  },
+
+  "events": {
+    "default_monthly_event_type": "step_accumulation",
+    "event_frequency_per_month": 1,
+    "event_duration_days": 7,
+    "event_petals_per_1000_steps": 5,
+    "event_petals_per_10_interactions": 3,
+    "event_petals_conversion_rate": 2
+  },
+
+  "ads": {
+    "slot_1": {
+      "name": "能量补充",
+      "reward_type": "energy",
+      "reward_amount": 3000,
+      "daily_limit": 3,
+      "location": "hatchery_page"
+    },
+    "slot_2": {
+      "name": "签到重roll",
+      "reward_type": "chest_reroll",
+      "daily_limit_per_cycle": 1,
+      "location": "checkin_popup"
+    },
+    "slot_3": {
+      "name": "花瓣不足补充",
+      "reward_type": "love_petals",
+      "reward_amount": 50,
+      "limit_per_event_period": 5,
+      "location": "shop"
+    },
+    "slot_4": {
+      "name": "互动冷却刷新",
+      "reward_type": "interaction_cooldown_reset",
+      "daily_limit": 2,
+      "location": "garden"
+    },
+    "slot_5": {
+      "name": "探索翻倍",
+      "reward_type": "exploration_double",
+      "daily_limit": 3,
+      "location": "exploration_return",
+      "effective_from": "v2.0"
+    }
+  },
+
+  "shop": {
+    "love_petal_store": {
+      "tiers": [
+        { "name": "基础花卉种子", "price_petals": 20, "items_per_purchase": 1 },
+        { "name": "独特花草种子", "price_petals": 50, "items_per_purchase": 1 },
+        { "name": "稀有猫咪玩具", "price_petals": 150, "items_per_purchase": 1 },
+        { "name": "奢华猫咪家具", "price_petals": 300, "items_per_purchase": 1 }
+      ],
+      "total_round_petals": 520
+    },
+    "gold_store": {
+      "basic_items_price_range": [100, 500]
+    },
+    "diamond_store": {
+      "energy_pack_cost": 30,
+      "energy_pack_amount": 3000
+    },
+    "capacity_expansion_cost": {
+      "first": 5000,
+      "second": 10000,
+      "third": 0
+    },
+    "makeup_cost_gold": 200,
+    "makeup_cost_diamond": 10
+  },
+
+  "exploration": {
+    "slots": 2,
+    "slot_2_unlock_at": 5,
+    "duration_options_hours": [1, 2, 4],
+    "return_probabilities": {
+      "postcard": 0.60,
+      "food_fragment": 0.25,
+      "decoration_fragment": 0.10,
+      "hidden_item": 0.05
+    },
+    "postcard_rain_bonus": 0.10,
+    "food_fragment_per_return": 1,
+    "food_fragment_max": 3,
+    "food_fragments_to_craft": 3,
+    "hidden_item_daily_per_cat_limit": 1,
+    "first_exploration_guaranteed_postcard": true,
+    "exploration_per_day": 1
+  },
+
+  "interaction": {
+    "feed_affection": 5,
+    "feed_cooldown_hours": 4,
+    "pet_affection": 3,
+    "pet_cooldown_hours": 2,
+    "play_affection": 4,
+    "play_cooldown_hours": 6,
+    "photo_affection": 2,
+    "photo_cooldown_hours": 1,
+    "board_snack_affection": 1,
+    "board_snack_can_affection": 3,
+    "board_snack_daily_limit_per_cat": 3,
+    "annoyed_threshold_per_hour": 4,
+    "daily_interactions_idealized": 10,
+    "affection_per_day_approximation": [10, 14]
+  },
+
+  "carry_cat": {
+    "xp_coefficient_by_breed": {
+      "orange": 1.0,
+      "british": 1.2,
+      "siamese": 1.5
+    },
+    "level_thresholds": [0, 5000, 15000, 30000, 50000, 75000, 100000, 120000, 138000, 150000],
+    "max_level": 10,
+    "total_xp_to_max": 150000,
+    "affection_level_thresholds": [0, 30, 80, 180, 360],
+    "max_affection_level": 5
+  },
+
+  "economy": {
+    "currencies": {
+      "gold": {
+        "daily_medium_reference": 150,
+        "sources": ["checkin_100_200", "achievement", "newbie_goals", "decoration_conversion", "board_B6"]
+      },
+      "diamond": {
+        "daily_free_reference": 15,
+        "daily_monthly_card": 20,
+        "weekly_free_reference": 90,
+        "sources": ["checkin_20_40", "achievement"]
+      },
+      "spring_petals": {
+        "daily_medium_reference": 36,
+        "conversion_to_gold": 2
+      },
+      "love_petals": {
+        "monthly_from_adoption": 2000,
+        "monthly_from_ad_slot3": 250,
+        "monthly_from_monthly_card": 600,
+        "monthly_total_reference": 2850,
+        "shop_round_total": 520,
+        "monthly_cycle_turns": 5.5
+      }
+    },
+    "monthly_card": {
+      "price_usd": 30,
+      "daily_diamond": 20,
+      "daily_gold": 100,
+      "daily_love_petals": 20
+    },
+    "iap_prices_usd": {
+      "remove_ads": 12,
+      "energy_pack_x3": 6,
+      "diamond_100": 6,
+      "diamond_600": 30,
+      "newbie_pack": 6
+    }
+  },
+
+  "pokedex": {
+    "max_entries": 12,
+    "breeds": ["orange", "british", "siamese"],
+    "rarities_per_breed": 4,
+    "unlock_tiers_for_expansion": [4, 8, 12]
+  },
+
+  "achievement_rewards": {
+    "step_milestones": [
+      { "steps": 1000, "gold": 100 },
+      { "steps": 10000, "gold": 200 },
+      { "steps": 42195, "diamond": 30 },
+      { "steps": 100000, "diamond": 50 },
+      { "steps": 1000000, "diamond": 100, "title": "行者" },
+      { "consecutive_7_days_3000_steps": true, "diamond": 50, "makeup_card": 1 }
+    ],
+    "collection_milestones": [
+      { "pokedex": 1, "gold": 200 },
+      { "pokedex": 4, "diamond": 30 },
+      { "pokedex": 8, "diamond": 50, "chest": 1 },
+      { "pokedex": 12, "diamond": 100, "title": "猫图鉴大师" },
+      { "all_3_breeds": true, "diamond": 80, "decoration": true }
+    ],
+    "growth_milestones": [
+      { "cat_level_3": true, "gold": 300 },
+      { "cat_level_10": true, "diamond": 50, "energy_pack": 1 },
+      { "affection_level_5": true, "item": "cat_collar" }
+    ]
+  },
+
+  "simulation": {
+    "iterations_per_profile": 1000,
+    "durations_days": [30, 90],
+    "output_dir": "output",
+    "random_seed": 42,
+    "daily_step_calculation": "end_of_day"
+  },
+
+  "assertion_thresholds": {
+    "A1_love_petal_monthly_cycles": { "max_cycles_p95": 6 },
+    "A2_gold_non_negative": true,
+    "A2_first_expansion_day_range": [20, 40],
+    "A3_ad_energy_ratio_max": 0.50,
+    "A4_orange_max_level_days": { "target": 30, "tolerance_days": 5 },
+    "A5_legendary_pity_trigger_ratio": { "target": 0.30, "tolerance_pp": 0.05 },
+    "A6_medium_overflow_cutoff": "daily_zero",
+    "A6_high_overflow_cutoff": "max_1_per_week",
+    "A7_tickets_no_ad_medium": { "min": 3, "max": 4 },
+    "A7_tickets_full_attendance": { "min": 5, "max": 6 },
+    "A8_B6_gold_injection_correct": true,
+    "A8_dead_items_90d": 0,
+    "A9_currency_divergence_check": "end_balance_less_10x_monthly_mean",
+    "A10_adoption_safety_valve": "observe_only"
+  }
+}
