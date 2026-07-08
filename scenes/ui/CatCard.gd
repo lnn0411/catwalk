@@ -832,8 +832,7 @@ func _is_sleeping() -> bool:
 		return false
 	var species := _get_cat_property("species", _get_cat_property("breed", "orange"))
 	var hour := int(CatSchedule._current_hour())
-	var period: String = CatSchedule.get_period(hour)
-	return String(CatSchedule.get_state(species, period)) == "sleep"
+	return String(CatSchedule.get_state(species, hour)) == "sleep"
 
 
 func _resolve_interaction_system() -> void:

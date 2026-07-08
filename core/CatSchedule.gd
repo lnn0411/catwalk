@@ -21,30 +21,55 @@ static func _current_hour() -> int:
 		return _time_override
 	return Time.get_datetime_dict_from_system()["hour"]
 
-static func get_state(breed: String, period: String) -> String:
+static func _in_range(hour: int, start: int, end: int) -> bool:
+	return hour >= start and hour <= end
+
+static func get_state(breed: String, hour: int) -> String:
 	match breed:
 		"orange":
-			if period == "night" or period == "dawn" or period == "noon":
+			if _in_range(hour, 0, 5) or hour == 23:
+				return "sleep"
+			if _in_range(hour, 9, 11) or _in_range(hour, 14, 16):
 				return "sleep"
 			return "active"
 		"british":
-			if period == "noon":
+			if _in_range(hour, 0, 5) or hour == 23:
+				return "sleep"
+			if _in_range(hour, 6, 8):
+				return "window"
+			if _in_range(hour, 12, 13):
 				return "sleep"
 			return "active"
 		"siamese":
-			if period == "night":
+			if _in_range(hour, 0, 5) or hour == 23:
 				return "sleep"
+			if _in_range(hour, 15, 16):
+				return "sleep"
+			if _in_range(hour, 20, 22):
+				return "lazy"
 			return "active"
 		_:
 			return "active"
 
-static func is_night_patrol() -> bool:
+static func is_night_patrol(breed: String = "") -> bool:
 	var h: int = _current_hour()
+	if breed == "orange" and _in_range(h, 0, 5):
+		return true
 	return h >= 20 and h <= 23
 
-static func can_wake() -> bool:
-	var period: String = get_period(_current_hour())
-	return period == "night" or period == "dawn" or period == "noon"
+static func can_wake(_cat_id: String = "") -> bool:
+	var h: int = _current_hour()
+	return get_state("orange", h) == "sleep" or get_state("british", h) == "sleep" or get_state("siamese", h) == "sleep"
+
+static func get_current_period() -> String:
+	return get_period(_current_hour())
+
+static func is_golden_hour(hour: int) -> bool:
+	var awake_count: int = 0
+	for breed in ["orange", "british", "siamese"]:
+		if get_state(breed, hour) != "sleep":
+			awake_count += 1
+	return awake_count >= 2
 
 static func set_time_override(hour: int) -> void:
 	_time_override = hour

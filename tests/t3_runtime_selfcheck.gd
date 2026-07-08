@@ -52,9 +52,9 @@ func _ready() -> void:
 	print("\n" + "=".repeat(64))
 	print("  结果：%d 通过 / %d 失败" % [_pass, _fail])
 	if _fail > 0:
-		print("  ── 失败项 ──")
-		for f in _failed_list:
-			print("    ✗ " + f)
+	print("  ── 失败项 ──")
+	for f in _failed_list:
+	print("    ✗ " + f)
 	print("  判定：" + ("✅ 全部通过，可报 complete" if _fail == 0 else "❌ 有失败，禁止 complete"))
 	print("=".repeat(64))
 
@@ -67,12 +67,12 @@ func _sec(name: String) -> void:
 
 func _ok(desc: String, cond: bool) -> void:
 	if cond:
-		_pass += 1
-		print("  [✓] %s" % desc)
+	_pass += 1
+	print("  [✓] %s" % desc)
 	else:
-		_fail += 1
-		_failed_list.append("[%s] %s" % [_section, desc])
-		print("  [✗] %s" % desc)
+	_fail += 1
+	_failed_list.append("[%s] %s" % [_section, desc])
+	print("  [✗] %s" % desc)
 
 func _eq(desc: String, actual, expected) -> void:
 	_ok("%s  (实际=%s 期望=%s)" % [desc, str(actual), str(expected)], actual == expected)
@@ -92,9 +92,9 @@ func _le(desc: String, actual, maxv) -> void:
 func _t_energy_engine() -> void:
 	_sec("A. EnergyEngine 能量逻辑")
 	if not FileAccess.file_exists("res://core/EnergyEngine.gd"):
-		print("  [⏭] 跳过 — EnergyEngine 已移除，相关逻辑归入 HatchEngine")
-		await get_tree().process_frame
-		return
+	print("  [⏭] 跳过 — EnergyEngine 已移除，相关逻辑归入 HatchEngine")
+	await get_tree().process_frame
+	return
 	var E = load("res://core/EnergyEngine.gd")
 
 	# A1 能量公式各 Tier 边界（对照 GDD §2.1 表，非新手 t1=0.3）
@@ -144,9 +144,9 @@ func _t_energy_engine() -> void:
 func _t_step_engine() -> void:
 	_sec("B. StepEngine 步数逻辑")
 	if not FileAccess.file_exists("res://core/StepEngine.gd"):
-		print("  [⏭] 跳过 — StepEngine.gd 未加载")
-		await get_tree().process_frame
-		return
+	print("  [⏭] 跳过 — StepEngine.gd 未加载")
+	await get_tree().process_frame
+	return
 	var S = StepEngine
 
 	# B1 mock 步数累加
@@ -271,22 +271,22 @@ func _t_pity() -> void:
 	# D2 epic 保底强制（epic计数到40 → 本次必 epic 或更高）
 	var all_epic_or_better := true
 	for i in range(80):
-		H.epic_pity_count = EPIC_threshold()
-		H.legendary_pity_count = 0
-		var r = H._roll_rarity()
-		if H._rarity_rank(r) < H._rarity_rank(CatData.RARITY_EPIC):
-			all_epic_or_better = false
-			break
+	H.epic_pity_count = EPIC_threshold()
+	H.legendary_pity_count = 0
+	var r = H._roll_rarity()
+	if H._rarity_rank(r) < H._rarity_rank(CatData.RARITY_EPIC):
+	all_epic_or_better = false
+	break
 	_ok("epic计数=40 → 必出epic+（80次）", all_epic_or_better)
 
 	# D3 legendary 保底强制（leg计数到120 → 本次必 legendary）
 	var all_leg := true
 	for i in range(80):
-		H.legendary_pity_count = LEG_threshold()
-		var r = H._roll_rarity()
-		if r != CatData.RARITY_LEGENDARY:
-			all_leg = false
-			break
+	H.legendary_pity_count = LEG_threshold()
+	var r = H._roll_rarity()
+	if r != CatData.RARITY_LEGENDARY:
+	all_leg = false
+	break
 	_ok("leg计数=120 → 必出legendary（80次）", all_leg)
 
 	# D4 不变量：3000抽内，epic间隔永不超40、leg间隔永不超120
@@ -300,20 +300,20 @@ func _t_pity() -> void:
 	var saw_epic := false
 	var saw_leg := false
 	for i in range(3000):
-		var r = H._roll_rarity()
-		var rank = H._rarity_rank(r)
-		if rank >= H._rarity_rank(CatData.RARITY_EPIC):
-			run_epic = 0
-			saw_epic = true
-		else:
-			run_epic += 1
-			max_run_epic = maxi(max_run_epic, run_epic)
-		if r == CatData.RARITY_LEGENDARY:
-			run_leg = 0
-			saw_leg = true
-		else:
-			run_leg += 1
-			max_run_leg = maxi(max_run_leg, run_leg)
+	var r = H._roll_rarity()
+	var rank = H._rarity_rank(r)
+	if rank >= H._rarity_rank(CatData.RARITY_EPIC):
+	run_epic = 0
+	saw_epic = true
+	else:
+	run_epic += 1
+	max_run_epic = maxi(max_run_epic, run_epic)
+	if r == CatData.RARITY_LEGENDARY:
+	run_leg = 0
+	saw_leg = true
+	else:
+	run_leg += 1
+	max_run_leg = maxi(max_run_leg, run_leg)
 	_le("连续非epic+ 不超40", max_run_epic, 40)
 	_le("连续非legendary 不超120", max_run_leg, 120)
 	_ok("3000抽内确实出过epic", saw_epic)
@@ -364,8 +364,8 @@ func _t_save_roundtrip() -> void:
 	_eq("epic保底计数往返", HatchEngine.epic_pity_count, 17)
 	_eq("leg保底计数往返", HatchEngine.legendary_pity_count, 88)
 	if c1 > 0:
-		_eq("猫名往返", String(HatchEngine.get_cats()[0].display_name), name1)
-		_eq("猫品种往返", String(HatchEngine.get_cats()[0].species), sp1)
+	_eq("猫名往返", String(HatchEngine.get_cats()[0].display_name), name1)
+	_eq("猫品种往返", String(HatchEngine.get_cats()[0].species), sp1)
 
 	SaveManager.reset_all()
 	await get_tree().process_frame
@@ -407,8 +407,8 @@ func _t_cat_spawner() -> void:
 	_sec("G. CatSpawner 生成")
 
 	if not ResourceLoader.exists("res://scenes/CatSprite.tscn"):
-		_ok("CatSprite.tscn 存在", false)
-		return
+	_ok("CatSprite.tscn 存在", false)
+	return
 
 	SaveManager.reset_all()
 	var container := Node2D.new()
@@ -469,29 +469,29 @@ func _t_scene_smoke() -> void:
 	# 注：S00_Splash / S02_Loading 含「定时器到点自动 replace」逻辑，
 	# 提前 free 会让定时器回调访问已释放节点刷错误，故不纳入冒烟（其 _ready 逻辑极简）。
 	var scenes := [
-		"res://scenes/S01_Onboarding.tscn", "res://scenes/S03_Permission.tscn",
-		"res://scenes/S04_GardenMain.tscn", "res://scenes/S05_ReadOnlyGarden.tscn",
-		"res://scenes/S06_HatchPage.tscn", "res://scenes/S08_HatchShow.tscn",
-		"res://scenes/S06_NamePopup.tscn", "res://scenes/S10_Album.tscn",
-		"res://scenes/S10_CatDetail.tscn", "res://scenes/S11_Settings.tscn",
-		"res://scenes/S90_NetworkError.tscn", "res://scenes/S91_PermDenied.tscn",
-		"res://scenes/S92_SleepReturn.tscn",
+	"res://scenes/S01_Onboarding.tscn", "res://scenes/S03_Permission.tscn",
+	"res://scenes/S04_GardenMain.tscn", "res://scenes/S05_ReadOnlyGarden.tscn",
+	"res://scenes/S06_HatchPage.tscn", "res://scenes/S08_HatchShow.tscn",
+	"res://scenes/S06_NamePopup.tscn", "res://scenes/S10_Album.tscn",
+	"res://scenes/S10_CatDetail.tscn", "res://scenes/S11_Settings.tscn",
+	"res://scenes/S90_NetworkError.tscn", "res://scenes/S91_PermDenied.tscn",
+	"res://scenes/S92_SleepReturn.tscn",
 	]
 	for path in scenes:
-		var name = path.get_file().get_basename()
-		if not ResourceLoader.exists(path):
-			_ok("%s 资源存在" % name, false)
-			continue
-		var packed = load(path)
-		var node = packed.instantiate() if packed else null
-		if node == null:
-			_ok("%s 实例化" % name, false)
-			continue
-		add_child(node)
-		await get_tree().process_frame
-		_ok("%s 实例化无崩溃" % name, is_instance_valid(node))
-		node.queue_free()
-		await get_tree().process_frame
+	var name = path.get_file().get_basename()
+	if not ResourceLoader.exists(path):
+	_ok("%s 资源存在" % name, false)
+	continue
+	var packed = load(path)
+	var node = packed.instantiate() if packed else null
+	if node == null:
+	_ok("%s 实例化" % name, false)
+	continue
+	add_child(node)
+	await get_tree().process_frame
+	_ok("%s 实例化无崩溃" % name, is_instance_valid(node))
+	node.queue_free()
+	await get_tree().process_frame
 
 	# S04 关键节点结构（真实节点检查，非 grep）
 	var s04 = load("res://scenes/S04_GardenMain.tscn").instantiate()
@@ -503,27 +503,27 @@ func _t_scene_smoke() -> void:
 
 	# BottomNav 含 5 个 Tab
 	if ResourceLoader.exists("res://ui/BottomNav.tscn"):
-		var nav = load("res://ui/BottomNav.tscn").instantiate()
-		add_child(nav)
-		await get_tree().process_frame
-		var emitted := [-1]
-		if nav.has_signal("tab_selected"):
-			nav.tab_selected.connect(func(i): emitted[0] = i)
-		if nav.has_method("_on_tab_pressed"):
-			nav._on_tab_pressed(4)
-		_eq("BottomNav 点设置Tab 发index=4", emitted[0], 4)
-		nav.queue_free()
+	var nav = load("res://ui/BottomNav.tscn").instantiate()
+	add_child(nav)
+	await get_tree().process_frame
+	var emitted := [-1]
+	if nav.has_signal("tab_selected"):
+	nav.tab_selected.connect(func(i): emitted[0] = i)
+	if nav.has_method("_on_tab_pressed"):
+	nav._on_tab_pressed(4)
+	_eq("BottomNav 点设置Tab 发index=4", emitted[0], 4)
+	nav.queue_free()
 	await get_tree().process_frame
 
 # ---------- 工具 ----------
 func _find_child_named(node: Node, target: String, depth: int = 3) -> bool:
 	if depth < 0:
-		return false
+	return false
 	for c in node.get_children():
-		if c.name == target:
-			return true
-		if _find_child_named(c, target, depth - 1):
-			return true
+	if c.name == target:
+	return true
+	if _find_child_named(c, target, depth - 1):
+	return true
 	return false
 
 # ============================================================
@@ -532,9 +532,9 @@ func _find_child_named(node: Node, target: String, depth: int = 3) -> bool:
 func _t_explore_engine() -> void:
 	_sec("J. ExploreEngine 探索系统")
 	if not FileAccess.file_exists("res://core/ExploreEngine.gd"):
-		print("  [⏭] 跳过 — ExploreEngine.gd 尚未创建")
-		await get_tree().process_frame
-		return
+	print("  [⏭] 跳过 — ExploreEngine.gd 尚未创建")
+	await get_tree().process_frame
+	return
 	var E = load("res://core/ExploreEngine.gd")
 
 	# J1 探索槽初始化
@@ -571,9 +571,9 @@ func _t_explore_engine() -> void:
 	E.reset_all()
 	var types_seen: Array = []
 	for i in range(50):
-		var reward_type: String = E._roll_reward_type("test_cat_r", 0)
-		if not types_seen.has(reward_type):
-			types_seen.append(reward_type)
+	var reward_type: String = E._roll_reward_type("test_cat_r", 0)
+	if not types_seen.has(reward_type):
+	types_seen.append(reward_type)
 	_ok("J5 奖励类型在四选一内", types_seen.all(func(t): return t in ["postcard", "ingredient", "decoration", "hidden"]))
 	_ok("J5 多次roll覆盖多种类型", types_seen.size() >= 2)
 
@@ -582,8 +582,8 @@ func _t_explore_engine() -> void:
 	E._mock_collected_postcards(["pc_001", "pc_002"])
 	var dup_count := 0
 	for i in range(30):
-		if E._roll_reward_type("test_cat_d", 0) == "postcard":
-			dup_count += 1
+	if E._roll_reward_type("test_cat_d", 0) == "postcard":
+	dup_count += 1
 	_ok("J6 防重复-连续postcard不超15次", dup_count <= 15)
 
 	SaveManager.reset_all()
@@ -595,9 +595,9 @@ func _t_explore_engine() -> void:
 func _t_emotion_state_machine() -> void:
 	_sec("K. EmotionStateMachine 情绪状态机")
 	if not FileAccess.file_exists("res://core/EmotionStateMachine.gd"):
-		print("  [⏭] 跳过 — EmotionStateMachine.gd 尚未创建")
-		await get_tree().process_frame
-		return
+	print("  [⏭] 跳过 — EmotionStateMachine.gd 尚未创建")
+	await get_tree().process_frame
+	return
 	var M = load("res://core/EmotionStateMachine.gd")
 
 	# K1 初始状态
@@ -616,8 +616,8 @@ func _t_emotion_state_machine() -> void:
 	M.reset_all()
 	var interaction_types: Array = ["feed", "pet", "play", "photo"]
 	for i in range(4):
-		M.record_interaction("cat_k3", interaction_types[i])
-		M._advance_window(300.0)
+	M.record_interaction("cat_k3", interaction_types[i])
+	M._advance_window(300.0)
 	_eq("K3 4次互动变annoyed", M.get_emotion("cat_k3"), "annoyed")
 	_ok("K3 is_annoyed=true", M.is_annoyed("cat_k3"))
 	M._advance_window(3601.0)  # 推进1h+让历史记录滑出窗口
@@ -643,8 +643,8 @@ func _t_emotion_state_machine() -> void:
 	M.reset_all()
 	var k6_types: Array = ["feed", "pet", "play", "photo", "feed"]
 	for i in range(5):
-		M.record_interaction("cat_k6", k6_types[i])
-		M._advance_window(750.0)  # 12.5min间隔，5次=62.5min，第1次滑出1h窗口
+	M.record_interaction("cat_k6", k6_types[i])
+	M._advance_window(750.0)  # 12.5min间隔，5次=62.5min，第1次滑出1h窗口
 	_eq("K6 窗口外旧记录不计数", M.get_emotion("cat_k6"), "annoyed")
 
 	SaveManager.reset_all()
@@ -656,9 +656,9 @@ func _t_emotion_state_machine() -> void:
 func _t_cat_schedule() -> void:
 	_sec("L. CatSchedule 作息时段")
 	if not FileAccess.file_exists("res://core/CatSchedule.gd"):
-		print("  [⏭] 跳过 — CatSchedule.gd 尚未创建")
-		await get_tree().process_frame
-		return
+	print("  [⏭] 跳过 — CatSchedule.gd 尚未创建")
+	await get_tree().process_frame
+	return
 	var C = load("res://core/CatSchedule.gd")
 
 	# L1 6时段定义
@@ -677,21 +677,30 @@ func _t_cat_schedule() -> void:
 	_eq("L1 0点=night", C.get_period(0), "night")
 	_eq("L1 5点=night", C.get_period(5), "night")
 
-	# L2 品种×时段状态
-	_eq("L2 橘猫dawn=sleep", C.get_state("orange", "dawn"), "sleep")
-	_eq("L2 橘猫noon=sleep", C.get_state("orange", "noon"), "sleep")
-	_eq("L2 橘猫night=sleep", C.get_state("orange", "night"), "sleep")
-	_eq("L2 橘猫morning=active", C.get_state("orange", "morning"), "active")
-	_eq("L2 橘猫afternoon=active", C.get_state("orange", "afternoon"), "active")
-	_eq("L2 橘猫dusk=active", C.get_state("orange", "dusk"), "active")
-	_eq("L2 英短noon=sleep", C.get_state("british", "noon"), "sleep")
-	_eq("L2 英短dawn=active", C.get_state("british", "dawn"), "active")
-	_eq("L2 英短dusk=active", C.get_state("british", "dusk"), "active")
-	_eq("L2 英短night=active", C.get_state("british", "night"), "active")
-	_eq("L2 暹罗night=sleep", C.get_state("siamese", "night"), "sleep")
-	_eq("L2 暹罗noon=active", C.get_state("siamese", "noon"), "active")
-	_eq("L2 暹罗dawn=active", C.get_state("siamese", "dawn"), "active")
-	_eq("L2 暹罗dusk=active", C.get_state("siamese", "dusk"), "active")
+	# L2 品种×小时状态
+	_eq("L2 橘猫7点=active", C.get_state("orange", 7), "active")
+	_eq("L2 橘猫10点=sleep", C.get_state("orange", 10), "sleep")
+	_eq("L2 橘猫13点=active", C.get_state("orange", 13), "active")
+	_eq("L2 橘猫15点=sleep", C.get_state("orange", 15), "sleep")
+	_eq("L2 橘猫18点=active", C.get_state("orange", 18), "active")
+	_eq("L2 橘猫22点=active", C.get_state("orange", 22), "active")
+	_eq("L2 橘猫23点=sleep", C.get_state("orange", 23), "sleep")
+	_eq("L2 橘猫0点=sleep", C.get_state("orange", 0), "sleep")
+	_eq("L2 英短7点=window", C.get_state("british", 7), "window")
+	_eq("L2 英短10点=active", C.get_state("british", 10), "active")
+	_eq("L2 英短13点=sleep", C.get_state("british", 13), "sleep")
+	_eq("L2 英短15点=active", C.get_state("british", 15), "active")
+	_eq("L2 英短18点=active", C.get_state("british", 18), "active")
+	_eq("L2 英短22点=active", C.get_state("british", 22), "active")
+	_eq("L2 英短23点=sleep", C.get_state("british", 23), "sleep")
+	_eq("L2 暹罗7点=active", C.get_state("siamese", 7), "active")
+	_eq("L2 暹罗10点=active", C.get_state("siamese", 10), "active")
+	_eq("L2 暹罗12点=active", C.get_state("siamese", 12), "active")
+	_eq("L2 暹罗13点=active", C.get_state("siamese", 13), "active")
+	_eq("L2 暹罗15点=sleep", C.get_state("siamese", 15), "sleep")
+	_eq("L2 暹罗18点=active", C.get_state("siamese", 18), "active")
+	_eq("L2 暹罗22点=lazy", C.get_state("siamese", 22), "lazy")
+	_eq("L2 暹罗23点=sleep", C.get_state("siamese", 23), "sleep")
 
 	# L3 set_time_override 时间助手
 	C.set_time_override(13)
@@ -699,27 +708,41 @@ func _t_cat_schedule() -> void:
 	C.set_time_override(8)
 	_eq("L3 override8点 当前=dawn", C.get_current_period(), "dawn")
 
-	# L4 night巡逻（仅20-23）
+	# L4 night巡逻（品种感知）
 	C.set_time_override(20)
-	_ok("L4 20点=巡逻", C.is_night_patrol())
+	_ok("L4 20点=巡逻", C.is_night_patrol("orange"))
 	C.set_time_override(23)
-	_ok("L4 23点=巡逻", C.is_night_patrol())
+	_ok("L4 23点=巡逻", C.is_night_patrol("british"))
 	C.set_time_override(19)
-	_ok("L4 19点非巡逻", not C.is_night_patrol())
+	_ok("L4 19点非巡逻", not C.is_night_patrol("orange"))
 	C.set_time_override(0)
-	_ok("L4 0点非巡逻", not C.is_night_patrol())
+	_ok("L4 0点橘猫巡逻", C.is_night_patrol("orange"))
+	C.set_time_override(3)
+	_ok("L4 3点英短非巡逻", not C.is_night_patrol("british"))
 
-	# L5 抚摸唤醒 — 仅睡眠时段可唤醒
-	C.set_time_override(7)    # dawn = 睡眠
-	_ok("L5 dawn可唤醒", C.can_wake("cat_l5"))
-	C.set_time_override(13)   # noon = 睡眠
-	_ok("L5 noon可唤醒", C.can_wake("cat_l5"))
-	C.set_time_override(22)   # night = 睡眠
-	_ok("L5 night可唤醒", C.can_wake("cat_l5"))
-	C.set_time_override(10)   # morning = 活动
-	_ok("L5 morning不可唤醒", not C.can_wake("cat_l5"))
-	C.set_time_override(16)   # afternoon = 活动
-	_ok("L5 afternoon不可唤醒", not C.can_wake("cat_l5"))
+	# L5 抚摸唤醒 — 任一品种睡眠时可唤醒
+	C.set_time_override(9)
+	_ok("L5 9点可唤醒(橘猫睡)", C.can_wake())
+	C.set_time_override(13)
+	_ok("L5 13点可唤醒(英短睡)", C.can_wake())
+	C.set_time_override(7)
+	_ok("L5 7点不可唤醒(全醒)", not C.can_wake())
+	C.set_time_override(18)
+	_ok("L5 18点不可唤醒(全醒)", not C.can_wake())
+	C.set_time_override(22)
+	_ok("L5 22点不可唤醒(全醒)", not C.can_wake())
+
+	# TC-42: 各黄金时段快照断言>=2品种可互动
+	C.set_time_override(8)
+	_ok("TC-42 8点(黄金时段)>=2品种醒", C.is_golden_hour(8))
+	C.set_time_override(13)
+	_ok("TC-42 13点(黄金时段)>=2品种醒", C.is_golden_hour(13))
+	C.set_time_override(7)
+	_ok("TC-42 7点(黄金时段)>=2品种醒", C.is_golden_hour(7))
+	C.set_time_override(21)
+	_ok("TC-42 21点(黄金时段)>=2品种醒", C.is_golden_hour(21))
+	C.set_time_override(14)
+	_ok("TC-42 14点(黄金时段)>=2品种醒", C.is_golden_hour(14))
 
 	SaveManager.reset_all()
 	await get_tree().process_frame
@@ -730,9 +753,9 @@ func _t_cat_schedule() -> void:
 func _t_level_system() -> void:
 	_sec("M. LevelSystem 等级系统")
 	if not FileAccess.file_exists("res://core/LevelSystem.gd"):
-		print("  [⏭] 跳过 — LevelSystem.gd 尚未创建")
-		await get_tree().process_frame
-		return
+	print("  [⏭] 跳过 — LevelSystem.gd 尚未创建")
+	await get_tree().process_frame
+	return
 	var L = load("res://core/LevelSystem.gd")
 
 	# M1 品种系数
@@ -777,9 +800,9 @@ func _t_level_system() -> void:
 func _t_interaction_system() -> void:
 	_sec("N. InteractionSystem 互动系统")
 	if not FileAccess.file_exists("res://core/InteractionSystem.gd"):
-		print("  [⏭] 跳过 — InteractionSystem.gd 尚未创建")
-		await get_tree().process_frame
-		return
+	print("  [⏭] 跳过 — InteractionSystem.gd 尚未创建")
+	await get_tree().process_frame
+	return
 	var I = load("res://core/InteractionSystem.gd")
 
 	# N1 冷却定义（分钟）
@@ -833,9 +856,9 @@ func _t_interaction_system() -> void:
 func _t_signin_system() -> void:
 	_sec("P. SigninSystem 签到系统")
 	if not FileAccess.file_exists("res://core/SigninSystem.gd"):
-		print("  [⏭] 跳过 — SigninSystem.gd 尚未创建")
-		await get_tree().process_frame
-		return
+	print("  [⏭] 跳过 — SigninSystem.gd 尚未创建")
+	await get_tree().process_frame
+	return
 	var P = load("res://core/SigninSystem.gd")
 
 	# P1 签到 day从1开始
@@ -850,10 +873,10 @@ func _t_signin_system() -> void:
 	var rewards: Array = []
 	var days: Array = []
 	for i in range(7):
-		var r: Dictionary = P.signin()
-		days.append(int(r.get("day", 0)))
-		rewards.append(r.get("reward"))
-		P._simulate_next_day()
+	var r: Dictionary = P.signin()
+	days.append(int(r.get("day", 0)))
+	rewards.append(r.get("reward"))
+	P._simulate_next_day()
 	_eq("P2 day序列1-7", days, [1, 2, 3, 4, 5, 6, 7])
 	_eq("P2 day1金币100", rewards[0], "金币100")
 	_eq("P2 day2金币200", rewards[1], "金币200")
@@ -866,8 +889,8 @@ func _t_signin_system() -> void:
 	# P3 断签退1（每漏1天退1级，非归1）
 	P.reset_all()
 	for i in range(4):                 # 连续签到累计到day4
-		P.signin()
-		P._simulate_next_day()
+	P.signin()
+	P._simulate_next_day()
 	P.set_last_signin_days_ago(2)      # 漏签2天
 	var r3: Dictionary = P.signin()
 	_eq("P3 断签2天退2级 day=2", int(r3.get("day", 0)), 2)
@@ -955,12 +978,12 @@ func _t_achievement_system() -> void:
 
 func _backup_save() -> void:
 	if FileAccess.file_exists(SAVE_PATH):
-		DirAccess.copy_absolute(SAVE_PATH, BAK_PATH)
+	DirAccess.copy_absolute(SAVE_PATH, BAK_PATH)
 
 func _restore_save() -> void:
 	if FileAccess.file_exists(BAK_PATH):
-		DirAccess.copy_absolute(BAK_PATH, SAVE_PATH)
-		DirAccess.remove_absolute(BAK_PATH)
+	DirAccess.copy_absolute(BAK_PATH, SAVE_PATH)
+	DirAccess.remove_absolute(BAK_PATH)
 	elif FileAccess.file_exists(SAVE_PATH):
-		# 原本没存档 → 删掉测试产生的，保持干净
-		DirAccess.remove_absolute(SAVE_PATH)
+	# 原本没存档 → 删掉测试产生的，保持干净
+	DirAccess.remove_absolute(SAVE_PATH)
