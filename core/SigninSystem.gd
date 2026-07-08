@@ -96,9 +96,9 @@ static func signin() -> Dictionary:
 		CurrencyManager.add_diamonds(diamonds, source)
 	if day == 7 and InventoryManager:
 		if bool(reward.get("has_treasure_box", false)):
-			InventoryManager.add_treasure_box(1, "signin:day7")
+			InventoryManager.add_treasure_box(1)
 		if bool(reward.get("has_decor", false)):
-			InventoryManager.add_random_decor(1, "signin:day7")
+			InventoryManager.add_random_decor(1)
 	cfg.set_value("state", "last_date", today)
 	cfg.set_value("state", "day", day)
 	cfg.set_value("state", "streak", streak)

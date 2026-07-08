@@ -5,6 +5,8 @@ extends Node
 
 const SAVE_PATH := "user://inventory.cfg"
 const SECTION := "inventory"
+const IDEMPOTENCY_KEY := "idempotency"
+const MAX_PROCESSED_IDS := 500
 
 # 物品类型
 const ITEM_INGREDIENT_SHARD := "ingredient_shard"   # 食材碎片（3片合成1个snack）
@@ -24,6 +26,7 @@ const VALID_TYPES := [
 ]
 
 var _counts: Dictionary = {}
+var _processed_ids: Array = []
 
 func _ready() -> void:
 	for t in VALID_TYPES:
@@ -33,21 +36,27 @@ func _ready() -> void:
 # ---- API ----
 
 # 增加物品，返回新数量；无效类型或非正数量返回当前数量
-func add_item(item_type: String, quantity: int) -> int:
+func add_item(item_type: String, quantity: int, inventory_event_id: String = "") -> int:
 	if not _counts.has(item_type):
 		push_warning("InventoryManager.add_item: 未知物品类型 '%s'" % item_type)
 		return 0
 	if quantity <= 0:
 		return _counts[item_type]
+	if inventory_event_id != "" and _processed_ids.has(inventory_event_id):
+		return _counts[item_type]
 	_counts[item_type] = max(_counts[item_type] + quantity, 0)
+	if inventory_event_id != "":
+		_processed_ids.append(inventory_event_id)
+		while _processed_ids.size() > MAX_PROCESSED_IDS:
+			_processed_ids.pop_front()
 	_after_change(item_type)
 	return _counts[item_type]
 
-func add_treasure_box(quantity: int, _source: String = "") -> int:
-	return add_item(ITEM_TREASURE_BOX, quantity)
+func add_treasure_box(quantity: int, inventory_event_id: String = "") -> int:
+	return add_item(ITEM_TREASURE_BOX, quantity, inventory_event_id)
 
-func add_random_decor(quantity: int, _source: String = "") -> int:
-	return add_item(ITEM_DECOR, quantity)
+func add_random_decor(quantity: int, inventory_event_id: String = "") -> int:
+	return add_item(ITEM_DECOR, quantity, inventory_event_id)
 
 func has_item(item_type: String, quantity: int) -> bool:
 	return get_count(item_type) >= max(quantity, 0)
@@ -97,11 +106,18 @@ func _load() -> void:
 		return
 	for t in VALID_TYPES:
 		_counts[t] = max(int(cfg.get_value(SECTION, t, 0)), 0)
+	var processed_json: String = str(cfg.get_value(SECTION, IDEMPOTENCY_KEY, "[]"))
+	var parsed = JSON.parse_string(processed_json)
+	if parsed is Array:
+		_processed_ids = parsed
+		while _processed_ids.size() > MAX_PROCESSED_IDS:
+			_processed_ids.pop_front()
 
 func _save() -> void:
 	var cfg := ConfigFile.new()
 	for t in VALID_TYPES:
 		cfg.set_value(SECTION, t, _counts[t])
+	cfg.set_value(SECTION, IDEMPOTENCY_KEY, JSON.stringify(_processed_ids))
 	if cfg.save(SAVE_PATH) != OK:
 		push_error("[InventoryManager] Save failed: %s" % SAVE_PATH)
 
