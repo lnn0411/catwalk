@@ -371,3 +371,25 @@ func _write_cat_screen() -> void:
 	_config.set_value("cat_screen", "cat_debut_times", Dictionary(data.get("cat_debut_times", {})))
 	_config.set_value("cat_screen", "cat_cooldowns", Dictionary(data.get("cat_cooldowns", {})))
 	_config.set_value("cat_screen", "cat_weight_bonus", Dictionary(data.get("cat_weight_bonus", {})))
+
+# ── IAPProvider section ──
+
+func _read_iap() -> Dictionary:
+	var iap := get_node_or_null("/root/IAPProvider")
+	if iap == null or not iap.has_method("get_save_data"):
+		return {}
+	return iap.get_save_data()
+
+func _write_iap() -> void:
+	var iap := get_node_or_null("/root/IAPProvider")
+	if iap == null or not iap.has_method("get_save_data"):
+		return
+	var data: Dictionary = iap.get_save_data()
+	_config.set_value("iap_store", "ads_removed", bool(data.get("ads_removed", false)))
+	_config.set_value("iap_store", "garden_expand_purchased", bool(data.get("garden_expand_purchased", false)))
+	_config.set_value("iap_store", "breed_fast_unlock", bool(data.get("breed_fast_unlock", false)))
+	_config.set_value("iap_store", "newbie_pack_purchased", bool(data.get("newbie_pack_purchased", false)))
+	_config.set_value("iap_store", "limited_skin_owned", bool(data.get("limited_skin_owned", false)))
+	_config.set_value("iap_store", "monthly_card_end_time", float(data.get("monthly_card_end_time", 0.0)))
+	_config.set_value("iap_store", "monthly_card_last_grant_date", String(data.get("monthly_card_last_grant_date", "")))
+	_config.set_value("iap_store", "makeup_cards", max(int(data.get("makeup_cards", 0)), 0))
