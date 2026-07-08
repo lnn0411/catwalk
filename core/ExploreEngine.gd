@@ -104,7 +104,7 @@ static func collect(cat_id: String, cat_species: String = "") -> Dictionary:
 		return {}
 	var entry: Dictionary = _explorers[cat_id].duplicate()
 	_explorers.erase(cat_id)
-	var reward_type := _roll_reward_type(cat_id)
+	var reward_type := _roll_reward_type(cat_id, int(entry.get("duration_hours", 0)))
 	var postcard_id := ""
 	if reward_type == "postcard":
 		var species_of_cat := cat_species if cat_species != "" else _get_cat_species(cat_id)
@@ -123,18 +123,33 @@ static func collect(cat_id: String, cat_species: String = "") -> Dictionary:
 	return entry
 
 # ---- 奖励 ----
-static func _roll_reward_type(cat_id: String) -> String:
+static func _roll_reward_type(cat_id: String, duration_hours: int = 0) -> String:
 	if not _first_explore_flags.has(cat_id):
 		_first_explore_flags[cat_id] = true
 		_last_reward_type[cat_id] = "postcard"
 		return "postcard"
+	# 基础概率（GDD §14.3）。所有修正一律从 ingredient 扣除，保证四项总和恒为 1.0。
+	var postcard := 0.60
+	var ingredient := 0.25
+	var decoration := 0.10
+	var hidden := 0.05
+	# 雨天：postcard +10pp，ingredient -10pp（WeatherTimeManager 不可用则降级为基础概率）。
+	if Engine.has_singleton("WeatherTimeManager"):
+		var wtm = Engine.get_singleton("WeatherTimeManager")
+		if wtm != null and int(wtm.current_weather) == wtm.WeatherType.RAIN:
+			postcard += 0.10
+			ingredient -= 0.10
+	# 4 小时探索：decoration +5pp，ingredient -5pp（可与雨天叠加）。
+	if duration_hours == 4:
+		decoration += 0.05
+		ingredient -= 0.05
 	var r := _rng.randf()
 	var t: String
-	if r < 0.60:
+	if r < postcard:
 		t = "postcard"
-	elif r < 0.85:
+	elif r < postcard + ingredient:
 		t = "ingredient"
-	elif r < 0.95:
+	elif r < postcard + ingredient + decoration:
 		t = "decoration"
 	else:
 		t = "hidden"

@@ -87,7 +87,8 @@ static func register_interaction(cat_id: String) -> bool:
 			data = _default_state()
 			state = EmotionState.IDLE
 		else:
-			return false
+			# ANNOYED 仅冻结情绪与冷视觉；经济奖励照常流转（GDD §5.5）。
+			return true
 	if state == EmotionState.IDLE:
 		data["count"] = 1
 		data["window_start"] = now

@@ -151,8 +151,6 @@ func get_cooldown_remaining(type: String) -> float:
 func try_interact(cat_id: String, type: String) -> bool:
 	if cat_id == "" or is_interaction_blocked(type, cat_id):
 		return false
-	if EmotionStateMachine != null and EmotionStateMachine.is_annoyed(cat_id):
-		return false
 
 	if type in ["feed", "pet", "play", "photo"]:
 		start_cooldown(type, cat_id)

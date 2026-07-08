@@ -4,7 +4,7 @@ signal slot_energy_changed(slot_idx: int, current: float, max: float)
 signal slot_box_ready(slot_idx: int)
 signal slot_box_opened(slot_idx: int, gift_id: String)
 
-const MAX_SLOTS := 3
+const MAX_SLOTS := 4
 const ENERGY_PER_SLOT := 3000.0
 const SAVE_PATH := "user://workshop.cfg"
 
