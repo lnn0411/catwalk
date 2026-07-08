@@ -21,6 +21,7 @@ func save_all() -> void:
 	_write_workshop()
 	_write_cat_screen()
 	_write_iap()
+	_write_walk_companion()
 	_config.save(SAVE_PATH)
 
 func load_and_apply() -> void:
@@ -55,6 +56,9 @@ func load_and_apply() -> void:
 	var iap := get_node_or_null("/root/IAPProvider")
 	if iap and iap.has_method("apply_save"):
 		iap.apply_save(_read_iap())
+	var wc := get_node_or_null("/root/WalkCompanion")
+	if wc and wc.has_method("apply_save"):
+		wc.apply_save(_read_walk_companion())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
 	# 避免冷启动时"应用关闭期间累积的步数"在首帧丢失。
@@ -75,6 +79,9 @@ func reset_all() -> void:
 	var cs2 := get_node_or_null("/root/CatScreenManager")
 	if cs2 and cs2.has_method("apply_save"):
 		cs2.apply_save({})
+	var wc2 := get_node_or_null("/root/WalkCompanion")
+	if wc2 and wc2.has_method("apply_save"):
+		wc2.apply_save({})
 	_is_applying = false
 	save_all()
 
@@ -115,6 +122,26 @@ func _write_steps() -> void:
 	_config.set_value("steps", "total_steps", int(data.get("total_steps", 0)))
 	_config.set_value("steps", "last_plugin_steps", int(data.get("last_plugin_steps", 0)))
 	_config.set_value("steps", "last_step_date", String(data.get("last_step_date", "")))
+
+func _read_walk_companion() -> Dictionary:
+	return {
+		"last_milestone_count": int(_config.get_value("walk_companion", "last_milestone_count", 0)),
+		"chatter_count_today": int(_config.get_value("walk_companion", "chatter_count_today", 0)),
+		"chatter_date": String(_config.get_value("walk_companion", "chatter_date", "")),
+		"last_chatter_index": int(_config.get_value("walk_companion", "last_chatter_index", -1)),
+		"last_summary_date": String(_config.get_value("walk_companion", "last_summary_date", "")),
+	}
+
+func _write_walk_companion() -> void:
+	var wc := get_node_or_null("/root/WalkCompanion")
+	if wc == null or not wc.has_method("get_save_data"):
+		return
+	var data: Dictionary = wc.get_save_data()
+	_config.set_value("walk_companion", "last_milestone_count", int(data.get("last_milestone_count", 0)))
+	_config.set_value("walk_companion", "chatter_count_today", int(data.get("chatter_count_today", 0)))
+	_config.set_value("walk_companion", "chatter_date", String(data.get("chatter_date", "")))
+	_config.set_value("walk_companion", "last_chatter_index", int(data.get("last_chatter_index", -1)))
+	_config.set_value("walk_companion", "last_summary_date", String(data.get("last_summary_date", "")))
 
 func _read_energy() -> Dictionary:
 	return {
