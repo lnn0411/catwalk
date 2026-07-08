@@ -37,6 +37,7 @@ const BREED_LOCATION_PREFERENCES := {
 static var _explorers: Dictionary = {}
 static var _hatched_count: int = 0
 static var _collected_postcards: Array = []
+static var _first_explore_flags: Dictionary = {}
 # cat_id -> 上一次 roll 出的奖励类型，用于「连续 postcard 防重复」。
 static var _last_reward_type: Dictionary = {}
 static var _rng := RandomNumberGenerator.new()
@@ -50,6 +51,7 @@ static func reset_all() -> void:
 	_explorers = {}
 	_hatched_count = 0
 	_collected_postcards = []
+	_first_explore_flags = {}
 	_last_reward_type = {}
 	_rng.randomize()
 	_save()
@@ -122,6 +124,10 @@ static func collect(cat_id: String, cat_species: String = "") -> Dictionary:
 
 # ---- 奖励 ----
 static func _roll_reward_type(cat_id: String) -> String:
+	if not _first_explore_flags.has(cat_id):
+		_first_explore_flags[cat_id] = true
+		_last_reward_type[cat_id] = "postcard"
+		return "postcard"
 	var r := _rng.randf()
 	var t: String
 	if r < 0.60:
@@ -250,6 +256,7 @@ static func _save() -> void:
 	cfg.set_value(SECTION, "explorers", _explorers)
 	cfg.set_value(SECTION, "hatched_count", _hatched_count)
 	cfg.set_value(SECTION, "collected_postcards", _collected_postcards)
+	cfg.set_value(SECTION, "first_explore_flags", _first_explore_flags)
 	if cfg.save(CFG_PATH) != OK:
 		push_error("[ExploreEngine] Save failed: %s" % CFG_PATH)
 
@@ -260,3 +267,4 @@ static func _load() -> void:
 	_explorers = cfg.get_value(SECTION, "explorers", {})
 	_hatched_count = int(cfg.get_value(SECTION, "hatched_count", 0))
 	_collected_postcards = cfg.get_value(SECTION, "collected_postcards", [])
+	_first_explore_flags = cfg.get_value(SECTION, "first_explore_flags", {})
