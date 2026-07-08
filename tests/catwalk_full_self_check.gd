@@ -555,9 +555,8 @@ func _validate_cat_detail() -> void:
 
 
 func _validate_shop() -> void:
-	_validate_script_api("SCENE_VALIDATION", "res://scenes/S12_Shop.gd", ["_build_product_list", "_on_buy_pressed", "_grant_product", "_refresh_all_buttons"], ["PRODUCTS"])
-	var products = _const_value("res://scenes/S12_Shop.gd", "PRODUCTS", [])
-	_check("SCENE_VALIDATION", products is Array and products.size() > 0, "S12_Shop has product grid data")
+	_validate_script_api("SCENE_VALIDATION", "res://scenes/S12_Shop.gd", ["_build_product_list", "_on_buy_pressed", "_refresh_all_buttons", "_on_purchase_completed", "_get_button_state"], ["GARDEN_PATH", "EXCHANGE_PATH"])
+	_validate_script_api("SCENE_VALIDATION", "res://scenes/S15_ExchangeShop.gd", ["_build_product_list", "_on_buy_pressed", "_grant_product", "_refresh_all_buttons"], ["PRODUCTS"])
 
 
 func _validate_friends() -> void:

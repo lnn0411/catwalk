@@ -155,6 +155,7 @@ func _section_compile_guard() -> void:
 		"res://scenes/S10_Album.gd",
 		"res://scenes/S10_CatDetail.gd",
 		"res://scenes/S12_Shop.gd",
+		"res://scenes/S15_ExchangeShop.gd",
 		"res://scenes/S13_Friends.gd",
 		"res://core/HatchEngine.gd",
 	]
