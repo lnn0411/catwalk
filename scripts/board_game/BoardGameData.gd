@@ -68,3 +68,52 @@ static func all_cells() -> Array:
 		for x in range(GRID_SIZE):
 			cells.append(Vector2i(x, y))
 	return cells
+
+
+# 棋盘关卡枚举（按累计胜场划分）
+enum BoardLevel { LV1 = 1, LV2 = 2, LV3 = 3 }
+
+
+# 关卡配置：{level: {initial_main_min, initial_main_max, initial_sub_min, initial_sub_max, mischief_triggers: [generator_click_indices]}}
+static func get_level_config(level: int) -> Dictionary:
+	match level:
+		BoardLevel.LV1:
+			return {
+				"initial_main_min": 5, "initial_main_max": 6,
+				"initial_sub_min": 2, "initial_sub_max": 3,
+				"mischief_triggers": [10],
+			}
+		BoardLevel.LV2:
+			return {
+				"initial_main_min": 4, "initial_main_max": 5,
+				"initial_sub_min": 2, "initial_sub_max": 3,
+				"mischief_triggers": [7, 14],
+			}
+		BoardLevel.LV3:
+			return {
+				"initial_main_min": 4, "initial_main_max": 5,
+				"initial_sub_min": 2, "initial_sub_max": 3,
+				"mischief_triggers": [6, 12, 18],
+			}
+		_:
+			return get_level_config(BoardLevel.LV1)
+
+
+# 关卡解锁所需胜场数
+static func get_wins_for_level(level: int) -> int:
+	match level:
+		BoardLevel.LV2:
+			return 5
+		BoardLevel.LV3:
+			return 15
+		_:
+			return 0
+
+
+# 根据累计胜场计算当前关卡等级
+static func calc_board_level(total_wins: int) -> int:
+	if total_wins >= get_wins_for_level(BoardLevel.LV3):
+		return BoardLevel.LV3
+	if total_wins >= get_wins_for_level(BoardLevel.LV2):
+		return BoardLevel.LV2
+	return BoardLevel.LV1

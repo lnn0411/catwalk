@@ -59,6 +59,9 @@ func _build_board_logic() -> void:
 	board.game_lost.connect(_on_game_lost)
 	board.sub_chain_completed.connect(_on_sub_chain_completed)
 	board.undo_performed.connect(_on_undo_performed)
+	board.mischief_warning.connect(_on_mischief_warning)
+	board.mischief_triggered.connect(_on_mischief_triggered)
+	board.mischief_cat_apology.connect(_on_cat_apology)
 
 
 # ---------------- UI 构建 ----------------
@@ -295,7 +298,7 @@ func _build_ad_rescue_dialog() -> void:
 	panel.add_child(vbox)
 
 	var label := Label.new()
-	label.text = "棋盘好像卡住了，看个广告帮你腾位置？"
+	label.text = "猫咪把东西拍飞了！看个广告帮你找回来？"
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.custom_minimum_size = Vector2(430, 0)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -325,34 +328,8 @@ func _build_ad_rescue_dialog() -> void:
 	give_up_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	give_up_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	give_up_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	give_up_button.pressed.connect(_show_failure_result)
+	give_up_button.pressed.connect(_on_ad_rescue_give_up_pressed)
 	buttons.add_child(give_up_button)
-
-	_ad_rescue_action_layer = Control.new()
-	_ad_rescue_action_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_ad_rescue_action_layer.mouse_filter = Control.MOUSE_FILTER_PASS
-	_ad_rescue_action_layer.visible = false
-	add_child(_ad_rescue_action_layer)
-
-	var bottom := CenterContainer.new()
-	bottom.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	bottom.offset_top = -120.0
-	bottom.offset_bottom = -28.0
-	bottom.mouse_filter = Control.MOUSE_FILTER_PASS
-	_ad_rescue_action_layer.add_child(bottom)
-
-	_ad_rescue_remove_button = Button.new()
-	_ad_rescue_remove_button.text = "移除所选物品"
-	_ad_rescue_remove_button.custom_minimum_size = Vector2(260, 68)
-	_ad_rescue_remove_button.disabled = true
-	_ad_rescue_remove_button.mouse_filter = Control.MOUSE_FILTER_STOP
-	_ad_rescue_remove_button.add_theme_font_size_override("font_size", 22)
-	_ad_rescue_remove_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	_ad_rescue_remove_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
-	_ad_rescue_remove_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	_ad_rescue_remove_button.add_theme_color_override("font_disabled_color", Color(UI_TEXT_COLOR, 0.45))
-	_ad_rescue_remove_button.pressed.connect(_remove_selected_items)
-	bottom.add_child(_ad_rescue_remove_button)
 
 
 func _build_debug_ticket_button() -> void:
@@ -397,7 +374,9 @@ func _start_game() -> void:
 			_refresh_ticket_label()
 			return
 		TicketManager.spend_ticket()
-	board.start_new_game()
+	var board_level := BoardGameData.calc_board_level(_get_total_board_wins())
+	var cat_name := _get_companion_cat_name()
+	board.start_new_game(board_level, cat_name)
 	_result_overlay.visible = false
 	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
 	var sub_name: String = ItemChains.get_chain_display_name(board.current_sub_chain)
@@ -418,6 +397,38 @@ func _refresh_all() -> void:
 func _refresh_ticket_label() -> void:
 	if TicketManager != null:
 		_ticket_label.text = "🎟 ×%d" % TicketManager.get_tickets()
+
+
+func _get_total_board_wins() -> int:
+	if LevelStateManager != null:
+		if LevelStateManager.has_method("get_total_wins"):
+			return int(LevelStateManager.call("get_total_wins"))
+		var wins: Variant = LevelStateManager.get("total_wins")
+		if wins != null:
+			return int(wins)
+	return 0
+
+
+func _get_companion_cat_name() -> String:
+	if HatchEngine == null:
+		return "猫咪"
+	var cat = null
+	var companion_id := String(HatchEngine.get("current_companion_cat_id"))
+	if not companion_id.is_empty() and HatchEngine.has_method("get_cat_by_id"):
+		cat = HatchEngine.get_cat_by_id(companion_id)
+	if cat == null and HatchEngine.has_method("get_cats"):
+		var cats: Array = HatchEngine.get_cats()
+		if not cats.is_empty():
+			cat = cats[0]
+	if cat == null:
+		return "猫咪"
+	if cat is Dictionary:
+		return String(cat.get("display_name", cat.get("name", "猫咪")))
+	var display_name := String(cat.get("display_name"))
+	if not display_name.is_empty():
+		return display_name
+	var fallback_name := String(cat.get("name"))
+	return fallback_name if not fallback_name.is_empty() else "猫咪"
 
 
 # ---------------- 交互回调 ----------------
@@ -473,6 +484,23 @@ func _on_undo_performed(_action: Dictionary) -> void:
 	_refresh_all()
 
 
+func _on_mischief_warning(pos: Vector2i) -> void:
+	if _cells.has(pos):
+		var cell: Control = _cells[pos]
+		var tween := create_tween()
+		tween.set_loops(2)
+		tween.tween_property(cell, "modulate", Color(1.0, 0.3, 0.3, 0.7), 0.2)
+		tween.tween_property(cell, "modulate", Color.WHITE, 0.2)
+
+
+func _on_mischief_triggered(_pos: Vector2i, _item: BoardItem) -> void:
+	_refresh_all()
+
+
+func _on_cat_apology(_cat_name: String) -> void:
+	pass
+
+
 func _on_game_won() -> void:
 	_refresh_all()
 	var reward: Dictionary = BoardRewardSystem.roll_reward()
@@ -520,7 +548,7 @@ func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> void:
 
 func _on_game_lost() -> void:
 	_refresh_all()
-	if board.ad_rescue_used:
+	if board.ad_rescue_restore_used or board.swiped_items.is_empty():
 		_show_failure_result()
 		return
 	_show_ad_rescue_dialog()
@@ -537,17 +565,25 @@ func _show_ad_rescue_dialog() -> void:
 func _show_failure_result() -> void:
 	_exit_ad_rescue_mode()
 	_ad_rescue_overlay.visible = false
-	_result_label.text = "😿 死局了…\n没有可合并的物品"
+	var cat: String = board.cat_name if not board.cat_name.is_empty() else "猫咪"
+	if board.is_give_up:
+		_result_label.text = "😿 你放弃了这局…\n%s蹭过来蹭蹭你，好像在说'下次一定行喵'" % cat
+	elif board.ad_rescue_restore_used:
+		_result_label.text = "😿 还是死局了…\n%s低着头蹭过来，心虚地喵了一声" % cat
+	else:
+		_result_label.text = "😿 死局了…\n%s把东西拍飞了，蹭过来道歉中…" % cat
 	_show_result()
 
 
 func _enter_ad_rescue_mode() -> void:
 	_ad_rescue_overlay.visible = false
-	_ad_rescue_mode = true
-	_ad_rescue_selected.clear()
-	_ad_rescue_action_layer.visible = true
-	_refresh_ad_rescue_highlights()
-	_update_ad_rescue_remove_button()
+	board.ad_rescue_restore()
+	_refresh_all()
+
+
+func _on_ad_rescue_give_up_pressed() -> void:
+	board.give_up()
+	_show_failure_result()
 
 
 func _toggle_ad_rescue_selection(pos: Vector2i) -> void:

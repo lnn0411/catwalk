@@ -21,6 +21,9 @@ signal sub_chain_completed(item: BoardItem)
 signal undo_performed(action: Dictionary)
 signal board_updated(grid_data: Dictionary)
 signal consolation_prize(item_name: String, count: int, message: String)  # 放弃本局的安慰奖
+signal mischief_warning(pos: Vector2i)  # 捣乱预警：猫出现在棋盘边缘
+signal mischief_triggered(pos: Vector2i, item: BoardItem)  # 捣乱执行：猫拍飞物品
+signal mischief_cat_apology(cat_name: String)  # 失败后猫来道歉
 
 # 撤销：免费次数用尽后每次撤销的钻石成本
 const UNDO_DIAMOND_COST := 10
@@ -41,27 +44,44 @@ var undo_free_count: int = BoardGameData.UNDO_FREE_COUNT
 var sub_chain_exit_used: bool = false  # 副链出口是否已用（副链⭐3只触发一次）
 var ad_rescue_used: bool = false
 var is_give_up: bool = false
+var board_level: int = BoardGameData.BoardLevel.LV1
+var generator_click_count: int = 0  # 本局生成器已点击次数
+var swiped_items: Array = []  # 被猫拍飞的物品 [{pos, item}]
+var ad_rescue_restore_used: bool = false  # 本局是否已用救局恢复
+var cat_name: String = ""  # 携带猫名字
+var mischief_pending_trigger: int = -1  # 下一个触发捣乱的点击序号（-1=本局无）
+var mischief_triggered_this_game: Array[int] = []  # 已触发的捣乱序号列表
+var _consolation_emitted: bool = false
 
 
-func start_new_game() -> void:
+func start_new_game(level: int = BoardGameData.BoardLevel.LV1, cat: String = "你的猫") -> void:
 	"""初始化新一局：随机选链→初始掉落→生成器满"""
 	randomize()
+	board_level = level
+	cat_name = cat
+	var config := BoardGameData.get_level_config(board_level)
 	# 随机选主链和副链（不同）
 	var chains: Array = BoardGameData.all_chains()
 	chains.shuffle()
 	current_main_chain = chains[0]
 	current_sub_chain = chains[1]
 	generator_remaining = BoardGameData.GENERATOR_TOTAL
+	generator_click_count = 0
 	undo_stack.clear()
 	undo_free_count = BoardGameData.UNDO_FREE_COUNT
 	sub_chain_exit_used = false
 	ad_rescue_used = false
+	ad_rescue_restore_used = false
+	swiped_items.clear()
 	is_give_up = false
+	mischief_triggered_this_game.clear()
+	_consolation_emitted = false
 	game_state = BoardGameData.GameState.PLAYING
+	_advance_mischief_trigger()
 	# 初始掉落
 	grid.clear()
-	var main_count := randi_range(BoardGameData.INITIAL_MAIN_MIN, BoardGameData.INITIAL_MAIN_MAX)
-	var sub_count := randi_range(BoardGameData.INITIAL_SUB_MIN, BoardGameData.INITIAL_SUB_MAX)
+	var main_count := randi_range(int(config["initial_main_min"]), int(config["initial_main_max"]))
+	var sub_count := randi_range(int(config["initial_sub_min"]), int(config["initial_sub_max"]))
 	_place_initial_items(main_count, sub_count)
 	board_updated.emit(grid.duplicate(true))
 
@@ -147,10 +167,12 @@ func click_generator() -> bool:
 	var new_item := BoardItem.create(chain, BoardGameData.StarLevel.ONE, target_pos)
 	grid[target_pos] = new_item
 	generator_remaining -= 1
+	generator_click_count += 1
 	undo_stack.append({"type": "generator", "pos": target_pos, "item": new_item.duplicate_item()})
 	generator_clicked.emit(target_pos, new_item)
 	generator_used.emit(generator_remaining)
 	board_updated.emit(grid.duplicate(true))
+	_check_mischief()
 	_check_deadlock()
 	return true
 
@@ -182,24 +204,38 @@ func get_undo_cost() -> Dictionary:
 
 
 func give_up() -> void:
-	"""主动放弃本局：置为失败并发放安慰奖（小鱼干×1）。非进行中则忽略。"""
+	"""主动放弃本局：置为失败并发放安慰奖（小鱼干x1）"""
 	if game_state != BoardGameData.GameState.PLAYING:
 		return
 	is_give_up = true
 	game_state = BoardGameData.GameState.LOST
-	consolation_prize.emit(CONSOLATION_ITEM, CONSOLATION_COUNT, CONSOLATION_TEXT)
+	_emit_consolation_prize()
+
+
+func ad_rescue_restore() -> bool:
+	"""看广告救局：恢复本局全部被猫拍飞的物品，每局限1次"""
+	if game_state != BoardGameData.GameState.LOST or ad_rescue_restore_used or is_give_up:
+		return false
+	if swiped_items.is_empty():
+		return false
+	ad_rescue_restore_used = true
+	ad_rescue_used = true
+	for entry in swiped_items:
+		var pos: Vector2i = entry["pos"]
+		var item: BoardItem = entry["item"]
+		if not grid.has(pos):
+			item.grid_pos = pos
+			grid[pos] = item
+	swiped_items.clear()
+	game_state = BoardGameData.GameState.PLAYING
+	board_updated.emit(grid.duplicate(true))
+	_check_deadlock()
+	return true
 
 
 func ad_rescue(extra_uses: int = 5) -> bool:
-	"""看广告救场：死局后补充生成器次数，每局一次"""
-	if game_state != BoardGameData.GameState.LOST or ad_rescue_used or is_give_up:
-		return false
-	ad_rescue_used = true
-	generator_remaining += extra_uses
-	game_state = BoardGameData.GameState.PLAYING
-	generator_used.emit(generator_remaining)
-	board_updated.emit(grid.duplicate(true))
-	return true
+	"""Deprecated：兼容旧救局入口，改为恢复被猫拍飞的物品。"""
+	return ad_rescue_restore()
 
 
 func sub_chain_exit(pos: Vector2i) -> bool:
@@ -227,6 +263,52 @@ func is_generator_pos(pos: Vector2i) -> bool:
 	return pos == BoardGameData.GENERATOR_POS
 
 
+func _check_mischief() -> void:
+	# 如果 mischief_pending_trigger == -1，说明本局无捣乱或已全部触发
+	if mischief_pending_trigger < 0:
+		return
+	# 如果当前点击未达到触发点，不触发
+	if generator_click_count < mischief_pending_trigger:
+		return
+	_trigger_mischief()
+
+
+func _trigger_mischief() -> void:
+	mischief_triggered_this_game.append(mischief_pending_trigger)
+	var targets: Array = []
+	for pos in grid:
+		var item: BoardItem = grid[pos]
+		if item.star <= BoardGameData.StarLevel.TWO:
+			var weight := 2 if item.star == BoardGameData.StarLevel.TWO else 1
+			for _i in range(weight):
+				targets.append({"pos": pos, "item": item})
+	if targets.is_empty():
+		_advance_mischief_trigger()
+		return
+	targets.shuffle()
+	var target: Dictionary = targets[0]
+	var pos: Vector2i = target["pos"]
+	var item: BoardItem = target["item"]
+	mischief_warning.emit(pos)
+	swiped_items.append({"pos": pos, "item": item.duplicate_item()})
+	grid.erase(pos)
+	mischief_triggered.emit(pos, item)
+	board_updated.emit(grid.duplicate(true))
+	_advance_mischief_trigger()
+	_check_deadlock()
+
+
+func _advance_mischief_trigger() -> void:
+	var config := BoardGameData.get_level_config(board_level)
+	var triggers: Array = config["mischief_triggers"]
+	mischief_pending_trigger = -1
+	for t in triggers:
+		var trigger := int(t)
+		if trigger > generator_click_count and not mischief_triggered_this_game.has(trigger):
+			mischief_pending_trigger = trigger
+			break
+
+
 func serialize_state() -> Dictionary:
 	"""序列化当前棋盘对局状态，供外层存档系统保存。"""
 	var grid_data: Dictionary = {}
@@ -246,6 +328,14 @@ func serialize_state() -> Dictionary:
 		"sub_chain_exit_used": sub_chain_exit_used,
 		"ad_rescue_used": ad_rescue_used,
 		"is_give_up": is_give_up,
+		"board_level": board_level,
+		"generator_click_count": generator_click_count,
+		"swiped_items": _serialize_swiped_items(),
+		"ad_rescue_restore_used": ad_rescue_restore_used,
+		"cat_name": cat_name,
+		"mischief_pending_trigger": mischief_pending_trigger,
+		"mischief_triggered_this_game": mischief_triggered_this_game.duplicate(),
+		"consolation_emitted": _consolation_emitted,
 	}
 
 
@@ -266,6 +356,16 @@ func deserialize_state(data: Dictionary) -> void:
 	sub_chain_exit_used = bool(data.get("sub_chain_exit_used", sub_chain_exit_used))
 	ad_rescue_used = bool(data.get("ad_rescue_used", ad_rescue_used))
 	is_give_up = bool(data.get("is_give_up", is_give_up))
+	board_level = int(data.get("board_level", board_level))
+	generator_click_count = int(data.get("generator_click_count", generator_click_count))
+	ad_rescue_restore_used = bool(data.get("ad_rescue_restore_used", data.get("ad_rescue_used", ad_rescue_restore_used)))
+	cat_name = String(data.get("cat_name", cat_name))
+	mischief_pending_trigger = int(data.get("mischief_pending_trigger", mischief_pending_trigger))
+	mischief_triggered_this_game.clear()
+	for trigger in data.get("mischief_triggered_this_game", []):
+		mischief_triggered_this_game.append(int(trigger))
+	swiped_items = _deserialize_swiped_items(data.get("swiped_items", []))
+	_consolation_emitted = bool(data.get("consolation_emitted", _consolation_emitted))
 	undo_stack.clear()
 	for raw_action in data.get("undo_stack", []):
 		var action := _deserialize_undo_action(raw_action)
@@ -318,6 +418,31 @@ func _deserialize_item(data: Variant, fallback_pos: Vector2i) -> BoardItem:
 		return null
 	var pos := _deserialize_pos(data.get("grid_pos", fallback_pos))
 	return BoardItem.create(int(data.get("chain", current_main_chain)), int(data.get("star", BoardGameData.StarLevel.ONE)), pos)
+
+
+func _serialize_swiped_items() -> Array:
+	var data: Array = []
+	for entry in swiped_items:
+		data.append({
+			"pos": _serialize_pos(entry["pos"]),
+			"item": _serialize_item(entry["item"]),
+		})
+	return data
+
+
+func _deserialize_swiped_items(data: Variant) -> Array:
+	var items: Array = []
+	if not (data is Array):
+		return items
+	for raw_entry in data:
+		if not (raw_entry is Dictionary):
+			continue
+		var pos := _deserialize_pos(raw_entry.get("pos", Vector2i.ZERO))
+		var item := _deserialize_item(raw_entry.get("item", {}), pos)
+		if item != null:
+			item.grid_pos = pos
+			items.append({"pos": pos, "item": item})
+	return items
 
 
 func _serialize_undo_action(action: Dictionary) -> Dictionary:
@@ -442,6 +567,9 @@ func _check_deadlock() -> void:
 	if generator_remaining > 0 and not board_full:
 		return  # 生成器还能产出新物品
 	game_state = BoardGameData.GameState.LOST
+	if not is_give_up:
+		mischief_cat_apology.emit(cat_name)
+	_emit_consolation_prize()
 	game_lost.emit()
 
 
@@ -456,3 +584,10 @@ func _has_mergeable() -> bool:
 		if count_by_id[item.id] >= 2:
 			return true
 	return false
+
+
+func _emit_consolation_prize() -> void:
+	if _consolation_emitted:
+		return
+	_consolation_emitted = true
+	consolation_prize.emit(CONSOLATION_ITEM, CONSOLATION_COUNT, CONSOLATION_TEXT)

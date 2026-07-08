@@ -85,11 +85,10 @@ func delete() -> void:
 
 
 func give_up() -> void:
-	"""主动放弃本局：结算安慰奖、清除存档并发出 resigned 信号。"""
+	"""主动放弃本局：由 BoardGame 处理安慰奖，管理器只清除存档。"""
 	var g := _ensure_game()
 	g.give_up()
 	delete()
-	resigned.emit(CONSOLATION_PRIZE["item"], CONSOLATION_PRIZE["count"], CONSOLATION_PRIZE["text"])
 
 
 func get_undo_cost() -> Dictionary:
