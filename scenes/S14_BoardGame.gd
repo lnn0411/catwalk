@@ -57,6 +57,7 @@ func _build_board_logic() -> void:
 	board.generator_used.connect(_on_generator_used)
 	board.game_won.connect(_on_game_won)
 	board.game_lost.connect(_on_game_lost)
+	board.sub_chain_completed.connect(_on_sub_chain_completed)
 	board.undo_performed.connect(_on_undo_performed)
 
 
@@ -475,9 +476,46 @@ func _on_undo_performed(_action: Dictionary) -> void:
 func _on_game_won() -> void:
 	_refresh_all()
 	var reward: Dictionary = BoardRewardSystem.roll_reward()
-	_result_label.text = "🎉 通关！\n获得「%s」" % String(reward.get("name", "小鱼干"))
+	var reward_id: String = String(reward.get("id", ""))
+	var reward_name: String = String(reward.get("name", "小鱼干"))
+
+	# 奖励入库
+	_add_reward_to_inventory(reward_id, reward_name)
+
+	var display_text := reward_name
+	if reward_id == "cat_can_pack":
+		display_text = "猫罐头×3"
+
+	_result_label.text = "🎉 通关！\n获得「%s」" % display_text
 	_show_result()
 	Juice.pattern_legendary()
+
+
+func _on_sub_chain_completed(_item: BoardItem) -> void:
+	# 副链⭐3出口奖励：奖励小鱼干×1
+	_add_reward_to_inventory("fish_dried", "小鱼干")
+	Popups.show_toast("副链出口！获得小鱼干×1")
+
+
+# 奖励类型→InventoryManager 映射
+func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> void:
+	if InventoryManager == null:
+		return
+	match reward_id:
+		"fish_dried":  # 小鱼干 → snack
+			InventoryManager.add_item("snack", 1)
+		"cat_can":  # 猫罐头 → snack
+			InventoryManager.add_item("snack", 1)
+		"cat_can_pack":  # 猫罐头大礼包 → 自动拆分为3个snack
+			InventoryManager.add_item("snack", 3)
+		"yarn_ball":  # 逗猫毛线团 → decoration_shard（占位，Phase 2再细分类）
+			InventoryManager.add_item("decoration_shard", 1)
+		"cat_wand":  # 逗猫棒 → decoration_shard（占位）
+			InventoryManager.add_item("decoration_shard", 1)
+		"cat_tree":  # 猫爬架 → decor（占位）
+			InventoryManager.add_item("decor", 1)
+		"cherry_tree":  # 樱花树 → decor（占位）
+			InventoryManager.add_item("decor", 1)
 
 
 func _on_game_lost() -> void:
