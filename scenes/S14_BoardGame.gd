@@ -400,7 +400,7 @@ func _start_game() -> void:
 	_result_overlay.visible = false
 	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
 	var sub_name: String = ItemChains.get_chain_display_name(board.current_sub_chain)
-	_goal_label.text = "目标：合出 %s ⭐5 ｜ 副链：%s" % [main_name, sub_name]
+	_goal_label.text = "目标：合出 %s ⭐5 ｜ 副链：%s ⭐3" % [main_name, sub_name]
 	_refresh_all()
 
 
