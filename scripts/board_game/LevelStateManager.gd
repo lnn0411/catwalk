@@ -23,6 +23,7 @@ signal saved
 signal loaded
 signal resigned(item_name: String, count: int, message: String)
 signal won_reward_ready
+signal first_three_star_bonus_reward(item_name: String, count: int)  # D4
 # 棋盘升档（旧等级 -> 新等级）；record_win 触发升级时发出
 signal level_up(old_level: int, new_level: int)
 
@@ -32,6 +33,7 @@ var game: BoardGame = null
 # 跨对局累计的进度（持久化在 SAVE_PATH 的 [meta] section）
 var total_wins: int = 0
 var board_level: int = BoardGameData.BoardLevel.LV1
+var first_three_star_claimed: bool = false  # D4
 
 
 func _ready() -> void:
@@ -142,6 +144,18 @@ func record_win() -> int:
 	return leveled_up
 
 
+# D4: Handle first three-star win bonus and persist the one-time claim.
+func on_game_won_with_stars(rating: int) -> Dictionary:
+	"""Handle star rating after win. Returns bonus info if any."""
+	var bonus := {"has_bonus": false, "item_name": "", "count": 0}
+	if rating >= 3 and not first_three_star_claimed:
+		first_three_star_claimed = true
+		_save_meta()
+		bonus = {"has_bonus": true, "item_name": "小鱼干", "count": 1}
+		first_three_star_bonus_reward.emit("小鱼干", 1)
+	return bonus
+
+
 # ---------------- 内部方法 ----------------
 
 func _load_meta() -> void:
@@ -151,6 +165,7 @@ func _load_meta() -> void:
 		return
 	total_wins = int(cfg.get_value(META_SECTION, "total_wins", 0))
 	board_level = int(cfg.get_value(META_SECTION, "board_level", BoardGameData.BoardLevel.LV1))
+	first_three_star_claimed = bool(cfg.get_value(META_SECTION, "first_three_star_claimed", false))  # D4
 	# 自愈：即便 board_level 丢失/损坏，也不低于当前胜场应有的等级（仍保证不降级）
 	board_level = maxi(board_level, BoardGameData.calc_board_level(total_wins))
 
@@ -161,6 +176,7 @@ func _save_meta() -> void:
 	cfg.load(SAVE_PATH)  # 载入已有内容以保留 session 存档
 	cfg.set_value(META_SECTION, "total_wins", total_wins)
 	cfg.set_value(META_SECTION, "board_level", board_level)
+	cfg.set_value(META_SECTION, "first_three_star_claimed", first_three_star_claimed)  # D4
 	var err := cfg.save(SAVE_PATH)
 	if err != OK:
 		push_warning("LevelStateManager._save_meta 失败: %d" % err)
@@ -177,4 +193,6 @@ func _ensure_game() -> BoardGame:
 
 
 func _on_game_won() -> void:
+	var star_rating: int = game.star_rating if game != null else 0  # D4
+	on_game_won_with_stars(star_rating)  # D4
 	won_reward_ready.emit()

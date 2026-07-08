@@ -38,11 +38,15 @@ var _ad_rescue_selected: Dictionary = {}  # Vector2i -> true
 var _ad_rescue_highlights: Dictionary = {}  # Vector2i -> Panel
 var _ad_rescue_mode: bool = false
 var _dbg_ticket_btn: Button
+var _has_three_star_bonus: bool = false  # D4
 
 
 func _ready() -> void:
 	super()
 	_build_board_logic()
+	if LevelStateManager != null and LevelStateManager.has_signal("first_three_star_bonus_reward"):  # D4
+		if not LevelStateManager.first_three_star_bonus_reward.is_connected(_on_three_star_bonus):  # D4
+			LevelStateManager.first_three_star_bonus_reward.connect(_on_three_star_bonus)  # D4
 	_build_ui()
 	_start_game()
 
@@ -367,6 +371,7 @@ func _build_debug_ticket_button() -> void:
 
 func _start_game() -> void:
 	_exit_ad_rescue_mode()
+	_has_three_star_bonus = false  # D4: reset bonus flag each game
 	if TicketManager != null:
 		if TicketManager.get_tickets() <= 0:
 			_result_label.text = "门票不足\n请先获取门票"
@@ -511,6 +516,11 @@ func _on_cat_apology(_cat_name: String) -> void:
 func _on_game_won() -> void:
 	_refresh_all()
 
+	var stars := board.star_rating if board != null else 0  # D4
+	var star_str := ""  # D4
+	for _i in range(stars):  # D4
+		star_str += "⭐"  # D4
+
 	# 记录累计胜场；若触发升档则弹出说明卡（等级仅升不降，持久化）
 	_record_win_and_maybe_upgrade()
 
@@ -525,9 +535,18 @@ func _on_game_won() -> void:
 	if reward_id == "cat_can_pack":
 		display_text = "猫罐头×3"
 
-	_result_label.text = "🎉 通关！\n获得「%s」" % display_text
+	var result_text := "🎉 通关！\n%s\n获得「%s」" % [star_str, display_text]  # D4
+	if _has_three_star_bonus:  # D4
+		result_text += "\n首次⭐⭐⭐奖励：小鱼干×1"  # D4
+	_result_label.text = result_text  # D4
 	_show_result()
 	Juice.pattern_legendary()
+
+
+# D4: Signal handler for first ⭐⭐⭐ bonus from LevelStateManager
+func _on_three_star_bonus(item_name: String, _count: int) -> void:
+	_has_three_star_bonus = true
+	_add_reward_to_inventory("fish_dried", item_name)
 
 
 func _record_win_and_maybe_upgrade() -> void:
