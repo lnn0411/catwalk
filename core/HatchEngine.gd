@@ -3,8 +3,6 @@ extends Node
 signal hatch_started(slot: int)
 signal hatch_progress(slot: int, progress: float)
 signal hatch_complete(cat_data)
-signal workshop_activated()
-signal hatched_activated()
 
 const CatData := preload("res://core/CatData.gd")
 const SLOT_COUNT := 4
@@ -21,17 +19,12 @@ var legendary_pity_count: int = 0
 var rng := RandomNumberGenerator.new()
 var _fill_timer: Timer  # 填蛋定时兜底（步数静止时池能量也能流进蛋）
 var _assign_timer: Timer  # 0.5s 自动落蛋延迟（检测到空槽后延迟装填）
-var _was_workshop_mode: bool = false  # 工坊/孵化态切换的去抖：仅在跨态时派发信号
 
 func _get_max_capacity() -> int:
 	if PackageSystem:
 		return PackageSystem.get_max_capacity()
 	return 24
 
-# GDD v2.17：工坊态/孵化态双轨切换 + 能量溢出链
-const WORKSHOP_CACHE_CAP := 3000.0
-var workshop_cached_energy: float = 0.0   # 工坊态半满能量冻结缓存（切回孵化态保留不丢）
-var surprise_box_ready: bool = false      # 惊喜礼盒是否 Ready（工坊缓存灌满触发）
 var has_tutorial_first_egg: bool = false  # 是否已触发新手首蛋
 var current_companion_cat_id: String = ""
 var garden_expand_purchased: bool = false
@@ -60,7 +53,6 @@ func _ready() -> void:
 	_assign_timer.one_shot = true
 	_assign_timer.timeout.connect(_do_assign_empty_slots)
 	add_child(_assign_timer)
-	_was_workshop_mode = is_workshop_mode()
 	_assign_next_empty_slots()
 	if StepEngine and not StepEngine.steps_updated.is_connected(_on_steps_updated):
 		StepEngine.steps_updated.connect(_on_steps_updated)
@@ -203,14 +195,11 @@ func apply_save(data: Dictionary) -> void:
 	legendary_pity_count = max(int(data.get("legendary_pity_count", 0)), 0)
 	ad_speedup_count = max(int(data.get("ad_speedup_count", 0)), 0)
 	ad_speedup_date = String(data.get("ad_speedup_date", ""))
-	workshop_cached_energy = clamp(float(data.get("workshop_cached_energy", 0.0)), 0.0, WORKSHOP_CACHE_CAP)
-	surprise_box_ready = bool(data.get("surprise_box_ready", false))
 	has_tutorial_first_egg = bool(data.get("has_tutorial_first_egg", false))
 	current_companion_cat_id = String(data.get("current_companion_cat_id", ""))
 	garden_expand_purchased = bool(data.get("garden_expand_purchased", false))
 	_ensure_slots()
 	_update_unlocks()
-	_was_workshop_mode = is_workshop_mode()
 	_assign_next_empty_slots()
 	_emit_all_progress()
 
@@ -274,8 +263,6 @@ func get_save_data() -> Dictionary:
 		"legendary_pity_count": legendary_pity_count,
 		"ad_speedup_count": ad_speedup_count,
 		"ad_speedup_date": ad_speedup_date,
-		"workshop_cached_energy": workshop_cached_energy,
-		"surprise_box_ready": surprise_box_ready,
 		"has_tutorial_first_egg": has_tutorial_first_egg,
 		"current_companion_cat_id": current_companion_cat_id,
 		"garden_expand_purchased": garden_expand_purchased,
@@ -332,7 +319,7 @@ func _recalc_companion_exp() -> void:
 func _on_steps_updated(delta: int, _total: int) -> void:
 	if EnergyEngine == null:
 		return
-	# 步数 → 能量，存进 pool/reserve（process_steps 内部已完成）
+	# 步数 → 能量，存进主池（process_steps 内部已完成）
 	var produced: float = EnergyEngine.process_steps(delta)
 	# 孵化从主池扣能量（不再用 produced 重复喂蛋）。
 	# 此处保留同帧填蛋（走路时即时响应）；_fill_timer 每 0.2s 兜底
@@ -379,16 +366,19 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 func _fill_slots_from_pool() -> void:
 	if EnergyEngine == null:
 		return
-	_update_mode()
-	# 工坊态（背包已满且无蛋在孵）：能量转入工坊缓存，不再灌蛋（GDD v2.17 能量溢出链）。
+	# 工坊态（背包已满且无蛋在孵）：能量转入 WorkshopManager 礼盒队列（GDD v3.1 R8）。
 	if is_workshop_mode():
-		_fill_workshop_cache()
+		if WorkshopManager:
+			var available: float = EnergyEngine.energy_pool if EnergyEngine else 0.0
+			if available > 0.0:
+				var take: float = EnergyEngine.spend_pool(available)
+				WorkshopManager.allocate_energy(take)
 		return
 	# 渐进灌注（设计决策 2026-06-12）：池里有多少灌多少，蛋随走路实时增长，
 	# GDD §8.2 蛋壳 4 阶段渐进视觉得以生效。
-	# 连带语义：有蛋在孵时主池常态趋近 0（能量都在蛋里干活）；
-	# 蛋全 ready/无蛋可孵时能量才积在池里 → 池满溢出 → 备用槽充能。
-	# 备用槽机制不变：只接池溢出、只手动注入。
+	# GDD v3.1 R8：备用槽已移除。能量路由为：孵化中的蛋 > 工坊礼盒 > 主能量池 > 截断。
+	# 有蛋在孵时主池常态趋近 0（能量都在蛋里干活）；
+	# 蛋全 ready/无蛋可孵时能量积在池里 → 池满截断（工坊礼盒队列承接缓冲）。
 	while true:
 		var slot_id: int = _get_active_filling_slot()
 		if slot_id == -1:
@@ -554,45 +544,6 @@ func _on_hatch_complete(_cat_data) -> void:
 func is_workshop_mode() -> bool:
 	# 工坊态条件：猫包已满（cats.size() >= backpack_max_capacity）且无 incubating 槽
 	return cats.size() >= _get_max_capacity() and _get_active_filling_slot() == -1
-
-func _update_mode() -> void:
-	var workshop_now: bool = is_workshop_mode()
-	if workshop_now and not _was_workshop_mode:
-		workshop_activated.emit()
-	elif not workshop_now and _was_workshop_mode:
-		hatched_activated.emit()
-	_was_workshop_mode = workshop_now
-
-# ── GDD v2.17 能量溢出链（工坊态）──
-
-func _fill_workshop_cache() -> void:
-	if EnergyEngine == null:
-		return
-	if surprise_box_ready:
-		# 礼盒 Ready 未拆 → 溢出链：主池(15000) → 备用槽(6000) → 硬截断
-		# 能量已在池中积累，不再流入工坊
-		return
-	var missing: float = WORKSHOP_CACHE_CAP - workshop_cached_energy
-	if missing <= 0.0:
-		return
-	# 从主池取能量注入工坊缓存
-	while missing > 0.0:
-		var available: float = EnergyEngine.energy_pool
-		if available <= 0.0:
-			break
-		var amount: float = minf(available, missing)
-		EnergyEngine.spend_pool(amount)
-		workshop_cached_energy += amount
-		missing -= amount
-	if workshop_cached_energy >= WORKSHOP_CACHE_CAP:
-		workshop_cached_energy = WORKSHOP_CACHE_CAP
-		surprise_box_ready = true
-
-func is_energy_overflowing() -> bool:
-	# 主池满 + 备用槽满 + 礼盒 Ready 未拆 → 硬截断预警
-	return surprise_box_ready \
-		and (EnergyEngine == null or EnergyEngine.energy_pool >= EnergyEngine.MAX_ENERGY_POOL) \
-		and (EnergyEngine == null or EnergyEngine.reserve_tank >= EnergyEngine.MAX_RESERVE_TANK)
 
 # ── GDD v2.17 0.5s 自动落蛋 + 新手首蛋 ──
 

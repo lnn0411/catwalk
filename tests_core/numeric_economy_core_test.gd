@@ -127,19 +127,14 @@ func _t_energy_alloc() -> void:
 	ee.created_at = Time.get_unix_time_from_system() - 9_000_000.0   # 非新手
 	ee.last_energy_date = ee._today_key()                            # 规避跨天重置
 	ee.process_steps(200_000)                                        # 海量步数压满
-	# E-017/018/019 池→备用槽→截断
+	# E-017/018/019 GDD v3.1 R8：池满截断（备用槽已移除）
 	check("E-017 主池≤15000", ee.energy_pool <= 15000.0 + 0.001, "pool=%f" % ee.energy_pool)
-	check("E-018 备用槽≤6000", ee.reserve_tank <= 6000.0 + 0.001, "reserve=%f" % ee.reserve_tank)
 	check_approx("E-019 主池满=15000", ee.energy_pool, 15000.0)
-	check_approx("E-019 备用槽满=6000", ee.reserve_tank, 6000.0)
-	# 备注(非断言)：满载后 total_energy_produced 仍在增长，E-019「不产生能量」的精确语义
-	# 需策划确认是否要冻结 total_energy_produced —— 见覆盖清单备注。
-	# E-025/026 广告补能溢出分配
+	# E-025/026 GDD v3.1 R8：add_pool_with_overflow 溢出直接截断（无备用槽）
 	var ee2 = EnergyS.new()
 	ee2.energy_pool = 15000.0       # 主池已满
-	ee2.reserve_tank = 0.0
 	ee2.add_pool_with_overflow(3000.0)
-	check_approx("E-025 主池满→3000进备用槽", ee2.reserve_tank, 3000.0)
+	check_approx("E-025R 主池满→溢出截断", ee2.energy_pool, 15000.0)
 	var ee3 = EnergyS.new()
 	ee3.energy_pool = 10000.0       # 主池有余量
 	ee3.add_pool_with_overflow(3000.0)

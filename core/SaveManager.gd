@@ -20,6 +20,7 @@ func save_all() -> void:
 	_write_relinquish()
 	_write_workshop()
 	_write_cat_screen()
+	_write_iap()
 	_config.save(SAVE_PATH)
 
 func load_and_apply() -> void:
@@ -51,6 +52,9 @@ func load_and_apply() -> void:
 	var cs := get_node_or_null("/root/CatScreenManager")
 	if cs and cs.has_method("apply_save"):
 		cs.apply_save(_read_cat_screen())
+	var iap := get_node_or_null("/root/IAPProvider")
+	if iap and iap.has_method("apply_save"):
+		iap.apply_save(_read_iap())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
 	# 避免冷启动时"应用关闭期间累积的步数"在首帧丢失。
@@ -115,7 +119,6 @@ func _write_steps() -> void:
 func _read_energy() -> Dictionary:
 	return {
 		"energy_pool": float(_config.get_value("energy", "energy_pool", 0.0)),
-		"reserve_tank": float(_config.get_value("energy", "reserve_tank", 0.0)),
 		"total_energy_produced": float(_config.get_value("energy", "total_energy_produced", 0.0)),
 		"today_energy": float(_config.get_value("energy", "today_energy", 0.0)),
 		"today_steps_processed": int(_config.get_value("energy", "today_steps_processed", 0)),
@@ -126,7 +129,7 @@ func _read_energy() -> Dictionary:
 func _write_energy() -> void:
 	var data := EnergyEngine.get_save_data()
 	_config.set_value("energy", "energy_pool", float(data.get("energy_pool", 0.0)))
-	_config.set_value("energy", "reserve_tank", float(data.get("reserve_tank", 0.0)))
+	# reserve_tank removed in GDD v3.1 R8
 	_config.set_value("energy", "total_energy_produced", float(data.get("total_energy_produced", 0.0)))
 	_config.set_value("energy", "today_energy", float(data.get("today_energy", 0.0)))
 	_config.set_value("energy", "today_steps_processed", int(data.get("today_steps_processed", 0)))
@@ -258,8 +261,6 @@ func _read_relinquish() -> Dictionary:
 	return {
 		"love_petals": int(_config.get_value("relinquish", "love_petals", 0)),
 		"backpack_max_capacity": int(_config.get_value("relinquish", "backpack_max_capacity", 24)),
-		"workshop_cached_energy": int(_config.get_value("relinquish", "workshop_cached_energy", 0)),
-		"surprise_box_ready": bool(_config.get_value("relinquish", "surprise_box_ready", false)),
 		"this_week_petals_gained": int(_config.get_value("relinquish", "this_week_petals_gained", 0)),
 		"week_reset_timestamp": int(_config.get_value("relinquish", "week_reset_timestamp", 0)),
 		"relinquished_event_ids": Array(_config.get_value("relinquish", "relinquished_event_ids", [])),
@@ -275,10 +276,7 @@ func _write_relinquish() -> void:
 		_config.set_value("relinquish", "backpack_max_capacity", _ps.get_capacity())
 	elif not _config.has_section_key("relinquish", "backpack_max_capacity"):
 		_config.set_value("relinquish", "backpack_max_capacity", 24)
-	# 工坊缓存由 HatchEngine 管理
-	if HatchEngine:
-		_config.set_value("relinquish", "workshop_cached_energy", int(HatchEngine.workshop_cached_energy))
-		_config.set_value("relinquish", "surprise_box_ready", HatchEngine.surprise_box_ready)
+	# 工坊缓存已移除（GDD v3.1 R8），由 WorkshopManager 独立持久化
 	# 送养周计数与幂等键由 RelinquishSystem 管理
 	var _rs2 := get_node_or_null("/root/RelinquishSystem")
 	if _rs2 and _rs2.has_method("get_save_data"):

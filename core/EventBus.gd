@@ -3,7 +3,7 @@
 extends Node
 
 signal step_updated(delta_steps: int, total_steps: int, tier: int)
-signal energy_changed(pool: int, reserve: int, total_produced: int)
+signal energy_changed(pool: int, total_produced: int)
 signal hatch_slot_updated(slot_id: int, status: int, progress: float)
 signal hatch_completed(cat_id: String)
 signal cat_spawned(cat_id: String, breed: String)
@@ -40,8 +40,8 @@ signal overflow_warning
 func emit_step_updated(delta_steps: int, total_steps: int, tier: int) -> void:
 	step_updated.emit(delta_steps, total_steps, tier)
 
-func emit_energy_changed(pool: int, reserve: int, total_produced: int) -> void:
-	energy_changed.emit(pool, reserve, total_produced)
+func emit_energy_changed(pool: int, total_produced: int) -> void:
+	energy_changed.emit(pool, total_produced)
 
 func emit_hatch_slot_updated(slot_id: int, status: int, progress: float) -> void:
 	hatch_slot_updated.emit(slot_id, status, progress)

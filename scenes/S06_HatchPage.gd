@@ -8,19 +8,14 @@ const CatData := preload("res://core/CatData.gd")
 const WORKSHOP_SCENE := "res://scenes/WorkshopPage.gd"
 
 @onready var _back_btn: TextureButton = %BackBtn
-@onready var _inject_btn: TextureButton = %InjectBtn
 @onready var _ad_btn: TextureButton = %AdBtn
 @onready var _workshop_link: Label = %WorkshopLink
-@onready var _energy_card: TextureRect = %EnergyCard
-@onready var _reserve_bar_fill: ColorRect = %ReserveBarFill
-@onready var _reserve_value: Label = %EnergyValue
 @onready var _slots_parent: Array = [%Slot0, %Slot1, %Slot2, %Slot3]
 
 
 func _ready() -> void:
 	super._ready()
 	_back_btn.pressed.connect(_on_back_pressed)
-	_inject_btn.pressed.connect(_inject_energy)
 	_ad_btn.pressed.connect(_speed_up)
 	_workshop_link.gui_input.connect(_on_workshop_clicked)
 	for i in range(_slots_parent.size()):
@@ -70,7 +65,6 @@ func _connect_data() -> void:
 
 func _refresh_all() -> void:
 	_refresh_slots()
-	_refresh_reserve()
 	_refresh_ad_button()
 
 
@@ -81,16 +75,6 @@ func _refresh_slots() -> void:
 		var slot_node = _slots_parent[i].get_child(0) if _slots_parent[i].get_child_count() > 0 else null
 		if slot_node and slot_node.has_method("set_data"):
 			slot_node.set_data(data)
-
-
-func _refresh_reserve() -> void:
-	var current := EnergyEngine.reserve_tank if EnergyEngine else 0.0
-	var max_value := EnergyEngine.MAX_RESERVE_TANK if EnergyEngine else 6000.0
-	var ratio: float = clamp(current / max_value, 0.0, 1.0) if max_value > 0.0 else 0.0
-	# ProgressFill 是 ReserveBarBg 的子节点，用 anchor_right 比例填充
-	_reserve_bar_fill.anchor_right = ratio
-	_reserve_bar_fill.offset_right = 0.0
-	_reserve_value.text = "%.0f / %.0f" % [current, max_value]
 
 
 func _refresh_ad_button() -> void:
@@ -136,35 +120,6 @@ func _on_slot_pressed(index: int) -> void:
 	_refresh_slots()
 
 
-func _inject_energy() -> void:
-	if HatchEngine == null or EnergyEngine == null:
-		return
-	if max(EnergyEngine.reserve_tank, 0.0) <= 0.0:
-		if Popups: Popups.show_toast("暂无备用能量")
-		return
-	if not HatchEngine.has_filling_egg():
-		if Popups: Popups.show_toast("当前没有正在孵化的蛋")
-		return
-	if Popups:
-		Popups.show_confirm("注入备用能量", "将备用能量注入当前孵化的蛋？", _do_inject)
-	else:
-		_do_inject()
-
-
-func _do_inject() -> void:
-	if HatchEngine == null or EnergyEngine == null:
-		return
-	var reserve: float = max(EnergyEngine.reserve_tank, 0.0)
-	if reserve <= 0.0:
-		return
-	var used: float = HatchEngine.feed_current_egg(reserve)
-	EnergyEngine.reserve_tank = max(reserve - used, 0.0)
-	EnergyEngine.energy_changed.emit(EnergyEngine.energy_pool, EnergyEngine.MAX_ENERGY_POOL, EnergyEngine.reserve_tank)
-	if SaveManager:
-		SaveManager.save_all()
-	_refresh_slots()
-
-
 func _speed_up() -> void:
 	if HatchEngine == null:
 		return
@@ -195,5 +150,5 @@ func _on_hatch_complete(cat_data) -> void:
 	UIManager.push("res://scenes/S08_HatchShow.tscn", {"cat": cat_data})
 
 
-func _on_energy_changed(_current: float, _pool_max: float, _backup: float) -> void:
-	_refresh_reserve()
+func _on_energy_changed(_current: float, _pool_max: float) -> void:
+	pass

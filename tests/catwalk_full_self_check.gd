@@ -297,10 +297,9 @@ func _check_energy_engine() -> void:
 	var n := _check_singleton("CORE_SYSTEMS", "EnergyEngine")
 	_check_methods("CORE_SYSTEMS", n, ["calc_energy", "process_steps", "spend_pool", "get_save_data", "apply_save"], "EnergyEngine")
 	_check("CORE_SYSTEMS", n != null and n.get("energy_pool") != null, "EnergyEngine.energy_pool exists")
-	_check("CORE_SYSTEMS", n != null and n.get("reserve_tank") != null, "EnergyEngine.reserve_tank exists")
 	_check("CORE_SYSTEMS", n != null and n.get("total_energy_produced") != null, "EnergyEngine.total_energy_produced exists")
 	_check("CORE_SYSTEMS", _const_value("res://core/EnergyEngine.gd", "MAX_ENERGY_POOL", 0.0) == 15000.0, "EnergyEngine.MAX_ENERGY_POOL = 15000")
-	_check("CORE_SYSTEMS", _const_value("res://core/EnergyEngine.gd", "MAX_RESERVE_TANK", 0.0) == 6000.0, "EnergyEngine.MAX_RESERVE_TANK = 6000")
+	# MAX_RESERVE_TANK removed in GDD v3.1 R8
 
 
 func _check_hatch_engine() -> void:
@@ -308,7 +307,6 @@ func _check_hatch_engine() -> void:
 	_check_methods("CORE_SYSTEMS", n, ["get_unlocked_species", "get_hatched_count", "collect_ready_slot", "get_save_data", "get_slots", "feed_energy"], "HatchEngine")
 	_check("CORE_SYSTEMS", n != null and n.get("slots") is Array, "HatchEngine.slots exists")
 	_check("CORE_SYSTEMS", _const_value("res://core/HatchEngine.gd", "SLOT_COUNT", 0) == 4, "HatchEngine.SLOT_COUNT = 4")
-	_check("CORE_SYSTEMS", _const_value("res://core/HatchEngine.gd", "WORKSHOP_CACHE_CAP", 0.0) == 3000.0, "HatchEngine.WORKSHOP_CACHE_CAP = 3000")
 
 
 func _check_explore_engine() -> void:
@@ -595,7 +593,6 @@ func _section_core_loop() -> void:
 		var before_data: Dictionary = energy.get_save_data() if energy.has_method("get_save_data") else {}
 		energy.apply_save({
 			"energy_pool": 0.0,
-			"reserve_tank": 0.0,
 			"total_energy_produced": 0.0,
 			"today_energy": 0.0,
 			"today_steps_processed": 0,
