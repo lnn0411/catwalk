@@ -6,9 +6,9 @@ signal expansion_available(unlock_count: int, cost_gold: int, capacity: int)
 const _INITIAL_CAPACITY := 24
 const _HARD_CAP := 36
 const _TIERS := [
-	{"capacity": 28, "unlock_count": 6,  "cost_gold": 5000},
-	{"capacity": 32, "unlock_count": 12, "cost_gold": 10000},
-	{"capacity": 36, "unlock_count": 24, "cost_gold": 0},
+	{"capacity": 28, "unlock_count": 4,  "cost_gold": 5000},
+	{"capacity": 32, "unlock_count": 8, "cost_gold": 10000},
+	{"capacity": 36, "unlock_count": 12, "cost_gold": 0},
 ]
 
 var backpack_max_capacity: int = _INITIAL_CAPACITY
