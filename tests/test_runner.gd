@@ -139,12 +139,10 @@ func test_energy_pool_overflow() -> void:
 	EnergyEngine.apply_save({})
 	StepEngine.apply_save({})
 	assert_eq("初始池=0", 0.0, EnergyEngine.energy_pool)
-	assert_eq("初始备用=0", 0.0, EnergyEngine.reserve_tank)
 
 	StepEngine.add_mock_steps(50000)
 	assert_gt("总产能>0", EnergyEngine.total_energy_produced, 0.0)
 	assert_eq("主池满 15000", EnergyEngine.MAX_ENERGY_POOL, EnergyEngine.energy_pool)
-	assert_eq("备用槽满 6000", EnergyEngine.MAX_RESERVE_TANK, EnergyEngine.reserve_tank)
 
 # ═══════════════════════════════════════════════
 # 6. 溢出浪费
@@ -154,10 +152,9 @@ func test_energy_overflow_waste() -> void:
 	EnergyEngine.apply_save({})
 	StepEngine.apply_save({})
 
-	# 灌满池+备用后再加步数，多余能量丢弃
+	# 灌满池后再加步数，多余能量丢弃
 	StepEngine.add_mock_steps(100000)
 	assert_eq("再灌仍满池", EnergyEngine.MAX_ENERGY_POOL, EnergyEngine.energy_pool)
-	assert_eq("再灌仍满备用", EnergyEngine.MAX_RESERVE_TANK, EnergyEngine.reserve_tank)
 
 # ═══════════════════════════════════════════════
 # 7. 串行孵化
@@ -286,7 +283,6 @@ func test_save_roundtrip() -> void:
 	StepEngine.today_steps = 0
 	StepEngine.total_steps = 0
 	EnergyEngine.energy_pool = 0.0
-	EnergyEngine.reserve_tank = 0.0
 
 	SaveManager.load_and_apply()
 	assert_eq("恢复步数=2000", 2000, StepEngine.get_today_steps())

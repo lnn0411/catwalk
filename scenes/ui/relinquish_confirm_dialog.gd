@@ -139,24 +139,9 @@ func _refresh_text() -> void:
 	_title_label.text = "送养 %s？" % name_str
 	_body_label.text = "将它送到一个更好的家庭，\n虽然很不舍，但希望它能幸福..."
 
-	var factor := 0.0
-	match rarity:
-		"legendary":
-			factor = 5.0
-		"epic":
-			factor = 2.0
-		"rare":
-			factor = 1.0
-		_:
-			factor = 0.0
-
-	var petals := 0
-	var gold := 0
-	if factor <= 0.0:
-		gold = 200
-	else:
-		petals = int(factor * (level * 10 + friendship * 2))
-		gold = 100
+	var preview := RelinquishSystem.preview_relinquish(_cat_data)
+	var petals: int = preview.get("love_petals", 0)
+	var gold: int = preview.get("gold_coins", 0)
 
 	var rarity_cn := ""
 	match rarity:

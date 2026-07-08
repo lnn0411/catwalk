@@ -725,7 +725,7 @@ func _refresh_cat_state() -> void:
 func _on_steps_updated(_delta: int, _total: int) -> void:
 	_refresh_steps()
 
-func _on_energy_changed(_current: float, _pool_max: float, _backup: float) -> void:
+func _on_energy_changed(_current: float, _pool_max: float) -> void:
 	_refresh_energy()
 
 func _on_cat_count_changed(_count: int) -> void:
@@ -841,7 +841,7 @@ func _inject_data() -> void:
 	if EnergyEngine:
 		EnergyEngine.energy_pool = EnergyEngine.MAX_ENERGY_POOL
 		EnergyEngine.created_at = Time.get_unix_time_from_system()
-		EnergyEngine.energy_changed.emit(EnergyEngine.energy_pool, EnergyEngine.MAX_ENERGY_POOL, EnergyEngine.reserve_tank)
+		EnergyEngine.energy_changed.emit(EnergyEngine.energy_pool, EnergyEngine.MAX_ENERGY_POOL)
 	if SaveManager:
 		SaveManager.save_all()
 

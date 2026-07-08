@@ -121,12 +121,11 @@ func _t_energy_engine() -> void:
 	_near("spend_pool 超额只扣到0", E.spend_pool(99999.0), 700.0)
 	_near("池清零不为负", E.energy_pool, 0.0)
 
-	# A5 溢出：池满 15000 后进储备 6000
+	# A5 溢出：池满 15000 后截断（reserve_tank 已移除 R8）
 	E.apply_save({})
 	E.process_steps(60000)  # 远超池容量
 	_near("池上限封顶 15000", E.energy_pool, 15000.0)
-	_le("储备不超 6000", E.reserve_tank, 6000.0)
-	_ge("储备已积累", E.reserve_tank, 1.0)
+	_near("池上限无额外蓄能", E.energy_pool, 15000.0)
 
 	# A6 跨天重置
 	E.apply_save({})
@@ -572,7 +571,7 @@ func _t_explore_engine() -> void:
 	E.reset_all()
 	var types_seen: Array = []
 	for i in range(50):
-		var reward_type: String = E._roll_reward_type("test_cat_r")
+		var reward_type: String = E._roll_reward_type("test_cat_r", 0)
 		if not types_seen.has(reward_type):
 			types_seen.append(reward_type)
 	_ok("J5 奖励类型在四选一内", types_seen.all(func(t): return t in ["postcard", "ingredient", "decoration", "hidden"]))
@@ -583,7 +582,7 @@ func _t_explore_engine() -> void:
 	E._mock_collected_postcards(["pc_001", "pc_002"])
 	var dup_count := 0
 	for i in range(30):
-		if E._roll_reward_type("test_cat_d") == "postcard":
+		if E._roll_reward_type("test_cat_d", 0) == "postcard":
 			dup_count += 1
 	_ok("J6 防重复-连续postcard不超15次", dup_count <= 15)
 

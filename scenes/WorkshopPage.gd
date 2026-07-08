@@ -349,17 +349,15 @@ func _refresh_energy_flow() -> void:
 		return
 
 	var pool: Variant = ee.get("energy_pool")
-	var reserve: Variant = ee.get("reserve_tank")
 	var pool_val := float(pool) if pool != null else 0.0
-	var reserve_val := float(reserve) if reserve != null else 0.0
 
 	var label := _get_flow_label() as Label
 	if label != null:
-		label.text = "主池: %d  |  备用: %d  |  →  工坊" % [int(pool_val), int(reserve_val)]
+		label.text = "主池: %d  →  工坊" % [int(pool_val)]
 
 	# Update energy bar fill
-	var max_val := 21000.0  # 15000 + 6000
-	var fill_pct := clampf((pool_val + reserve_val) / max_val, 0.0, 1.0)
+	var max_val := 15000.0  # MAX_ENERGY_POOL (reserve_tank removed in R8)
+	var fill_pct := clampf((pool_val) / max_val, 0.0, 1.0)
 	_energy_bar.size.x = lerpf(10.0, (size.x - 80.0), fill_pct)
 	var full_color := Color("#FFD700")
 	var empty_color := Color("#333355")
