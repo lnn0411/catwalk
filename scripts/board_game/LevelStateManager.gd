@@ -8,6 +8,7 @@ const BoardGameData := preload("res://scripts/board_game/BoardGameData.gd")
 
 const SAVE_PATH := "user://cat_merge_save.cfg"
 const SECTION := "session"
+const META_SECTION := "meta"  # 累计胜场 / 棋盘等级（跨对局持久化，仅升不降）
 
 # 主动放弃本局的安慰奖（与 BoardGame 的 CONSOLATION_* 常量保持一致）
 const CONSOLATION_PRIZE := {
@@ -22,12 +23,19 @@ signal saved
 signal loaded
 signal resigned(item_name: String, count: int, message: String)
 signal won_reward_ready
+# 棋盘升档（旧等级 -> 新等级）；record_win 触发升级时发出
+signal level_up(old_level: int, new_level: int)
 
 # 本管理器持有的对局实例（纯逻辑，UI 层通过 game 访问棋盘）
 var game: BoardGame = null
 
+# 跨对局累计的进度（持久化在 SAVE_PATH 的 [meta] section）
+var total_wins: int = 0
+var board_level: int = BoardGameData.BoardLevel.LV1
+
 
 func _ready() -> void:
+	_load_meta()
 	_ensure_game()
 
 
@@ -46,6 +54,7 @@ func save() -> bool:
 	if game == null:
 		return false
 	var cfg := ConfigFile.new()
+	cfg.load(SAVE_PATH)  # 保留已有的 [meta] section，避免被整体覆盖
 	cfg.set_value(SECTION, "state", game.serialize_state())
 	var err := cfg.save(SAVE_PATH)
 	if err != OK:
@@ -79,9 +88,16 @@ func has_saved() -> bool:
 
 
 func delete() -> void:
-	"""删除对局存档。"""
-	if FileAccess.file_exists(SAVE_PATH):
+	"""删除对局存档，但保留 [meta]（累计胜场/棋盘等级不因开新局而清空）。"""
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	var cfg := ConfigFile.new()
+	if cfg.load(SAVE_PATH) != OK:
 		DirAccess.remove_absolute(SAVE_PATH)
+		return
+	if cfg.has_section(SECTION):
+		cfg.erase_section(SECTION)
+	cfg.save(SAVE_PATH)
 
 
 func give_up() -> void:
@@ -98,7 +114,57 @@ func get_undo_cost() -> Dictionary:
 	return game.get_undo_cost()
 
 
+# ---------------- 累计进度 / 棋盘等级 ----------------
+
+func get_total_wins() -> int:
+	"""累计胜场（跨对局）。"""
+	return total_wins
+
+
+func get_board_level() -> int:
+	"""当前棋盘等级（持久化，仅升不降）。"""
+	return board_level
+
+
+func record_win() -> int:
+	"""记录一次胜利：累计胜场 +1，按新胜场重算等级。
+	若发生升档返回新等级（并发出 level_up 信号），否则返回 -1。等级只升不降。"""
+	total_wins += 1
+	var new_level := BoardGameData.calc_board_level(total_wins)
+	var leveled_up := -1
+	if new_level > board_level:
+		var old_level := board_level
+		board_level = new_level
+		leveled_up = new_level
+	_save_meta()
+	if leveled_up > 0:
+		level_up.emit(board_level - 1, board_level)
+	return leveled_up
+
+
 # ---------------- 内部方法 ----------------
+
+func _load_meta() -> void:
+	"""从 [meta] section 载入累计胜场与棋盘等级。旧存档无该 section 时用默认值。"""
+	var cfg := ConfigFile.new()
+	if cfg.load(SAVE_PATH) != OK:
+		return
+	total_wins = int(cfg.get_value(META_SECTION, "total_wins", 0))
+	board_level = int(cfg.get_value(META_SECTION, "board_level", BoardGameData.BoardLevel.LV1))
+	# 自愈：即便 board_level 丢失/损坏，也不低于当前胜场应有的等级（仍保证不降级）
+	board_level = maxi(board_level, BoardGameData.calc_board_level(total_wins))
+
+
+func _save_meta() -> void:
+	"""把累计胜场与棋盘等级写回 [meta]，保留其它 section（如 session/state）。"""
+	var cfg := ConfigFile.new()
+	cfg.load(SAVE_PATH)  # 载入已有内容以保留 session 存档
+	cfg.set_value(META_SECTION, "total_wins", total_wins)
+	cfg.set_value(META_SECTION, "board_level", board_level)
+	var err := cfg.save(SAVE_PATH)
+	if err != OK:
+		push_warning("LevelStateManager._save_meta 失败: %d" % err)
+
 
 func _ensure_game() -> BoardGame:
 	if game == null:

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://levelstate_selfcheck"]
+
+[ext_resource type="Script" path="res://tests/level_state_manager_selfcheck.gd" id="1_lscheck"]
+
+[node name="LevelStateSelfCheck" type="Node"]
+script = ExtResource("1_lscheck")

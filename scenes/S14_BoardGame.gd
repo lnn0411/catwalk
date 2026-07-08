@@ -374,7 +374,7 @@ func _start_game() -> void:
 			_refresh_ticket_label()
 			return
 		TicketManager.spend_ticket()
-	var board_level := BoardGameData.calc_board_level(_get_total_board_wins())
+	var board_level := _get_board_level()
 	var cat_name := _get_companion_cat_name()
 	board.start_new_game(board_level, cat_name)
 	_result_overlay.visible = false
@@ -407,6 +407,13 @@ func _get_total_board_wins() -> int:
 		if wins != null:
 			return int(wins)
 	return 0
+
+
+func _get_board_level() -> int:
+	# 用持久化的 board_level（仅升不降）；无 LevelStateManager 时回退到按胜场计算
+	if LevelStateManager != null and LevelStateManager.has_method("get_board_level"):
+		return int(LevelStateManager.call("get_board_level"))
+	return BoardGameData.calc_board_level(_get_total_board_wins())
 
 
 func _get_companion_cat_name() -> String:
@@ -503,6 +510,10 @@ func _on_cat_apology(_cat_name: String) -> void:
 
 func _on_game_won() -> void:
 	_refresh_all()
+
+	# 记录累计胜场；若触发升档则弹出说明卡（等级仅升不降，持久化）
+	_record_win_and_maybe_upgrade()
+
 	var reward: Dictionary = BoardRewardSystem.roll_reward()
 	var reward_id: String = String(reward.get("id", ""))
 	var reward_name: String = String(reward.get("name", "小鱼干"))
@@ -517,6 +528,31 @@ func _on_game_won() -> void:
 	_result_label.text = "🎉 通关！\n获得「%s」" % display_text
 	_show_result()
 	Juice.pattern_legendary()
+
+
+func _record_win_and_maybe_upgrade() -> void:
+	if LevelStateManager == null or not LevelStateManager.has_method("record_win"):
+		return
+	var new_level := int(LevelStateManager.call("record_win"))
+	if new_level > BoardGameData.BoardLevel.LV1:
+		_show_level_up_popup(new_level)
+
+
+func _show_level_up_popup(new_level: int) -> void:
+	# 升档说明卡（§19.9 D8）：纯参数提升，无惩罚无降级
+	var content := ""
+	match new_level:
+		BoardGameData.BoardLevel.LV2:
+			content = "进入成长期 🐾\n捣乱增加但奖励更丰厚"
+		BoardGameData.BoardLevel.LV3:
+			content = "进入挑战期 ⭐\n难度最高但收益最大"
+		_:
+			content = "棋盘参数已提升"
+	var reward_desc := String(BoardGameData.get_level_config(new_level).get("reward_desc", ""))
+	if not reward_desc.is_empty():
+		content += "\n奖励：%s" % reward_desc
+	if Popups != null:
+		Popups.show_confirm("🎉 棋盘升级！", content, Callable())
 
 
 func _on_sub_chain_completed(_item: BoardItem) -> void:
