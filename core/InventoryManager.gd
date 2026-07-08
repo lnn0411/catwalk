@@ -66,6 +66,13 @@ func consume_item(item_type: String, quantity: int) -> bool:
 func get_count(item_type: String) -> int:
 	return int(_counts.get(item_type, 0))
 
+# 返回所有物品类型的数量快照（供背包页面一次性读取）
+func get_all_counts() -> Dictionary:
+	var out: Dictionary = {}
+	for t in VALID_TYPES:
+		out[t] = int(_counts.get(t, 0))
+	return out
+
 # 合成：消耗 cost 个 from_type，产出 1 个 to_type
 func synthesize(from_type: String, to_type: String, cost: int) -> bool:
 	if not _counts.has(from_type) or not _counts.has(to_type):

@@ -170,7 +170,7 @@ func _entry_row() -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
 	row.add_child(_entry_card("👭", "好友", _on_friends))
-	row.add_child(_entry_card("🎀", "礼物背包", func() -> void: Popups.show_toast("即将开放")))
+	row.add_child(_entry_card("🎀", "礼物背包", func() -> void: UIManager.push("res://scenes/S13_Backpack.tscn")))
 	row.add_child(_entry_card("✉️", "信箱", func() -> void: Popups.show_toast("即将开放")))
 	return row
 
