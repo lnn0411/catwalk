@@ -3,6 +3,7 @@ extends Node
 signal hatch_started(slot: int)
 signal hatch_progress(slot: int, progress: float)
 signal hatch_complete(cat_data)
+signal workshop_mode_toggled(is_workshop: bool)
 
 const CatData := preload("res://core/CatData.gd")
 const SLOT_COUNT := 4
@@ -11,6 +12,8 @@ const SLOT_UNLOCK_HATCH_COUNTS := [0, 1, 3, 10]
 var slots: Array = []
 var cats: Array = []
 var hatched_count: int = 0
+# 手动工坊模式覆盖（第6只猫起长按切换孵化/工坊态）
+var manual_workshop_override: bool = false
 # 稀有度保底（两层独立计数）：epic 连续40次未出必出，legendary 连续120次未出必出
 const EPIC_PITY := 40
 const LEGENDARY_PITY := 120
@@ -198,6 +201,7 @@ func apply_save(data: Dictionary) -> void:
 	has_tutorial_first_egg = bool(data.get("has_tutorial_first_egg", false))
 	current_companion_cat_id = String(data.get("current_companion_cat_id", ""))
 	garden_expand_purchased = bool(data.get("garden_expand_purchased", false))
+	manual_workshop_override = bool(data.get("manual_workshop_override", false))
 	_ensure_slots()
 	_update_unlocks()
 	_assign_next_empty_slots()
@@ -266,6 +270,7 @@ func get_save_data() -> Dictionary:
 		"has_tutorial_first_egg": has_tutorial_first_egg,
 		"current_companion_cat_id": current_companion_cat_id,
 		"garden_expand_purchased": garden_expand_purchased,
+		"manual_workshop_override": manual_workshop_override,
 	}
 
 func get_unlocked_species() -> Array:
@@ -538,12 +543,36 @@ func _emit_all_progress() -> void:
 func _on_hatch_complete(_cat_data) -> void:
 	if PackageSystem:
 		PackageSystem.check_expansion(get_unique_species_count())
+	# 第6只孵化解锁长按切换：广播当前工坊态，供 UI 显示切换控件
+	if hatched_count == 6:
+		workshop_mode_toggled.emit(is_workshop_mode())
 
 # ── GDD v2.17 工坊态/孵化态双轨切换 ──
 
 func is_workshop_mode() -> bool:
+	# 手动强制工坊态优先（第6只起玩家长按切换）
+	if manual_workshop_override:
+		return true
 	# 工坊态条件：猫包已满（cats.size() >= backpack_max_capacity）且无 incubating 槽
 	return cats.size() >= _get_max_capacity() and _get_active_filling_slot() == -1
+
+# ── 手动工坊模式切换（第6只猫起长按切换）──
+
+func is_manual_switch_enabled() -> bool:
+	# 第6只猫解锁长按切换
+	return hatched_count >= 6
+
+func toggle_workshop_override() -> void:
+	manual_workshop_override = not manual_workshop_override
+	workshop_mode_toggled.emit(manual_workshop_override)
+
+func set_workshop_override(v: bool) -> void:
+	if manual_workshop_override != v:
+		manual_workshop_override = v
+		workshop_mode_toggled.emit(v)
+
+func get_workshop_override() -> bool:
+	return manual_workshop_override
 
 # ── GDD v2.17 0.5s 自动落蛋 + 新手首蛋 ──
 

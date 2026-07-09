@@ -6,8 +6,11 @@ extends Control
 # ============================================================
 
 signal slot_pressed(slot_index: int)
+signal slot_long_pressed(slot_index: int)
 
 const CatData := preload("res://core/CatData.gd")
+
+const LONG_PRESS_DURATION := 0.6
 
 const SLOT_CARD_TEXTURES: Dictionary = {
 	"locked": preload("res://assets/art/ui/incubation/slots/slot_card_locked.png"),
@@ -46,6 +49,10 @@ var _is_ready_state := false
 var _anim := 0.0
 var _egg_home := Vector2.ZERO
 
+var _press_start_time: float = 0.0
+var _is_pressing: bool = false
+var _long_press_triggered: bool = false
+
 
 func _ready() -> void:
 	_egg_home = _egg.position
@@ -54,11 +61,23 @@ func _ready() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		slot_pressed.emit(slot_index)
+	var is_mouse_left := event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT
+	var is_touch := event is InputEventScreenTouch
+	if not (is_mouse_left or is_touch):
+		return
+
+	if event.pressed:
+		_press_start_time = Time.get_ticks_msec() / 1000.0
+		_is_pressing = true
+		_long_press_triggered = false
+		set_process(true)
 		accept_event()
-	elif event is InputEventScreenTouch and event.pressed:
-		slot_pressed.emit(slot_index)
+	else:
+		if _is_pressing and not _long_press_triggered:
+			# 短按释放：沿用原点击语义
+			slot_pressed.emit(slot_index)
+		_is_pressing = false
+		set_process(_is_ready_state)
 		accept_event()
 
 
@@ -150,6 +169,14 @@ func _unlock_count() -> int:
 
 
 func _process(delta: float) -> void:
+	# 长按检测：与 ready 震动共用 _process，互不影响
+	if _is_pressing and not _long_press_triggered:
+		if Time.get_ticks_msec() / 1000.0 - _press_start_time >= LONG_PRESS_DURATION:
+			_long_press_triggered = true
+			_is_pressing = false
+			slot_long_pressed.emit(slot_index)
+			set_process(_is_ready_state)
+
 	if not _is_ready_state:
 		return
 	_anim += delta

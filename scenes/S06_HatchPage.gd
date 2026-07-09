@@ -27,6 +27,8 @@ func _ready() -> void:
 			slot.slot_index = i
 			if not slot.slot_pressed.is_connected(_on_slot_pressed):
 				slot.slot_pressed.connect(_on_slot_pressed)
+			if not slot.slot_long_pressed.is_connected(_on_slot_long_pressed):
+				slot.slot_long_pressed.connect(_on_slot_long_pressed)
 			slot_node.add_child(slot)
 	_connect_data()
 	_refresh_all()
@@ -47,6 +49,8 @@ func _exit_tree() -> void:
 			HatchEngine.hatch_progress.disconnect(_on_hatch_progress)
 		if HatchEngine.hatch_complete.is_connected(_on_hatch_complete):
 			HatchEngine.hatch_complete.disconnect(_on_hatch_complete)
+		if HatchEngine.workshop_mode_toggled.is_connected(_on_workshop_mode_toggled):
+			HatchEngine.workshop_mode_toggled.disconnect(_on_workshop_mode_toggled)
 	if EnergyEngine and EnergyEngine.energy_changed.is_connected(_on_energy_changed):
 		EnergyEngine.energy_changed.disconnect(_on_energy_changed)
 
@@ -57,6 +61,8 @@ func _connect_data() -> void:
 			HatchEngine.hatch_progress.connect(_on_hatch_progress)
 		if not HatchEngine.hatch_complete.is_connected(_on_hatch_complete):
 			HatchEngine.hatch_complete.connect(_on_hatch_complete)
+		if not HatchEngine.workshop_mode_toggled.is_connected(_on_workshop_mode_toggled):
+			HatchEngine.workshop_mode_toggled.connect(_on_workshop_mode_toggled)
 	if EnergyEngine and not EnergyEngine.energy_changed.is_connected(_on_energy_changed):
 		EnergyEngine.energy_changed.connect(_on_energy_changed)
 
@@ -120,6 +126,21 @@ func _on_slot_pressed(index: int) -> void:
 	_refresh_slots()
 
 
+func _on_slot_long_pressed(slot_index: int) -> void:
+	if HatchEngine == null:
+		return
+	if not HatchEngine.is_manual_switch_enabled():
+		if Popups:
+			Popups.show_toast("孵化第6只猫后解锁模式切换")
+		return
+	var current_is_workshop := HatchEngine.is_workshop_mode()
+	HatchEngine.toggle_workshop_override()
+	if Popups:
+		var msg := "已切换到%s模式" % ["孵化" if current_is_workshop else "工坊"]
+		Popups.show_toast(msg)
+	_refresh_all()
+
+
 func _speed_up() -> void:
 	if HatchEngine == null:
 		return
@@ -152,3 +173,7 @@ func _on_hatch_complete(cat_data) -> void:
 
 func _on_energy_changed(_current: float, _pool_max: float) -> void:
 	pass
+
+
+func _on_workshop_mode_toggled(_is_workshop: bool) -> void:
+	_refresh_all()
