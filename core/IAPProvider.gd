@@ -16,7 +16,7 @@ const ERR_NOT_AVAILABLE := "IAP_NOT_AVAILABLE"      # Android 未接入计费时
 # GDD §12.1 IAP 商品清单（9 SKU），顺序即商店展示顺序。
 const SKUS := {
 	"remove_ads":    {"name": "去广告",       "price_yuan": 12, "type": "non_consumable", "icon": "🚫", "desc": "永久移除广告等待时间"},
-	"energy_pack_3": {"name": "能量补充包×3", "price_yuan": 6,  "type": "consumable",     "icon": "🔋", "desc": "3000能量×3份"},
+	"energy_pack_3": {"name": "能量补充包×4", "price_yuan": 6,  "type": "consumable",     "icon": "🔋", "desc": "3000能量×4份"},
 	"diamond_100":   {"name": "钻石×100",     "price_yuan": 6,  "type": "consumable",     "icon": "💎", "desc": "100钻石"},
 	"diamond_600":   {"name": "钻石×600",     "price_yuan": 30, "type": "consumable",     "icon": "💎", "desc": "600钻石（赠送60）"},
 	"newbie_pack":   {"name": "新手礼包",     "price_yuan": 6,  "type": "one_time",       "icon": "🎁", "desc": "钻石×200+补签卡×3+能量包×2"},
@@ -93,7 +93,7 @@ func grant_product(sku_id: String) -> void:
 		"remove_ads":
 			ads_removed = true
 		"energy_pack_3":
-			_grant_energy(3000.0, 3)
+			_grant_energy(3000.0, 4)
 		"diamond_100":
 			if CurrencyManager:
 				CurrencyManager.add_diamonds(100, "iap:diamond_100")

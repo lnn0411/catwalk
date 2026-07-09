@@ -6,12 +6,12 @@ const WEEKLY_PETAL_CAP := 500
 const GOLD_REWARD := 50
 
 const SPECIES_BASE := {
-	"orange": 5,
-	"british": 10,
-	"siamese": 15,
-	"橘猫": 5,
-	"英短": 10,
-	"暹罗": 15,
+	"orange": 15,
+	"british": 30,
+	"siamese": 45,
+	"橘猫": 15,
+	"英短": 30,
+	"暹罗": 45,
 }
 
 const RARITY_FACTOR := {

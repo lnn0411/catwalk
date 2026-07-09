@@ -26,7 +26,7 @@ const ACHIEVEMENTS: Array[Dictionary] = [
 	# E: Postcards (§10.4)
 	{id = "E1", name = "第一张明信片", category = "postcards", type = "postcards", target = 1, reward = {gold_coins = 100}},
 	{id = "E2", name = "城市探索者", category = "postcards", type = "postcards", target = 10, reward = {diamonds = 30}},
-	{id = "E3", name = "见过世面的猫", category = "postcards", type = "postcards", target = 30, reward = {diamonds = 50, album_cover = 1}},
+	{id = "E3", name = "见过世面的猫", category = "postcards", type = "postcards", target = 20, reward = {diamonds = 50, album_cover = 1}},
 	{id = "E4", name = "城市说书人", category = "postcards", type = "city_postcards", target = 30, reward = {diamonds = 100, title = "城市行者"}},
 	# D: Easter eggs (§10.5)
 	{id = "D1", name = "午夜猫语", category = "easter_egg", type = "midnight", target = 1, reward = {diamonds = 20, hidden_diary = 1}},
