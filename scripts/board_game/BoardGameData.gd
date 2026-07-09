@@ -18,6 +18,9 @@ enum ItemChain { WEAR = 0, SNACK = 1, BED = 2 }
 # 对局状态
 enum GameState { PLAYING = 0, WON = 1, LOST = 2 }
 
+# 特殊格枚举（D10）
+enum SpecialTile { NONE = 0, YARN = 1 }
+
 # 生成器配置: 每局20次，第5/10/15/20次出副链，其余出主链
 const GENERATOR_TOTAL := 20
 
@@ -41,6 +44,40 @@ const GENERATOR_POS := Vector2i(2, 2)  # 中心格
 
 # 撤销：每局免费次数（超出后由 UI 层扣钻石）
 const UNDO_FREE_COUNT := 3
+
+# ============================================================
+# D10 兴奋值 / 连击 / 狂欢 配置
+# ============================================================
+
+# 兴奋值上限
+const EXCITEMENT_MAX := 100
+
+# 按星级合并获得的兴奋值（StarLevel → value）
+const EXCITEMENT_MERGE_VALUES := {1: 8, 2: 12, 3: 18, 4: 30}
+
+# 连击额外兴奋值
+const EXCITEMENT_COMBO_BONUS := 4
+
+# 三连合额外兴奋值
+const EXCITEMENT_TRIPLE_MERGE_BONUS := 10
+
+# 解开毛线格获得的兴奋值
+const EXCITEMENT_YARN_BONUS := 20
+
+# 连击判定窗口（秒）
+const COMBO_WINDOW_SECONDS := 3.0
+
+# 狂欢免费生成次数
+const FRENZY_FREE_GENERATIONS := 3
+
+# 每局最大狂欢次数
+const FRENZY_MAX_TRIGGERS := 2
+
+# 狂欢持续时间（秒）
+const FRENZY_DURATION_SECONDS := 10.0
+
+# 目标横幅星级段数
+const MAX_STAR_SEGMENTS := 5
 
 
 static func chain_name(chain: int) -> String:
@@ -83,6 +120,8 @@ static func get_level_config(level: int) -> Dictionary:
 				"initial_sub_min": 2, "initial_sub_max": 3,
 				"mischief_triggers": [10],
 				"reward_desc": "基础通关奖励",
+				"yarn_tile_count": 2,
+				"excitement_initial": 0,
 			}
 		BoardLevel.LV2:
 			return {
@@ -90,6 +129,8 @@ static func get_level_config(level: int) -> Dictionary:
 				"initial_sub_min": 2, "initial_sub_max": 3,
 				"mischief_triggers": [7, 14],
 				"reward_desc": "装饰+2pp",
+				"yarn_tile_count": 3,
+				"excitement_initial": 0,
 			}
 		BoardLevel.LV3:
 			return {
@@ -97,6 +138,8 @@ static func get_level_config(level: int) -> Dictionary:
 				"initial_sub_min": 2, "initial_sub_max": 3,
 				"mischief_triggers": [6, 12, 18],
 				"reward_desc": "装饰+礼包+4pp；⭐⭐⭐额外+猫罐头×1",
+				"yarn_tile_count": 4,
+				"excitement_initial": 0,
 			}
 		_:
 			return get_level_config(BoardLevel.LV1)

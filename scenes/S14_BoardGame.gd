@@ -39,6 +39,16 @@ var _ad_rescue_highlights: Dictionary = {}  # Vector2i -> Panel
 var _ad_rescue_mode: bool = false
 var _dbg_ticket_btn: Button
 var _has_three_star_bonus: bool = false  # D4
+var _excitement_bar: ProgressBar          # 兴奋值条
+var _excitement_label: Label              # 兴奋值文字（如 "兴奋值 88/100"）
+var _frenzy_button: Button                # 狂欢触发按钮
+var _frenzy_timer_label: Label            # 狂欢倒计时（如 "狂欢 7.5s"）
+var _target_banner: HBoxContainer         # 目标横幅容器
+var _target_segments: Array = []          # 5个段 TextureRect/ColorRect
+var _cat_react_panel: PanelContainer  # 猫入座容器
+var _cat_react_tex: TextureRect      # 猫贴图
+var _cat_react_label: Label          # 反应文字气泡
+var _cat_breed: String = "orange"    # 携带猫品种
 
 
 func _ready() -> void:
@@ -66,6 +76,13 @@ func _build_board_logic() -> void:
 	board.mischief_warning.connect(_on_mischief_warning)
 	board.mischief_triggered.connect(_on_mischief_triggered)
 	board.mischief_cat_apology.connect(_on_cat_apology)
+	board.main_chain_star_changed.connect(_on_main_chain_star_changed)
+	board.excitement_changed.connect(_on_excitement_changed)
+	board.combo_triggered.connect(_on_combo_triggered)
+	board.frenzy_ready.connect(_on_frenzy_ready)
+	board.frenzy_activated.connect(_on_frenzy_activated)
+	board.frenzy_ended.connect(_on_frenzy_ended)
+	board.highest_star_changed.connect(_on_highest_star_changed)
 
 
 # ---------------- UI 构建 ----------------
@@ -84,6 +101,8 @@ func _build_ui() -> void:
 	add_child(root)
 
 	root.add_child(_build_top_bar())
+	root.add_child(_build_target_banner())  # D10: 目标横幅
+	root.add_child(_build_excitement_bar())  # D10: 兴奋值条
 
 	# 棋盘居中容器
 	var center := CenterContainer.new()
@@ -94,6 +113,7 @@ func _build_ui() -> void:
 	root.add_child(_build_bottom_bar())
 	_build_result_overlay()
 	_build_ad_rescue_dialog()
+	_build_cat_seat()
 	_build_debug_ticket_button()
 
 
@@ -156,6 +176,111 @@ func _build_top_bar() -> Control:
 	hbox.add_child(_ticket_label)
 
 	return bar
+
+
+func _build_target_banner() -> Control:
+	var banner := PanelContainer.new()
+	banner.name = "TargetBanner"
+	var style := StyleBoxFlat.new()
+	style.bg_color = Palette.MILK_WHITE
+	style.border_color = Palette.BORDER
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(8)
+	style.content_margin_left = 10.0
+	style.content_margin_right = 10.0
+	style.content_margin_top = 6.0
+	style.content_margin_bottom = 6.0
+	banner.add_theme_stylebox_override("panel", style)
+	banner.custom_minimum_size = Vector2(0, 36)
+
+	var hbox := HBoxContainer.new()
+	hbox.name = "TargetSegments"
+	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	hbox.add_theme_constant_override("separation", 4)
+	banner.add_child(hbox)
+
+	# 创建5个段：从⭐1到⭐5，文字/色块表示
+	for i in range(BoardGameData.MAX_STAR_SEGMENTS):
+		var seg := ColorRect.new()
+		seg.name = "Seg_%d" % (i + 1)
+		seg.custom_minimum_size = Vector2(50, 20)
+		seg.size = Vector2(50, 20)
+		seg.color = Color(0.9, 0.9, 0.9)  # 灰色（未点亮）
+		hbox.add_child(seg)
+		_target_segments.append(seg)
+
+	# 左侧标注
+	var label := Label.new()
+	label.text = "⭐目标进度"
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	label.custom_minimum_size = Vector2(80, 20)
+	hbox.add_child(label)
+	# 将 label 移到最前面
+	hbox.move_child(label, 0)
+
+	return banner
+
+
+func _build_excitement_bar() -> Control:
+	var container := HBoxContainer.new()
+	container.name = "ExcitementBar"
+	container.add_theme_constant_override("separation", 8)
+	container.custom_minimum_size = Vector2(0, 28)
+
+	var label := Label.new()
+	label.text = "😺兴奋"
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	label.custom_minimum_size = Vector2(48, 0)
+	container.add_child(label)
+
+	_excitement_bar = ProgressBar.new()
+	_excitement_bar.name = "ExcitementProgress"
+	_excitement_bar.min_value = 0.0
+	_excitement_bar.max_value = float(BoardGameData.EXCITEMENT_MAX)
+	_excitement_bar.value = 0.0
+	_excitement_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_excitement_bar.custom_minimum_size = Vector2(200, 20)
+	_excitement_bar.add_theme_stylebox_override("fill", _make_excitement_fill_style())
+	container.add_child(_excitement_bar)
+
+	_excitement_label = Label.new()
+	_excitement_label.name = "ExcitementValue"
+	_excitement_label.text = "0/%d" % BoardGameData.EXCITEMENT_MAX
+	_excitement_label.add_theme_font_size_override("font_size", 14)
+	_excitement_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	_excitement_label.custom_minimum_size = Vector2(60, 0)
+	container.add_child(_excitement_label)
+
+	# 狂欢按钮（初始隐藏）
+	_frenzy_button = Button.new()
+	_frenzy_button.name = "FrenzyButton"
+	_frenzy_button.text = "🎉狂欢!"
+	_frenzy_button.visible = false
+	_frenzy_button.custom_minimum_size = Vector2(80, 28)
+	_frenzy_button.add_theme_font_size_override("font_size", 14)
+	_frenzy_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	_frenzy_button.pressed.connect(_on_frenzy_pressed)
+	container.add_child(_frenzy_button)
+
+	# 狂欢倒计时（初始隐藏）
+	_frenzy_timer_label = Label.new()
+	_frenzy_timer_label.name = "FrenzyTimer"
+	_frenzy_timer_label.visible = false
+	_frenzy_timer_label.text = "🎊 10.0s"
+	_frenzy_timer_label.add_theme_font_size_override("font_size", 14)
+	_frenzy_timer_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.0))
+	container.add_child(_frenzy_timer_label)
+
+	return container
+
+
+func _make_excitement_fill_style() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 0.6, 0.0)  # 橙色兴奋条
+	style.set_corner_radius_all(4)
+	return style
 
 
 func _build_grid() -> Control:
@@ -336,6 +461,44 @@ func _build_ad_rescue_dialog() -> void:
 	buttons.add_child(give_up_button)
 
 
+func _build_cat_seat() -> void:
+	# 猫入座容器（棋盘左上角边缘）
+	_cat_react_panel = PanelContainer.new()
+	_cat_react_panel.name = "CatSeat"
+	_cat_react_panel.visible = false
+	var seat_style := StyleBoxFlat.new()
+	seat_style.bg_color = Color(1, 1, 1, 0.6)
+	seat_style.set_corner_radius_all(16)
+	seat_style.content_margin_left = 0
+	seat_style.content_margin_right = 0
+	seat_style.content_margin_top = 0
+	seat_style.content_margin_bottom = 0
+	_cat_react_panel.add_theme_stylebox_override("panel", seat_style)
+	_cat_react_panel.custom_minimum_size = Vector2(160, 180)
+	_cat_react_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var inner := VBoxContainer.new()
+	inner.alignment = BoxContainer.ALIGNMENT_CENTER
+	inner.add_theme_constant_override("separation", 4)
+	_cat_react_panel.add_child(inner)
+
+	_cat_react_tex = TextureRect.new()
+	_cat_react_tex.name = "CatTex"
+	_cat_react_tex.custom_minimum_size = Vector2(100, 140)
+	_cat_react_tex.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	_cat_react_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	inner.add_child(_cat_react_tex)
+
+	_cat_react_label = Label.new()
+	_cat_react_label.name = "CatReactLabel"
+	_cat_react_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cat_react_label.add_theme_font_size_override("font_size", 14)
+	_cat_react_label.add_theme_color_override("font_color", Color("4F453C"))
+	inner.add_child(_cat_react_label)
+
+	add_child(_cat_react_panel)
+
+
 func _build_debug_ticket_button() -> void:
 	# 仅 debug 构建可见：右下角快速加 3 张门票
 	if not OS.is_debug_build():
@@ -386,6 +549,14 @@ func _start_game() -> void:
 	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
 	var sub_name: String = ItemChains.get_chain_display_name(board.current_sub_chain)
 	_goal_label.text = "目标：合出 %s ⭐5 ｜ 副链：%s ⭐3" % [main_name, sub_name]
+	_show_cat_seat()
+	# D10: 重置兴奋值/目标横幅/狂欢UI
+	_excitement_bar.value = 0
+	_excitement_label.text = "0/%d" % BoardGameData.EXCITEMENT_MAX
+	_frenzy_button.visible = false
+	_frenzy_timer_label.visible = false
+	for seg in _target_segments:
+		seg.color = Color(0.9, 0.9, 0.9)  # 全部灰色
 	_refresh_all()
 
 
@@ -397,6 +568,10 @@ func _refresh_all() -> void:
 	_undo_button.text = "↩ 撤销 (%d)" % board.undo_free_count
 	_undo_button.disabled = not board.can_undo()
 	_refresh_ticket_label()
+	_excitement_bar.value = float(board.excitement)
+	_excitement_label.text = "%d/%d" % [board.excitement, BoardGameData.EXCITEMENT_MAX]
+	# 更新目标横幅
+	_on_highest_star_changed(board.highest_star_achieved)
 
 
 func _refresh_ticket_label() -> void:
@@ -739,3 +914,143 @@ func _show_result() -> void:
 
 func _on_back_pressed() -> void:
 	UIManager.pop()
+
+
+func _show_cat_seat() -> void:
+	# 获取携带猫品种并加载对应 idle 帧
+	_cat_breed = _get_companion_cat_breed()
+	var tex_path := "res://assets/art/cats/%s/idle_front_frame_00.png" % _cat_breed
+	if ResourceLoader.exists(tex_path):
+		_cat_react_tex.texture = load(tex_path)
+	_cat_react_label.text = "好奇张望..."
+	_cat_react_panel.visible = true
+	# 定位：棋盘左侧边缘
+	var grid_size := CELL_SIZE * BoardGameData.GRID_SIZE + CELL_GAP * float(BoardGameData.GRID_SIZE + 1)
+	_cat_react_panel.position = Vector2(20, (DESIGN_SIZE.y - grid_size) * 0.5 - 20)
+
+
+func _get_companion_cat_breed() -> String:
+	if HatchEngine == null:
+		return "orange"
+	var cat = null
+	var companion_id := String(HatchEngine.get("current_companion_cat_id"))
+	if not companion_id.is_empty() and HatchEngine.has_method("get_cat_by_id"):
+		cat = HatchEngine.get_cat_by_id(companion_id)
+	if cat == null and HatchEngine.has_method("get_cats"):
+		var cats: Array = HatchEngine.get_cats()
+		if not cats.is_empty():
+			cat = cats[0]
+	if cat == null:
+		return "orange"
+	if cat is Dictionary:
+		var species := String(cat.get("species", cat.get("breed", "orange")))
+		return species if not species.is_empty() else "orange"
+	var species := String(cat.get("species"))
+	return species if not species.is_empty() else "orange"
+
+
+func _on_main_chain_star_changed(star: int) -> void:
+	# 主链星级提升 → 猫反应升级
+	var reaction_text: String
+	match star:
+		2:
+			reaction_text = "好奇张望..."
+			_play_cat_wiggle()  # ⭐2: 好奇张望 → 小幅度左右摇摆
+		3:
+			reaction_text = "凑近嗅嗅..."
+			_play_cat_sniff()   # ⭐3: 凑近嗅 → 靠近+上下浮动
+		4:
+			reaction_text = "兴奋拍爪！"
+			_play_cat_excited() # ⭐4: 兴奋拍爪 → 快速震动
+		5:
+			reaction_text = "扑入穿戴！！"
+			_play_cat_jump_in() # ⭐5: 扑入穿戴 → 放大弹出
+		_:
+			return
+	_cat_react_label.text = reaction_text
+
+
+func _play_cat_wiggle() -> void:
+	# 小幅度摇摆（±8px 左右摆动，0.15s一次，循环3次）
+	var tween := create_tween()
+	for _i in range(3):
+		tween.tween_property(_cat_react_tex, "position:x", 8.0, 0.12).as_relative()
+		tween.tween_property(_cat_react_tex, "position:x", -16.0, 0.24).as_relative()
+		tween.tween_property(_cat_react_tex, "position:x", 8.0, 0.12).as_relative()
+
+
+func _play_cat_sniff() -> void:
+	# 猫凑近：往右移动15px + 上下浮动（呼吸式）
+	var tween := create_tween()
+	tween.tween_property(_cat_react_panel, "position:x", 15.0, 0.3).as_relative()
+	tween.set_loops(3)
+	tween.tween_property(_cat_react_tex, "position:y", -6.0, 0.4)
+	tween.tween_property(_cat_react_tex, "position:y", 6.0, 0.4)
+
+
+func _play_cat_excited() -> void:
+	# 兴奋拍爪：快速上下弹跳（±12px，0.08s一次，循环5次）
+	var tween := create_tween()
+	for _i in range(5):
+		tween.tween_property(_cat_react_tex, "position:y", -12.0, 0.06).as_relative()
+		tween.tween_property(_cat_react_tex, "position:y", 12.0, 0.06).as_relative()
+
+
+func _play_cat_jump_in() -> void:
+	# 扑入穿戴：放大到1.3倍 → 缩回 → 弹跳
+	var tween := create_tween()
+	tween.tween_property(_cat_react_tex, "scale", Vector2(1.3, 1.3), 0.2)
+	tween.tween_property(_cat_react_tex, "scale", Vector2(0.9, 0.9), 0.15)
+	tween.tween_property(_cat_react_tex, "scale", Vector2(1.0, 1.0), 0.15)
+
+
+# ---------------- D10 兴奋值/狂欢/目标横幅回调 ----------------
+
+func _on_excitement_changed(value: int, max_value: int) -> void:
+	_excitement_bar.value = float(value)
+	_excitement_label.text = "%d/%d" % [value, max_value]
+
+
+func _on_combo_triggered(count: int) -> void:
+	# 连击提示：闪烁兴奋条
+	var tween := create_tween()
+	tween.tween_property(_excitement_bar, "modulate", Color(1, 1, 0, 1), 0.1)
+	tween.tween_property(_excitement_bar, "modulate", Color(1, 1, 1, 1), 0.2)
+
+
+func _on_frenzy_ready() -> void:
+	# 兴奋值满，显示狂欢按钮
+	_frenzy_button.visible = true
+
+
+func _on_frenzy_pressed() -> void:
+	if board.trigger_frenzy():
+		_frenzy_button.visible = false
+		_frenzy_timer_label.visible = true
+		_frenzy_timer_label.text = "🎊 %.1fs" % BoardGameData.FRENZY_DURATION_SECONDS
+
+
+func _on_frenzy_activated() -> void:
+	# 狂欢激活：闪烁效果
+	_excitement_bar.value = 0
+	_excitement_label.text = "0/%d" % BoardGameData.EXCITEMENT_MAX
+	var tween := create_tween()
+	tween.tween_property(_excitement_bar, "modulate", Color(0.5, 1.0, 0.5, 1), 0.15)
+	tween.tween_property(_excitement_bar, "modulate", Color(1, 1, 1, 1), 0.3)
+
+
+func _on_frenzy_ended() -> void:
+	_frenzy_timer_label.visible = false
+
+
+func _on_highest_star_changed(star: int) -> void:
+	# 目标横幅：点亮对应星级的色块（star=1~5）
+	var filled_color := Color(1.0, 0.85, 0.0)  # 金色
+	var empty_color := Color(0.9, 0.9, 0.9)    # 灰色
+	for i in range(BoardGameData.MAX_STAR_SEGMENTS):
+		_target_segments[i].color = filled_color if (i + 1) <= star else empty_color
+
+
+func _process(_delta: float) -> void:
+	if board.frenzy_active and _frenzy_timer_label.visible:
+		_frenzy_timer_label.text = "🎊 %.1fs" % max(board.frenzy_timer, 0.0)
