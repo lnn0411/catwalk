@@ -61,7 +61,7 @@ func _ready() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
-	var is_mouse_left := event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT
+	var is_mouse_left: bool = event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT
 	var is_touch := event is InputEventScreenTouch
 	if not (is_mouse_left or is_touch):
 		return

@@ -67,12 +67,12 @@ func _sec(name: String) -> void:
 
 func _ok(desc: String, cond: bool) -> void:
 	if cond:
-	_pass += 1
-	print("  [✓] %s" % desc)
+		_pass += 1
+		print("  [✓] %s" % desc)
 	else:
-	_fail += 1
-	_failed_list.append("[%s] %s" % [_section, desc])
-	print("  [✗] %s" % desc)
+		_fail += 1
+		_failed_list.append("[%s] %s" % [_section, desc])
+		print("  [✗] %s" % desc)
 
 func _eq(desc: String, actual, expected) -> void:
 	_ok("%s  (实际=%s 期望=%s)" % [desc, str(actual), str(expected)], actual == expected)
