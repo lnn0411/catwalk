@@ -40,6 +40,12 @@ static var _collected_postcards: Array = []
 static var _first_explore_flags: Dictionary = {}
 # cat_id -> 上一次 roll 出的奖励类型，用于「连续 postcard 防重复」。
 static var _last_reward_type: Dictionary = {}
+# cat_id -> {high, medium, low, pool_date}：每日刷新的地点候选池。
+static var _daily_location_pools: Dictionary = {}
+# cat_id -> 上一次派遣所选地点。
+static var _last_chosen_location: Dictionary = {}
+# cat_id -> 上一次所选地点是否命中高偏好（决定返回物 +1）。
+static var _last_location_chosen_is_high: Dictionary = {}
 static var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -53,6 +59,9 @@ static func reset_all() -> void:
 	_collected_postcards = []
 	_first_explore_flags = {}
 	_last_reward_type = {}
+	_daily_location_pools = {}
+	_last_chosen_location = {}
+	_last_location_chosen_is_high = {}
 	_rng.randomize()
 	_save()
 
@@ -88,6 +97,64 @@ static func dispatch(cat_id: String, duration_hours: int) -> bool:
 	_save()
 	return true
 
+# 每天为每只猫随机生成 3 个目的地（1 高偏好 + 1 中 + 1 低偏好），跨天自动刷新。
+static func get_location_choices(cat_id: String, cat_species: String) -> Dictionary:
+	_check_daily_pool_reset()
+	if _daily_location_pools.has(cat_id):
+		return _daily_location_pools[cat_id].duplicate()
+	var species_key := _normalize_species(cat_species)
+	var pref: Dictionary = BREED_LOCATION_PREFERENCES.get(species_key, BREED_LOCATION_PREFERENCES["orange"])
+	var pool := {}
+	# 每个偏好层随机选 1 个。
+	for tier in ["high", "medium", "low"]:
+		var options: Array = pref.get(tier, [])
+		if options.is_empty():
+			continue
+		pool[tier] = options[_rng.randi() % options.size()]
+	# 去重保障：若 high/medium/low 撞车，重新 roll medium 和 low（最多 3 次）。
+	for _attempt in range(3):
+		var vals := pool.values()
+		var dup := false
+		for i in range(vals.size()):
+			for j in range(i + 1, vals.size()):
+				if vals[i] == vals[j]:
+					dup = true
+					break
+			if dup:
+				break
+		if not dup:
+			break
+		for tier in ["medium", "low"]:
+			var options: Array = pref.get(tier, [])
+			if options.size() > 1:
+				pool[tier] = options[_rng.randi() % options.size()]
+	pool["pool_date"] = _today_date()
+	_daily_location_pools[cat_id] = pool
+	_save()
+	return pool.duplicate()
+
+# 带地点选择的派遣：记录所选地点并标记是否命中高偏好。
+static func dispatch_with_location(cat_id: String, duration_hours: int, chosen_location: String) -> bool:
+	if not VALID_DURATIONS.has(duration_hours):
+		return false
+	if is_exploring(cat_id):
+		return false
+	if _active_count() >= _available_slot_count():
+		return false
+	var now := _safe_unix_time()
+	_explorers[cat_id] = {
+		"departure_time": now,
+		"return_time": now + duration_hours * SECONDS_PER_HOUR,
+		"duration_hours": duration_hours,
+		"is_exploring": true,
+		"chosen_location": chosen_location,
+	}
+	var pool := get_location_choices(cat_id, _get_cat_species(cat_id))
+	_last_chosen_location[cat_id] = chosen_location
+	_last_location_chosen_is_high[cat_id] = (String(pool.get("high", "")) == chosen_location)
+	_save()
+	return true
+
 static func is_exploring(cat_id: String) -> bool:
 	return _explorers.has(cat_id) and bool(_explorers[cat_id].get("is_exploring", false))
 
@@ -119,6 +186,12 @@ static func collect(cat_id: String, cat_species: String = "") -> Dictionary:
 			reward_type = "ingredient"
 	entry["reward_type"] = reward_type
 	entry["postcard_id"] = postcard_id
+	# 偏好命中奖励：所选地点为高偏好时，返回物 +1（bonus_reward）。
+	var bonus_reward: bool = bool(_last_location_chosen_is_high.get(cat_id, false))
+	entry["bonus_reward"] = bonus_reward
+	entry["chosen_location"] = String(entry.get("chosen_location", _last_chosen_location.get(cat_id, "")))
+	_last_chosen_location.erase(cat_id)
+	_last_location_chosen_is_high.erase(cat_id)
 	_save()
 	return entry
 
@@ -199,6 +272,21 @@ static func _pick_postcard_for_cat(cat_species: String) -> String:
 	# Last fallback: any postcard
 	return available[_rng.randi() % available.size()]
 
+# 返回高偏好地点的推荐提示（供 UI 展示），无池时返回空串。
+static func get_bonus_hint(cat_id: String) -> String:
+	var pool: Dictionary = _daily_location_pools.get(cat_id, {})
+	var high_loc := String(pool.get("high", ""))
+	if high_loc == "":
+		return ""
+	var location_names := {
+		"convenience_store": "便利店", "park_bench": "公园长椅",
+		"subway_station": "地铁站", "bookstore": "书店",
+		"cafe": "咖啡馆", "hospital_corridor": "医院走廊",
+		"sky_bridge": "天桥", "night_market": "夜市",
+		"playground": "游乐场", "rainy_day": "雨天",
+	}
+	return "❤️ 建议：%s（命中返回物+1）" % location_names.get(high_loc, high_loc)
+
 # ---- 测试辅助 ----
 static func get_remaining_seconds(cat_id: String) -> int:
 	if not _explorers.has(cat_id):
@@ -261,6 +349,18 @@ static func _normalize_species(cat_species: String) -> String:
 		return cat_species
 	return "orange"
 
+# 跨天则清空全部地点池，令下一次 get_location_choices 重新生成。
+static func _check_daily_pool_reset() -> void:
+	var today := _today_date()
+	for cat_id in _daily_location_pools:
+		if String(_daily_location_pools[cat_id].get("pool_date", "")) != today:
+			_daily_location_pools.clear()
+			return
+
+static func _today_date() -> String:
+	var date := Time.get_date_dict_from_system()
+	return "%04d-%02d-%02d" % [date.year, date.month, date.day]
+
 static func _safe_unix_time() -> float:
 	if Engine.has_singleton("TimeGuard") and Engine.get_singleton("TimeGuard").has_method("get_safe_unix_time"):
 		return Engine.get_singleton("TimeGuard").get_safe_unix_time()
@@ -272,6 +372,9 @@ static func _save() -> void:
 	cfg.set_value(SECTION, "hatched_count", _hatched_count)
 	cfg.set_value(SECTION, "collected_postcards", _collected_postcards)
 	cfg.set_value(SECTION, "first_explore_flags", _first_explore_flags)
+	cfg.set_value(SECTION, "daily_location_pools", _daily_location_pools)
+	cfg.set_value(SECTION, "last_chosen_location", _last_chosen_location)
+	cfg.set_value(SECTION, "last_location_chosen_is_high", _last_location_chosen_is_high)
 	if cfg.save(CFG_PATH) != OK:
 		push_error("[ExploreEngine] Save failed: %s" % CFG_PATH)
 
@@ -283,3 +386,6 @@ static func _load() -> void:
 	_hatched_count = int(cfg.get_value(SECTION, "hatched_count", 0))
 	_collected_postcards = cfg.get_value(SECTION, "collected_postcards", [])
 	_first_explore_flags = cfg.get_value(SECTION, "first_explore_flags", {})
+	_daily_location_pools = cfg.get_value(SECTION, "daily_location_pools", {})
+	_last_chosen_location = cfg.get_value(SECTION, "last_chosen_location", {})
+	_last_location_chosen_is_high = cfg.get_value(SECTION, "last_location_chosen_is_high", {})

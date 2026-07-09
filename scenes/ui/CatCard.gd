@@ -355,7 +355,7 @@ func _on_explore_button_pressed() -> void:
 		if ExploreEngine.is_returned(cat_id):
 			_collect_explore_return()
 		return
-	_show_duration_picker()
+	_show_explore_location_picker()
 
 
 func update_explore_button_state() -> void:
@@ -449,25 +449,14 @@ func _update_explore_labels() -> void:
 	_return_time_label.text = "预计返回 %02d:%02d" % [int(dt.get("hour", 0)), int(dt.get("minute", 0))]
 
 
-func _show_duration_picker() -> void:
-	var packed := load("res://scenes/ui/explore_duration_picker.tscn")
-	var picker = packed.instantiate()
-	picker.duration_selected.connect(func(duration_hours: int) -> void:
-		_on_explore_duration_selected(duration_hours, picker)
-	)
-	picker.canceled.connect(func() -> void:
-		_close_overlay(picker)
-	)
-	_add_overlay(picker)
-
-
-func _on_explore_duration_selected(duration_hours: int, picker: Node) -> void:
-	_close_overlay(picker)
+func _show_explore_location_picker() -> void:
+	var cat_name := _get_cat_display_name()
+	var species := _get_cat_property("species", _get_cat_property("breed", "orange"))
 	var packed := load("res://scenes/ui/explore_confirm_dialog.tscn")
 	var dialog = packed.instantiate()
-	dialog.setup(_get_cat_display_name(), duration_hours)
-	dialog.confirmed.connect(func(confirmed_duration_hours: int) -> void:
-		_on_explore_confirmed(confirmed_duration_hours, dialog)
+	dialog.setup(cat_name, cat_id, species)
+	dialog.confirmed.connect(func(chosen_location: String) -> void:
+		_on_explore_location_chosen(chosen_location, dialog)
 	)
 	dialog.canceled.connect(func() -> void:
 		_close_overlay(dialog)
@@ -475,6 +464,23 @@ func _on_explore_duration_selected(duration_hours: int, picker: Node) -> void:
 	_add_overlay(dialog)
 
 
+func _on_explore_location_chosen(chosen_location: String, dialog: Node) -> void:
+	_close_overlay(dialog)
+	if cat_id == "":
+		return
+	var duration_hours := 2  # 默认2小时
+	if ExploreEngine.dispatch_with_location(cat_id, duration_hours, chosen_location):
+		var remaining := ExploreEngine.get_remaining_seconds(cat_id)
+		if EventBus:
+			EventBus.emit_explore_dispatched(cat_id, Time.get_unix_time_from_system() + remaining)
+		_show_feedback("🧭 已出发探索")
+		_check_explore_state()
+		refresh_interaction_buttons()
+	else:
+		_show_feedback("探索名额已满")
+
+
+# fallback：旧的按时长派遣入口，当前流程不再调用
 func _on_explore_confirmed(duration_hours: int, dialog: Node) -> void:
 	_close_overlay(dialog)
 	if cat_id == "":

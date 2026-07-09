@@ -1,25 +1,26 @@
 extends Control
 
-signal confirmed(duration_hours: int)
+signal confirmed(chosen_location: String)
 signal canceled
 
 var _cat_name := "猫咪"
-var _duration_hours := 1
+var _cat_id := ""
+var _cat_species := ""
+var duration_hours := 2
 var _title_label: Label
-var _body_label: Label
 
 func _ready() -> void:
 	name = "ExploreConfirmDialog"
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_build_ui()
-	_refresh_text()
 
-func setup(cat_name: String, duration_hours: int) -> void:
+func setup(cat_name: String, cat_id: String, cat_species: String) -> void:
 	_cat_name = cat_name
-	_duration_hours = duration_hours
-	if is_inside_tree():
-		_refresh_text()
+	_cat_id = cat_id
+	_cat_species = cat_species
+	if _title_label != null:
+		_title_label.text = "派遣 %s 去哪儿探索？" % _cat_name
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed:
@@ -36,7 +37,7 @@ func _build_ui() -> void:
 	panel.texture = load("res://assets/art/ui/adopt/adopt_panel.png")
 	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	panel.stretch_mode = TextureRect.STRETCH_SCALE
-	_center_control(panel, Vector2(560, 340))
+	_center_control(panel, Vector2(560, 450))
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(panel)
 
@@ -49,85 +50,79 @@ func _build_ui() -> void:
 	box.offset_top = 16
 	box.offset_right = -24
 	box.offset_bottom = -14
-	box.add_theme_constant_override("separation", 10)
+	box.add_theme_constant_override("separation", 8)
 	panel.add_child(box)
 
 	_title_label = Label.new()
 	_title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(_title_label, 24)
+	_title_label.text = "派遣 %s 去哪儿探索？" % _cat_name
+	_style_label(_title_label, 22)
 	box.add_child(_title_label)
 
-	_body_label = Label.new()
-	_body_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(_body_label, 16)
-	box.add_child(_body_label)
+	var location_names := {
+		"convenience_store": "便利店", "park_bench": "公园长椅",
+		"subway_station": "地铁站", "bookstore": "书店",
+		"cafe": "咖啡馆", "hospital_corridor": "医院走廊",
+		"sky_bridge": "天桥", "night_market": "夜市",
+		"playground": "游乐场", "rainy_day": "雨天"
+	}
+	var choices := ExploreEngine.get_location_choices(_cat_id, _cat_species)
+	if choices.is_empty():
+		choices = {"high": "park_bench", "medium": "cafe", "low": "bookstore"}
+	for tier in ["high", "medium", "low"]:
+		var loc := String(choices.get(tier, ""))
+		if loc == "":
+			continue
+		var btn := TextureButton.new()
+		btn.custom_minimum_size = Vector2(480, 48)
+		btn.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
+		btn.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
+		btn.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
+		btn.ignore_texture_size = true
+		btn.stretch_mode = TextureButton.STRETCH_SCALE
+		var my_loc := loc
+		btn.pressed.connect(func() -> void:
+			confirmed.emit(my_loc)
+		)
+		box.add_child(btn)
 
-	# spacer — 按钮下移50px
-	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 50)
-	box.add_child(spacer)
+		var label := Label.new()
+		label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.offset_left = 16
+		label.add_theme_font_size_override("font_size", 17)
+		label.add_theme_color_override("font_color", Color("#4F453C"))
+		var loc_name := String(location_names.get(loc, loc))
+		if tier == "high":
+			label.text = "❤️ %s（偏好，返回物+1）" % loc_name
+		else:
+			label.text = "   %s" % loc_name
+		btn.add_child(label)
 
-	var sep := HSeparator.new()
-	sep.modulate = Color("#D4A85A", 0.4)
-	box.add_child(sep)
+	var cancel_row := HBoxContainer.new()
+	cancel_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(cancel_row)
 
-	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 24)
-	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_child(row)
-
-	# 两按钮并排：2×244 + 24 = 512。高取下限 80 → 3.05:1。
-	# feed(3.46:1) 变形 ~1.13×，explore(5.83:1) 变形 ~1.91×（较原 5.25× 大幅改善）。
 	var cancel := TextureButton.new()
-	cancel.custom_minimum_size = Vector2(244, 80)
-	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
-	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
-	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
+	cancel.custom_minimum_size = Vector2(240, 64)
+	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_secondary_blank.png")
 	cancel.ignore_texture_size = true
 	cancel.stretch_mode = TextureButton.STRETCH_SCALE
 	cancel.pressed.connect(func() -> void:
 		canceled.emit()
 	)
-	row.add_child(cancel)
+	cancel_row.add_child(cancel)
 
-	var cancel_label := Label.new()
-	cancel_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	cancel_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	cancel_label.text = "再想想"
-	cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	cancel_label.add_theme_font_size_override("font_size", 18)
-	cancel_label.add_theme_color_override("font_color", Color("#4F453C"))
-	cancel.add_child(cancel_label)
-
-	var ok := TextureButton.new()
-	ok.custom_minimum_size = Vector2(244, 80)
-	ok.texture_normal = load("res://assets/art/ui/catcard/btn_explore_normal.png")
-	ok.texture_hover = load("res://assets/art/ui/catcard/btn_explore_hover.png")
-	ok.texture_pressed = load("res://assets/art/ui/catcard/btn_explore_pressed.png")
-	ok.ignore_texture_size = true
-	ok.stretch_mode = TextureButton.STRETCH_SCALE
-	ok.pressed.connect(func() -> void:
-		confirmed.emit(_duration_hours)
-	)
-	row.add_child(ok)
-
-	var ok_label := Label.new()
-	ok_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	ok_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ok_label.text = "出发"
-	ok_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	ok_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	ok_label.add_theme_font_size_override("font_size", 18)
-	ok_label.add_theme_color_override("font_color", Color("#4F453C"))
-	ok.add_child(ok_label)
-
-func _refresh_text() -> void:
-	if _title_label == null or _body_label == null:
-		return
-	_title_label.text = "派遣 %s 探索？" % _cat_name
-	_body_label.text = "本次探索需要 %d 小时。探索期间不能喂食、抚摸或玩耍，返回后可领取奖励。" % _duration_hours
+	var cl := Label.new()
+	cl.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cl.text = "算了"
+	cl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cl.add_theme_font_size_override("font_size", 18)
+	cl.add_theme_color_override("font_color", Color("#4F453C"))
+	cancel.add_child(cl)
 
 func _style_label(label: Label, font_size: int) -> void:
 	label.add_theme_color_override("font_color", Color("#4F453C"))
