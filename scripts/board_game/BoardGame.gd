@@ -210,11 +210,14 @@ func merge_items(pos_a: Vector2i, pos_b: Vector2i) -> bool:
 		excitement = mini(excitement + BoardGameData.EXCITEMENT_TRIPLE_MERGE_BONUS, BoardGameData.EXCITEMENT_MAX)
 		excitement_changed.emit(excitement, BoardGameData.EXCITEMENT_MAX)
 		triple_merged.emit(pos_b, triple_item)
+		# 三连合最高星级检查（用升级后星级）
+		if triple_item.star > highest_star_achieved:
+			highest_star_achieved = triple_item.star
+			highest_star_changed.emit(highest_star_achieved)
 
-	# 最高星级检查（三连合用升级后星级，普通合并用合并前星级）
-	var effective_star: int = triple_item.star if triple_list.size() >= 1 else new_item.star
-	if effective_star > highest_star_achieved:
-		highest_star_achieved = effective_star
+	# 普通合并最高星级检查
+	if new_item.star > highest_star_achieved:
+		highest_star_achieved = new_item.star
 		highest_star_changed.emit(highest_star_achieved)
 
 	# 解开相邻毛线格
