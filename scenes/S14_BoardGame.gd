@@ -44,6 +44,7 @@ var _excitement_label: Label              # 兴奋值文字（如 "兴奋值 88/
 var _frenzy_button: Button                # 狂欢触发按钮
 var _frenzy_timer_label: Label            # 狂欢倒计时（如 "狂欢 7.5s"）
 var _target_banner: HBoxContainer         # 目标横幅容器
+var _target_banner_label: Label           # 目标横幅内的目标名称文本
 var _target_segments: Array = []          # 5个段 TextureRect/ColorRect
 var _cat_react_panel: PanelContainer  # 猫入座容器
 var _cat_react_tex: TextureRect      # 猫贴图
@@ -209,15 +210,17 @@ func _build_target_banner() -> Control:
 		hbox.add_child(seg)
 		_target_segments.append(seg)
 
-	# 左侧标注
+	# 左侧目标名称文本（在 _start_game 中填入具体主链⭐5目标）
 	var label := Label.new()
-	label.text = "⭐目标进度"
+	label.text = "⭐目标"
 	label.add_theme_font_size_override("font_size", 14)
 	label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	label.custom_minimum_size = Vector2(80, 20)
+	label.custom_minimum_size = Vector2(140, 20)
+	label.clip_text = true
 	hbox.add_child(label)
-	# 将 label 移到最前面
+	# 将 label 移到最前面（左侧目标文本 + 右侧5个星级段）
 	hbox.move_child(label, 0)
+	_target_banner_label = label
 
 	return banner
 
@@ -549,6 +552,8 @@ func _start_game() -> void:
 	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
 	var sub_name: String = ItemChains.get_chain_display_name(board.current_sub_chain)
 	_goal_label.text = "目标：合出 %s ⭐5 ｜ 副链：%s ⭐3" % [main_name, sub_name]
+	if _target_banner_label != null:
+		_target_banner_label.text = "目标：%s ⭐5" % main_name
 	_show_cat_seat()
 	# D10: 重置兴奋值/目标横幅/狂欢UI
 	_excitement_bar.value = 0
