@@ -495,7 +495,7 @@ func _collect_explore_return() -> void:
 	var entry := ExploreEngine.collect(cat_id, species)
 	if entry.is_empty():
 		return
-	var reward_type := entry.get("reward_type", "")
+	var reward_type: String = entry.get("reward_type", "")
 	if EventBus:
 		EventBus.emit_explore_returned(cat_id, reward_type)
 	_show_return_animation(reward_type)

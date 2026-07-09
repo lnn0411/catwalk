@@ -19,9 +19,10 @@ var _tween: Tween
 func _ready() -> void:
 	_bubble.visible = false
 	_bubble.modulate.a = 0.0
-	if WalkCompanion and WalkCompanion.has_signal("chatter_triggered"):
-		if not WalkCompanion.chatter_triggered.is_connected(_on_chatter):
-			WalkCompanion.chatter_triggered.connect(_on_chatter)
+	var wc := get_node_or_null("/root/WalkCompanion")
+	if wc and wc.has_signal("chatter_triggered"):
+		if not wc.chatter_triggered.is_connected(_on_chatter):
+			wc.chatter_triggered.connect(_on_chatter)
 
 
 func _on_chatter(_breed: String, phrase: String) -> void:

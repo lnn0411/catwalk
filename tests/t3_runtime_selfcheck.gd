@@ -52,9 +52,9 @@ func _ready() -> void:
 	print("\n" + "=".repeat(64))
 	print("  结果：%d 通过 / %d 失败" % [_pass, _fail])
 	if _fail > 0:
-	print("  ── 失败项 ──")
-	for f in _failed_list:
-	print("    ✗ " + f)
+		print("  ── 失败项 ──")
+		for f in _failed_list:
+			print("    ✗ " + f)
 	print("  判定：" + ("✅ 全部通过，可报 complete" if _fail == 0 else "❌ 有失败，禁止 complete"))
 	print("=".repeat(64))
 
