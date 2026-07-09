@@ -15,6 +15,7 @@ const CITY_LOCATION_TYPES := [
 	"convenience_store", "park_bench", "subway_station", "bookstore", "cafe",
 	"hospital_corridor", "sky_bridge", "night_market", "playground", "rainy_day",
 ]
+const WeeklySpotlightS := preload("res://scripts/postcard/WeeklySpotlightManager.gd")
 const BREED_LOCATION_PREFERENCES := {
 	"orange": {
 		"high": ["convenience_store", "park_bench"],
@@ -46,6 +47,7 @@ static var _daily_location_pools: Dictionary = {}
 static var _last_chosen_location: Dictionary = {}
 # cat_id -> 上一次所选地点是否命中高偏好（决定返回物 +1）。
 static var _last_location_chosen_is_high: Dictionary = {}
+static var _spotlight_boost := 0.15
 static var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
@@ -180,8 +182,8 @@ static func collect(cat_id: String, cat_species: String = "") -> Dictionary:
 			_collected_postcards.append(postcard_id)
 			var postcard = PostcardData.get_by_id(postcard_id)
 			var location_type := String(postcard.location_type) if postcard != null else ""
-			if EventBus:
-				EventBus.emit_postcard_obtained(postcard_id, location_type)
+			if Engine.has_singleton("EventBus"):
+				Engine.get_singleton("EventBus").emit_postcard_obtained(postcard_id, location_type)
 		else:
 			reward_type = "ingredient"
 	entry["reward_type"] = reward_type
@@ -251,6 +253,15 @@ static func _pick_postcard_for_cat(cat_species: String) -> String:
 			available.append(pid)
 	if available.is_empty():
 		return ""
+	var spotlight_location := _get_spotlight_location()
+	if spotlight_location != "" and _rng.randf() < _spotlight_boost:
+		var spotlight_candidates := []
+		for pid in available:
+			var pd = PD.get_by_id(pid)
+			if pd and pd.sender_cat_species == cat_species and pd.location_type == spotlight_location:
+				spotlight_candidates.append(pid)
+		if not spotlight_candidates.is_empty():
+			return spotlight_candidates[_rng.randi() % spotlight_candidates.size()]
 	# Try by breed preference tiers
 	for tier in ["high", "medium", "low"]:
 		var preferred = pref[tier]
@@ -333,8 +344,8 @@ static func _active_count() -> int:
 
 
 static func _get_cat_species(cat_id: String) -> String:
-	if HatchEngine and HatchEngine.has_method("get_cat_by_id"):
-		var cat = HatchEngine.get_cat_by_id(cat_id)
+	if Engine.has_singleton("HatchEngine") and Engine.get_singleton("HatchEngine").has_method("get_cat_by_id"):
+		var cat = Engine.get_singleton("HatchEngine").get_cat_by_id(cat_id)
 		if cat is Dictionary:
 			return _normalize_species(String(cat.get("species", cat.get("breed", "orange"))))
 		if cat != null and "species" in cat:
@@ -366,8 +377,12 @@ static func _safe_unix_time() -> float:
 		return Engine.get_singleton("TimeGuard").get_safe_unix_time()
 	return Time.get_unix_time_from_system()
 
+static func _get_spotlight_location() -> String:
+	return WeeklySpotlightS.get_current_spotlight_location()
+
 static func _save() -> void:
 	var cfg := ConfigFile.new()
+	cfg.load(CFG_PATH)
 	cfg.set_value(SECTION, "explorers", _explorers)
 	cfg.set_value(SECTION, "hatched_count", _hatched_count)
 	cfg.set_value(SECTION, "collected_postcards", _collected_postcards)

@@ -504,31 +504,40 @@ func _collect_explore_return() -> void:
 	var reward_type: String = entry.get("reward_type", "")
 	if EventBus:
 		EventBus.emit_explore_returned(cat_id, reward_type)
-	_show_return_animation(reward_type)
+	_show_return_animation(reward_type, String(entry.get("postcard_id", "")))
 	_show_feedback("探索奖励已领取")
 	_check_explore_state()
 	refresh_interaction_buttons()
 
 
-func _show_return_animation(reward_type: String) -> void:
+func _show_return_animation(reward_type: String, postcard_id: String = "") -> void:
 	var packed := load("res://scenes/ui/explore_return_animation.tscn")
 	var animation = packed.instantiate()
 	animation.finished.connect(func() -> void:
 		animation.queue_free()
-		_show_postcard_reveal(reward_type)
+		_show_postcard_reveal(reward_type, postcard_id)
 	)
 	_add_overlay(animation)
 	animation.play(_get_cat_display_name(), reward_type)
 
 
-func _show_postcard_reveal(reward_type: String) -> void:
+func _show_postcard_reveal(reward_type: String, postcard_id: String = "") -> void:
 	var packed := load("res://scenes/ui/postcard_reveal.tscn")
 	var reveal = packed.instantiate()
 	reveal.closed.connect(func() -> void:
 		reveal.queue_free()
 	)
 	_add_overlay(reveal)
-	reveal.reveal(_get_cat_display_name(), reward_type)
+	var postcard_data := {}
+	if postcard_id != "":
+		var postcard = PostcardData.get_by_id(postcard_id)
+		if postcard != null:
+			postcard_data = {"location_type": String(postcard.location_type)}
+	var spotlight_location := ""
+	var wsm = get_node_or_null("/root/WeeklySpotlightManager")
+	if wsm != null and wsm.has_method("get_current_spotlight_location"):
+		spotlight_location = String(wsm.get_current_spotlight_location())
+	reveal.reveal(_get_cat_display_name(), reward_type, spotlight_location, postcard_data)
 
 
 func _add_overlay(node: Control) -> void:

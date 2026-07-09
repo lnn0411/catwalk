@@ -6,6 +6,9 @@ var _cat_name := "猫咪"
 var _reward_type := "postcard"
 var _title: Label
 var _body: Label
+var _panel: PanelContainer
+var _spotlight_badge: ColorRect
+var _spotlight_active := false
 
 
 func _ready() -> void:
@@ -16,11 +19,25 @@ func _ready() -> void:
 	_refresh_text()
 
 
-func reveal(cat_name: String, reward_type: String) -> void:
+func reveal(cat_name: String, reward_type: String, spotlight_location_type: String = "", postcard_data: Dictionary = {}) -> void:
 	_cat_name = cat_name
 	_reward_type = reward_type
+	if spotlight_location_type != "" or not postcard_data.is_empty():
+		set_spotlight(spotlight_location_type, postcard_data)
 	if is_inside_tree():
 		_refresh_text()
+
+
+func set_spotlight(spotlight_location_type: String, postcard_data: Dictionary = {}) -> void:
+	var active := false
+	var postcard_location := String(postcard_data.get("location_type", ""))
+	if postcard_location != "":
+		active = postcard_location == spotlight_location_type
+	else:
+		active = false
+	_spotlight_active = active
+	if is_inside_tree():
+		_refresh_spotlight_visual()
 
 
 func _build_ui() -> void:
@@ -29,14 +46,18 @@ func _build_ui() -> void:
 	dim.color = Color(0, 0, 0, 0.5)
 	add_child(dim)
 
-	var panel := PanelContainer.new()
-	_center_control(panel, Vector2(560, 360))
-	_style_panel(panel)
-	add_child(panel)
+	var card := Control.new()
+	_center_control(card, Vector2(560, 360))
+	add_child(card)
+
+	_panel = PanelContainer.new()
+	_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_style_panel(_panel)
+	card.add_child(_panel)
 
 	var box := VBoxContainer.new()
 	box.add_theme_constant_override("separation", 16)
-	panel.add_child(box)
+	_panel.add_child(box)
 
 	_title = Label.new()
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -63,12 +84,45 @@ func _build_ui() -> void:
 	)
 	box.add_child(ok)
 
+	_spotlight_badge = ColorRect.new()
+	_spotlight_badge.custom_minimum_size = Vector2(60, 60)
+	_spotlight_badge.size = Vector2(60, 60)
+	_spotlight_badge.anchor_left = 1.0
+	_spotlight_badge.anchor_top = 0.0
+	_spotlight_badge.anchor_right = 1.0
+	_spotlight_badge.anchor_bottom = 0.0
+	_spotlight_badge.offset_left = -76
+	_spotlight_badge.offset_top = 16
+	_spotlight_badge.offset_right = -16
+	_spotlight_badge.offset_bottom = 76
+	_spotlight_badge.color = Color(1.0, 0.85, 0.4, 0.9)
+	_spotlight_badge.visible = false
+	card.add_child(_spotlight_badge)
+
+	var badge_label := Label.new()
+	badge_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	badge_label.text = "🌟 本周聚光"
+	badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	badge_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_style_label(badge_label, 11, Color.WHITE)
+	_spotlight_badge.add_child(badge_label)
+	_refresh_spotlight_visual()
+
 
 func _refresh_text() -> void:
 	if _title == null or _body == null:
 		return
 	_title.text = _title_text(_reward_type)
 	_body.text = "%s %s" % [_cat_name, _body_text(_reward_type)]
+	_refresh_spotlight_visual()
+
+
+func _refresh_spotlight_visual() -> void:
+	if _spotlight_badge != null:
+		_spotlight_badge.visible = _spotlight_active
+	if _panel != null:
+		_style_panel(_panel, _spotlight_active)
 
 
 func _title_text(reward_type: String) -> String:
@@ -117,11 +171,11 @@ func _style_button(button: Button) -> void:
 	button.add_theme_stylebox_override("pressed", pressed)
 
 
-func _style_panel(panel: PanelContainer) -> void:
+func _style_panel(panel: PanelContainer, spotlight_active: bool = false) -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("#3C2A1C")
-	style.border_color = Palette.AMBER
-	style.set_border_width_all(2)
+	style.border_color = Color(1.0, 0.85, 0.4, 1.0) if spotlight_active else Palette.AMBER
+	style.set_border_width_all(4 if spotlight_active else 2)
 	style.set_corner_radius_all(10)
 	style.content_margin_left = 24
 	style.content_margin_top = 24

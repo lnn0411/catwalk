@@ -18,6 +18,7 @@ signal network_status_changed(online: bool)
 signal save_completed(success: bool)
 signal level_up(cat_id: String, from_level: int, to_level: int)
 signal postcard_obtained(postcard_id: String, location_type: String)
+signal weekly_spotlight_changed(location_type: String)
 signal signin_completed(day: int, reward: Dictionary)
 signal currency_changed(gold: int, diamonds: int, petals: int)
 signal inventory_changed(item_type: String, quantity: int)
@@ -84,6 +85,9 @@ func emit_level_up(cat_id: String, from_level: int, to_level: int) -> void:
 
 func emit_postcard_obtained(postcard_id: String, location_type: String) -> void:
 	postcard_obtained.emit(postcard_id, location_type)
+
+func emit_weekly_spotlight_changed(location_type: String) -> void:
+	weekly_spotlight_changed.emit(location_type)
 
 func emit_signin_completed(day: int, reward: Dictionary) -> void:
 	signin_completed.emit(day, reward)
