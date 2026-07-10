@@ -57,7 +57,8 @@ def _run_assertions(results: list[tuple[str, int, SimEngine]], params: dict) -> 
             }
         )
 
-        expansion_days = [state.first_expansion_day for state in states if state.first_expansion_day is not None]
+        # R3-2 (A2'): use the day gold was actually spent on expansion, not the pokedex date.
+        expansion_days = [state.first_gold_expansion_day for state in states if state.first_gold_expansion_day is not None]
         expected = thresholds["A2_first_expansion_day_range"]
         expansion_mean = _mean(expansion_days)
         expansion_ok = (not expansion_days) or (int(expected[0]) <= expansion_mean <= int(expected[1]))
@@ -98,20 +99,37 @@ def _run_assertions(results: list[tuple[str, int, SimEngine]], params: dict) -> 
             }
         )
 
-        pity_ratios = [
-            state.legendary_pity_triggers / max(1, state.total_hatches // int(params["hatching"]["pity"]["legendary_every_n"]))
-            for state in states
-        ]
-        pity_mean = _mean(pity_ratios)
-        pity_target = float(thresholds["A5_legendary_pity_trigger_ratio"]["target"])
-        pity_tol = float(thresholds["A5_legendary_pity_trigger_ratio"]["tolerance_pp"])
+        # R3-1 A5a: overall legendary acquisition rate — observe-only, all profiles.
+        legendary_rate = [state.legendary_pity_triggers / max(1, state.total_hatches) for state in states]
         rows.append(
             {
                 "profile": profile_name,
                 "days": days,
-                "assertion": "A5_legendary_pity_trigger_ratio",
-                "result": _pass(abs(pity_mean - pity_target) <= pity_tol or not any(state.total_hatches for state in states)),
-                "observed": "%.3f" % pity_mean,
+                "assertion": "A5a_legendary_acquisition_rate",
+                "result": "PASS",
+                "observed": "%.3f" % _mean(legendary_rate),
+            }
+        )
+
+        # R3-1 A5b: pity-trigger ratio — only profiles with enough hatches to be meaningful.
+        a5b = thresholds["A5b_legendary_pity_trigger_ratio"]
+        min_hatches = int(a5b["min_hatches"])
+        eligible = [state for state in states if state.total_hatches >= min_hatches]
+        if eligible:
+            pity_ratios = [state.legendary_pity_triggers / max(1, state.total_hatches // min_hatches) for state in eligible]
+            pity_mean = _mean(pity_ratios)
+            pity_result = _pass(abs(pity_mean - float(a5b["target"])) <= float(a5b["tolerance_pp"]))
+            pity_observed = "%.3f" % pity_mean
+        else:
+            pity_result = "N/A (insufficient hatches)"
+            pity_observed = "insufficient hatches (min %d)" % min_hatches
+        rows.append(
+            {
+                "profile": profile_name,
+                "days": days,
+                "assertion": "A5b_legendary_pity_trigger_ratio",
+                "result": pity_result,
+                "observed": pity_observed,
             }
         )
 

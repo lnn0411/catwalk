@@ -42,6 +42,8 @@ def _profile(activity: str, ads_enabled: bool, has_monthly_card: bool, params: d
             "inventory_full_priority": "adopt_common_level_2_affection_100_first",
             "board_game": "play_when_ticket_available",
             "shop": "buy_highest_tier_when_petals_or_gold_enough",
+            # R1-2: idealized daily interaction count feeds the ticket-per-interaction path
+            "daily_interactions": int(params["interaction"]["daily_interactions_idealized"]),
         },
     }
 

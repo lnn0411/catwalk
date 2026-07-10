@@ -86,6 +86,7 @@
 
   "workshop": {
     "energy_per_box": 3000,
+    "unbox_energy_cost": 1500,
     "max_slots": 4,
     "box_categories": ["cat_accessory", "flower_seed", "furniture_component"]
   },
@@ -316,6 +317,11 @@
     "unlock_tiers_for_expansion": [4, 8, 12]
   },
 
+  "newbie_goals": {
+    "daily_gold": 50,
+    "duration_days": 7
+  },
+
   "achievement_rewards": {
     "step_milestones": [
       { "steps": 1000, "gold": 100 },
@@ -353,7 +359,8 @@
     "A2_first_expansion_day_range": [20, 40],
     "A3_ad_energy_ratio_max": 0.50,
     "A4_orange_max_level_days": { "target": 30, "tolerance_days": 5 },
-    "A5_legendary_pity_trigger_ratio": { "target": 0.30, "tolerance_pp": 0.05 },
+    "A5a_legendary_acquisition_rate": "observe_only",
+    "A5b_legendary_pity_trigger_ratio": { "target": 0.30, "tolerance_pp": 0.05, "min_hatches": 120 },
     "A6_medium_overflow_cutoff": "daily_zero",
     "A6_high_overflow_cutoff": "max_1_per_week",
     "A7_tickets_no_ad_medium": { "min": 3, "max": 4 },

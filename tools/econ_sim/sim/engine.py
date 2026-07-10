@@ -71,6 +71,14 @@ class SimState:
         self.pokedex = set()
         self.first_exploration_done = False
         self._adoptions_this_week = 0
+        # R1-1: workshop gift-box queue (accumulated "ready but un-opened" boxes)
+        self.workshop_ready_queue = 0
+        # R1-3: achievements are granted once, on the day the milestone is reached
+        self.claimed_achievements = set()
+        # R1-4: capacity is gated by real gold payment, not pokedex size
+        self.expansion_tier_unlocked = 0  # 0=24, 1=28, 2=32, 3=36
+        self.gold_spent_on_capacity = 0
+        self.first_gold_expansion_day = None
         self._init_slots()
         self._add_cat(
             params["hatching"]["first_cat_breed"],
@@ -112,11 +120,9 @@ class SimState:
 
     @property
     def inventory_capacity(self) -> int:
-        capacity = int(self.params["cat_inventory"]["initial_capacity"])
-        for tier in self.params["cat_inventory"]["expansion_tiers"]:
-            if len(self.pokedex) >= int(tier["unlock_at_pokedex"]):
-                capacity = int(tier["new_capacity"])
-        return capacity
+        # R1-4: capacity is a function of tiers actually paid for, not pokedex size.
+        caps = [24, 28, 32, 36]
+        return caps[min(self.expansion_tier_unlocked, 3)]
 
     def _unlock_slots_and_capacity(self) -> None:
         total = len(self.cats) + self.total_adoptions
@@ -128,10 +134,23 @@ class SimState:
                 slot["unlocked"] = True
             elif index == 3 and total >= 10:
                 slot["unlocked"] = True
-        if self.first_expansion_day is None:
-            initial = int(self.params["cat_inventory"]["initial_capacity"])
-            if self.inventory_capacity > initial and self.current_day:
-                self.first_expansion_day = self.current_day
+        # R1-4: expand capacity only when the pokedex gate AND the gold cost are met.
+        # Tiers must be unlocked in order; deduct gold and record the real payment day.
+        tiers = self.params["cat_inventory"]["expansion_tiers"]
+        for i, tier in enumerate(tiers):
+            if i < self.expansion_tier_unlocked:
+                continue  # already unlocked
+            if i != self.expansion_tier_unlocked:
+                break  # only the next tier in sequence is eligible
+            if len(self.pokedex) >= int(tier["unlock_at_pokedex"]) and self.gold >= int(tier["cost_gold"]):
+                self.gold -= int(tier["cost_gold"])
+                self.gold_spent_on_capacity += int(tier["cost_gold"])
+                self.flow("gold_out_capacity_expansion", int(tier["cost_gold"]))
+                self.expansion_tier_unlocked = i + 1
+                if self.first_gold_expansion_day is None and self.current_day:
+                    self.first_gold_expansion_day = self.current_day
+            else:
+                break  # next tier not yet affordable/unlocked
 
     def flow(self, name: str, amount: int | float) -> None:
         self.daily_flow.setdefault(self.current_day, {})
@@ -247,16 +266,23 @@ class SimEngine:
 
         self._checkin(state, rng)
         self._monthly_card(state)
+        self._daily_newbie_goals(state)
         self._board_ticket_grants(state, step_count)
+        self._interaction_grants(state)
         self._ads(state)
         self._energy_routing(state, step_energy)
         self._hatching(state, rng)
         self._adoption(state)
         self._workshop(state, rng)
+        self._gold_ticket_purchase(state)
         self._board_game(state, rng)
         self._shop(state)
+        # P1-2: re-run capacity/slot unlock after all gold income is settled, so a
+        # full bag (which skips hatching → _add_cat) can't deadlock expansion.
+        state._unlock_slots_and_capacity()
         self._exploration(state, rng)
         self._carry_cat_xp(state)
+        self._achievement_grant(state)
         self._events(state, step_count)
         self._record_daily_stats(state)
 
@@ -302,6 +328,31 @@ class SimEngine:
         state.total_tickets_earned += earned
         state.flow("tickets_in_steps", step_tickets)
         state.flow("tickets_in_login", login_tickets)
+
+    def _interaction_grants(self, state: SimState) -> None:
+        """R1-2: interaction pathway — every N interactions grants a board ticket."""
+        board = self.params["board_game"]
+        interactions = int(self.profile["default_behavior"]["daily_interactions"])
+        per = int(board["ticket_per_interactions"])
+        limit = int(board["ticket_daily_limit_by_interaction"])
+        earned = min(limit, interactions // per) if per > 0 else 0
+        state.board_tickets += earned
+        state.total_tickets_earned += earned
+        state.flow("tickets_in_interaction", earned)
+
+    def _gold_ticket_purchase(self, state: SimState) -> None:
+        """R1-2: gold pathway — auto-buy board tickets with spare gold, daily-capped."""
+        board = self.params["board_game"]
+        cost = int(board["ticket_gold_cost"])
+        limit = int(board["ticket_gold_daily_limit"])
+        bought = 0
+        while bought < limit and cost > 0 and state.gold >= cost:
+            state.gold -= cost
+            state.board_tickets += 1
+            state.total_tickets_earned += 1
+            bought += 1
+            state.flow("gold_out_ticket_purchase", cost)
+            state.flow("tickets_in_gold", 1)
 
     def _ads(self, state: SimState) -> None:
         if not self.profile["ads_enabled"]:
@@ -386,8 +437,22 @@ class SimEngine:
         return list(pool.keys())[-1]
 
     def _adoption(self, state: SimState) -> None:
-        while len(state.cats) > state.inventory_capacity:
-            candidate = get_rancher_priority_cats(state)[0]
+        # R2: adopt when the bag is full OR a nurtured cat has reached the gate.
+        guard = 0
+        while len(state.cats) > state.inventory_capacity or self._nurtured_cats_ready(state):
+            guard += 1
+            if guard > 1000:  # safety valve against an unexpected non-terminating loop
+                break
+            ready = self._nurtured_cats_ready(state)
+            if ready:
+                candidate = ready[0]  # groomed cats first
+            else:
+                priority = get_rancher_priority_cats(state)
+                if not priority:
+                    break
+                candidate = priority[0]  # fallback: over-capacity trim
+            if candidate not in state.cats:
+                break
             revenue = self._adoption_revenue(candidate)
             state.cats.remove(candidate)
             state.love_petals += revenue
@@ -418,37 +483,51 @@ class SimEngine:
         return revenue
 
     def _workshop(self, state: SimState, rng: random.Random) -> None:
-        """Workshop only consumes energy when hatching is blocked by inventory.
+        """R1-1: workshop is an independent energy channel, not gated by cat capacity.
 
-        Per GDD §2.2.2: workshop activates when cat inventory is full.
-        Energy routing priority: incubating_egg > workshop_box > main_pool > cutoff.
-        Workshop does NOT drain energy that could be used for hatching — it only
-        activates when the player has no room for new cats, regardless of pool level.
+        Hatching runs first (eggs get energy priority); the workshop then burns the
+        remaining pool. Each idle slot packs a gift box (energy_per_box) into an
+        unbounded ready-queue. Ready boxes are then unboxed (unbox_energy_cost),
+        completing same-day and producing the box reward. Energy pool truncation is
+        unchanged — this simply keeps the pool from sitting full and overflowing.
         """
         energy_per_box = int(self.params["workshop"]["energy_per_box"])
-        if len(state.cats) < state.inventory_capacity:
-            # Hatching has room — do NOT let workshop consume energy
-            # Energy stays in pool for hatching on future days
-            return
-        for slot in state.workshop_slots:
+        unbox_cost = int(self.params["workshop"]["unbox_energy_cost"])
+
+        # Packing: every slot packs a box while energy remains; queue backs up freely.
+        for _slot in state.workshop_slots:
             if state.energy_pool < energy_per_box:
                 break
             state.energy_pool -= energy_per_box
-            category = rng.choice(self.params["workshop"]["box_categories"])
+            state.workshop_ready_queue += 1
             state.flow("energy_out_workshop", energy_per_box)
+
+        # Unboxing: each slot processes one ready box this day if energy allows.
+        for _slot in state.workshop_slots:
+            if state.workshop_ready_queue <= 0:
+                break
+            if state.energy_pool < unbox_cost:
+                break
+            state.energy_pool -= unbox_cost
+            state.workshop_ready_queue -= 1
+            state.flow("energy_out_workshop_unbox", unbox_cost)
+            category = rng.choice(self.params["workshop"]["box_categories"])
             state.flow("workshop_box_" + category, 1)
             if category == "flower_seed":
-                state.love_petals += int(self.params["events"]["event_petals_per_10_interactions"])
-                state.flow("love_petals_in_workshop", int(self.params["events"]["event_petals_per_10_interactions"]))
+                petals = int(self.params["events"]["event_petals_per_10_interactions"])
+                state.love_petals += petals
+                state.flow("love_petals_in_workshop", petals)
 
     def _board_game(self, state: SimState, rng: random.Random) -> None:
         board = self.params["board_game"]
         clear_rate = float(board["clear_rate"])
-        plays = state.board_tickets
-        state.board_tickets = 0
-        state.total_tickets_spent += plays
-        state.flow("tickets_out_board", plays)
-        for _ in range(plays):
+        # R1-2 K1: 2 tickets per game; leftover odd ticket carries to the next day.
+        tickets_per_game = 2
+        games = state.board_tickets // tickets_per_game
+        state.board_tickets -= games * tickets_per_game
+        state.total_tickets_spent += games * tickets_per_game
+        state.flow("tickets_out_board", games * tickets_per_game)
+        for _ in range(games):
             if rng.random() <= clear_rate:
                 self._board_reward(state, rng)
             else:
@@ -476,11 +555,31 @@ class SimEngine:
         else:
             self._apply_affection(state, int(self.params["interaction"]["board_snack_affection"]))
 
+    def _nurtured_cats_ready(self, state: SimState) -> list:
+        """R2: common cats groomed to the adoption gate (Lv>=2 and affection>=100)."""
+        return [
+            cat
+            for cat in state.cats
+            if str(cat["rarity"]).lower() == "common"
+            and int(cat["level"]) >= 2
+            and int(cat["affection"]) >= 100
+        ]
+
+    def _nurture_pool(self, state: SimState) -> list:
+        """R2: the 3-5 cats actively groomed — high level first, low affection first."""
+        sorted_cats = sorted(state.cats, key=lambda c: (-int(c["level"]), int(c["affection"])))
+        return sorted_cats[: min(5, len(sorted_cats))]
+
     def _apply_affection(self, state: SimState, amount: int) -> None:
-        if not state.cats:
+        # R2: spread affection across the nurture pool instead of only cats[0].
+        if not state.cats or amount <= 0:
             return
-        target = state.cats[0]
-        target["affection"] += amount
+        pool = self._nurture_pool(state)
+        per_cat = amount // len(pool)
+        remainder = amount - per_cat * len(pool)
+        for i, cat in enumerate(pool):
+            bonus = 1 if i < remainder else 0  # distribute the remainder to the first few
+            cat["affection"] += per_cat + bonus
         state.flow("cat_affection_gain", amount)
 
     def _shop(self, state: SimState) -> None:
@@ -492,14 +591,52 @@ class SimEngine:
                 state.flow("love_petals_out_shop", price)
                 self._apply_affection(state, int(self.params["interaction"]["feed_affection"]))
                 break
+        # R1-4: capacity expansion (gold-gated) is now handled centrally in
+        # SimState._unlock_slots_and_capacity; the old shop-side charge is removed
+        # to avoid double-charging the player.
 
-        for tier in self.params["cat_inventory"]["expansion_tiers"]:
-            cost = int(tier["cost_gold"])
-            if cost > 0 and len(state.pokedex) >= int(tier["unlock_at_pokedex"]) and state.gold >= cost:
-                state.gold -= cost
-                state.flow("gold_out_capacity_expansion", cost)
-                if state.first_expansion_day is None:
-                    state.first_expansion_day = state.current_day
+    def _daily_newbie_goals(self, state: SimState) -> None:
+        """R1-3: newbie goals grant flat daily gold for the first N days."""
+        newbie = self.params.get("newbie_goals", {})
+        duration = int(newbie.get("duration_days", 7))
+        daily_gold = int(newbie.get("daily_gold", 50))
+        if state.current_day <= duration:
+            state.gold += daily_gold
+            state.flow("gold_in_newbie_goal", daily_gold)
+
+    def _achievement_grant(self, state: SimState) -> None:
+        """R1-3: achievements pay out once, on the day the milestone is first met."""
+
+        def claim(key: str) -> bool:
+            if key in state.claimed_achievements:
+                return False
+            state.claimed_achievements.add(key)
+            return True
+
+        # Step milestones
+        if state.total_steps >= 1000 and claim("steps_1000"):
+            state.gold += 100
+            state.flow("gold_in_achievement", 100)
+        if state.total_steps >= 10000 and claim("steps_10000"):
+            state.gold += 200
+            state.flow("gold_in_achievement", 200)
+        if state.total_steps >= 42195 and claim("steps_42195"):
+            state.diamonds += 30
+            state.flow("diamonds_in_achievement", 30)
+        # Pokedex milestones
+        if len(state.pokedex) >= 1 and claim("pokedex_1"):
+            state.gold += 200
+            state.flow("gold_in_achievement", 200)
+        if len(state.pokedex) >= 4 and claim("pokedex_4"):
+            state.diamonds += 30
+            state.flow("diamonds_in_achievement", 30)
+        if len(state.pokedex) >= 8 and claim("pokedex_8"):
+            state.diamonds += 50
+            state.flow("diamonds_in_achievement", 50)
+        # Growth milestone
+        if any(int(cat["level"]) >= 3 for cat in state.cats) and claim("cat_level_3"):
+            state.gold += 300
+            state.flow("gold_in_achievement", 300)
 
     def _exploration(self, state: SimState, rng: random.Random) -> None:
         slots = int(self.params["exploration"]["slots"])
@@ -527,7 +664,9 @@ class SimEngine:
             return
         thresholds = self.params["carry_cat"]["level_thresholds"]
         max_level = int(self.params["carry_cat"]["max_level"])
-        active = state.cats[0]
+        # R2: rotate the daily carry XP to the least-progressed cat in the nurture pool.
+        pool = self._nurture_pool(state)
+        active = min(pool, key=lambda c: int(c["xp"]))
         coefficient = float(self.params["carry_cat"]["xp_coefficient_by_breed"].get(active["breed"], 1.0))
         xp_gain = int(int(self.profile["daily_steps"]) * coefficient)
         active["xp"] += xp_gain
