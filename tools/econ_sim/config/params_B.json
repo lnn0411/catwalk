@@ -51,7 +51,8 @@
     },
     "breed_unlock_chain": {
       "orange_required_for_british": 3,
-      "british_required_for_siamese": 3
+      "british_required_for_siamese": 3,
+      "siamese_steps_required": 50000
     },
     "breed_pool_weights": {
       "orange_only": {
@@ -87,7 +88,7 @@
       },
       {
         "unlock_at_pokedex": 8,
-        "cost_gold": 10000,
+        "cost_gold": 8000,
         "new_capacity": 32
       },
       {
@@ -98,9 +99,9 @@
     ],
     "adoption_revenue_formula": {
       "base_by_breed": {
-        "orange": 5,
-        "british": 10,
-        "siamese": 15
+        "orange": 15,
+        "british": 30,
+        "siamese": 45
       },
       "rarity_factor": {
         "common": 1.0,
@@ -173,6 +174,10 @@
       "cat_accessory",
       "flower_seed",
       "furniture_component"
+    ],
+    "duplicate_conversion_gold": 50,
+    "duplicate_conversion_exclude": [
+      "flower_seed"
     ]
   },
   "board_game": {
@@ -205,7 +210,8 @@
       "cherry_tree_max": 1,
       "convert_to_gold": 100
     },
-    "consolation_prize": "fish_treat_x1"
+    "consolation_prize": "fish_treat_x1",
+    "gold_per_clear": 20
   },
   "checkin": {
     "cycle_length": 7,
@@ -275,7 +281,8 @@
       "reward_type": "energy",
       "reward_amount": 1500,
       "daily_limit": 2,
-      "location": "hatchery_page"
+      "location": "hatchery_page",
+      "step_gate": 3000
     },
     "slot_2": {
       "name": "签到重roll",
@@ -463,7 +470,10 @@
       "energy_pack_x3": 6,
       "diamond_100": 6,
       "diamond_600": 30,
-      "newbie_pack": 6
+      "newbie_pack": 6,
+      "energy_pack_x3_name": "4份×3000 ¥6",
+      "energy_pack_count": 4,
+      "energy_pack_amount": 3000
     }
   },
   "pokedex": {
@@ -599,5 +609,5 @@
     "A9_currency_divergence_check": "end_balance_less_10x_monthly_mean",
     "A10_adoption_safety_valve": "observe_only"
   },
-  "_b_group_note": "B组 P1~P8 参数集。P1=(slot_1: 1500×2)已实现。P2~P8需要从规格书v1.1附录A获取。"
+  "_b_group_note": "B组 P1b-P7 全量参数集。P1(ad#1: 1500×2)+P1b(步数≥3000门控); P2(通关+20金币); P3(暹罗:3英短+5万步); P4(花瓣Base×3); P5(工坊重复物→金币×50); P6(二档扩容8000); P7(IAP#2=4×3000)"
 }

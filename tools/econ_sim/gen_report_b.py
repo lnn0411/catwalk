@@ -1,0 +1,258 @@
+"""Generate B-group assertion report in batches to avoid OOM."""
+from __future__ import annotations
+
+import json
+import os
+import statistics
+import sys
+
+sys.path.insert(0, os.path.dirname(__file__))
+
+from sim.engine import SimEngine
+from sim.profiles import ALL_PROFILE_NAMES
+
+_PARAMS_PATH = os.path.join(os.path.dirname(__file__), "config", "params_B.json")
+_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "output", "b_group")
+_BATCH_SIZE = 3
+
+
+def _pass(condition: bool) -> str:
+    return "PASS" if condition else "FAIL"
+
+
+def _mean(values: list) -> float:
+    return statistics.mean(values) if values else 0.0
+
+
+def _percentile(values: list, percentile: int) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    if len(ordered) == 1:
+        return float(ordered[0])
+    position = (len(ordered) - 1) * percentile / 100.0
+    lower = int(position)
+    upper = min(lower + 1, len(ordered) - 1)
+    weight = position - lower
+    return float(ordered[lower] * (1.0 - weight) + ordered[upper] * weight)
+
+
+def _run_assertions_for_batch(batch_results: list, params: dict) -> list[dict]:
+    """Run assertions for a batch of (profile_name, days, engine) tuples."""
+    thresholds = params["assertion_thresholds"]
+    rows = []
+
+    for profile_name, days, engine in batch_results:
+        states = engine.states
+        love_monthly_cycles = [
+            (state.daily_flow.get(days, {}).get("end_love_petals", state.love_petals)
+             + sum(day.get("love_petals_out_shop", 0) for day in state.daily_flow.values()))
+            / max(1, int(params["shop"]["love_petal_store"]["total_round_petals"]))
+            / max(1, days / 30.0)
+            for state in states
+        ]
+        p95_cycles = _percentile(love_monthly_cycles, 95)
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A1_love_petal_monthly_cycles",
+            "result": _pass(p95_cycles <= float(thresholds["A1_love_petal_monthly_cycles"]["max_cycles_p95"])),
+            "observed": "%.2f cycles/month p95" % p95_cycles,
+        })
+
+        min_gold = min((min((day.get("end_gold", state.gold) for day in state.daily_flow.values()), default=state.gold) for state in states), default=0)
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A2_gold_non_negative",
+            "result": _pass(min_gold >= 0),
+            "observed": str(min_gold),
+        })
+
+        expansion_days = [state.first_gold_expansion_day for state in states if state.first_gold_expansion_day is not None]
+        expected = thresholds["A2_first_expansion_day_range"]
+        expansion_mean = _mean(expansion_days)
+        expansion_ok = (not expansion_days) or (int(expected[0]) <= expansion_mean <= int(expected[1]))
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A2_first_expansion_day_range",
+            "result": _pass(expansion_ok),
+            "observed": "not reached" if not expansion_days else "%.1f" % expansion_mean,
+        })
+
+        ad_energy = sum(state.total_ad_energy for state in states)
+        step_energy = sum(state.total_step_energy for state in states)
+        ratio = ad_energy / max(1, ad_energy + step_energy)
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A3_ad_energy_ratio_max",
+            "result": _pass(ratio <= float(thresholds["A3_ad_energy_ratio_max"])),
+            "observed": "%.3f" % ratio,
+        })
+
+        orange_days = [state.orange_max_level_day for state in states if state.orange_max_level_day is not None]
+        target = int(thresholds["A4_orange_max_level_days"]["target"])
+        tolerance = int(thresholds["A4_orange_max_level_days"]["tolerance_days"])
+        orange_mean = _mean(orange_days)
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A4_orange_max_level_days",
+            "result": _pass(bool(orange_days) and abs(orange_mean - target) <= tolerance),
+            "observed": "not reached" if not orange_days else "%.1f" % orange_mean,
+        })
+
+        legendary_rate = [state.legendary_pity_triggers / max(1, state.total_hatches) for state in states]
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A5a_legendary_acquisition_rate",
+            "result": "PASS",
+            "observed": "%.3f" % _mean(legendary_rate),
+        })
+
+        a5b = thresholds["A5b_legendary_pity_trigger_ratio"]
+        min_hatches = int(a5b["min_hatches"])
+        eligible = [state for state in states if state.total_hatches >= min_hatches]
+        if eligible:
+            pity_ratios = [state.legendary_pity_triggers / max(1, state.total_hatches // min_hatches) for state in eligible]
+            pity_mean = _mean(pity_ratios)
+            pity_result = _pass(abs(pity_mean - float(a5b["target"])) <= float(a5b["tolerance_pp"]))
+            pity_observed = "%.3f" % pity_mean
+        else:
+            pity_result = "N/A (insufficient hatches)"
+            pity_observed = "insufficient hatches (min %d)" % min_hatches
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A5b_legendary_pity_trigger_ratio",
+            "result": pity_result,
+            "observed": pity_observed,
+        })
+
+        overflows = [sum(day.get("energy_overflow_cutoff", 0) for day in state.daily_flow.values()) for state in states]
+        if profile_name.startswith("medium"):
+            ok = max(overflows or [0]) == 0
+            name = "A6_medium_overflow_cutoff"
+        elif profile_name.startswith("high"):
+            weekly_limit = max(1, days // 7)
+            ok = _mean([1 if value > 0 else 0 for value in overflows]) <= weekly_limit
+            name = "A6_high_overflow_cutoff"
+        else:
+            ok = True
+            name = "A6_overflow_cutoff_low_observe"
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": name,
+            "result": _pass(ok),
+            "observed": "%.1f mean cutoff" % _mean(overflows),
+        })
+
+        ticket_values = []
+        for state in states:
+            per_day = [day.get("tickets_in_steps", 0) + day.get("tickets_in_login", 0) for day in state.daily_flow.values()]
+            ticket_values.extend(per_day)
+        ticket_mean = _mean(ticket_values)
+        key = "A7_tickets_full_attendance" if "ad_on" in profile_name else "A7_tickets_no_ad_medium"
+        ticket_range = thresholds[key]
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": key,
+            "result": _pass(float(ticket_range["min"]) <= ticket_mean <= float(ticket_range["max"])),
+            "observed": "%.2f/day" % ticket_mean,
+        })
+
+        b6_values = [sum(day.get("gold_in_b6_conversion", 0) for day in state.daily_flow.values()) for state in states]
+        conversion = int(params["board_game"]["b6_conversion"]["convert_to_gold"])
+        b6_ok = all(value % conversion == 0 for value in b6_values)
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A8_B6_gold_injection_correct",
+            "result": _pass(b6_ok),
+            "observed": "%.1f mean gold" % _mean(b6_values),
+        })
+
+        dead_items = sum(state.dead_items for state in states)
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A8_dead_items_90d",
+            "result": _pass(days != 90 or dead_items <= int(thresholds["A8_dead_items_90d"])),
+            "observed": str(dead_items),
+        })
+
+        monthly_gold_mean = _mean(
+            [sum(day.get("gold_in_checkin", 0) + day.get("gold_in_monthly_card", 0) + day.get("gold_in_b6_conversion", 0)
+                 + day.get("gold_in_board_clear", 0) + day.get("gold_in_workshop_duplicate", 0)
+                 for day in state.daily_flow.values()) / max(1, days / 30.0) for state in states]
+        )
+        end_gold_mean = _mean([state.gold for state in states])
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A9_currency_divergence_check",
+            "result": _pass(end_gold_mean < max(1.0, monthly_gold_mean * 10.0)),
+            "observed": "end %.1f / monthly %.1f" % (end_gold_mean, monthly_gold_mean),
+        })
+
+        adopted = sum(state.total_adoptions for state in states)
+        rows.append({
+            "profile": profile_name, "days": days,
+            "assertion": "A10_adoption_safety_valve",
+            "result": "PASS",
+            "observed": "%s adoptions observed" % adopted,
+        })
+
+    return rows
+
+
+def _write_report(rows: list[dict], path: str) -> None:
+    with open(path, "w", encoding="utf-8") as fh:
+        fh.write("# B组断言报告 (Assertion Report B)\n\n")
+        fh.write("| Profile | Days | Assertion | Result | Observed |\n")
+        fh.write("|---|---:|---|---|---|\n")
+        for row in rows:
+            fh.write("| {profile} | {days} | {assertion} | {result} | {observed} |\n".format(**row))
+
+
+def main() -> None:
+    with open(_PARAMS_PATH, "r", encoding="utf-8") as fh:
+        params = json.load(fh)
+
+    durations = [int(d) for d in params["simulation"]["durations_days"]]
+    iterations = int(params["simulation"]["iterations_per_profile"])
+
+    # Build all 24 combos
+    all_combos = [(p, d) for p in ALL_PROFILE_NAMES for d in durations]
+    print("Total combos: %d, batch size: %d" % (len(all_combos), _BATCH_SIZE))
+
+    all_rows = []
+    for i in range(0, len(all_combos), _BATCH_SIZE):
+        batch = all_combos[i:i + _BATCH_SIZE]
+        batch_num = i // _BATCH_SIZE + 1
+        total_batches = (len(all_combos) + _BATCH_SIZE - 1) // _BATCH_SIZE
+        print("\n[Batch %d/%d]" % (batch_num, total_batches), flush=True)
+
+        batch_results = []
+        for profile_name, days in batch:
+            print("  %s %dd ..." % (profile_name, days), flush=True)
+            engine = SimEngine(profile_name, params=params, iterations=iterations, days=days)
+            engine.run()
+            batch_results.append((profile_name, days, engine))
+
+        rows = _run_assertions_for_batch(batch_results, params)
+        all_rows.extend(rows)
+
+        # Free memory
+        for _, _, engine in batch_results:
+            del engine
+        del batch_results
+
+        print("  -> %d assertion rows" % len(rows), flush=True)
+
+    report_path = os.path.join(_OUTPUT_DIR, "assertion_report_B.md")
+    _write_report(all_rows, report_path)
+
+    passes = sum(1 for r in all_rows if r["result"] == "PASS")
+    fails = sum(1 for r in all_rows if r["result"] == "FAIL")
+    nas = sum(1 for r in all_rows if "N/A" in str(r["result"]))
+    print("\n=== DONE ===")
+    print("Report: %s" % report_path)
+    print("PASS=%d FAIL=%d N/A=%d TOTAL=%d" % (passes, fails, nas, len(all_rows)))
+
+
+if __name__ == "__main__":
+    main()
