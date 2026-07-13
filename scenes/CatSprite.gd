@@ -40,13 +40,6 @@ signal cat_clicked(cat_data)
 const ARCHED_GROUND_Y := 1.0  # 脚底略高于阴影，避免垂直压在阴影上
 const WALK_PX_BRITISH := 4.0
 
-# Spritesheet 帧自动切分参数（横向单行，帧间为绿色间隙）：
-# - 背景绿并非纯 #00FF00，逐图从 (0,0) 采样并配合绿色启发式判定间隙列。
-# - 抗锯齿会在间隙里留下几像素的杂散非背景列，故用最小帧宽过滤掉噪声帧。
-const BG_TOLERANCE := 0.12      # 每通道容差（对照 (0,0) 采样色），约 ~0.1
-const GAP_SAMPLE_STEP := 4      # 纵向每 4 行采样一次判断是否为间隙列
-const MIN_FRAME_WIDTH := 16     # 窄于此的帧视为切分噪声，丢弃
-
 # 英短walk帧脚底像素透明度偏低(alpha≈66-87),需要额外下移补偿
 const BREED_FOOT_BIAS := {
 	"british": 4.0,
@@ -91,8 +84,8 @@ const ANIM_IDLE_SUB_3 := "idle_sub_3"
 const ANIM_IDLE_SUB_4 := "idle_sub_4"
 const ANIM_IDLE_SUB_5 := "idle_sub_5"
 
-# 新格式下每个动画都是 8 帧的单行 spritesheet。实际帧数以自动切分结果为准，
-# 此表仅作缺帧时的回退默认值 / 未来灵活性保留。
+# 每个动画由多张独立 PNG 帧组成（_frameNN.png）。实际帧数以成功加载的贴图数为准，
+# 此表仅作缺帧时的回退默认值 / 上限保留。
 const ANIM_FRAME_COUNT := {
 	ANIM_WALK_RIGHT: 8,
 	ANIM_WALK_UP_RIGHT: 8,
@@ -104,7 +97,7 @@ const ANIM_FRAME_COUNT := {
 	ANIM_MOVE_TURN: 8,
 }
 
-# _frames_cache[anim] = {texture: Texture2D, regions: Array[Rect2],
+# _frames_cache[anim] = {textures: Array[Texture2D],
 #                        metrics: Array[{foot_y: float, x_center: float}],
 #                        frame_size: Vector2}
 var _frames_cache: Dictionary = {}
@@ -249,113 +242,83 @@ func _setup_sprite() -> void:
 
 
 func _load_frames() -> void:
-	_frames_cache.clear()
 	var dir := _breed_dir()
-	var anims := [
-		ANIM_WALK_RIGHT, ANIM_WALK_UP_RIGHT, ANIM_WALK_UP,
-		ANIM_WALK_DOWN_RIGHT, ANIM_WALK_DOWN, ANIM_IDLE, ANIM_TURN,
-		# 预留 idle 子动画：多数品种暂无文件，_load_spritesheet 缺文件会静默跳过。
-		ANIM_IDLE_SUB_1, ANIM_IDLE_SUB_2, ANIM_IDLE_SUB_3, ANIM_IDLE_SUB_4, ANIM_IDLE_SUB_5,
-	]
-	for anim in anims:
-		var entry := _load_spritesheet(dir, anim)
-		if not entry.is_empty():
-			_frames_cache[anim] = entry
+	_frames_cache.clear()
 
-	# move_turn 复用 turn 帧（仅播放速率不同，见 _get_anim_fps）
-	if _frames_cache.has(ANIM_TURN):
-		_frames_cache[ANIM_MOVE_TURN] = _frames_cache[ANIM_TURN]
+	# 主要动画：走行各方向 + 正面 idle。每帧一张独立 PNG。
+	var primary_anims := [
+		ANIM_WALK_RIGHT, ANIM_WALK_UP_RIGHT, ANIM_WALK_UP,
+		ANIM_WALK_DOWN_RIGHT, ANIM_WALK_DOWN, ANIM_IDLE,
+	]
+	for anim in primary_anims:
+		var prefix := _anim_to_file_prefix(anim)
+		_load_individual_frames(anim, dir, prefix)
+
+	# 方向化 idle（idle_side_right / idle_back_right / idle_back /
+	# idle_front_right / idle_front）：文件存在才加载，缺文件静默跳过。
+	for idle_anim in ["idle_side_right", "idle_back_right", "idle_back", "idle_front_right", "idle_front"]:
+		_try_load_anim(idle_anim, dir, idle_anim)
+
+	# 预留 idle 子动画：多数品种暂无文件，缺文件静默跳过。
+	for sub_anim in [ANIM_IDLE_SUB_1, ANIM_IDLE_SUB_2, ANIM_IDLE_SUB_3, ANIM_IDLE_SUB_4, ANIM_IDLE_SUB_5]:
+		_try_load_anim(sub_anim, dir, _anim_to_file_prefix(sub_anim))
+
+	# 转身动画（turn / move_turn 共用同一批 turn 帧，仅播放速率不同，见 _get_anim_fps）
+	_try_load_anim(ANIM_TURN, dir, "turn")
+	_try_load_anim(ANIM_MOVE_TURN, dir, "turn")
 
 	if not _frames_cache.has(ANIM_IDLE):
-		push_error("CatSprite: idle spritesheet missing for breed %s" % dir)
+		push_error("CatSprite: idle frames missing for breed %s" % dir)
 
 	_apply_frame(ANIM_IDLE, 0)
-	_apply_sprite_anchor(0.5, 1.0)
+	_apply_sprite_anchor(1.0, 1.0)
 
 
-# 加载单张 spritesheet 并自动切分为帧区域。缺文件返回 {}（由调用方跳过）。
-func _load_spritesheet(dir: String, anim: String) -> Dictionary:
-	var prefix := _anim_to_file_prefix(anim)
-	var res_path := "res://assets/art/cats/%s/%s_spritesheet.png" % [dir, prefix]
-	if not FileAccess.file_exists(res_path) and not ResourceLoader.exists(res_path):
-		return {}
+# 逐帧加载 {prefix}_frame_NN.png（NN 从 00 起），存入 _frames_cache[anim]。
+# 缺帧即停止累加；一帧都没有则不写入缓存（由调用方判定回退）。
+func _load_individual_frames(anim: String, breed_dir: String, prefix: String) -> void:
+	var textures: Array[Texture2D] = []
+	var metrics: Array[Dictionary] = []
+	var frame_count: int = ANIM_FRAME_COUNT.get(anim, 8)
+	var frame_w := 0.0
+	var frame_h := 0.0
 
-	var img := Image.new()
-	var abs_path := ProjectSettings.globalize_path(res_path)
-	if img.load(abs_path) != OK:
-		# 回退：导出包内 res:// 源文件可能不在磁盘，改从已导入纹理取 Image。
-		var t := load(res_path) as Texture2D
-		if t == null:
-			return {}
-		img = t.get_image()
-		if img == null:
-			return {}
+	for i in range(frame_count):
+		var path := "res://assets/art/cats/%s/%s_frame_%02d.png" % [breed_dir, prefix, i]
+		if not ResourceLoader.exists(path):
+			continue
+		var tex := load(path) as Texture2D
+		if tex == null:
+			continue
+		textures.append(tex)
+		frame_w = maxf(frame_w, tex.get_width())
+		frame_h = maxf(frame_h, tex.get_height())
 
-	var bg := img.get_pixel(0, 0)
-	var regions := _detect_regions(img, bg)
-	if regions.is_empty():
-		push_error("CatSprite: no frame regions detected in %s" % res_path)
-		return {}
+		# 从贴图扫描每帧脚底 y 与水平质心，供锚点对齐使用。
+		var img := tex.get_image()
+		if img:
+			metrics.append({
+				"foot_y": float(_get_foot_offset_full(img)),
+				"x_center": _get_x_center_fix_full(img),
+			})
+		else:
+			metrics.append({"foot_y": frame_h - 1.0, "x_center": 0.0})
 
-	var metrics: Array = []
-	var max_w := 0.0
-	var max_h := 0.0
-	for r in regions:
-		metrics.append({
-			"foot_y": float(_get_foot_offset(img, r, bg)),
-			"x_center": _get_x_center_fix(img, r, bg),
-		})
-		max_w = maxf(max_w, r.size.x)
-		max_h = maxf(max_h, r.size.y)
+	if textures.is_empty():
+		return
 
-	var tex := ImageTexture.create_from_image(img)
-	return {
-		"texture": tex,
-		"regions": regions,
+	_frames_cache[anim] = {
+		"textures": textures,
 		"metrics": metrics,
-		"frame_size": Vector2(max_w, max_h),
+		"frame_size": Vector2(frame_w, frame_h),
 	}
 
 
-# 是否为背景像素：绿色启发式（对绿幕梯度更鲁棒）或贴近 (0,0) 采样色（兼容白底 back 图）。
-func _is_bg_pixel(c: Color, bg: Color) -> bool:
-	if c.g > 0.8 and c.r < 0.3 and c.b < 0.3:
-		return true
-	return absf(c.r - bg.r) <= BG_TOLERANCE \
-		and absf(c.g - bg.g) <= BG_TOLERANCE \
-		and absf(c.b - bg.b) <= BG_TOLERANCE
-
-
-# 扫描整行全为背景的列作为间隙，间隙之间的列段即为帧区域（全高 Rect2）。
-func _detect_regions(img: Image, bg: Color) -> Array:
-	var w := img.get_width()
-	var h := img.get_height()
-	var is_gap := PackedByteArray()
-	is_gap.resize(w)
-	for x in range(w):
-		var gap := true
-		var y := 0
-		while y < h:
-			if not _is_bg_pixel(img.get_pixel(x, y), bg):
-				gap = false
-				break
-			y += GAP_SAMPLE_STEP
-		is_gap[x] = 1 if gap else 0
-
-	var regions: Array = []
-	var x := 0
-	while x < w:
-		if is_gap[x] == 0:
-			var start := x
-			while x < w and is_gap[x] == 0:
-				x += 1
-			var width := x - start
-			# 丢弃抗锯齿在间隙里留下的窄杂散列（否则会多切出无效帧）。
-			if width >= MIN_FRAME_WIDTH:
-				regions.append(Rect2(float(start), 0.0, float(width), float(h)))
-		else:
-			x += 1
-	return regions
+# 仅当首帧文件存在时才加载该动画（turn / 方向化 idle / idle 子动画等可选动画）。
+func _try_load_anim(anim: String, breed_dir: String, prefix: String) -> void:
+	var path := "res://assets/art/cats/%s/%s_frame_00.png" % [breed_dir, prefix]
+	if ResourceLoader.exists(path):
+		_load_individual_frames(anim, breed_dir, prefix)
 
 
 func _make_chroma_key_material() -> ShaderMaterial:
@@ -471,12 +434,12 @@ func _is_walk_anim(anim_name: String) -> bool:
 	return anim_name != ANIM_IDLE and anim_name != ANIM_TURN and anim_name != ANIM_MOVE_TURN
 
 
-# 当前动画实际帧数：优先取自动切分的区域数，回退到 ANIM_FRAME_COUNT。
+# 当前动画实际帧数：优先取已加载的贴图数，回退到 ANIM_FRAME_COUNT。
 func _frame_count(anim_name: String) -> int:
 	var entry: Dictionary = _frames_cache.get(anim_name, {})
-	var regions: Array = entry.get("regions", [])
-	if not regions.is_empty():
-		return regions.size()
+	var textures: Array = entry.get("textures", [])
+	if not textures.is_empty():
+		return textures.size()
 	return ANIM_FRAME_COUNT.get(anim_name, 8)
 
 
@@ -545,34 +508,30 @@ func _set_anim(anim_name: String, flip_left: bool, force: bool = false) -> void:
 	_apply_frame(_current_anim, _current_col)
 
 
-# 在 region 边界内扫描：从底部向上找到第一行含非背景像素，返回该行在 region 内的局部 y。
-func _get_foot_offset(img: Image, region: Rect2, bg: Color) -> int:
-	var rx := int(region.position.x)
-	var ry := int(region.position.y)
-	var rw := int(region.size.x)
-	var rh := int(region.size.y)
-	for y in range(rh - 1, -1, -1):
-		for x in range(rw):
-			if not _is_bg_pixel(img.get_pixel(rx + x, ry + y), bg):
+# 从底部向上扫描整张贴图，找到第一行含不透明像素（alpha>0.05），返回其 y。
+func _get_foot_offset_full(img: Image) -> int:
+	var w := img.get_width()
+	var h := img.get_height()
+	for y in range(h - 1, -1, -1):
+		for x in range(w):
+			if img.get_pixel(x, y).a > 0.05:
 				return y
-	return rh - 1
+	return h - 1
 
 
-# 在 region 边界内扫描非背景像素的水平质心，返回相对 region 中心的偏移（像素）。
-func _get_x_center_fix(img: Image, region: Rect2, bg: Color) -> float:
-	var rx := int(region.position.x)
-	var ry := int(region.position.y)
-	var rw := int(region.size.x)
-	var rh := int(region.size.y)
+# 扫描整张贴图不透明像素的水平质心，返回相对贴图中心的偏移（像素）。
+func _get_x_center_fix_full(img: Image) -> float:
+	var w := img.get_width()
+	var h := img.get_height()
 	var sum_x := 0.0
 	var count := 0
-	for y in range(rh):
-		for x in range(rw):
-			if not _is_bg_pixel(img.get_pixel(rx + x, ry + y), bg):
+	for y in range(h):
+		for x in range(w):
+			if img.get_pixel(x, y).a > 0.05:
 				sum_x += x
 				count += 1
 	if count > 0:
-		return sum_x / float(count) - float(rw) * 0.5
+		return sum_x / float(count) - float(w) * 0.5
 	return 0.0
 
 
@@ -585,29 +544,27 @@ func _apply_frame(anim: String, frame: int) -> void:
 		if entry.is_empty():
 			return
 
-	var tex: Texture2D = entry.get("texture", null)
-	var regions: Array = entry.get("regions", [])
-	if tex == null or regions.is_empty():
+	var textures: Array = entry.get("textures", [])
+	if textures.is_empty():
 		return
 
-	var idx := frame % regions.size()
-	var region: Rect2 = regions[idx]
+	var idx := frame % textures.size()
+	var tex: Texture2D = textures[idx]
 
-	if tex != _sprite.texture:
-		_sprite.texture = tex
+	_sprite.texture = tex
 	_sprite.region_enabled = true
-	_sprite.region_rect = region
+	_sprite.region_rect = Rect2(0, 0, tex.get_width(), tex.get_height())
 
-	# 锚点用的每帧脚底/水平质心（region 局部坐标），加载时已预扫描。
+	# 锚点用的每帧脚底/水平质心（整图局部坐标），加载时已预扫描。
 	var metrics: Array = entry.get("metrics", [])
 	if idx < metrics.size():
 		var m: Dictionary = metrics[idx]
-		_per_frame_foot_y = m.get("foot_y", region.size.y - 1.0)
+		_per_frame_foot_y = m.get("foot_y", tex.get_height() - 1.0)
 		_per_frame_x_center = m.get("x_center", 0.0)
 	else:
-		_per_frame_foot_y = region.size.y - 1.0
+		_per_frame_foot_y = tex.get_height() - 1.0
 		_per_frame_x_center = 0.0
-	_current_frame_size = region.size
+	_current_frame_size = Vector2(tex.get_width(), tex.get_height())
 
 
 func _apply_visual_motion(_delta: float) -> void:
