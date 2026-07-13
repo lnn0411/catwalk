@@ -59,21 +59,20 @@ const BREED_VISUAL_SCALE := {
 # 各品种每方向额外缩放（解决透视差异——侧面矮宽、正面高瘦）
 # 数值 = 使该方向猫的视觉高度一致的额外缩放比例
 const PER_ANIM_SCALE := {
-	# 英短所有动画统一缩放，由 depth_scale 控制位置大小
-	# 不同方向透视差异（正面高瘦、侧面矮宽）保留，是自然的猫形态
+	# 所有动画按可见高度归一化到76px屏幕高，解决走/停切换时忽大忽小
 	"british": {
-		"walk_right": 0.30,
-		"walk_up_right": 0.30,
-		"walk_up": 0.30,
-		"walk_down_right": 0.30,
-		"walk_down": 0.30,
-		"idle": 0.3000,
-		"idle_side_right": 0.3024,
-		"idle_front_right": 0.3123,
-		"idle_back_right": 0.2146,
-		"idle_back": 0.2295,
-		"turn": 0.30,
-		"move_turn": 0.30,
+		"walk_right": 0.3004,
+		"walk_up_right": 0.2804,
+		"walk_up": 0.2405,
+		"walk_down_right": 0.2382,
+		"walk_down": 0.2129,
+		"idle": 0.2992,
+		"idle_side_right": 0.3016,
+		"idle_front_right": 0.3115,
+		"idle_back_right": 0.2141,
+		"idle_back": 0.2289,
+		"turn": 0.3016,
+		"move_turn": 0.3016,
 	},
 }
 
