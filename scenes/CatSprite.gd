@@ -345,9 +345,9 @@ func _load_individual_frames(anim: String, breed_dir: String, prefix: String) ->
 		frame_w = maxf(frame_w, tex.get_width())
 		frame_h = maxf(frame_h, tex.get_height())
 
-		# 从贴图扫描每帧脚底 y 与水平质心，供锚点对齐使用。
-		# 英短有预扫描常量表，跳过逐像素扫描提升加载速度
-		var cached_metrics: Array = BRITISH_FRAME_METRICS.get(prefix, []) if breed == "british" else []
+		# 查预扫描常量表（每品种独立常量），跳过运行时逐像素扫描提升加载速度
+		var breed_metrics := _get_breed_metrics()
+		var cached_metrics: Array = breed_metrics.get(prefix, [])
 		if i < cached_metrics.size():
 			var cm: Dictionary = cached_metrics[i]
 			metrics.append({
@@ -554,6 +554,15 @@ func _advance_animation(delta: float) -> void:
 			_current_col = 0
 
 		_apply_frame(_current_anim, _current_col)
+
+
+# 查品种对应的预扫描帧度量表（无表则返回空字典，走运行时扫描）
+func _get_breed_metrics() -> Dictionary:
+	match breed:
+		"british", "british_shorthair":
+			return BRITISH_FRAME_METRICS
+		_:
+			return {}
 
 
 func _get_anim_fps(anim_name: String) -> float:
