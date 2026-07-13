@@ -28,7 +28,7 @@ signal cat_clicked(cat_data)
 @export var sprite_scale: float = 1.0
 # 整图背景（garden_master.png）无透视梯度，景深缩放会让猫忽大忽小却与平铺草坪脱节。
 # 故关闭，让猫在草坪任意位置保持稳定体型。换成带透视的分层背景时再开回 true。
-@export var depth_scale_enabled: bool = true
+@export var depth_scale_enabled: bool = false
 @export var shadow_enabled: bool = true
 @export var idle_breath_enabled: bool = true
 
