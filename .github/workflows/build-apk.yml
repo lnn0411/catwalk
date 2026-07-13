@@ -34,9 +34,6 @@ jobs:
       - name: Generate debug keystore
         run: keytool -genkey -v -keystore debug.keystore -storepass android -keypass android -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Initialize Godot project
-        run: godot --headless --path . --editor --quit
-
       - name: Extract AAR dependencies
         run: |
           TEMPLATES=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable -name "android_source.zip" 2>/dev/null | head -1)

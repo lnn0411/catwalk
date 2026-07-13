@@ -99,9 +99,6 @@ jobs:
             -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS \
             -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Init Godot project
-        run: godot --headless --editor --quit
-
       - name: Extract AAR
         run: |
           ZIP=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable \
