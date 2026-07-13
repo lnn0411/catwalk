@@ -84,6 +84,21 @@ const PER_ANIM_SCALE := {
 	},
 }
 
+# 预扫描的英短帧脚底y与水平质心偏移（避免运行时逐像素扫描拖慢加载）
+const BRITISH_FRAME_METRICS := {
+	"back": [{"f": 399, "x": -1.45}, {"f": 399, "x": 0.58}, {"f": 399, "x": 0.21}, {"f": 399, "x": 0.69}],
+	"back_right": [{"f": 399, "x": -2.05}, {"f": 399, "x": 11.85}, {"f": 399, "x": 5.55}, {"f": 399, "x": 7.81}],
+	"front": [{"f": 399, "x": -1.3}, {"f": 399, "x": 2.74}, {"f": 399, "x": -0.9}, {"f": 399, "x": -0.42}],
+	"front_right": [{"f": 399, "x": -3.31}, {"f": 399, "x": 2.21}, {"f": 399, "x": -2.79}, {"f": 399, "x": 0.57}],
+	"idle_back": [{"f": 581, "x": 14.62}, {"f": 581, "x": 13.81}, {"f": 581, "x": 16.24}, {"f": 581, "x": 14.91}, {"f": 581, "x": 15.87}, {"f": 581, "x": 6.7}, {"f": 581, "x": -0.98}, {"f": 581, "x": -14.23}],
+	"idle_back_right": [{"f": 522, "x": 4.6}, {"f": 522, "x": 5.76}, {"f": 522, "x": 1.72}, {"f": 522, "x": 1.79}, {"f": 522, "x": 5.13}, {"f": 522, "x": 4.14}, {"f": 522, "x": 4.65}, {"f": 522, "x": 4.51}],
+	"idle_front": [{"f": 399, "x": 15.29}, {"f": 399, "x": 15.14}, {"f": 399, "x": 15.14}, {"f": 399, "x": 14.72}, {"f": 399, "x": 15.14}, {"f": 399, "x": 15.29}],
+	"idle_front_right": [{"f": 480, "x": -1.69}, {"f": 480, "x": -0.82}, {"f": 480, "x": 0.67}, {"f": 480, "x": -0.25}, {"f": 480, "x": 0.03}, {"f": 480, "x": -0.43}, {"f": 480, "x": 0.93}, {"f": 480, "x": -0.31}],
+	"idle_side_right": [{"f": 399, "x": 4.24}, {"f": 399, "x": 4.74}, {"f": 399, "x": 6.37}, {"f": 399, "x": 6.62}],
+	"side_right": [{"f": 399, "x": 6.49}, {"f": 399, "x": 2.29}, {"f": 399, "x": 6.95}, {"f": 399, "x": 6.19}],
+	"turn": [{"f": 399, "x": 6.17}, {"f": 399, "x": 0.42}],
+}
+
 var _per_frame_foot_y := 131.0
 var _per_frame_x_center := 0.0
 var _current_frame_size := Vector2(100, 140)
@@ -331,14 +346,23 @@ func _load_individual_frames(anim: String, breed_dir: String, prefix: String) ->
 		frame_h = maxf(frame_h, tex.get_height())
 
 		# 从贴图扫描每帧脚底 y 与水平质心，供锚点对齐使用。
-		var img := tex.get_image()
-		if img:
+		# 英短有预扫描常量表，跳过逐像素扫描提升加载速度
+		var cached_metrics: Array = BRITISH_FRAME_METRICS.get(prefix, []) if breed_dir == _breed_dir() else []
+		if i < cached_metrics.size():
+			var cm: Dictionary = cached_metrics[i]
 			metrics.append({
-				"foot_y": float(_get_foot_offset_full(img)),
-				"x_center": _get_x_center_fix_full(img),
+				"foot_y": float(cm.get("f", frame_h - 1.0)),
+				"x_center": float(cm.get("x", 0.0)),
 			})
 		else:
-			metrics.append({"foot_y": frame_h - 1.0, "x_center": 0.0})
+			var img := tex.get_image()
+			if img:
+				metrics.append({
+					"foot_y": float(_get_foot_offset_full(img)),
+					"x_center": _get_x_center_fix_full(img),
+				})
+			else:
+				metrics.append({"foot_y": frame_h - 1.0, "x_center": 0.0})
 
 	if textures.is_empty():
 		return
