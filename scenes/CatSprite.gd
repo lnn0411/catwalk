@@ -28,7 +28,7 @@ signal cat_clicked(cat_data)
 @export var sprite_scale: float = 1.0
 # 整图背景（garden_master.png）无透视梯度，景深缩放会让猫忽大忽小却与平铺草坪脱节。
 # 故关闭，让猫在草坪任意位置保持稳定体型。换成带透视的分层背景时再开回 true。
-@export var depth_scale_enabled: bool = false
+@export var depth_scale_enabled: bool = true
 @export var shadow_enabled: bool = true
 @export var idle_breath_enabled: bool = true
 
@@ -59,16 +59,17 @@ const BREED_VISUAL_SCALE := {
 # 各品种每方向额外缩放（解决透视差异——侧面矮宽、正面高瘦）
 # 数值 = 使该方向猫的视觉高度一致的额外缩放比例
 const PER_ANIM_SCALE := {
-	# 按几何均值(√宽×高)对齐，使各方向视觉面积一致，解决透视差异
+	# 英短所有动画统一缩放，由 depth_scale 控制位置大小
+	# 不同方向透视差异（正面高瘦、侧面矮宽）保留，是自然的猫形态
 	"british": {
-		"walk_right": 0.2937,
-		"walk_up_right": 0.3152,
-		"walk_up": 0.3398,
-		"walk_down_right": 0.2544,
-		"walk_down": 0.3180,
-		"idle": 0.3630,
-		"turn": 0.2929,
-		"move_turn": 0.2929,
+		"walk_right": 0.30,
+		"walk_up_right": 0.30,
+		"walk_up": 0.30,
+		"walk_down_right": 0.30,
+		"walk_down": 0.30,
+		"idle": 0.30,
+		"turn": 0.30,
+		"move_turn": 0.30,
 	},
 }
 
