@@ -22,7 +22,15 @@ signal cat_clicked(cat_data)
 
 @export_group("Animation")
 @export var walk_fps: float = 8.0
-@export var idle_fps: float = 12.0
+@export var idle_fps: float = 8.0
+
+# 各动画独立帧率（覆盖全局 idle_fps。空/缺失 → 用全局默认值）
+const PER_ANIM_FPS := {
+	"british": {
+		"idle_front_right": 20.0,
+		"idle_back_right": 20.0,
+	},
+}
 @export var turn_fps: float = 5.7
 @export var move_turn_fps: float = 5.0
 @export var sprite_scale: float = 1.0
@@ -516,6 +524,10 @@ func _advance_animation(delta: float) -> void:
 
 
 func _get_anim_fps(anim_name: String) -> float:
+	# 先查 PER_ANIM_FPS 独立帧率（右下/右上 idle 加速等）
+	var per_fps_breed: Dictionary = PER_ANIM_FPS.get(breed, {})
+	if per_fps_breed.has(anim_name):
+		return per_fps_breed[anim_name]
 	if anim_name == ANIM_IDLE:
 		return idle_fps
 	if anim_name == ANIM_TURN:
