@@ -345,7 +345,7 @@ func _try_load_anim(anim: String, breed_dir: String, prefix: String) -> void:
 	if not ResourceLoader.exists(path):
 		return
 	var tex := load(path) as Texture2D
-	if tex == null or tex.get_width() < 200:
+	if tex == null or tex.get_width() < 150:
 		return
 	_load_individual_frames(anim, breed_dir, prefix)
 
