@@ -60,12 +60,12 @@ const BREED_VISUAL_SCALE := {
 # 数值 = 使该方向猫的视觉高度一致的额外缩放比例
 const PER_ANIM_SCALE := {
 	"british": {
-		"walk_right": 0.512,
-		"walk_up_right": 0.478,
-		"walk_up": 0.410,
-		"walk_down_right": 0.406,
-		"walk_down": 0.363,
-		"idle": 0.363,
+		"walk_right": 0.3616,
+		"walk_up_right": 0.3375,
+		"walk_up": 0.2895,
+		"walk_down_right": 0.2868,
+		"walk_down": 0.2562,
+		"idle": 0.3630,
 	},
 }
 
