@@ -471,7 +471,8 @@ func _current_walk_px() -> float:
 
 
 func _is_walk_anim(anim_name: String) -> bool:
-	return anim_name != ANIM_IDLE and anim_name != ANIM_TURN and anim_name != ANIM_MOVE_TURN
+	# 走路动画以 "walk_" 开头；idle/turn/move_turn/方向性idle 均不走位移驱动
+	return anim_name.begins_with("walk_")
 
 
 # 当前动画实际帧数：优先取已加载的贴图数，回退到 ANIM_FRAME_COUNT。
