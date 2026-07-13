@@ -343,6 +343,14 @@ func _load_individual_frames(anim: String, breed_dir: String, prefix: String) ->
 	if textures.is_empty():
 		return
 
+	# 所有帧使用平均 x_center，防止呼吸时猫身左右飘/抖
+	var avg_x: float = 0.0
+	for m in metrics:
+		avg_x += m.get("x_center", 0.0)
+	avg_x /= maxi(metrics.size(), 1)
+	for m in metrics:
+		m["x_center"] = avg_x
+
 	_frames_cache[anim] = {
 		"textures": textures,
 		"metrics": metrics,
