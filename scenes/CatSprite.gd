@@ -48,6 +48,14 @@ const BREED_FOOT_BIAS := {
 	"siamese": 0.0,
 }
 
+# 各品种视觉缩放系数（帧尺寸差异大时用这里拉齐，不依赖美术重出）
+const BREED_VISUAL_SCALE := {
+	"british": 0.45,
+	"orange": 0.93,
+	"orange_tabby": 0.93,
+	"siamese": 1.0,
+}
+
 var _per_frame_foot_y := 131.0
 var _per_frame_x_center := 0.0
 var _current_frame_size := Vector2(100, 140)
@@ -576,10 +584,10 @@ func _apply_visual_motion(_delta: float) -> void:
 	var sx := sprite_scale * depth_scale
 	var sy := sx
 
-	# 橘猫视觉略小
-	if breed == "orange" or breed == "orange_tabby":
-		sx *= 0.93
-		sy *= 0.93
+	# 各品种按 BREED_VISUAL_SCALE 拉齐视觉大小（主要用于帧尺寸差异大的切换期）
+	var breed_scale := BREED_VISUAL_SCALE.get(breed, 1.0)
+	sx *= breed_scale
+	sy *= breed_scale
 
 	if _current_anim == ANIM_IDLE:
 		sx *= IDLE_HEIGHT_SCALE
