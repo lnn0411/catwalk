@@ -585,7 +585,7 @@ func _apply_visual_motion(_delta: float) -> void:
 	var sy := sx
 
 	# 各品种按 BREED_VISUAL_SCALE 拉齐视觉大小（主要用于帧尺寸差异大的切换期）
-	var breed_scale := BREED_VISUAL_SCALE.get(breed, 1.0)
+	var breed_scale: float = BREED_VISUAL_SCALE.get(breed, 1.0)
 	sx *= breed_scale
 	sy *= breed_scale
 
