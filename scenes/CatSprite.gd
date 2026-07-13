@@ -712,7 +712,8 @@ func _apply_visual_motion(_delta: float) -> void:
 		sy *= breed_scale
 
 	# IDLE_HEIGHT_SCALE 是为旧系统(100×140帧)设计的，新帧通过 PER_ANIM_SCALE 已包含idle缩放
-	if _current_anim == ANIM_IDLE and per_anim_scale <= 0.0:
+	# 方向性 idle（idle_front/idle_side_right等）也应触发此回退
+	if (_current_anim == ANIM_IDLE or _current_anim.begins_with("idle_")) and per_anim_scale <= 0.0:
 		sx *= IDLE_HEIGHT_SCALE
 		sy *= IDLE_HEIGHT_SCALE
 
