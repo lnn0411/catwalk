@@ -339,11 +339,15 @@ func _load_individual_frames(anim: String, breed_dir: String, prefix: String) ->
 	}
 
 
-# 仅当首帧文件存在时才加载该动画（turn / 方向化 idle / idle 子动画等可选动画）。
+# 仅当首帧文件存在且尺寸合理(≥200px，排除旧100×140帧)时才加载该动画。
 func _try_load_anim(anim: String, breed_dir: String, prefix: String) -> void:
 	var path := "res://assets/art/cats/%s/%s_frame_00.png" % [breed_dir, prefix]
-	if ResourceLoader.exists(path):
-		_load_individual_frames(anim, breed_dir, prefix)
+	if not ResourceLoader.exists(path):
+		return
+	var tex := load(path) as Texture2D
+	if tex == null or tex.get_width() < 200:
+		return
+	_load_individual_frames(anim, breed_dir, prefix)
 
 
 func _make_chroma_key_material() -> ShaderMaterial:
