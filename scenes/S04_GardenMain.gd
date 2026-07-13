@@ -65,6 +65,7 @@ var _last_blend := -1.0
 var _stats_visible := false
 var _diary_notification_btn: TextureButton
 var _diary_unread_cats: Array = []
+var _currency_labels: Array[Label] = []
 func _ready() -> void:
 	super()
 	_load_frame_textures()
@@ -460,7 +461,8 @@ func _build_hud() -> void:
 	currency_box.add_theme_constant_override("separation", 6)
 	currency_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(currency_box)
-	for entry in [{"icon": "icon_coin.png", "value": "0"}, {"icon": "icon_gem.png", "value": "0"}, {"icon": "icon_petal.png", "value": "0"}]:
+	_currency_labels = []
+	for entry in [{"icon": "icon_coin.png", "key": "gold_coins"}, {"icon": "icon_gem.png", "key": "diamonds"}, {"icon": "icon_petal.png", "key": "flower_petals"}]:
 		var item_box := HBoxContainer.new()
 		item_box.add_theme_constant_override("separation", 3)
 		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -472,12 +474,13 @@ func _build_hud() -> void:
 		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		item_box.add_child(item_icon)
 		var label := Label.new()
-		label.text = String(entry["value"])
+		label.text = str(CurrencyManager.get(entry["key"], 0)) if CurrencyManager else "0"
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 16)
 		label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 		item_box.add_child(label)
 		currency_box.add_child(item_box)
+		_currency_labels.append(label)
 
 	# 右侧间距（货币不贴边）
 	var right_margin := Control.new()
@@ -651,6 +654,8 @@ func _connect_data() -> void:
 			EventBus.workshop_activated.connect(_on_workshop_activated)
 		if not EventBus.hatch_activated.is_connected(_on_hatched_activated):
 			EventBus.hatch_activated.connect(_on_hatched_activated)
+		if not EventBus.currency_changed.is_connected(_on_currency_changed):
+			EventBus.currency_changed.connect(_on_currency_changed)
 	if CatScreenManager and not CatScreenManager.screen_cats_changed.is_connected(_on_screen_cats_changed):
 		CatScreenManager.screen_cats_changed.connect(_on_screen_cats_changed)
 
@@ -727,6 +732,16 @@ func _on_steps_updated(_delta: int, _total: int) -> void:
 
 func _on_energy_changed(_current: float, _pool_max: float) -> void:
 	_refresh_energy()
+
+func _on_currency_changed(_gold: int, _diamonds: int, _petals: int) -> void:
+	_refresh_currency()
+
+func _refresh_currency() -> void:
+	if _currency_labels.is_empty() or not CurrencyManager:
+		return
+	_currency_labels[0].text = str(CurrencyManager.gold_coins)
+	_currency_labels[1].text = str(CurrencyManager.diamonds)
+	_currency_labels[2].text = str(CurrencyManager.flower_petals)
 
 func _on_cat_count_changed(_count: int) -> void:
 	_refresh_cat_state()
