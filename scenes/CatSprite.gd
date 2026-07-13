@@ -347,7 +347,7 @@ func _load_individual_frames(anim: String, breed_dir: String, prefix: String) ->
 
 		# 从贴图扫描每帧脚底 y 与水平质心，供锚点对齐使用。
 		# 英短有预扫描常量表，跳过逐像素扫描提升加载速度
-		var cached_metrics: Array = BRITISH_FRAME_METRICS.get(prefix, []) if breed_dir == _breed_dir() else []
+		var cached_metrics: Array = BRITISH_FRAME_METRICS.get(prefix, []) if breed == "british" else []
 		if i < cached_metrics.size():
 			var cm: Dictionary = cached_metrics[i]
 			metrics.append({
