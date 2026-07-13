@@ -73,7 +73,7 @@ const PER_ANIM_SCALE := {
 		"walk_up_right": 0.3073,
 		"walk_up": 0.2397,
 		"walk_down_right": 0.2375,
-		"walk_down": 0.2123,
+		"walk_down": 0.265,
 		"idle": 0.3008,
 		"idle_side_right": 0.3004,
 		"idle_front_right": 0.3115,
