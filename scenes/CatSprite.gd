@@ -642,6 +642,32 @@ func _apply_sprite_anchor(sx: float, sy: float) -> void:
 	)
 
 
+func _idle_for_current_direction() -> String:
+	# 根据最后移动方向选择对应的方向性待机动画
+	# 只在新帧(400×400)存在时才切换，否则回退到正面idle
+	var idle_name := ANIM_IDLE
+	match _current_anim:
+		ANIM_WALK_RIGHT:
+			idle_name = "idle_side_right"
+		ANIM_WALK_UP_RIGHT:
+			idle_name = "idle_back_right"
+		ANIM_WALK_UP:
+			idle_name = "idle_back"
+		ANIM_WALK_DOWN_RIGHT:
+			idle_name = "idle_front_right"
+		ANIM_WALK_DOWN:
+			idle_name = "idle_front"
+	
+	# 校验方向性idle是否为400×400新帧，不是则用正面idle
+	if idle_name != ANIM_IDLE:
+		var entry: Dictionary = _frames_cache.get(idle_name, {})
+		var textures: Array = entry.get("textures", [])
+		if not textures.is_empty():
+			var tex: Texture2D = textures[0]
+			if tex.get_width() < 200:  # 旧帧100px宽，新帧400px
+				idle_name = ANIM_IDLE
+	return idle_name
+
 func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> void:
 	var turn_anim := ANIM_MOVE_TURN if move_turn else ANIM_TURN
 	# 无 turn 帧时直接切到目标动画/朝向。
@@ -697,7 +723,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 		_cur_speed = 0.0
 		_move_dir = Vector2.ZERO
-		_set_anim(ANIM_IDLE, _facing_left)
+		_set_anim(_idle_for_current_direction(), _facing_left)
 		_schedule_wander()
 		return
 
