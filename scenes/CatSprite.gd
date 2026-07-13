@@ -59,15 +59,16 @@ const BREED_VISUAL_SCALE := {
 # 各品种每方向额外缩放（解决透视差异——侧面矮宽、正面高瘦）
 # 数值 = 使该方向猫的视觉高度一致的额外缩放比例
 const PER_ANIM_SCALE := {
+	# 按几何均值(√宽×高)对齐，使各方向视觉面积一致，解决透视差异
 	"british": {
-		"walk_right": 0.3616,
-		"walk_up_right": 0.3375,
-		"walk_up": 0.2895,
-		"walk_down_right": 0.2868,
-		"walk_down": 0.2562,
+		"walk_right": 0.2937,
+		"walk_up_right": 0.3152,
+		"walk_up": 0.3398,
+		"walk_down_right": 0.2544,
+		"walk_down": 0.3180,
 		"idle": 0.3630,
-		"turn": 0.3388,
-		"move_turn": 0.3388,
+		"turn": 0.2929,
+		"move_turn": 0.2929,
 	},
 }
 
