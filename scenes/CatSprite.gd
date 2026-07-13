@@ -56,6 +56,19 @@ const BREED_VISUAL_SCALE := {
 	"siamese": 1.0,
 }
 
+# 各品种每方向额外缩放（解决透视差异——侧面矮宽、正面高瘦）
+# 数值 = 使该方向猫的视觉高度一致的额外缩放比例
+const PER_ANIM_SCALE := {
+	"british": {
+		"walk_right": 0.512,
+		"walk_up_right": 0.478,
+		"walk_up": 0.410,
+		"walk_down_right": 0.406,
+		"walk_down": 0.363,
+		"idle": 0.363,
+	},
+}
+
 var _per_frame_foot_y := 131.0
 var _per_frame_x_center := 0.0
 var _current_frame_size := Vector2(100, 140)
@@ -584,12 +597,19 @@ func _apply_visual_motion(_delta: float) -> void:
 	var sx := sprite_scale * depth_scale
 	var sy := sx
 
-	# 各品种按 BREED_VISUAL_SCALE 拉齐视觉大小（主要用于帧尺寸差异大的切换期）
-	var breed_scale: float = BREED_VISUAL_SCALE.get(breed, 1.0)
-	sx *= breed_scale
-	sy *= breed_scale
+	# 优先按每方向精确缩放（解决透视拉长/压扁差异），无则退到品种级
+	var per_anim_breed: Dictionary = PER_ANIM_SCALE.get(breed, {})
+	var per_anim_scale: float = per_anim_breed.get(_current_anim, 0.0)
+	if per_anim_scale > 0.0:
+		sx *= per_anim_scale
+		sy *= per_anim_scale
+	else:
+		var breed_scale: float = BREED_VISUAL_SCALE.get(breed, 1.0)
+		sx *= breed_scale
+		sy *= breed_scale
 
-	if _current_anim == ANIM_IDLE:
+	# IDLE_HEIGHT_SCALE 是为旧系统(100×140帧)设计的，新帧通过 PER_ANIM_SCALE 已包含idle缩放
+	if _current_anim == ANIM_IDLE and per_anim_scale <= 0.0:
 		sx *= IDLE_HEIGHT_SCALE
 		sy *= IDLE_HEIGHT_SCALE
 
