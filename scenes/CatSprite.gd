@@ -93,6 +93,7 @@ const PER_ANIM_SCALE := {
 		"idle_front_right": 0.2605,
 		"idle_back_right": 0.2382,
 		"idle_back": 0.2559,
+		"idle_sit": 0.23,
 		"turn": 0.2390,
 		"move_turn": 0.2390,
 	},
@@ -125,6 +126,7 @@ const SIAMESE_FRAME_METRICS := {
 	"idle_side_right": [{"f": 398, "x": 14.03}, {"f": 398, "x": 14.53}, {"f": 398, "x": 15.43}, {"f": 398, "x": 13.7}],
 	"side_right": [{"f": 398, "x": 7.64}, {"f": 398, "x": 2.93}, {"f": 399, "x": 6.78}, {"f": 398, "x": 5.67}, {"f": 399, "x": 4.06}, {"f": 398, "x": 6.22}],
 	"turn": [{"f": 398, "x": 6.22}, {"f": 398, "x": -2.36}, {"f": 399, "x": 1.4}],
+	"idle_sit": [{"f": 399, "x": 0.0}, {"f": 399, "x": 0.0}, {"f": 399, "x": 0.0}, {"f": 399, "x": 0.0}],
 }
 
 var _per_frame_foot_y := 131.0
@@ -155,6 +157,7 @@ const ANIM_WALK_DOWN := "walk_down"
 const ANIM_IDLE := "idle"
 const ANIM_TURN := "turn"
 const ANIM_MOVE_TURN := "move_turn"
+const ANIM_IDLE_SIT := "idle_sit"
 
 # 预留的 idle 子动画（暂无对应 spritesheet，缺文件时 _load_frames 会静默跳过）
 const ANIM_IDLE_SUB_1 := "idle_sub_1"
@@ -342,9 +345,12 @@ func _load_frames() -> void:
 	for sub_anim in [ANIM_IDLE_SUB_1, ANIM_IDLE_SUB_2, ANIM_IDLE_SUB_3, ANIM_IDLE_SUB_4, ANIM_IDLE_SUB_5]:
 		_try_load_anim(sub_anim, dir, _anim_to_file_prefix(sub_anim))
 
-	# 转身动画（turn / move_turn 共用同一批 turn 帧，仅播放速率不同，见 _get_anim_fps）
+	# 转身动画（turn / move_turn 共用同一批 turn 帧，仅播放速率不同）
 	_try_load_anim(ANIM_TURN, dir, "turn")
 	_try_load_anim(ANIM_MOVE_TURN, dir, "turn")
+
+	# 坐姿 idle（可选，文件存在才加载）
+	_try_load_anim(ANIM_IDLE_SIT, dir, "idle_sit")
 
 	if not _frames_cache.has(ANIM_IDLE):
 		push_error("CatSprite: idle frames missing for breed %s" % dir)
@@ -757,6 +763,11 @@ func _idle_for_current_direction() -> String:
 			var tex: Texture2D = textures[0]
 			if tex.get_width() < 200:  # 旧帧100px宽，新帧400px
 				idle_name = ANIM_IDLE
+	
+	# 15%概率坐下（需要idle_sit帧存在）
+	if _frames_cache.has(ANIM_IDLE_SIT) and rng.randf() < 0.15:
+		idle_name = ANIM_IDLE_SIT
+	
 	return idle_name
 
 func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> void:
