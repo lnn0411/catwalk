@@ -70,14 +70,14 @@ const PER_ANIM_SCALE := {
 	# 所有动画按可见高度归一化到76px屏幕高，解决走/停切换时忽大忽小
 	"british": {
 		"walk_right": 0.2992,
-		"walk_up_right": 0.2794,
+		"walk_up_right": 0.3073,
 		"walk_up": 0.2397,
 		"walk_down_right": 0.2375,
 		"walk_down": 0.2123,
 		"idle": 0.3008,
 		"idle_side_right": 0.3004,
 		"idle_front_right": 0.3115,
-		"idle_back_right": 0.2140,
+		"idle_back_right": 0.2354,
 		"idle_back": 0.2279,
 		"turn": 0.2804,
 		"move_turn": 0.2804,
