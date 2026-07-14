@@ -130,6 +130,8 @@ jobs:
           # 第一阶段：单线程导入（避免 CSV 后台线程 crash）
           godot --headless --editor --quit 2>&1 || true
           # 第二阶段：正式导出（用已缓存好的资源）
+          # 强制替换 Health Connect 版本（双重保险）
+          sed -i "s/1.1.0-alpha07/1.1.0-alpha06/g" android/build/build.gradle
           godot --headless --export-debug "Android Debug" catwalk-debug.apk 2>&1 || true
           if [ ! -f catwalk-debug.apk ]; then
             echo "❌ APK 未生成"
