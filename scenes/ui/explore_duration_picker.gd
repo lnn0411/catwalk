@@ -72,14 +72,12 @@ func _build_ui() -> void:
 
 	for duration in DURATIONS:
 		var button := TextureButton.new()
-		# explore 贴图 280×48 (5.83:1)。三按钮并排最大宽 ~162，高取下限 80 →
-		# 2.03:1，是本约束下最接近横条、变形最小的可行尺寸。
-		button.custom_minimum_size = Vector2(162, 80)
+		button.custom_minimum_size = Vector2(150, 48)
 		button.texture_normal = load("res://assets/art/ui/catcard/btn_explore_normal.png")
 		button.texture_hover = load("res://assets/art/ui/catcard/btn_explore_hover.png")
 		button.texture_pressed = load("res://assets/art/ui/catcard/btn_explore_pressed.png")
 		button.ignore_texture_size = true
-		button.stretch_mode = TextureButton.STRETCH_SCALE
+		button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 		button.pressed.connect(func() -> void:
 			duration_selected.emit(duration)
 		)
@@ -91,7 +89,7 @@ func _build_ui() -> void:
 		label.text = "%d小时" % duration
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 20)
+		label.add_theme_font_size_override("font_size", 17)
 		label.add_theme_color_override("font_color", Color("#4F453C"))
 		button.add_child(label)
 
@@ -105,13 +103,12 @@ func _build_ui() -> void:
 	box.add_child(cancel_row)
 
 	var cancel := TextureButton.new()
-	# feed 贴图 180×52 (3.46:1)。单独一行、无并排约束，取 220×80 (2.75:1)，接近原生横条，变形 ~1.26×。
-	cancel.custom_minimum_size = Vector2(220, 80)
+	cancel.custom_minimum_size = Vector2(180, 52)
 	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
 	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
 	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
 	cancel.ignore_texture_size = true
-	cancel.stretch_mode = TextureButton.STRETCH_SCALE
+	cancel.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	cancel.pressed.connect(func() -> void:
 		canceled.emit()
 	)
@@ -123,7 +120,7 @@ func _build_ui() -> void:
 	cancel_label.text = "取消"
 	cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	cancel_label.add_theme_font_size_override("font_size", 18)
+	cancel_label.add_theme_font_size_override("font_size", 17)
 	cancel_label.add_theme_color_override("font_color", Color("#4F453C"))
 	cancel.add_child(cancel_label)
 

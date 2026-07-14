@@ -74,12 +74,12 @@ func _build_ui() -> void:
 		if loc == "":
 			continue
 		var btn := TextureButton.new()
-		btn.custom_minimum_size = Vector2(480, 48)
+		btn.custom_minimum_size = Vector2(420, 56)
 		btn.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
 		btn.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
 		btn.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
 		btn.ignore_texture_size = true
-		btn.stretch_mode = TextureButton.STRETCH_SCALE
+		btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 		var my_loc := loc
 		btn.pressed.connect(func() -> void:
 			confirmed.emit(my_loc)
@@ -90,8 +90,10 @@ func _build_ui() -> void:
 		label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.offset_left = 16
-		label.add_theme_font_size_override("font_size", 17)
+		label.offset_left = 24
+		label.offset_right = -24
+		label.add_theme_font_size_override("font_size", 16)
+		label.clip_text = true
 		label.add_theme_color_override("font_color", Color("#4F453C"))
 		var loc_name := String(location_names.get(loc, loc))
 		if tier == "high":
@@ -105,10 +107,10 @@ func _build_ui() -> void:
 	box.add_child(cancel_row)
 
 	var cancel := TextureButton.new()
-	cancel.custom_minimum_size = Vector2(240, 64)
+	cancel.custom_minimum_size = Vector2(220, 56)
 	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_secondary_blank.png")
 	cancel.ignore_texture_size = true
-	cancel.stretch_mode = TextureButton.STRETCH_SCALE
+	cancel.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	cancel.pressed.connect(func() -> void:
 		canceled.emit()
 	)
