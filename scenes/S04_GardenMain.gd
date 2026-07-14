@@ -431,7 +431,7 @@ func _build_hud() -> void:
 	steps_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var steps_icon := TextureRect.new()
 	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
-	steps_icon.custom_minimum_size = Vector2(36.0, 36.0)
+	steps_icon.custom_minimum_size = Vector2(40.0, 40.0)
 	steps_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	steps_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -451,7 +451,7 @@ func _build_hud() -> void:
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
-	energy_icon.custom_minimum_size = Vector2(36.0, 36.0)
+	energy_icon.custom_minimum_size = Vector2(40.0, 40.0)
 	energy_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	energy_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
