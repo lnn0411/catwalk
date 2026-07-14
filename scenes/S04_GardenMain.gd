@@ -489,7 +489,7 @@ func _build_hud() -> void:
 		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item_icon := TextureRect.new()
 		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
-		item_icon.custom_minimum_size = Vector2(36.0, 36.0)
+		item_icon.custom_minimum_size = Vector2(44.0, 44.0)
 		item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		item_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
