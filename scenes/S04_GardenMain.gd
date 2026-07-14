@@ -291,11 +291,14 @@ func _apply_weather_particles(weather: int) -> void:
 		_snow_particles.visible = _snow_particles.emitting
 
 func _build_parallax_background() -> void:
-	# 随机从 4 张宽幅花园背景中选一张（garden_01~04.png）
-	# 每张 3072x1024，3:1 全景
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	var idx := rng.randi_range(1, 5)
+	# 夜晚时段默认用夜景背景（garden_05），其他时段随机
+	var idx: int
+	if WeatherTimeManager and WeatherTimeManager.current_period == WeatherTimeManager.TimePeriod.NIGHT:
+		idx = 5
+	else:
+		var rng := RandomNumberGenerator.new()
+		rng.randomize()
+		idx = rng.randi_range(1, 5)
 	var path := "res://assets/art/garden/garden_%02d.png" % idx
 	var tex := load(path) as Texture2D
 	if tex == null:
