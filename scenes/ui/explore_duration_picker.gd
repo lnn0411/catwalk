@@ -73,11 +73,12 @@ func _build_ui() -> void:
 	for duration in DURATIONS:
 		var button := TextureButton.new()
 		button.custom_minimum_size = Vector2(150, 48)
+		button.size = Vector2(150, 48)
 		button.texture_normal = load("res://assets/art/ui/catcard/btn_explore_normal.png")
 		button.texture_hover = load("res://assets/art/ui/catcard/btn_explore_hover.png")
 		button.texture_pressed = load("res://assets/art/ui/catcard/btn_explore_pressed.png")
 		button.ignore_texture_size = true
-		button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+		button.stretch_mode = TextureButton.STRETCH_SCALE
 		button.pressed.connect(func() -> void:
 			duration_selected.emit(duration)
 		)
@@ -85,6 +86,10 @@ func _build_ui() -> void:
 
 		var label := Label.new()
 		label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		label.offset_left = 0
+		label.offset_right = 0
+		label.offset_top = 0
+		label.offset_bottom = 0
 		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		label.text = "%d小时" % duration
 		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -104,11 +109,12 @@ func _build_ui() -> void:
 
 	var cancel := TextureButton.new()
 	cancel.custom_minimum_size = Vector2(180, 52)
+	cancel.size = Vector2(180, 52)
 	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
 	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
 	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
 	cancel.ignore_texture_size = true
-	cancel.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	cancel.stretch_mode = TextureButton.STRETCH_SCALE
 	cancel.pressed.connect(func() -> void:
 		canceled.emit()
 	)
