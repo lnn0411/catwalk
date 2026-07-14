@@ -341,6 +341,7 @@ func _build_hud() -> void:
 	# 全屏 HUD 容器放行：只让真正的按钮/导航(子控件)拦截点击，
 	# 空白区域事件穿透到花园(拖动 + 点猫拾取)。
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
+root.clip_contents = true
 	add_child(root)
 	# 核心修复：必须先 add_child 进场景树，再设置全屏锚点，否则在不同真机分辨率下无法拉伸对齐宽度！
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
