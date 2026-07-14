@@ -91,7 +91,7 @@ class NavTab:
 	func _build_visuals() -> void:
 		_icon = TextureRect.new()
 		_icon.custom_minimum_size = Vector2(50.0, 50.0)
-		_icon.stretch_mode = TextureRect.STRETCH_SCALE
+		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		_icon.anchor_left = 0.5
 		_icon.anchor_right = 0.5
@@ -113,7 +113,7 @@ class NavTab:
 			_icon.texture = load(formal_path)
 		else:
 			_icon.texture = load(fallback_path)
-		_icon.modulate = Color.WHITE
+		_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 
 	func _gui_input(event: InputEvent) -> void:
 		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
