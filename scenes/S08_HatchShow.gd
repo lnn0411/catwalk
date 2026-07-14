@@ -59,6 +59,11 @@ const FX_LEGENDARY_SIZE := Vector2(200.0, 200.0)
 # —— 美术资源路径 ——
 const ART_BG_PATH := "res://assets/art/ui/hatch_show/hatch_show_bg.png"
 const ART_EGG_PATH := "res://assets/art/ui/hatch_show/hatch_egg_whole.png"
+const ART_EGG_PATHS := {
+	CatData.BREED_ORANGE: "res://assets/art/ui/incubation/eggs/egg_orange_tabby.png",
+	CatData.BREED_BRITISH: "res://assets/art/ui/incubation/eggs/egg_british_shorthair.png",
+	CatData.BREED_SIAMESE: "res://assets/art/ui/incubation/eggs/egg_siamese.png",
+}
 const ART_SILHOUETTE_PATH := "res://assets/art/ui/hatch_show/hatch_cat_silhouette.png"
 const ART_SHARD_PATHS := [
 	"res://assets/art/ui/hatch_show/hatch_shard_01.png",
@@ -164,11 +169,14 @@ func _build_art_layers() -> void:
 		if _art_bg:
 			%Bg.texture = load(ART_BG_PATH)
 
-	# —— 蛋 ——
-	_art_egg = _egg_node != null and ResourceLoader.exists(ART_EGG_PATH)
+	# —— 蛋（按品种）——
+	var egg_path := _egg_texture_path()
+	if egg_path == "" or not ResourceLoader.exists(egg_path):
+		egg_path = ART_EGG_PATH
+	_art_egg = _egg_node != null and ResourceLoader.exists(egg_path)
 	if _egg_node != null:
 		if _art_egg:
-			_egg_node.texture = load(ART_EGG_PATH)
+			_egg_node.texture = load(egg_path)
 			_init_texture_node(_egg_node, EGG_SIZE)
 			_egg_node.visible = true
 		else:
@@ -231,6 +239,11 @@ func _reveal_texture_path() -> String:
 	if _cat == null:
 		return ""
 	return String(ART_REVEAL_PATHS.get(String(_cat.species), ""))
+
+func _egg_texture_path() -> String:
+	if _cat == null:
+		return ""
+	return String(ART_EGG_PATHS.get(String(_cat.species), ""))
 
 func _on_page_setup(data: Dictionary) -> void:
 	_cat = data.get("cat", null)
