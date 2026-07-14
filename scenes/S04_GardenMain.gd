@@ -464,14 +464,8 @@ func _build_hud() -> void:
 	_energy_label.text = "0/0"
 	energy_box.add_child(_energy_label)
 
-	# 左 → 中：steps 贴左，推 energy 居中
+	# 左 → 中：steps 贴左，energy 紧挨着
 	top_row.add_child(steps_box)
-
-	var spacer_mid := Control.new()
-	spacer_mid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	spacer_mid.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_row.add_child(spacer_mid)
-
 	top_row.add_child(energy_box)
 
 	# 中 → 右：推 currency 贴右
