@@ -96,6 +96,7 @@ func on_enter(_data: Dictionary = {}) -> void:
 		TutorialManager.start(self)
 	_hatch_navigating = false
 	_refresh_diary_notification()
+	_refresh_currency()
 	# 无条件重申容器归属（set_cat_container 已幂等：在场的猫先登记不会重复，
 	# 漏生成/生成进旧容器的猫会补到当前容器）。
 	# 实测：孵化后猫可能生成进中间态的旧容器，有条件判断会漏触发——改为每次回页必重申。
@@ -474,7 +475,7 @@ func _build_hud() -> void:
 		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		item_box.add_child(item_icon)
 		var label := Label.new()
-		label.text = str(CurrencyManager.get(entry["key"], 0)) if CurrencyManager else "0"
+		label.text = str(CurrencyManager.get(entry["key"])) if CurrencyManager else "0"
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 		label.add_theme_font_size_override("font_size", 16)
 		label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
@@ -664,6 +665,7 @@ func _refresh_all() -> void:
 	_refresh_energy()
 	_refresh_cat_state()
 	_refresh_diary_notification()
+	_refresh_currency()
 
 # 扫描所有猫的日记未读标记，驱动顶栏提醒图标的显隐与点击行为
 func _refresh_diary_notification() -> void:
