@@ -455,8 +455,8 @@ func _show_explore_location_picker() -> void:
 	var packed := load("res://scenes/ui/explore_confirm_dialog.tscn")
 	var dialog = packed.instantiate()
 	dialog.setup(cat_name, cat_id, species)
-	dialog.confirmed.connect(func(chosen_location: String) -> void:
-		_on_explore_location_chosen(chosen_location, dialog)
+	dialog.confirmed.connect(func(chosen_location: String, duration_hours: int) -> void:
+		_on_explore_location_chosen(chosen_location, duration_hours, dialog)
 	)
 	dialog.canceled.connect(func() -> void:
 		_close_overlay(dialog)
@@ -464,11 +464,10 @@ func _show_explore_location_picker() -> void:
 	_add_overlay(dialog)
 
 
-func _on_explore_location_chosen(chosen_location: String, dialog: Node) -> void:
+func _on_explore_location_chosen(chosen_location: String, duration_hours: int, dialog: Node) -> void:
 	_close_overlay(dialog)
 	if cat_id == "":
 		return
-	var duration_hours := 2  # 默认2小时
 	if ExploreEngine.dispatch_with_location(cat_id, duration_hours, chosen_location):
 		var remaining := ExploreEngine.get_remaining_seconds(cat_id)
 		if EventBus:
