@@ -295,7 +295,7 @@ func _build_parallax_background() -> void:
 	# 每张 3072x1024，3:1 全景
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	var idx := rng.randi_range(1, 4)
+	var idx := rng.randi_range(1, 5)
 	var path := "res://assets/art/garden/garden_%02d.png" % idx
 	var tex := load(path) as Texture2D
 	if tex == null:
@@ -857,7 +857,7 @@ func _toggle_debug_panel() -> void:
 func _cycle_garden_bg() -> void:
 	if _bg_sprite == null or not is_instance_valid(_bg_sprite):
 		return
-	_bg_index = (_bg_index % 4) + 1
+	_bg_index = (_bg_index % 5) + 1
 	var path := "res://assets/art/garden/garden_%02d.png" % _bg_index
 	var tex := load(path) as Texture2D
 	if tex != null:
