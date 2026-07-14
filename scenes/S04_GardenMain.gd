@@ -358,8 +358,7 @@ func _build_hud() -> void:
 	gt.fill = 0  # FILL_LINEAR
 	gt.fill_from = 1  # FILL_FROM_TOP_TO_BOTTOM
 	var mask_h := int(DESIGN_SIZE.y * 0.11)
-	gt.width = int(DESIGN_SIZE.x)
-	gt.height = mask_h
+	gt.fill_size = Vector2(DESIGN_SIZE.x, mask_h)
 	top_mask.texture = gt
 	top_mask.stretch_mode = TextureRect.STRETCH_SCALE
 	top_mask.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
