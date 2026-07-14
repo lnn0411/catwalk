@@ -426,12 +426,12 @@ func _build_hud() -> void:
 
 	# 左侧间距
 	var left_margin := Control.new()
-	left_margin.custom_minimum_size = Vector2(8, 1)
+	left_margin.custom_minimum_size = Vector2(20, 1)
 	top_row.add_child(left_margin)
 
 	# 步数
 	var steps_box := HBoxContainer.new()
-	steps_box.add_theme_constant_override("separation", 4)
+	steps_box.add_theme_constant_override("separation", 5)
 	steps_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var steps_icon := TextureRect.new()
 	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
@@ -452,7 +452,7 @@ func _build_hud() -> void:
 
 	# 能量
 	var energy_box := HBoxContainer.new()
-	energy_box.add_theme_constant_override("separation", 4)
+	energy_box.add_theme_constant_override("separation", 5)
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
@@ -469,8 +469,12 @@ func _build_hud() -> void:
 	_energy_label.text = "0/0"
 	energy_box.add_child(_energy_label)
 
-	# 左 → 中：steps 贴左，energy 紧挨着
+	# 左 → 中：steps 贴左，间隔后 energy
 	top_row.add_child(steps_box)
+	var stats_gap := Control.new()
+	stats_gap.custom_minimum_size = Vector2(18, 1)
+	stats_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_row.add_child(stats_gap)
 	top_row.add_child(energy_box)
 
 	# 中 → 右：推 currency 贴右
@@ -479,13 +483,13 @@ func _build_hud() -> void:
 	spacer_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(spacer_right)
 	var currency_box := HBoxContainer.new()
-	currency_box.add_theme_constant_override("separation", 4)
+	currency_box.add_theme_constant_override("separation", 12)
 	currency_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(currency_box)
 	_currency_labels = []
 	for entry in [{"icon": "icon_coin.png", "key": "gold_coins"}, {"icon": "icon_gem.png", "key": "diamonds"}, {"icon": "icon_petal.png", "key": "flower_petals"}]:
 		var item_box := HBoxContainer.new()
-		item_box.add_theme_constant_override("separation", 4)
+		item_box.add_theme_constant_override("separation", 5)
 		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item_icon := TextureRect.new()
 		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
@@ -506,7 +510,7 @@ func _build_hud() -> void:
 
 	# 右侧间距（货币不贴边）
 	var right_margin := Control.new()
-	right_margin.custom_minimum_size = Vector2(32, 1)
+	right_margin.custom_minimum_size = Vector2(20, 1)
 	top_row.add_child(right_margin)
 
 	# 日记未读提醒图标（贴顶栏右侧），默认隐藏
