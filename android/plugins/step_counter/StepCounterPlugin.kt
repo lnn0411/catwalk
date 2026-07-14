@@ -148,38 +148,38 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
         Thread {
             runBlocking {
                 try {
-                val client = healthConnectClient ?: return@Thread
-                val permissions = setOf(
-                    HealthPermission.getReadPermission(StepsRecord::class)
-                )
+                    val client = healthConnectClient ?: return@runBlocking
+                    val permissions = setOf(
+                        HealthPermission.getReadPermission(StepsRecord::class)
+                    )
 
-                // Check if we have permission
-                val grantedPermissions = client.permissionController.getGrantedPermissions()
-                if (!grantedPermissions.containsAll(permissions)) {
+                    // Check if we have permission
+                    val grantedPermissions = client.permissionController.getGrantedPermissions()
+                    if (!grantedPermissions.containsAll(permissions)) {
+                        healthConnectTodaySteps = -1
+                        return@runBlocking
+                    }
+
+                    val today = LocalDate.now()
+                    val zoneId = ZoneId.systemDefault()
+                    val startOfDay = today.atStartOfDay(zoneId).toInstant()
+                    val endOfDay = today.plusDays(1).atStartOfDay(zoneId).toInstant()
+
+                    val request = AggregateRequest(
+                        metrics = setOf(StepsRecord.COUNT_TOTAL),
+                        timeRangeFilter = TimeRangeFilter.between(startOfDay, endOfDay)
+                    )
+
+                    val response = client.aggregate(request)
+                    val steps = response[StepsRecord.COUNT_TOTAL] ?: 0
+                    healthConnectTodaySteps = steps.toInt().coerceAtLeast(0)
+
+                    Handler(Looper.getMainLooper()).post {
+                        emitSignal(healthConnectStepsSignal, Integer(healthConnectTodaySteps))
+                    }
+                } catch (e: Exception) {
                     healthConnectTodaySteps = -1
-                    return@Thread
                 }
-
-                val today = LocalDate.now()
-                val zoneId = ZoneId.systemDefault()
-                val startOfDay = today.atStartOfDay(zoneId).toInstant()
-                val endOfDay = today.plusDays(1).atStartOfDay(zoneId).toInstant()
-
-                val request = AggregateRequest(
-                    metrics = setOf(StepsRecord.COUNT_TOTAL),
-                    timeRangeFilter = TimeRangeFilter.between(startOfDay, endOfDay)
-                )
-
-                val response = client.aggregate(request)
-                val steps = response[StepsRecord.COUNT_TOTAL] ?: 0
-                healthConnectTodaySteps = steps.toInt().coerceAtLeast(0)
-
-                }
-                Handler(Looper.getMainLooper()).post {
-                    emitSignal(healthConnectStepsSignal, Integer(healthConnectTodaySteps))
-                }
-            } catch (e: Exception) {
-                healthConnectTodaySteps = -1
             }
         }.start()
     }
