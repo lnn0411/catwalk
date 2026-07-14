@@ -15,6 +15,8 @@ func _ready() -> void:
 	last_step_date = _today_key()
 	_load_plugin()
 	_poll_for_first_reading()
+	# 尝试接入 Health Connect 日桶步数（可用时作为今日步数的权威来源）
+	_connect_health_connect()
 
 # app 从后台回到前台时，重读硬件累计步数，补回最小化/进程被杀期间走的步。
 # TYPE_STEP_COUNTER 在固件层计数，进程死了也照常累加，这里读一次即可对齐。
@@ -22,6 +24,8 @@ func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_RESUMED:
 		_check_daily_reset()
 		_refresh_plugin_steps()
+		# Health Connect 冷启动时已在插件后台线程异步读取，resume 无需额外触发；
+		# 若之前已拿到 HC 数据，也不在此覆写，避免旧日桶值回退今日步数。
 		await get_tree().create_timer(0.5).timeout
 		if is_inside_tree():
 			_refresh_plugin_steps()
@@ -106,6 +110,40 @@ func _poll_for_first_reading() -> void:
 		if is_inside_tree():
 			_poll_for_first_reading()
 
+
+# ── Health Connect 日桶步数（辅助数据源）───────────────────────────────
+# TYPE_STEP_COUNTER 只能捕获 app 存活期间的传感器增量；Health Connect 提供
+# 系统级"今日累计"日桶，可补回进程被杀/设备重启期间漏记的步数。
+# 仅当 HC 值高于当前 today_steps 时向上对齐，永不回退；HC 不可用（-1）时
+# 静默降级，TYPE_STEP_COUNTER 差值方案继续独立工作。
+func _connect_health_connect() -> void:
+	if step_plugin == null:
+		return
+	if step_plugin.has_signal("health_connect_steps"):
+		if not step_plugin.health_connect_steps.is_connected(_on_health_connect_steps):
+			step_plugin.health_connect_steps.connect(_on_health_connect_steps)
+	# 插件可能已在后台线程读完，尝试同步取一次缓存值。
+	_refresh_health_connect_steps()
+
+func _refresh_health_connect_steps() -> void:
+	if step_plugin == null or not step_plugin.has_method("getHealthConnectTodaySteps"):
+		return
+	_apply_health_connect_steps(int(step_plugin.getHealthConnectTodaySteps()))
+
+func _on_health_connect_steps(hc_steps: int) -> void:
+	# Health Connect 后台线程读取完成后的异步回调。
+	_apply_health_connect_steps(int(hc_steps))
+
+func _apply_health_connect_steps(hc_steps: int) -> void:
+	_check_daily_reset()
+	if hc_steps < 0:
+		return  # HC 不可用（返回 -1）：静默跳过
+	if hc_steps <= today_steps:
+		return  # 旧日桶值不回退今日步数
+	var delta: int = hc_steps - today_steps
+	today_steps = hc_steps
+	total_steps += delta  # 补回 HC 记录但传感器未捕获的步数（如进程被杀/设备重启）
+	_emit_steps_updated(delta)
 
 func _check_daily_reset() -> void:
 	var today: String = _today_key()
