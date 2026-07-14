@@ -345,6 +345,31 @@ func _build_hud() -> void:
 	# 核心修复：必须先 add_child 进场景树，再设置全屏锚点，否则在不同真机分辨率下无法拉伸对齐宽度！
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
+	# 顶栏渐变遮罩：暖白 #FFF9ED，顶部90%透→底部0%，放在背景之上、文字图标之下
+	var top_mask := TextureRect.new()
+	top_mask.name = "TopGradientMask"
+	top_mask.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var G := Gradient.new()
+	G.offsets = [0.0, 1.0]
+	# #FFF9ED = (1.0, 0.9765, 0.9294)
+	G.colors = [Color(1.0, 0.9765, 0.9294, 0.90), Color(1.0, 0.9765, 0.9294, 0.0)]
+	var gt := GradientTexture2D.new()
+	gt.gradient = G
+	gt.fill = GradientTexture2D.FILL_VERTICAL
+	var mask_h := int(DESIGN_SIZE.y * 0.11)
+	gt.width = int(DESIGN_SIZE.x)
+	gt.height = mask_h
+	top_mask.texture = gt
+	top_mask.stretch_mode = TextureRect.STRETCH_SCALE
+	top_mask.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	top_mask.anchor_left = 0.0
+	top_mask.anchor_right = 1.0
+	top_mask.anchor_top = 0.0
+	top_mask.anchor_bottom = 0.0
+	top_mask.offset_top = 0.0
+	top_mask.offset_bottom = mask_h
+	root.add_child(top_mask)
+
 	var debug_btn := Button.new()
 	debug_btn.text = "DBG"
 	debug_btn.flat = true
