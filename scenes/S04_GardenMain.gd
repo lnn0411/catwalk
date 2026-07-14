@@ -505,7 +505,7 @@ func _build_hud() -> void:
 
 	# 右侧间距（货币不贴边）
 	var right_margin := Control.new()
-	right_margin.custom_minimum_size = Vector2(24, 1)
+	right_margin.custom_minimum_size = Vector2(32, 1)
 	top_row.add_child(right_margin)
 
 	# 日记未读提醒图标（贴顶栏右侧），默认隐藏
