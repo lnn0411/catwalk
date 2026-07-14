@@ -408,6 +408,7 @@ func _build_hud() -> void:
 	board_btn.pressed.connect(func():
 		UIManager.push("res://scenes/S14_BoardGame.tscn")
 	)
+	board_btn.visible = false
 	root.add_child(board_btn)
 
 	# 顶栏：HBoxContainer，紧凑布局
