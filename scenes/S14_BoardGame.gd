@@ -41,8 +41,7 @@ var _dbg_ticket_btn: Button
 var _has_three_star_bonus: bool = false  # D4
 var _excitement_bar: ProgressBar          # 兴奋值条
 var _excitement_label: Label              # 兴奋值文字（如 "兴奋值 88/100"）
-var _frenzy_button: Button                # 狂欢触发按钮
-var _frenzy_timer_label: Label            # 狂欢倒计时（如 "狂欢 7.5s"）
+var _frenzy_button: Button                # 狂欢触发按钮（K7: 一次性抵消下一次捣乱）
 var _target_banner: HBoxContainer         # 目标横幅容器
 var _target_banner_label: Label           # 目标横幅内的目标名称文本
 var _target_segments: Array = []          # 5个段 TextureRect/ColorRect
@@ -82,7 +81,7 @@ func _build_board_logic() -> void:
 	board.combo_triggered.connect(_on_combo_triggered)
 	board.frenzy_ready.connect(_on_frenzy_ready)
 	board.frenzy_activated.connect(_on_frenzy_activated)
-	board.frenzy_ended.connect(_on_frenzy_ended)
+	board.mischief_cancelled.connect(_on_mischief_cancelled)  # K7: 狂欢抵消捣乱
 	board.highest_star_changed.connect(_on_highest_star_changed)
 
 
@@ -266,15 +265,6 @@ func _build_excitement_bar() -> Control:
 	_frenzy_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	_frenzy_button.pressed.connect(_on_frenzy_pressed)
 	container.add_child(_frenzy_button)
-
-	# 狂欢倒计时（初始隐藏）
-	_frenzy_timer_label = Label.new()
-	_frenzy_timer_label.name = "FrenzyTimer"
-	_frenzy_timer_label.visible = false
-	_frenzy_timer_label.text = "🎊 10.0s"
-	_frenzy_timer_label.add_theme_font_size_override("font_size", 14)
-	_frenzy_timer_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.0))
-	container.add_child(_frenzy_timer_label)
 
 	return container
 
@@ -559,7 +549,6 @@ func _start_game() -> void:
 	_excitement_bar.value = 0
 	_excitement_label.text = "0/%d" % BoardGameData.EXCITEMENT_MAX
 	_frenzy_button.visible = false
-	_frenzy_timer_label.visible = false
 	for seg in _target_segments:
 		seg.color = Color(0.9, 0.9, 0.9)  # 全部灰色
 	_refresh_all()
@@ -1029,10 +1018,9 @@ func _on_frenzy_ready() -> void:
 
 
 func _on_frenzy_pressed() -> void:
+	# K7: 点击狂欢即蓄一次「抵消下一次捣乱」，无倒计时，按钮变灰
 	if board.trigger_frenzy():
 		_frenzy_button.visible = false
-		_frenzy_timer_label.visible = true
-		_frenzy_timer_label.text = "🎊 %.1fs" % BoardGameData.FRENZY_DURATION_SECONDS
 
 
 func _on_frenzy_activated() -> void:
@@ -1044,8 +1032,15 @@ func _on_frenzy_activated() -> void:
 	tween.tween_property(_excitement_bar, "modulate", Color(1, 1, 1, 1), 0.3)
 
 
-func _on_frenzy_ended() -> void:
-	_frenzy_timer_label.visible = false
+func _on_mischief_cancelled(pos: Vector2i) -> void:
+	# K7: 狂欢抵消了一次捣乱——物品没被拍飞，播猫嬉戏动画替代拍飞
+	# TODO: 接入猫嬉戏动画（占位：先做一下轻微高亮提示）
+	if _cells.has(pos):
+		var cell: Control = _cells[pos]
+		var tween := create_tween()
+		tween.tween_property(cell, "modulate", Color(0.6, 1.0, 0.6, 1.0), 0.15)
+		tween.tween_property(cell, "modulate", Color.WHITE, 0.25)
+	_refresh_all()
 
 
 func _on_highest_star_changed(star: int) -> void:
@@ -1054,8 +1049,3 @@ func _on_highest_star_changed(star: int) -> void:
 	var empty_color := Color(0.9, 0.9, 0.9)    # 灰色
 	for i in range(BoardGameData.MAX_STAR_SEGMENTS):
 		_target_segments[i].color = filled_color if (i + 1) <= star else empty_color
-
-
-func _process(_delta: float) -> void:
-	if board.frenzy_active and _frenzy_timer_label.visible:
-		_frenzy_timer_label.text = "🎊 %.1fs" % max(board.frenzy_timer, 0.0)

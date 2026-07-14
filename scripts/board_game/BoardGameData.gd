@@ -67,14 +67,14 @@ const EXCITEMENT_YARN_BONUS := 20
 # 连击判定窗口（秒）
 const COMBO_WINDOW_SECONDS := 3.0
 
-# 狂欢免费生成次数
-const FRENZY_FREE_GENERATIONS := 3
+# 狂欢免费生成次数（K7 狂欢改为「抵消捣乱」，不再有免费生成）
+# const FRENZY_FREE_GENERATIONS := 3
 
 # 每局最大狂欢次数
 const FRENZY_MAX_TRIGGERS := 2
 
-# 狂欢持续时间（秒）
-const FRENZY_DURATION_SECONDS := 10.0
+# 狂欢持续时间（秒）（K7 狂欢改为「抵消捣乱」，不再有倒计时）
+# const FRENZY_DURATION_SECONDS := 10.0
 
 # 目标横幅星级段数
 const MAX_STAR_SEGMENTS := 5

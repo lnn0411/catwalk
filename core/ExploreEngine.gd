@@ -186,6 +186,9 @@ static func collect(cat_id: String, cat_species: String = "") -> Dictionary:
 				Engine.get_singleton("EventBus").emit_postcard_obtained(postcard_id, location_type)
 		else:
 			reward_type = "ingredient"
+	elif reward_type == "frame_variant" or reward_type == "food_fragment":
+		# N10 新类型：仅记录 reward_type，本版本不做额外产出处理（相框/碎片系统另行结算）。
+		pass
 	entry["reward_type"] = reward_type
 	entry["postcard_id"] = postcard_id
 	# 偏好命中奖励：所选地点为高偏好时，返回物 +1（bonus_reward）。
@@ -203,11 +206,16 @@ static func _roll_reward_type(cat_id: String, duration_hours: int = 0) -> String
 		_first_explore_flags[cat_id] = true
 		_last_reward_type[cat_id] = "postcard"
 		return "postcard"
-	# 基础概率（GDD §14.3）。所有修正一律从 ingredient 扣除，保证四项总和恒为 1.0。
-	var postcard := 0.60
+	# N10：首发 30 张城市明信片集齐后，60% 明信片概率质量重分配给相框变体与食材碎片。
+	var all_collected := _all_city_postcards_collected()
+	# 基础概率（GDD §14.3 / N10）。所有修正一律从 ingredient 扣除，保证总和恒为 1.0。
+	var postcard := 0.0 if all_collected else 0.60
 	var ingredient := 0.25
 	var decoration := 0.10
 	var hidden := 0.05
+	# 集齐后启用：周主题相框变体 30% + 食材碎片 30%（未集齐时为 0）。
+	var frame_variant := 0.30 if all_collected else 0.0
+	var food_fragment := 0.30 if all_collected else 0.0
 	# 雨天：postcard +10pp，ingredient -10pp（WeatherTimeManager 不可用则降级为基础概率）。
 	if Engine.has_singleton("WeatherTimeManager"):
 		var wtm = Engine.get_singleton("WeatherTimeManager")
@@ -220,19 +228,42 @@ static func _roll_reward_type(cat_id: String, duration_hours: int = 0) -> String
 		ingredient -= 0.05
 	var r := _rng.randf()
 	var t: String
-	if r < postcard:
-		t = "postcard"
-	elif r < postcard + ingredient:
-		t = "ingredient"
-	elif r < postcard + ingredient + decoration:
-		t = "decoration"
+	if all_collected:
+		# 集齐后：不再产出 postcard，60% 质量由 frame_variant/food_fragment 承接。
+		if r < frame_variant:
+			t = "frame_variant"
+		elif r < frame_variant + food_fragment:
+			t = "food_fragment"
+		elif r < frame_variant + food_fragment + ingredient:
+			t = "ingredient"
+		elif r < frame_variant + food_fragment + ingredient + decoration:
+			t = "decoration"
+		else:
+			t = "hidden"
 	else:
-		t = "hidden"
-	# 防重复：同一猫连续 postcard 时改为 ingredient。
+		if r < postcard:
+			t = "postcard"
+		elif r < postcard + ingredient:
+			t = "ingredient"
+		elif r < postcard + ingredient + decoration:
+			t = "decoration"
+		else:
+			t = "hidden"
+	# 防重复：同一猫连续 postcard 时改为 ingredient（集齐后 postcard=0，不会命中）。
 	if t == "postcard" and String(_last_reward_type.get(cat_id, "")) == "postcard":
 		t = "ingredient"
 	_last_reward_type[cat_id] = t
 	return t
+
+# N10：判断首发 30 张城市明信片（CITY_LOCATION_TYPES）是否已全部收集。
+static func _all_city_postcards_collected() -> bool:
+	var city_ids := PostcardData.get_city_postcard_ids()
+	if city_ids.is_empty():
+		return false
+	for pid in city_ids:
+		if pid not in _collected_postcards:
+			return false
+	return true
 
 
 static func _pick_postcard_for_cat(cat_species: String) -> String:
