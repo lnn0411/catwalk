@@ -413,8 +413,8 @@ func _build_hud() -> void:
 	# 顶栏：HBoxContainer，用两个 spacer 实现 左|中|右 布局
 	var top_row := HBoxContainer.new()
 	top_row.anchor_right = 1.0
-	top_row.offset_top = 60.0
-	top_row.offset_bottom = 100.0
+	top_row.offset_top = 20.0
+	top_row.offset_bottom = 130.0
 	top_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	top_row.add_theme_constant_override("separation", 0)
 	top_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -427,11 +427,11 @@ func _build_hud() -> void:
 
 	# 步数
 	var steps_box := HBoxContainer.new()
-	steps_box.add_theme_constant_override("separation", 6)
+	steps_box.add_theme_constant_override("separation", 12)
 	steps_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var steps_icon := TextureRect.new()
 	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
-	steps_icon.custom_minimum_size = Vector2(36.0, 36.0)
+	steps_icon.custom_minimum_size = Vector2(100.0, 100.0)
 	steps_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	steps_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -440,7 +440,7 @@ func _build_hud() -> void:
 	_steps_label.text = "0"
 	_steps_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_steps_label.mouse_filter = Control.MOUSE_FILTER_STOP
-	_steps_label.add_theme_font_size_override("font_size", 19)
+	_steps_label.add_theme_font_size_override("font_size", 38)
 	_steps_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_steps_label.gui_input.connect(_on_steps_label_input)
 	steps_box.add_child(_steps_label)
@@ -451,13 +451,13 @@ func _build_hud() -> void:
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
-	energy_icon.custom_minimum_size = Vector2(28.0, 28.0)
+	energy_icon.custom_minimum_size = Vector2(100.0, 100.0)
 	energy_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	energy_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	energy_box.add_child(energy_icon)
 	_energy_label = Label.new()
-	_energy_label.add_theme_font_size_override("font_size", 17)
+	_energy_label.add_theme_font_size_override("font_size", 34)
 	_energy_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_energy_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_energy_label.text = "0/0"
@@ -479,7 +479,7 @@ func _build_hud() -> void:
 	spacer_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(spacer_right)
 	var currency_box := HBoxContainer.new()
-	currency_box.add_theme_constant_override("separation", 6)
+	currency_box.add_theme_constant_override("separation", 14)
 	currency_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(currency_box)
 	_currency_labels = []
@@ -489,7 +489,7 @@ func _build_hud() -> void:
 		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item_icon := TextureRect.new()
 		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
-		item_icon.custom_minimum_size = Vector2(18.0, 18.0)
+		item_icon.custom_minimum_size = Vector2(100.0, 100.0)
 		item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		item_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -497,7 +497,7 @@ func _build_hud() -> void:
 		var label := Label.new()
 		label.text = str(CurrencyManager.get(entry["key"])) if CurrencyManager else "0"
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 16)
+		label.add_theme_font_size_override("font_size", 32)
 		label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 		item_box.add_child(label)
 		currency_box.add_child(item_box)
