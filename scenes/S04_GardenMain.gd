@@ -426,11 +426,12 @@ func _build_hud() -> void:
 
 	# 左侧间距
 	var left_margin := Control.new()
-	left_margin.custom_minimum_size = Vector2(20, 1)
+	left_margin.custom_minimum_size = Vector2(16, 1)
+	left_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(left_margin)
-
 	# 步数
 	var steps_box := HBoxContainer.new()
+	steps_box.custom_minimum_size = Vector2(210, 1)
 	steps_box.add_theme_constant_override("separation", 5)
 	steps_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var steps_icon := TextureRect.new()
@@ -449,9 +450,10 @@ func _build_hud() -> void:
 	_steps_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_steps_label.gui_input.connect(_on_steps_label_input)
 	steps_box.add_child(_steps_label)
-
+	top_row.add_child(steps_box)
 	# 能量
 	var energy_box := HBoxContainer.new()
+	energy_box.custom_minimum_size = Vector2(110, 1)
 	energy_box.add_theme_constant_override("separation", 5)
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var energy_icon := TextureRect.new()
@@ -466,29 +468,30 @@ func _build_hud() -> void:
 	_energy_label.add_theme_font_size_override("font_size", 20)
 	_energy_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_energy_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_energy_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_energy_label.text = "0/0"
 	energy_box.add_child(_energy_label)
-
-	# 左 → 中：steps 贴左，间隔后 energy
-	top_row.add_child(steps_box)
-	var stats_gap := Control.new()
-	stats_gap.custom_minimum_size = Vector2(18, 1)
-	stats_gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	top_row.add_child(stats_gap)
 	top_row.add_child(energy_box)
-
-	# 中 → 右：推 currency 贴右
+	# 中间弹性空白：让货币组稳定靠右
 	var spacer_right := Control.new()
 	spacer_right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer_right.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(spacer_right)
+	# 货币组
 	var currency_box := HBoxContainer.new()
+	currency_box.custom_minimum_size = Vector2(330, 1)
 	currency_box.add_theme_constant_override("separation", 12)
+	currency_box.alignment = BoxContainer.ALIGNMENT_END
 	currency_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(currency_box)
 	_currency_labels = []
-	for entry in [{"icon": "icon_coin.png", "key": "gold_coins"}, {"icon": "icon_gem.png", "key": "diamonds"}, {"icon": "icon_petal.png", "key": "flower_petals"}]:
+	for entry in [
+	{"icon": "icon_coin.png", "key": "gold_coins"},
+	{"icon": "icon_gem.png", "key": "diamonds"},
+	{"icon": "icon_petal.png", "key": "flower_petals"},
+	]:
 		var item_box := HBoxContainer.new()
+		item_box.custom_minimum_size = Vector2(92, 1)
 		item_box.add_theme_constant_override("separation", 5)
 		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item_icon := TextureRect.new()
@@ -507,10 +510,10 @@ func _build_hud() -> void:
 		item_box.add_child(label)
 		currency_box.add_child(item_box)
 		_currency_labels.append(label)
-
 	# 右侧间距（货币不贴边）
 	var right_margin := Control.new()
-	right_margin.custom_minimum_size = Vector2(20, 1)
+	right_margin.custom_minimum_size = Vector2(16, 1)
+	right_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	top_row.add_child(right_margin)
 
 	# 日记未读提醒图标（贴顶栏右侧），默认隐藏
