@@ -408,7 +408,6 @@ func _build_hud() -> void:
 	board_btn.pressed.connect(func():
 		UIManager.push("res://scenes/S14_BoardGame.tscn")
 	)
-	board_btn.visible = false
 	root.add_child(board_btn)
 
 	# 顶栏：HBoxContainer，紧凑布局
@@ -578,6 +577,7 @@ func _build_hud() -> void:
 	companion_btn.offset_top = -174.0
 	companion_btn.offset_bottom = -78.0
 	companion_btn.pressed.connect(_on_companion_pressed)
+	companion_btn.visible = false
 	root.add_child(companion_btn)
 
 	var nav = BottomNavScene.instantiate()
