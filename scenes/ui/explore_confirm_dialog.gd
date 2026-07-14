@@ -3,7 +3,7 @@ extends Control
 signal confirmed(chosen_location: String, duration_hours: int)
 signal canceled
 
-const DURATIONS := [1, 2, 4]
+const DURATIONS: Array[int] = [1, 2, 4]
 
 var _cat_name := "猫咪"
 var _cat_id := ""
