@@ -447,7 +447,7 @@ func _build_hud() -> void:
 
 	# 能量
 	var energy_box := HBoxContainer.new()
-	energy_box.add_theme_constant_override("separation", 4)
+	energy_box.add_theme_constant_override("separation", 2)
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
@@ -505,7 +505,7 @@ func _build_hud() -> void:
 
 	# 右侧间距（货币不贴边）
 	var right_margin := Control.new()
-	right_margin.custom_minimum_size = Vector2(16, 1)
+	right_margin.custom_minimum_size = Vector2(24, 1)
 	top_row.add_child(right_margin)
 
 	# 日记未读提醒图标（贴顶栏右侧），默认隐藏
