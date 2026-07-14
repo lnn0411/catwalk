@@ -127,6 +127,7 @@ jobs:
       - name: Export APK
         run: |
           rm -f catwalk-debug.apk
+          rm -rf .godot/
           godot --headless --export-debug "Android Debug" catwalk-debug.apk 2>&1 || true
           if [ ! -f catwalk-debug.apk ]; then
             echo "❌ APK 未生成"
