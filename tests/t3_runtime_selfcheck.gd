@@ -92,9 +92,9 @@ func _le(desc: String, actual, maxv) -> void:
 func _t_energy_engine() -> void:
 	_sec("A. EnergyEngine 能量逻辑")
 	if not FileAccess.file_exists("res://core/EnergyEngine.gd"):
-	print("  [⏭] 跳过 — EnergyEngine 已移除，相关逻辑归入 HatchEngine")
-	await get_tree().process_frame
-	return
+		print("  [⏭] 跳过 — EnergyEngine 已移除，相关逻辑归入 HatchEngine")
+		await get_tree().process_frame
+		return
 	var E = load("res://core/EnergyEngine.gd")
 
 	# A1 能量公式各 Tier 边界（对照 GDD §2.1 表，非新手 t1=0.3）
@@ -987,3 +987,4 @@ func _restore_save() -> void:
 	elif FileAccess.file_exists(SAVE_PATH):
 	# 原本没存档 → 删掉测试产生的，保持干净
 	DirAccess.remove_absolute(SAVE_PATH)
+
