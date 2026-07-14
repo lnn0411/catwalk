@@ -48,6 +48,9 @@ dependencies {
     implementation "androidx.core:core-splashscreen:$versions.splashscreenVersion"
     implementation "androidx.documentfile:documentfile:$versions.documentfileVersion"
 
+    // CN9: Health Connect 日桶步数 SDK
+    implementation "androidx.health.connect:connect-client:1.1.0-alpha07"
+
     if (rootProject.findProject(":lib")) {
         implementation project(":lib")
     } else if (rootProject.findProject(":godot:lib")) {
