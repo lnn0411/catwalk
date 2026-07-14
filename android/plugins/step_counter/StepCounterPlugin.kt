@@ -23,6 +23,7 @@ import java.time.ZoneId
 import java.time.Instant
 import android.os.Handler
 import android.os.Looper
+import kotlinx.coroutines.runBlocking
 import org.godotengine.godot.Godot
 import org.godotengine.godot.plugin.GodotPlugin
 import org.godotengine.godot.plugin.SignalInfo
@@ -145,7 +146,8 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
 
     private fun readHealthConnectTodaySteps() {
         Thread {
-            try {
+            runBlocking {
+                try {
                 val client = healthConnectClient ?: return@Thread
                 val permissions = setOf(
                     HealthPermission.getReadPermission(StepsRecord::class)
@@ -172,6 +174,7 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
                 val steps = response[StepsRecord.COUNT_TOTAL] ?: 0
                 healthConnectTodaySteps = steps.toInt().coerceAtLeast(0)
 
+                }
                 Handler(Looper.getMainLooper()).post {
                     emitSignal(healthConnectStepsSignal, Integer(healthConnectTodaySteps))
                 }
@@ -229,3 +232,4 @@ class StepCounterPlugin(godot: Godot) : GodotPlugin(godot), SensorEventListener 
         hostActivity.startActivity(intent)
     }
 }
+
