@@ -355,7 +355,8 @@ func _build_hud() -> void:
 	G.colors = [Color(1.0, 0.9765, 0.9294, 0.90), Color(1.0, 0.9765, 0.9294, 0.0)]
 	var gt := GradientTexture2D.new()
 	gt.gradient = G
-	gt.fill = GradientTexture2D.FILL_VERTICAL
+	gt.fill = 0  # FILL_LINEAR
+	gt.fill_from = 1  # FILL_FROM_TOP_TO_BOTTOM
 	var mask_h := int(DESIGN_SIZE.y * 0.11)
 	gt.width = int(DESIGN_SIZE.x)
 	gt.height = mask_h
