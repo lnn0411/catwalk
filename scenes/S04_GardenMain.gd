@@ -432,7 +432,7 @@ func _build_hud() -> void:
 	steps_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var steps_icon := TextureRect.new()
 	steps_icon.texture = load("res://assets/art/ui/icons/icon_paw.png")
-	steps_icon.custom_minimum_size = Vector2(44.0, 44.0)
+	steps_icon.custom_minimum_size = Vector2(28.0, 28.0)
 	steps_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	steps_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	steps_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -441,24 +441,24 @@ func _build_hud() -> void:
 	_steps_label.text = "0"
 	_steps_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_steps_label.mouse_filter = Control.MOUSE_FILTER_STOP
-	_steps_label.add_theme_font_size_override("font_size", 22)
+	_steps_label.add_theme_font_size_override("font_size", 18)
 	_steps_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_steps_label.gui_input.connect(_on_steps_label_input)
 	steps_box.add_child(_steps_label)
 
 	# 能量
 	var energy_box := HBoxContainer.new()
-	energy_box.add_theme_constant_override("separation", 0)
+	energy_box.add_theme_constant_override("separation", 4)
 	energy_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var energy_icon := TextureRect.new()
 	energy_icon.texture = load("res://assets/art/ui/icons/icon_sprout.png")
-	energy_icon.custom_minimum_size = Vector2(44.0, 44.0)
+	energy_icon.custom_minimum_size = Vector2(28.0, 28.0)
 	energy_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	energy_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	energy_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	energy_box.add_child(energy_icon)
 	_energy_label = Label.new()
-	_energy_label.add_theme_font_size_override("font_size", 22)
+	_energy_label.add_theme_font_size_override("font_size", 18)
 	_energy_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	_energy_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	_energy_label.text = "0/0"
@@ -480,11 +480,11 @@ func _build_hud() -> void:
 	_currency_labels = []
 	for entry in [{"icon": "icon_coin.png", "key": "gold_coins"}, {"icon": "icon_gem.png", "key": "diamonds"}, {"icon": "icon_petal.png", "key": "flower_petals"}]:
 		var item_box := HBoxContainer.new()
-		item_box.add_theme_constant_override("separation", 3)
+		item_box.add_theme_constant_override("separation", 4)
 		item_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var item_icon := TextureRect.new()
 		item_icon.texture = load("res://assets/art/ui/icons/" + String(entry["icon"]))
-		item_icon.custom_minimum_size = Vector2(44.0, 44.0)
+		item_icon.custom_minimum_size = Vector2(28.0, 28.0)
 		item_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		item_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		item_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -492,7 +492,7 @@ func _build_hud() -> void:
 		var label := Label.new()
 		label.text = str(CurrencyManager.get(entry["key"])) if CurrencyManager else "0"
 		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.add_theme_font_size_override("font_size", 22)
+		label.add_theme_font_size_override("font_size", 18)
 		label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 		item_box.add_child(label)
 		currency_box.add_child(item_box)
