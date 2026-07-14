@@ -295,7 +295,7 @@ func _build_parallax_background() -> void:
 	# 每张 3072x1024，3:1 全景
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	var idx := rng.randi_range(1, 4)
+	var idx := rng.randi_range(1, 5)
 	var path := "res://assets/art/garden/garden_%02d.png" % idx
 	var tex := load(path) as Texture2D
 	if tex == null:
