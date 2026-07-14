@@ -345,32 +345,25 @@ func _build_hud() -> void:
 	# 核心修复：必须先 add_child 进场景树，再设置全屏锚点，否则在不同真机分辨率下无法拉伸对齐宽度！
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# 顶栏渐变遮罩：暖白 #FFF9ED，顶部90%透→底部0%，放在背景之上、文字图标之下
-	var top_mask := TextureRect.new()
-	top_mask.name = "TopGradientMask"
-	top_mask.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var G := Gradient.new()
-	G.offsets = [0.0, 1.0]
-	# #FFF9ED = (1.0, 0.9765, 0.9294)
-	G.colors = [Color(1.0, 0.9765, 0.9294, 0.90), Color(1.0, 0.9765, 0.9294, 0.0)]
-	var gt := GradientTexture2D.new()
-	gt.gradient = G
-	gt.fill = 0  # FILL_LINEAR
-	gt.fill_from = Vector2(0.0, 0.0)  # 顶部开始
-	gt.fill_to = Vector2(0.0, 1.0)    # 垂直向下渐变
-	var mask_h := int(DESIGN_SIZE.y * 0.11)
-	gt.width = int(DESIGN_SIZE.x)
-	gt.height = mask_h
-	top_mask.texture = gt
-	top_mask.stretch_mode = TextureRect.STRETCH_SCALE
-	top_mask.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	top_mask.anchor_left = 0.0
-	top_mask.anchor_right = 1.0
-	top_mask.anchor_top = 0.0
-	top_mask.anchor_bottom = 0.0
-	top_mask.offset_top = 0.0
-	top_mask.offset_bottom = mask_h
-	root.add_child(top_mask)
+	# 顶栏渐变遮罩（Shader版）：暖白 #FFF8E8，顶部96%硬度→渐隐至0%
+	# 节点顺序：背景 → TopFade → HUD图标与文字（作为root的第一个子节点）
+	var top_fade := ColorRect.new()
+	top_fade.name = "TopFade"
+	top_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var shader_code := "shader_type canvas_item;\nuniform vec4 top_color : source_color = vec4(1.0, 0.973, 0.91, 0.96);\nuniform float solid_area = 0.32;\nuniform float fade_end = 0.95;\nvoid fragment() {\n	float alpha;\n	if (UV.y <= solid_area) {\n		alpha = 1.0;\n	} else {\n		alpha = 1.0 - smoothstep(solid_area, fade_end, UV.y);\n	}\n	COLOR = vec4(top_color.rgb, top_color.a * alpha);\n}"
+	var s := Shader.new()
+	s.code = shader_code
+	var mat := ShaderMaterial.new()
+	mat.shader = s
+	top_fade.material = mat
+	var mask_h := int(DESIGN_SIZE.y * 0.20)  # ~256px (240-280区间)
+	top_fade.anchor_left = 0.0
+	top_fade.anchor_right = 1.0
+	top_fade.anchor_top = 0.0
+	top_fade.anchor_bottom = 0.0
+	top_fade.offset_top = 0.0
+	top_fade.offset_bottom = mask_h
+	root.add_child(top_fade)
 
 	var debug_btn := Button.new()
 	debug_btn.text = "DBG"
