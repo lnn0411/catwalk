@@ -298,7 +298,7 @@ func _build_parallax_background() -> void:
 	else:
 		var rng := RandomNumberGenerator.new()
 		rng.randomize()
-		idx = rng.randi_range(1, 5)
+		idx = rng.randi_range(1, 4)
 	var path := "res://assets/art/garden/garden_%02d.png" % idx
 	var tex := load(path) as Texture2D
 	if tex == null:
