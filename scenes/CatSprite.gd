@@ -101,6 +101,7 @@ const PER_ANIM_SCALE := {
 	},
 	"orange": {
 		"idle": 0.3819,
+		"idle_front": 0.3819,
 		"idle_back": 0.2382,
 		"idle_back_right": 0.2382,
 		"idle_front_right": 0.2382,
