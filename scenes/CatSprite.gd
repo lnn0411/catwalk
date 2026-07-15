@@ -804,7 +804,14 @@ func _idle_for_current_direction() -> String:
 	return idle_name
 
 func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> void:
-	var turn_anim := ANIM_MOVE_TURN if move_turn else ANIM_TURN
+	# 行走中变方向 → 不播转身序列帧，直接切朝向+走
+	if move_turn:
+		_set_anim(after_anim, after_flip, true)
+		_turn_playing = false
+		return
+	
+	# 停顿时转身 → 播完整序列帧
+	var turn_anim := ANIM_TURN
 	# 无 turn 帧时直接切到目标动画/朝向。
 	if not _frames_cache.has(turn_anim):
 		_set_anim(after_anim, after_flip, true)
