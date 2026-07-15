@@ -101,8 +101,8 @@ const PER_ANIM_SCALE := {
 		"move_turn": 0.2734,
 	},
 	"orange": {
-		"idle": 0.2117,
-		"idle_front": 0.2117,
+		"idle": 0.30,
+		"idle_front": 0.30,
 		"idle_back": 0.2382,
 		"idle_back_right": 0.2382,
 		"idle_front_right": 0.2382,
