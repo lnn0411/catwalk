@@ -1144,25 +1144,24 @@ func _setup_companion_badge() -> void:
 	_companion_badge = PanelContainer.new()
 	_companion_badge.name = "CompanionBadge"
 	_companion_badge.visible = false
-	_companion_badge.position = Vector2(-48, -96)
-	_companion_badge.size = Vector2(96, 30)
-	_companion_badge.custom_minimum_size = Vector2(96, 30)
+	_companion_badge.position = Vector2(-60, -96)
+	_companion_badge.size = Vector2(0, 0)
 	_companion_badge.z_index = 20
 	_companion_badge.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
-	row.add_theme_constant_override("separation", 5)
+	row.add_theme_constant_override("separation", 6)
 	_companion_badge.add_child(row)
 	var icon := TextureRect.new()
 	icon.texture = load("res://assets/art/ui/icons/icon_paw.png") as Texture2D
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.custom_minimum_size = Vector2(18, 18)
+	icon.custom_minimum_size = Vector2(22, 22)
 	row.add_child(icon)
 	var label := Label.new()
 	label.text = "随行中"
-	label.add_theme_font_size_override("font_size", 14)
-	label.add_theme_color_override("font_color", Color("#6F4A1F"))
+	label.add_theme_font_size_override("font_size", 20)
+	label.add_theme_color_override("font_color", Color(1, 1, 1))
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(label)
 	add_child(_companion_badge)
