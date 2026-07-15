@@ -1132,11 +1132,12 @@ func _is_companion() -> bool:
 
 func _draw_companion_marker() -> void:
 	var pulse := 0.5 + 0.5 * sin(_idle_phase * 3.2)
-	var center := Vector2(0, 3)
-	draw_circle(center, 20.0 + pulse * 2.0, Color(0.22, 0.95, 0.72, 0.10))
-	draw_arc(center, 18.0 + pulse, 0.0, TAU, 48, Color(0.22, 0.95, 0.72, 0.52), 1.8, true)
-	var start_angle := -_idle_phase * 1.8
-	draw_arc(center, 12.0, start_angle, start_angle + PI * 0.65, 16, Color(1.0, 0.82, 0.28, 0.72), 2.0, true)
+	var center := Vector2(0, 2)
+	draw_circle(center + Vector2(-15, 2), 3.2 + pulse * 0.8, Color(0.22, 0.95, 0.72, 0.58))
+	draw_circle(center + Vector2(14, 1), 2.6 + pulse * 0.6, Color(1.0, 0.82, 0.28, 0.62))
+	draw_circle(center + Vector2(2, 7), 2.2 + pulse * 0.5, Color(0.60, 1.0, 0.88, 0.48))
+	var start_angle := PI * 1.05
+	draw_arc(center, 18.0, start_angle, start_angle + PI * 0.42, 14, Color(0.22, 0.95, 0.72, 0.42), 1.6, true)
 
 
 func _draw() -> void:
