@@ -31,8 +31,8 @@ const PER_ANIM_FPS := {
 		"idle_back_right": 10.0,
 	},
 }
-@export var turn_fps: float = 5.7
-@export var move_turn_fps: float = 5.0
+@export var turn_fps: float = 14.0
+@export var move_turn_fps: float = 10.0
 @export var sprite_scale: float = 1.0
 # 整图背景（garden_master.png）无透视梯度，景深缩放会让猫忽大忽小却与平铺草坪脱节。
 # 故关闭，让猫在草坪任意位置保持稳定体型。换成带透视的分层背景时再开回 true。
