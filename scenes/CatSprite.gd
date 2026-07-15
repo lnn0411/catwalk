@@ -52,8 +52,8 @@ const WALK_PX_BRITISH := 4.0
 # 英短walk帧脚底像素透明度偏低(alpha≈66-87),需要额外下移补偿
 const BREED_FOOT_BIAS := {
 	"british": 4.0,
-	"orange": 0.0,
-	"orange_tabby": 0.0,
+	"orange": 3.0,
+	"orange_tabby": 3.0,
 	"siamese": 0.0,
 }
 
@@ -792,7 +792,7 @@ func _apply_sprite_anchor(sx: float, sy: float) -> void:
 	var foot_bias: float = BREED_FOOT_BIAS.get(breed, 0.0)
 	var fs := _current_frame_size
 	_sprite.position = Vector2(
-		-fs.x * 0.5 * sx + _per_frame_x_center,
+		-fs.x * 0.5 * sx - _per_frame_x_center * sx,
 		-_per_frame_foot_y * sy + ARCHED_GROUND_Y + foot_bias
 	)
 
@@ -1154,7 +1154,7 @@ func _is_companion() -> bool:
 func _draw() -> void:
 	if not shadow_enabled:
 		return
-	_draw_oval(Vector2(0, 7), Vector2(24, 6), Color(0.12, 0.14, 0.06, 0.08))
+	_draw_oval(Vector2(0, 4), Vector2(24, 6), Color(0.12, 0.14, 0.06, 0.12))
 
 
 func _draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
