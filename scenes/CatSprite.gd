@@ -1157,7 +1157,7 @@ func _is_companion() -> bool:
 func _draw() -> void:
 	if not shadow_enabled:
 		return
-	_draw_oval(Vector2(0, 3), Vector2(40, 10), Color(0.12, 0.14, 0.06, 0.10))
+	_draw_oval(Vector2(0, 7), Vector2(24, 6), Color(0.12, 0.14, 0.06, 0.08))
 
 
 func _draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
