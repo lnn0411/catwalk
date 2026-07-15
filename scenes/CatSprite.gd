@@ -248,6 +248,7 @@ var _wander_timer: Timer
 var _bounce_tween: Tween
 var _card_open := false  # CatCard 打开时锁住移动
 var _explore_badge: Label  # 探索中头顶徽标（🧭 探索中），由 set_exploring 控制显隐
+var _companion_badge: PanelContainer
 
 
 func _ready() -> void:
@@ -286,6 +287,7 @@ func _ready() -> void:
 
 	_set_anim(ANIM_IDLE, false, true)
 	_schedule_wander()
+	_setup_companion_badge()
 
 
 func _breed_dir() -> String:
@@ -507,6 +509,8 @@ func _process(delta: float) -> void:
 	_idle_phase += delta
 	_turn_cooldown = maxf(0.0, _turn_cooldown - delta)
 
+	_update_companion_badge()
+
 	# Walk 动画：位移驱动（脚随身体走）；其他：时间驱动
 	if _is_walk_anim(_current_anim):
 		_advance_walk_by_distance()
@@ -516,7 +520,7 @@ func _process(delta: float) -> void:
 	_apply_visual_motion(delta)
 	_last_frame_pos = global_position
 
-	if shadow_enabled or _is_companion():
+	if shadow_enabled:
 		queue_redraw()
 
 
@@ -1130,21 +1134,52 @@ func _is_companion() -> bool:
 	return cid != "" and cid == HatchEngine.current_companion_cat_id
 
 
-func _draw_companion_marker() -> void:
-	var pulse := 0.5 + 0.5 * sin(_idle_phase * 3.2)
-	var center := Vector2(0, 2)
-	draw_circle(center + Vector2(-15, 2), 3.2 + pulse * 0.8, Color(0.22, 0.95, 0.72, 0.58))
-	draw_circle(center + Vector2(14, 1), 2.6 + pulse * 0.6, Color(1.0, 0.82, 0.28, 0.62))
-	draw_circle(center + Vector2(2, 7), 2.2 + pulse * 0.5, Color(0.60, 1.0, 0.88, 0.48))
-	var start_angle := PI * 1.05
-	draw_arc(center, 18.0, start_angle, start_angle + PI * 0.42, 14, Color(0.22, 0.95, 0.72, 0.42), 1.6, true)
+func _update_companion_badge() -> void:
+	if _companion_badge == null:
+		return
+	_companion_badge.visible = _is_companion()
+
+
+func _setup_companion_badge() -> void:
+	_companion_badge = PanelContainer.new()
+	_companion_badge.name = "CompanionBadge"
+	_companion_badge.visible = false
+	_companion_badge.position = Vector2(-48, -96)
+	_companion_badge.size = Vector2(96, 30)
+	_companion_badge.custom_minimum_size = Vector2(96, 30)
+	_companion_badge.z_index = 20
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(1.0, 0.96, 0.86, 0.92)
+	style.border_color = Color(0.92, 0.62, 0.22, 0.85)
+	style.set_border_width_all(2)
+	style.set_corner_radius_all(12)
+	style.set_content_margin(SIDE_LEFT, 9)
+	style.set_content_margin(SIDE_RIGHT, 9)
+	style.set_content_margin(SIDE_TOP, 4)
+	style.set_content_margin(SIDE_BOTTOM, 4)
+	_companion_badge.add_theme_stylebox_override("panel", style)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_CENTER
+	row.add_theme_constant_override("separation", 5)
+	_companion_badge.add_child(row)
+	var icon := TextureRect.new()
+	icon.texture = load("res://assets/art/ui/icons/icon_paw.png") as Texture2D
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.custom_minimum_size = Vector2(18, 18)
+	row.add_child(icon)
+	var label := Label.new()
+	label.text = "随行中"
+	label.add_theme_font_size_override("font_size", 14)
+	label.add_theme_color_override("font_color", Color("#6F4A1F"))
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	add_child(_companion_badge)
 
 
 func _draw() -> void:
 	if shadow_enabled:
 		_draw_oval(Vector2(0, 3), Vector2(24, 6), Color(0.12, 0.14, 0.06, 0.13))
-	if _is_companion():
-		_draw_companion_marker()
 
 
 func _draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
