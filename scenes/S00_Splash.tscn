@@ -18,4 +18,4 @@ grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("2")
 expand_mode = 3
-stretch_mode = 0
+stretch_mode = 2

@@ -24,7 +24,7 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("3")
 expand_mode = 3
-stretch_mode = 5
+stretch_mode = 2
 mouse_filter = 2
 
 [node name="BackBtn" type="TextureButton" parent="."]

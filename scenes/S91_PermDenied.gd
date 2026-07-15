@@ -12,7 +12,7 @@ func _add_background() -> void:
 	var bg := TextureRect.new()
 	bg.texture = preload("res://assets/art/ui/perm_denied.png")
 	bg.expand_mode = TextureRect.EXPAND_FIT_WIDTH
-	bg.stretch_mode = TextureRect.STRETCH_KEEP
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.show_behind_parent = true
 	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)

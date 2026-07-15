@@ -37,7 +37,7 @@ func _build_pages() -> void:
 	for i in range(PAGE_TEXTURES.size()):
 		var page := TextureRect.new()
 		page.texture = PAGE_TEXTURES[i]
-		page.stretch_mode = TextureRect.STRETCH_SCALE
+		page.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 		page.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		page.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		page.grow_horizontal = Control.GROW_DIRECTION_BOTH
