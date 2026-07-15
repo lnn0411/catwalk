@@ -804,6 +804,23 @@ func _idle_for_current_direction() -> String:
 	
 	return idle_name
 
+func _anim_to_turn_idx(anim: String) -> int:
+	# 根据当前动画返回最近的转身帧起始索引
+	# turn 帧序列: 00(背)→01(背右)→02(侧/背右)→03(前右)→04(正)→05(前左)→06(背左)→07(背)
+	var dir := anim
+	if dir.begins_with("walk_"):
+		dir = dir.trim_prefix("walk_")
+	elif dir.begins_with("idle_"):
+		dir = dir.trim_prefix("idle_")
+	match dir:
+		"down", "front":      return 4
+		"down_right", "front_right": return 3
+		"right", "side_right": return 2
+		"up_right", "back_right": return 1
+		"up", "back":         return 0
+	return 0
+
+
 func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> void:
 	# 行走中变方向 → 不播转身序列帧，直接切朝向+走
 	if move_turn:
@@ -811,20 +828,21 @@ func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> 
 		_turn_playing = false
 		return
 	
-	# 停顿时转身 → 播完整序列帧
+	# 停顿时转身 → 从当前方向匹配的起始帧开始播
 	var turn_anim := ANIM_TURN
-	# 无 turn 帧时直接切到目标动画/朝向。
 	if not _frames_cache.has(turn_anim):
 		_set_anim(after_anim, after_flip, true)
 		_turn_playing = false
 		return
-
-	# 记录转身结束后要切换到的动画与朝向，转身期间保持当前朝向。
-	_turn_playing = false  # 先解锁，让 _set_anim 能切到 turn
+	
+	var start_idx := _anim_to_turn_idx(_current_anim)
+	_turn_playing = false
 	_turn_after_anim = after_anim
 	_turn_after_flip = after_flip
 	_set_anim(turn_anim, _facing_left, true)
 	_turn_playing = true
+	_current_col = start_idx
+	_apply_frame(turn_anim, start_idx)
 
 
 func _select_anim_from_direction(dir: Vector2) -> Dictionary:
