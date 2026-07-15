@@ -169,7 +169,7 @@ const WALK_PX_SIAMESE := 7.0
 
 # 方向差异化步幅：side（侧面，脚位移大）/ up_right（斜向，中）/ front（正背面，小）
 const WALK_PX_ORANGE_SIDE := 8.0
-const WALK_PX_ORANGE_UPRIGHT := 7.0
+const WALK_PX_ORANGE_UPRIGHT := 5.5
 const WALK_PX_ORANGE_FRONT := 6.0
 const WALK_PX_BRITISH_SIDE := 7.0
 const WALK_PX_BRITISH_UPRIGHT := 6.0
