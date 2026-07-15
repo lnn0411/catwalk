@@ -254,19 +254,6 @@ func _ready() -> void:
 	rng.randomize()
 	target_position = position
 
-	# 随行中图标（绿色爪印，头顶显示）
-	var companion_icon := Label.new()
-	companion_icon.name = "CompanionIcon"
-	companion_icon.text = "🐾"
-	companion_icon.add_theme_color_override("font_color", Color(0.2, 0.9, 0.2))
-	companion_icon.add_theme_font_size_override("font_size", 20)
-	companion_icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	companion_icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	companion_icon.position = Vector2(-12, -90)
-	companion_icon.size = Vector2(24, 24)
-	companion_icon.visible = false
-	add_child(companion_icon)
-
 	# 探索中徽标（🧭 探索中，头顶右上角显示，默认隐藏）
 	var explore_badge := Label.new()
 	explore_badge.name = "ExploreBadge"
@@ -519,25 +506,17 @@ func _process(delta: float) -> void:
 		return  # CatCard 打开时冻结移动
 	_idle_phase += delta
 	_turn_cooldown = maxf(0.0, _turn_cooldown - delta)
-	# 随行图标更新
-	_update_companion_icon()
 
 	# Walk 动画：位移驱动（脚随身体走）；其他：时间驱动
 	if _is_walk_anim(_current_anim):
 		_advance_walk_by_distance()
-		# 随行猫：走路时脚下弹脚印
-		if _footprint_timer > 0.0:
-			_footprint_timer -= delta
-		else:
-			_spawn_footprint()
-			_footprint_timer = 0.25
 	else:
 		_advance_animation(delta)
 
 	_apply_visual_motion(delta)
 	_last_frame_pos = global_position
 
-	if shadow_enabled:
+	if shadow_enabled or _is_companion():
 		queue_redraw()
 
 
@@ -1151,10 +1130,20 @@ func _is_companion() -> bool:
 	return cid != "" and cid == HatchEngine.current_companion_cat_id
 
 
+func _draw_companion_marker() -> void:
+	var pulse := 0.5 + 0.5 * sin(_idle_phase * 3.2)
+	var center := Vector2(0, 3)
+	draw_circle(center, 20.0 + pulse * 2.0, Color(0.22, 0.95, 0.72, 0.10))
+	draw_arc(center, 18.0 + pulse, 0.0, TAU, 48, Color(0.22, 0.95, 0.72, 0.52), 1.8, true)
+	var start_angle := -_idle_phase * 1.8
+	draw_arc(center, 12.0, start_angle, start_angle + PI * 0.65, 16, Color(1.0, 0.82, 0.28, 0.72), 2.0, true)
+
+
 func _draw() -> void:
-	if not shadow_enabled:
-		return
-	_draw_oval(Vector2(0, 3), Vector2(24, 6), Color(0.12, 0.14, 0.06, 0.13))
+	if shadow_enabled:
+		_draw_oval(Vector2(0, 3), Vector2(24, 6), Color(0.12, 0.14, 0.06, 0.13))
+	if _is_companion():
+		_draw_companion_marker()
 
 
 func _draw_oval(center: Vector2, size: Vector2, color: Color) -> void:
