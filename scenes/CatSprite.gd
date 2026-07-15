@@ -1148,6 +1148,7 @@ func _setup_companion_badge() -> void:
 	_companion_badge.size = Vector2(96, 30)
 	_companion_badge.custom_minimum_size = Vector2(96, 30)
 	_companion_badge.z_index = 20
+	_companion_badge.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 5)
