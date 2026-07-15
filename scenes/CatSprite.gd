@@ -60,8 +60,8 @@ const BREED_FOOT_BIAS := {
 # 各品种视觉缩放系数（帧尺寸差异大时用这里拉齐，不依赖美术重出）
 const BREED_VISUAL_SCALE := {
 	"british": 0.45,
-	"orange": 0.93,
-	"orange_tabby": 0.93,
+	"orange": 0.24,
+	"orange_tabby": 0.24,
 	"siamese": 1.0,
 }
 
@@ -170,7 +170,7 @@ const WALK_PX_SIAMESE := 7.0
 # 方向差异化步幅：side（侧面，脚位移大）/ up_right（斜向，中）/ front（正背面，小）
 const WALK_PX_ORANGE_SIDE := 8.0
 const WALK_PX_ORANGE_UPRIGHT := 7.0
-const WALK_PX_ORANGE_FRONT := 4.0
+const WALK_PX_ORANGE_FRONT := 6.0
 const WALK_PX_BRITISH_SIDE := 7.0
 const WALK_PX_BRITISH_UPRIGHT := 6.0
 const WALK_PX_BRITISH_FRONT := 4.0
@@ -178,7 +178,7 @@ const WALK_PX_SIAMESE_SIDE := 7.0
 const WALK_PX_SIAMESE_UPRIGHT := 6.0
 const WALK_PX_SIAMESE_FRONT := 3.5
 
-const BOB_AMPLITUDE := 2.5  # 走路踩地弹跳幅度（视觉像素，乘以深度缩放后使用）
+const BOB_AMPLITUDE := 0.0  # 走路踩地弹跳幅度（视觉像素，橘猫新帧脚底固定，不需弹跳）
 const IDLE_HEIGHT_SCALE := 100.0 / 126.0  # ≈0.794
 
 const ANIM_WALK_RIGHT := "walk_right"
