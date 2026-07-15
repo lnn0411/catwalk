@@ -229,6 +229,7 @@ var _last_motion_dir := Vector2.RIGHT
 
 var _turn_playing := false
 var _turn_frames_left := 0
+var _turn_forward := true
 var _turn_after_anim := ANIM_IDLE
 var _turn_after_flip := false
 
@@ -590,7 +591,12 @@ func _advance_walk_by_distance() -> void:
 	var max_frames: int = _frame_count(_current_anim)
 	while _walk_accum >= px_per_frame:
 		_walk_accum -= px_per_frame
-		_current_col += 1
+		if _turn_playing and not _turn_forward:
+			_current_col -= 1
+			if _current_col < 0:
+				_current_col = max_frames - 1
+		else:
+			_current_col += 1
 		if _current_col >= max_frames:
 			_current_col = 0
 			if _turn_playing:
@@ -616,8 +622,12 @@ func _advance_animation(delta: float) -> void:
 	while _frame_accum >= frame_time:
 		_frame_accum -= frame_time
 		var max_frames: int = _frame_count(_current_anim)
-		_current_col += 1
-
+		if _turn_playing and not _turn_forward:
+			_current_col -= 1
+			if _current_col < 0:
+				_current_col = max_frames - 1
+		else:
+			_current_col += 1
 		if _current_col >= max_frames:
 			if _turn_playing:
 				_turn_playing = false
@@ -855,6 +865,8 @@ func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> 
 	_set_anim(turn_anim, _facing_left, true)
 	_turn_playing = true
 	_turn_frames_left = 4
+	# 帧05-07是左向，从正面(3-4)转向时反向播放00-04右向帧
+	_turn_forward = start_idx < 3
 	_current_col = start_idx
 	_apply_frame(turn_anim, start_idx)
 
