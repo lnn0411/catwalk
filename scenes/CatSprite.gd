@@ -33,6 +33,7 @@ const PER_ANIM_FPS := {
 }
 @export var turn_fps: float = 5.0
 @export var move_turn_fps: float = 7.0
+const TURN_PAUSE := 0.6  # 停顿时慵懒转身的停顿秒数
 @export var sprite_scale: float = 1.0
 # 整图背景（garden_master.png）无透视梯度，景深缩放会让猫忽大忽小却与平铺草坪脱节。
 # 故关闭，让猫在草坪任意位置保持稳定体型。换成带透视的分层背景时再开回 true。
@@ -848,27 +849,16 @@ func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> 
 	# 行走中变方向 → 不播转身序列帧，直接切朝向+走
 	if move_turn:
 		_set_anim(after_anim, after_flip, true)
-		_turn_playing = false
 		return
 	
-	# 停顿时转身 → 从当前方向匹配的起始帧开始播
-	var turn_anim := ANIM_TURN
-	if not _frames_cache.has(turn_anim):
+	# 停顿时慵懒转身：保持当前姿态，短暂停顿后切到目标朝向
+	_turn_playing = true
+	var tw := create_tween()
+	tw.tween_interval(TURN_PAUSE)
+	tw.tween_callback(func():
 		_set_anim(after_anim, after_flip, true)
 		_turn_playing = false
-		return
-	
-	var start_idx := _anim_to_turn_idx(_current_anim)
-	_turn_playing = false
-	_turn_after_anim = after_anim
-	_turn_after_flip = after_flip
-	_set_anim(turn_anim, _facing_left, true)
-	_turn_playing = true
-	_turn_frames_left = 4
-	# 帧05-07是左向，从正面(3-4)转向时反向播放00-04右向帧
-	_turn_forward = start_idx < 3
-	_current_col = start_idx
-	_apply_frame(turn_anim, start_idx)
+	)
 
 
 func _select_anim_from_direction(dir: Vector2) -> Dictionary:
