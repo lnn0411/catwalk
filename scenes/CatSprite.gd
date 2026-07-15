@@ -228,6 +228,7 @@ var _facing_left := false
 var _last_motion_dir := Vector2.RIGHT
 
 var _turn_playing := false
+var _turn_frames_left := 0
 var _turn_after_anim := ANIM_IDLE
 var _turn_after_flip := false
 
@@ -597,6 +598,12 @@ func _advance_walk_by_distance() -> void:
 				_set_anim(_turn_after_anim, _turn_after_flip, true)
 				return
 		_apply_frame(_current_anim, _current_col)
+		if _turn_playing:
+			_turn_frames_left -= 1
+			if _turn_frames_left <= 0:
+				_turn_playing = false
+				_set_anim(_turn_after_anim, _turn_after_flip, true)
+				return
 
 
 func _advance_animation(delta: float) -> void:
@@ -619,6 +626,12 @@ func _advance_animation(delta: float) -> void:
 			_current_col = 0
 
 		_apply_frame(_current_anim, _current_col)
+		if _turn_playing:
+			_turn_frames_left -= 1
+			if _turn_frames_left <= 0:
+				_turn_playing = false
+				_set_anim(_turn_after_anim, _turn_after_flip, true)
+				return
 
 
 # 查品种对应的预扫描帧度量表（无表则返回空字典，走运行时扫描）
@@ -841,6 +854,7 @@ func _start_turn_anim(move_turn: bool, after_anim: String, after_flip: bool) -> 
 	_turn_after_flip = after_flip
 	_set_anim(turn_anim, _facing_left, true)
 	_turn_playing = true
+	_turn_frames_left = 4
 	_current_col = start_idx
 	_apply_frame(turn_anim, start_idx)
 
