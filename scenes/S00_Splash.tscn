@@ -4,6 +4,11 @@
 [ext_resource type="Texture2D" uid="uid://c5wlr01eb68oh" path="res://assets/art/ui/splash.png" id="2"]
 
 [node name="S00_Splash" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1")
 
 [node name="Bg" type="TextureRect" parent="."]

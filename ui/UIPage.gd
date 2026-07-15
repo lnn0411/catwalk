@@ -9,6 +9,17 @@ var page_data: Dictionary = {}
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	_fit_fullscreen_bg()
+
+
+func _fit_fullscreen_bg() -> void:
+	var bg := get_node_or_null("Bg") as TextureRect
+	if bg == null:
+		return
+	bg.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	bg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 func setup(data: Dictionary = {}) -> void:
 	page_data = data.duplicate(true)
