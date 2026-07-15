@@ -159,9 +159,9 @@ const ORANGE_FRAME_METRICS := {
 	"turn": [{"f": 395, "x": -3.84}, {"f": 395, "x": 9.75}, {"f": 395, "x": 3.87}, {"f": 395, "x": 7.3}, {"f": 395, "x": -10.89}, {"f": 395, "x": -6.5}, {"f": 395, "x": 1.19}, {"f": 395, "x": -7.69}],
 }
 
-var _per_frame_foot_y := 131.0
+var _per_frame_foot_y := 395.0
 var _per_frame_x_center := 0.0
-var _current_frame_size := Vector2(100, 140)
+var _current_frame_size := Vector2(400, 400)
 const WALK_PX_ORANGE := 6.5
 const WALK_PX_SIAMESE := 7.0
 
