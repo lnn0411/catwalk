@@ -787,7 +787,7 @@ func _idle_for_current_direction() -> String:
 		ANIM_WALK_RIGHT:
 			idle_name = "idle_side_right"
 		ANIM_WALK_UP_RIGHT:
-			idle_name = "idle_back_right"
+			idle_name = "idle_side_right"
 		ANIM_WALK_UP:
 			idle_name = "idle_back"
 		ANIM_WALK_DOWN_RIGHT:
