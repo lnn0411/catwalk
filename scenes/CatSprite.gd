@@ -27,8 +27,9 @@ signal cat_clicked(cat_data)
 # 各动画独立帧率（覆盖全局 idle_fps。空/缺失 → 用全局默认值）
 const PER_ANIM_FPS := {
 	"british": {
-		"idle_front_right": 10.0,
-		"idle_back_right": 10.0,
+		"idle_side_right": 5.0,
+		"idle_back_right": 5.0,
+		"idle_back": 5.0,
 	},
 }
 @export var turn_fps: float = 5.0
