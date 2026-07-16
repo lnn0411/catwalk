@@ -139,7 +139,9 @@ jobs:
           godot --headless --editor --quit 2>&1 || true
           # 清理编辑器重新生成的图片（防止 png+webp 重复冲突）
           find android/build/res \( -name "*.png" -o -name "*.webp" \) -delete 2>/dev/null || true
-          # 手动添加 Health Connect 依赖（editor headless 不写入 gdap 依赖）
+          # 手动添加权限到 AndroidManifest（模板不带 FOREGROUND_SERVICE）
+          grep -q "FOREGROUND_SERVICE" android/build/src/main/AndroidManifest.xml || \
+            sed -i "/<manifest/a\\    <uses-permission android:name=\"android.permission.FOREGROUND_SERVICE\" />" android/build/src/main/AndroidManifest.xml
           grep -q "health.connect" android/build/build.gradle || \
             sed -i "/^dependencies {/a\\    implementation 'androidx.health.connect:connect-client:1.1.0-alpha06'" android/build/build.gradle
           # 第二阶段：正式导出
