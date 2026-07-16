@@ -99,13 +99,16 @@ jobs:
             -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS \
             -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Extract AAR
+      - name: Extract Android build template
         run: |
           ZIP=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable \
             -name "android_source.zip" | head -1)
-          mkdir -p /tmp/ga android/build/libs/debug
-          unzip -qo "$ZIP" -d /tmp/ga
-          cp /tmp/ga/libs/debug/*.aar android/build/libs/debug/ 2>/dev/null || true
+          echo "模板: $ZIP"
+          rm -rf android/build
+          unzip -qo "$ZIP" -d android/build/
+          for f in build.gradle gradlew src/main/AndroidManifest.xml; do
+            [ -f "android/build/$f" ] && echo "  ✅ $f" || { echo "  ❌ $f 缺失"; exit 1; }
+          done
 
       - name: Copy plugin source
         run: |
@@ -127,11 +130,6 @@ jobs:
       - name: Export APK
         run: |
           rm -f catwalk-debug.apk
-          # 第一阶段：单线程导入（避免 CSV 后台线程 crash）
-          godot --headless --editor --quit 2>&1 || true
-          # 第二阶段：正式导出（用已缓存好的资源）
-          # 强制替换 Health Connect 版本（双重保险）
-          sed -i "s/1.1.0-alpha07/1.1.0-alpha06/g" android/build/build.gradle
           godot --headless --export-debug "Android Debug" catwalk-debug.apk 2>&1 || true
           if [ ! -f catwalk-debug.apk ]; then
             echo "❌ APK 未生成"
