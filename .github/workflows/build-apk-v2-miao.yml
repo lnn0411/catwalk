@@ -146,6 +146,9 @@ jobs:
             sed -i "/<supports-screens/i\\    <uses-permission android:name=\"android.permission.FOREGROUND_SERVICE\" />" android/build/src/main/AndroidManifest.xml
           grep -q "ACTIVITY_RECOGNITION" android/build/src/main/AndroidManifest.xml || \
             sed -i "/<supports-screens/i\\    <uses-permission android:name=\"android.permission.ACTIVITY_RECOGNITION\" />" android/build/src/main/AndroidManifest.xml
+          # 恢复插件注册 metadata（模板解压会覆盖 main manifest，丢失 StepCounter 插件声明）
+          grep -q "org.godotengine.plugin.v2.StepCounter" android/build/src/main/AndroidManifest.xml || \
+            sed -i "/<\/application>/i\\    <meta-data android:name=\"org.godotengine.plugin.v2.StepCounter\" android:value=\"com.catwalk.stepcounter.StepCounterPlugin\" />" android/build/src/main/AndroidManifest.xml
           grep -q "health.connect" android/build/build.gradle || \
             sed -i "/^dependencies {/a\\    implementation 'androidx.health.connect:connect-client:1.1.0-alpha06'" android/build/build.gradle
           # 第二阶段：正式导出
@@ -191,6 +194,7 @@ jobs:
           MANIFEST=$(unzip -p $APK AndroidManifest.xml 2>/dev/null || true)
           echo "$MANIFEST" | grep -q "ACTIVITY_RECOGNITION" && echo "✅ ACTIVITY_RECOGNITION" || { echo "❌ 缺少 ACTIVITY_RECOGNITION"; ERR=$((ERR+1)); }
           echo "$MANIFEST" | grep -q "FOREGROUND_SERVICE" && echo "✅ FOREGROUND_SERVICE" || { echo "❌ 缺少 FOREGROUND_SERVICE"; ERR=$((ERR+1)); }
+          echo "$MANIFEST" | grep -q "StepCounterPlugin" && echo "✅ StepCounter 插件 metadata" || { echo "❌ 缺少 StepCounter 插件 metadata"; ERR=$((ERR+1)); }
 
           echo ""
           echo "── .gdc 脚本 ──"
