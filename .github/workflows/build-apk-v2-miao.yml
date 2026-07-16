@@ -132,6 +132,9 @@ jobs:
           grep "compress_native_libraries=true" export_presets.cfg || echo "⚠️ compress_native_libraries 检查"
           grep "package/signed=false" export_presets.cfg && echo "✅ Godot signing disabled" || echo "❌ 禁用签名失败"
 
+      - name: Pre-import (prevent headless crash)
+        run: godot --headless --import 2>&1 | tail -3 || true
+
       - name: Export APK
         run: |
           rm -f catwalk-debug.apk
