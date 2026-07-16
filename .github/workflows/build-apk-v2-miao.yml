@@ -99,15 +99,19 @@ jobs:
             -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS \
             -dname "CN=Android Debug,O=Android,C=US"
 
+      # ═══ FIX: 先解压模板，再让 editor 追加插件依赖 ═══
+      - name: Extract Android template
+        run: |
+          ZIP=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable \
+            -name "android_source.zip" | head -1)
+          unzip -qo "$ZIP" -d android/build/
+          echo "✅ 模板已解压"
+
       - name: Extract AAR
         run: |
           ZIP=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable \
             -name "android_source.zip" | head -1)
-          # 手动解压完整模板（兜底）
-          rm -rf android/build
-          unzip -qo "$ZIP" -d android/build/
-          # 提取 AAR
-          mkdir -p /tmp/ga
+          mkdir -p /tmp/ga android/build/libs/debug
           unzip -qo "$ZIP" -d /tmp/ga
           cp /tmp/ga/libs/debug/*.aar android/build/libs/debug/ 2>/dev/null || true
 
