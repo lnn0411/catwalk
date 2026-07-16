@@ -53,13 +53,8 @@ func handle_authorize() -> void:
 		return
 	_connect_permission_signal()
 
-	# 若系统已自动拒绝（用户曾勾选「不再询问」），直接跳设置页
-	if not _can_show_in_app_dialog():
-		_set_status("请到系统设置页手动开启步数权限")
-		_open_settings()
-		return
-
-	# 尝试 in-app 弹窗 —— 同时启动超时兜底
+	# 直接请求 in-app 弹窗（不应在首次请求前检查 shouldShowRequestPermissionRationale，
+	# 该 API 在首次请求前返回 false，会被误判为「不能弹窗」而跳过真正的请求）
 	_waiting_for_result = true
 	sc.call("requestActivityRecognitionPermission")
 	_start_signal_timeout()
