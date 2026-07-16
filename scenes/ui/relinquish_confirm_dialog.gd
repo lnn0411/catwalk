@@ -36,10 +36,10 @@ func _build_ui() -> void:
 	add_child(dim)
 
 	var panel := TextureRect.new()
-	panel.texture = load("res://assets/art/ui/adopt/adopt_panel.png")
+	panel.texture = load("res://assets/art/ui/panels/popup_bg.png")
 	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	panel.stretch_mode = TextureRect.STRETCH_SCALE
-	_center_control(panel, Vector2(560, 360))
+	_center_control(panel, Vector2(560, 400))
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(panel)
 
@@ -84,9 +84,6 @@ func _build_ui() -> void:
 	var cancel := TextureButton.new()
 	cancel.custom_minimum_size = Vector2(170, 70)
 	cancel.texture_normal = load("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
-	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
-	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
-	cancel.texture_disabled = load("res://assets/art/ui/catcard/btn_feed_disabled.png")
 	cancel.ignore_texture_size = true
 	cancel.stretch_mode = TextureButton.STRETCH_SCALE
 	cancel.pressed.connect(func() -> void:
@@ -105,11 +102,8 @@ func _build_ui() -> void:
 	cancel.add_child(cancel_label)
 
 	var ok := TextureButton.new()
-	ok.custom_minimum_size = Vector2(126, 68)
-	ok.texture_normal = load("res://assets/art/ui/catcard/btn_play_normal.png")
-	ok.texture_hover = load("res://assets/art/ui/catcard/btn_play_hover.png")
-	ok.texture_pressed = load("res://assets/art/ui/catcard/btn_play_pressed.png")
-	ok.texture_disabled = load("res://assets/art/ui/catcard/btn_play_disabled.png")
+	ok.custom_minimum_size = Vector2(170, 70)
+	ok.texture_normal = load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
 	ok.ignore_texture_size = true
 	ok.stretch_mode = TextureButton.STRETCH_SCALE
 	ok.pressed.connect(func() -> void:

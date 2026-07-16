@@ -44,7 +44,7 @@ func _build_ui() -> void:
 	add_child(dim)
 
 	var panel := TextureRect.new()
-	panel.texture = load("res://assets/art/ui/adopt/adopt_panel.png")
+	panel.texture = load("res://assets/art/ui/panels/popup_bg.png")
 	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	panel.stretch_mode = TextureRect.STRETCH_SCALE
 	_center_control(panel, Vector2(560, 400))
@@ -132,9 +132,6 @@ func _build_ui() -> void:
 	var cancel_btn := TextureButton.new()
 	cancel_btn.custom_minimum_size = Vector2(170, 70)
 	cancel_btn.texture_normal = load("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
-	cancel_btn.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
-	cancel_btn.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
-	cancel_btn.texture_disabled = load("res://assets/art/ui/catcard/btn_feed_disabled.png")
 	cancel_btn.ignore_texture_size = true
 	cancel_btn.stretch_mode = TextureButton.STRETCH_SCALE
 	cancel_btn.pressed.connect(func() -> void:
@@ -155,9 +152,6 @@ func _build_ui() -> void:
 	var confirm_btn := TextureButton.new()
 	confirm_btn.custom_minimum_size = Vector2(170, 70)
 	confirm_btn.texture_normal = load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
-	confirm_btn.texture_hover = load("res://assets/art/ui/catcard/btn_play_hover.png")
-	confirm_btn.texture_pressed = load("res://assets/art/ui/catcard/btn_play_pressed.png")
-	confirm_btn.texture_disabled = load("res://assets/art/ui/catcard/btn_play_disabled.png")
 	confirm_btn.ignore_texture_size = true
 	confirm_btn.stretch_mode = TextureButton.STRETCH_SCALE
 	confirm_btn.pressed.connect(func() -> void:
