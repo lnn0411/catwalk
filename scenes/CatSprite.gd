@@ -799,9 +799,7 @@ func _idle_for_current_direction() -> String:
 	if idle_name != ANIM_IDLE:
 		var entry: Dictionary = _frames_cache.get(idle_name, {})
 		var textures: Array = entry.get("textures", [])
-		if not textures.is_empty():
-			var tex: Texture2D = textures[0]
-			if tex.get_width() < 200:  # 旧帧100px宽，新帧400px
+		if textures.is_empty() or textures[0].get_width() < 200:  # 无帧或旧帧(100px) → 回退到正面idle
 				idle_name = ANIM_IDLE
 	
 	# 15%概率坐下（需要idle_sit帧存在）
