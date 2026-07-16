@@ -99,14 +99,6 @@ jobs:
             -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS \
             -dname "CN=Android Debug,O=Android,C=US"
 
-      # ═══ FIX: 先解压模板，再让 editor 追加插件依赖 ═══
-      - name: Extract Android template
-        run: |
-          ZIP=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable \
-            -name "android_source.zip" | head -1)
-          unzip -qo "$ZIP" -d android/build/
-          echo "✅ 模板已解压"
-
       - name: Extract AAR
         run: |
           ZIP=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable \
@@ -136,22 +128,10 @@ jobs:
         run: |
           rm -f catwalk-debug.apk
           # 第一阶段：单线程导入（避免 CSV 后台线程 crash）
-          # 注：不再执行 --editor --quit，因为该步骤可能重写 android/build/ 下文件
-          # 导致插件注册异常，直接用 --import 或跳过
-          
-          # 清理编辑器重新生成的图片（防止 png+webp 重复冲突）
-          find android/build/res \( -name "*.png" -o -name "*.webp" \) -delete 2>/dev/null || true
-          # 手动添加权限到 AndroidManifest（模板不带 FOREGROUND_SERVICE）
-          grep -q "FOREGROUND_SERVICE" android/build/src/main/AndroidManifest.xml || \
-            sed -i "/<supports-screens/i\\    <uses-permission android:name=\"android.permission.FOREGROUND_SERVICE\" />" android/build/src/main/AndroidManifest.xml
-          grep -q "ACTIVITY_RECOGNITION" android/build/src/main/AndroidManifest.xml || \
-            sed -i "/<supports-screens/i\\    <uses-permission android:name=\"android.permission.ACTIVITY_RECOGNITION\" />" android/build/src/main/AndroidManifest.xml
-          # 恢复插件注册 metadata（模板解压会覆盖 main manifest，丢失 StepCounter 插件声明）
-          grep -q "org.godotengine.plugin.v2.StepCounter" android/build/src/main/AndroidManifest.xml || \
-            sed -i "/<\/application>/i\\    <meta-data android:name=\"org.godotengine.plugin.v2.StepCounter\" android:value=\"com.catwalk.stepcounter.StepCounterPlugin\" />" android/build/src/main/AndroidManifest.xml
-          grep -q "health.connect" android/build/build.gradle || \
-            sed -i "/^dependencies {/a\\    implementation 'androidx.health.connect:connect-client:1.1.0-alpha06'" android/build/build.gradle
-          # 第二阶段：正式导出
+          godot --headless --editor --quit 2>&1 || true
+          # 第二阶段：正式导出（用已缓存好的资源）
+          # 强制替换 Health Connect 版本（双重保险）
+          sed -i "s/1.1.0-alpha07/1.1.0-alpha06/g" android/build/build.gradle
           godot --headless --export-debug "Android Debug" catwalk-debug.apk 2>&1 || true
           if [ ! -f catwalk-debug.apk ]; then
             echo "❌ APK 未生成"
