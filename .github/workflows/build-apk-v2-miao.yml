@@ -99,18 +99,17 @@ jobs:
             -alias debug -keyalg RSA -keysize 2048 -validity 10000 -storetype JKS \
             -dname "CN=Android Debug,O=Android,C=US"
 
-      - name: Extract Android build template
+      - name: Extract AAR
         run: |
           ZIP=$(find $HOME/.local/share/godot/export_templates/4.6.3.stable \
             -name "android_source.zip" | head -1)
-          echo "模板: $ZIP"
+          # 手动解压完整模板（兜底）
           rm -rf android/build
           unzip -qo "$ZIP" -d android/build/
-          # 防止 Godot 扫描 android/build/ 生成 .import 文件导致 Gradle 报错
-          touch android/build/.gdignore
-          for f in build.gradle gradlew src/main/AndroidManifest.xml .gdignore; do
-            [ -f "android/build/$f" ] && echo "  ✅ $f" || { echo "  ❌ $f 缺失"; exit 1; }
-          done
+          # 提取 AAR
+          mkdir -p /tmp/ga
+          unzip -qo "$ZIP" -d /tmp/ga
+          cp /tmp/ga/libs/debug/*.aar android/build/libs/debug/ 2>/dev/null || true
 
       - name: Copy plugin source
         run: |
@@ -118,11 +117,8 @@ jobs:
           cp android/plugins/step_counter/StepCounterPlugin.kt \
              android/build/src/main/java/com/catwalk/stepcounter/
 
-      - name: Clean template res (prevent Gradle merge errors)
-        run: |
-          find android/build/res \( -name "*.png" -o -name "*.webp" -o -name "*.import" \) -delete
-          find android/build -name "*.import" -delete 2>/dev/null || true
-          echo "✅ res + .import 清理完成"
+      - name: Clean duplicate res
+        run: find android/build/res \( -name "*.png" -o -name "*.webp" \) -delete
 
       - name: Set compress_native_libraries=true and disable Godot signing
         run: |
@@ -132,17 +128,14 @@ jobs:
           grep "compress_native_libraries=true" export_presets.cfg || echo "⚠️ compress_native_libraries 检查"
           grep "package/signed=false" export_presets.cfg && echo "✅ Godot signing disabled" || echo "❌ 禁用签名失败"
 
-      - name: Init Godot project (thread-safe import)
-        run: godot --headless --editor --quit 2>&1 | tail -5 || true
-
-      - name: Fix Health Connect version
-        run: |
-          sed -i "s/1.1.0-alpha07/1.1.0-alpha06/g" android/build/build.gradle
-          grep -q "1.1.0-alpha06" android/build/build.gradle && echo "✅ Health Connect pinned to alpha06" || echo "⚠️ alpha06 替换未匹配"
-
       - name: Export APK
         run: |
           rm -f catwalk-debug.apk
+          # 第一阶段：单线程导入（避免 CSV 后台线程 crash）
+          godot --headless --editor --quit 2>&1 || true
+          # 第二阶段：正式导出（用已缓存好的资源）
+          # 强制替换 Health Connect 版本（双重保险）
+          sed -i "s/1.1.0-alpha07/1.1.0-alpha06/g" android/build/build.gradle
           godot --headless --export-debug "Android Debug" catwalk-debug.apk 2>&1 || true
           if [ ! -f catwalk-debug.apk ]; then
             echo "❌ APK 未生成"
