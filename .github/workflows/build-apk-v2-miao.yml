@@ -132,6 +132,11 @@ jobs:
           grep "compress_native_libraries=true" export_presets.cfg || echo "⚠️ compress_native_libraries 检查"
           grep "package/signed=false" export_presets.cfg && echo "✅ Godot signing disabled" || echo "❌ 禁用签名失败"
 
+      - name: Fix Health Connect version
+        run: |
+          sed -i "s/1.1.0-alpha07/1.1.0-alpha06/g" android/build/build.gradle
+          grep -q "1.1.0-alpha06" android/build/build.gradle && echo "✅ Health Connect pinned to alpha06" || echo "⚠️ alpha06 替换未匹配"
+
       - name: Pre-import (prevent headless crash)
         run: godot --headless --import 2>&1 | tail -3 || true
 
