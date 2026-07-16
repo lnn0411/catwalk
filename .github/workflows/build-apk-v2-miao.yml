@@ -142,6 +142,8 @@ jobs:
           # 手动添加权限到 AndroidManifest（模板不带 FOREGROUND_SERVICE）
           grep -q "FOREGROUND_SERVICE" android/build/src/main/AndroidManifest.xml || \
             sed -i "/<supports-screens/i\\    <uses-permission android:name=\"android.permission.FOREGROUND_SERVICE\" />" android/build/src/main/AndroidManifest.xml
+          grep -q "ACTIVITY_RECOGNITION" android/build/src/main/AndroidManifest.xml || \
+            sed -i "/<supports-screens/i\\    <uses-permission android:name=\"android.permission.ACTIVITY_RECOGNITION\" />" android/build/src/main/AndroidManifest.xml
           grep -q "health.connect" android/build/build.gradle || \
             sed -i "/^dependencies {/a\\    implementation 'androidx.health.connect:connect-client:1.1.0-alpha06'" android/build/build.gradle
           # 第二阶段：正式导出
