@@ -82,8 +82,8 @@ func _build_ui() -> void:
 	box.add_child(row)
 
 	var cancel := TextureButton.new()
-	cancel.custom_minimum_size = Vector2(126, 68)
-	cancel.texture_normal = load("res://assets/art/ui/catcard/btn_feed_normal.png")
+	cancel.custom_minimum_size = Vector2(170, 70)
+	cancel.texture_normal = load("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
 	cancel.texture_hover = load("res://assets/art/ui/catcard/btn_feed_hover.png")
 	cancel.texture_pressed = load("res://assets/art/ui/catcard/btn_feed_pressed.png")
 	cancel.texture_disabled = load("res://assets/art/ui/catcard/btn_feed_disabled.png")
