@@ -136,7 +136,9 @@ jobs:
         run: |
           rm -f catwalk-debug.apk
           # 第一阶段：单线程导入（避免 CSV 后台线程 crash）
-          godot --headless --editor --quit 2>&1 || true
+          # 注：不再执行 --editor --quit，因为该步骤可能重写 android/build/ 下文件
+          # 导致插件注册异常，直接用 --import 或跳过
+          
           # 清理编辑器重新生成的图片（防止 png+webp 重复冲突）
           find android/build/res \( -name "*.png" -o -name "*.webp" \) -delete 2>/dev/null || true
           # 手动添加权限到 AndroidManifest（模板不带 FOREGROUND_SERVICE）
