@@ -1157,7 +1157,7 @@ func _setup_companion_badge() -> void:
 	row.add_child(icon)
 	var label := Label.new()
 	label.text = "随行中"
-	label.add_theme_font_size_override("font_size", 20)
+	label.add_theme_font_size_override("font_size", 18)
 	label.add_theme_color_override("font_color", Color(1, 1, 1))
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(label)
