@@ -106,7 +106,9 @@ jobs:
           echo "模板: $ZIP"
           rm -rf android/build
           unzip -qo "$ZIP" -d android/build/
-          for f in build.gradle gradlew src/main/AndroidManifest.xml; do
+          # 防止 Godot 扫描 android/build/ 生成 .import 文件导致 Gradle 报错
+          touch android/build/.gdignore
+          for f in build.gradle gradlew src/main/AndroidManifest.xml .gdignore; do
             [ -f "android/build/$f" ] && echo "  ✅ $f" || { echo "  ❌ $f 缺失"; exit 1; }
           done
 
@@ -116,8 +118,11 @@ jobs:
           cp android/plugins/step_counter/StepCounterPlugin.kt \
              android/build/src/main/java/com/catwalk/stepcounter/
 
-      - name: Clean duplicate res
-        run: find android/build/res \( -name "*.png" -o -name "*.webp" \) -delete
+      - name: Clean template res (prevent Gradle merge errors)
+        run: |
+          find android/build/res \( -name "*.png" -o -name "*.webp" -o -name "*.import" \) -delete
+          find android/build -name "*.import" -delete 2>/dev/null || true
+          echo "✅ res + .import 清理完成"
 
       - name: Set compress_native_libraries=true and disable Godot signing
         run: |
