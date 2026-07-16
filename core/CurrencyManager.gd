@@ -118,4 +118,4 @@ func get_save_data() -> Dictionary:
 
 # ---- 内部 ----
 func _after_change() -> void:
-	EventBus.emit_currency_changed(gold_coins, diamonds, flower_petals)
+	EventBus.emit_currency_changed(gold_coins, diamonds, flower_petals, love_petals)

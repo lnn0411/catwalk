@@ -20,7 +20,7 @@ signal level_up(cat_id: String, from_level: int, to_level: int)
 signal postcard_obtained(postcard_id: String, location_type: String)
 signal weekly_spotlight_changed(location_type: String)
 signal signin_completed(day: int, reward: Dictionary)
-signal currency_changed(gold: int, diamonds: int, petals: int)
+signal currency_changed(gold: int, diamonds: int, petals: int, love_petals: int)
 signal inventory_changed(item_type: String, quantity: int)
 
 # 新增信号
@@ -92,8 +92,8 @@ func emit_weekly_spotlight_changed(location_type: String) -> void:
 func emit_signin_completed(day: int, reward: Dictionary) -> void:
 	signin_completed.emit(day, reward)
 
-func emit_currency_changed(gold: int, diamonds: int, petals: int) -> void:
-	currency_changed.emit(gold, diamonds, petals)
+func emit_currency_changed(gold: int, diamonds: int, petals: int, love_petals: int = 0) -> void:
+	currency_changed.emit(gold, diamonds, petals, love_petals)
 
 func emit_inventory_changed(item_type: String, quantity: int) -> void:
 	inventory_changed.emit(item_type, quantity)
