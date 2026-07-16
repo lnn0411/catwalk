@@ -871,6 +871,9 @@ func _cycle_garden_bg() -> void:
 	if tex != null:
 		_bg_sprite.texture = tex
 		print("[DBG] 切换花园背景: garden_%02d" % _bg_index)
+		# 同步更新猫咪走行区
+		if CatSpawner and CatSpawner.has_method("set_wander_zone"):
+			CatSpawner.set_wander_zone(_bg_index)
 	else:
 		print("[DBG] 加载失败: ", path)
 
