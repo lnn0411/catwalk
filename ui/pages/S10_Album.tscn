@@ -137,7 +137,7 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_top = 205.0
-offset_bottom = -280.0
+offset_bottom = -330.0
 grow_horizontal = 2
 grow_vertical = 0
 horizontal_scroll_mode = 0
@@ -155,7 +155,7 @@ theme_override_constants/margin_bottom = 24
 layout_mode = 2
 columns = 2
 theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = -55
+theme_override_constants/v_separation = 0
 
 [node name="Placeholder01" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
