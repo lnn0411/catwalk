@@ -63,9 +63,13 @@ grow_horizontal = 2
 theme_override_constants/separation = 6
 alignment = 1
 
+
+[node name="CatSpacer" type="Control" parent="TabBar"]
+custom_minimum_size = Vector2(10, 1)
+layout_mode = 2
+mouse_filter = 2
 [node name="TabCats" type="TextureButton" parent="TabBar"]
 custom_minimum_size = Vector2(282, 120)
-offset_left = 10
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("4_tab_selected")
