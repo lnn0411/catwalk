@@ -2,11 +2,15 @@ extends Control
 
 signal closed
 
+const BTN_EXPLORE_NORMAL := preload("res://assets/art/ui/catcard/btn_explore_normal.png")
+const BTN_EXPLORE_HOVER := preload("res://assets/art/ui/catcard/btn_explore_hover.png")
+const BTN_EXPLORE_PRESSED := preload("res://assets/art/ui/catcard/btn_explore_pressed.png")
+
 var _cat_name := "猫咪"
 var _reward_type := "postcard"
 var _title: Label
 var _body: Label
-var _panel: PanelContainer
+var _card: Control
 var _spotlight_badge: ColorRect
 var _spotlight_active := false
 
@@ -41,49 +45,95 @@ func set_spotlight(spotlight_location_type: String, postcard_data: Dictionary = 
 
 
 func _build_ui() -> void:
+	# 遮罩
 	var dim := ColorRect.new()
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0, 0, 0, 0.5)
 	add_child(dim)
 
-	var card := Control.new()
-	_center_control(card, Vector2(560, 360))
-	add_child(card)
+	_card = Control.new()
+	_center_control(_card, Vector2(560, 320))
+	add_child(_card)
 
-	_panel = PanelContainer.new()
-	_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_style_panel(_panel)
-	card.add_child(_panel)
+	# 面板底图 — 用白色圆角垫底
+	var panel := ColorRect.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel.color = Color("#F5EFE6")
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color("#F5EFE6")
+	panel_style.set_corner_radius_all(12)
+	panel_style.set_border_width_all(2)
+	panel_style.border_color = Color(0.35, 0.25, 0.2, 0.3)
+	panel.add_theme_stylebox_override("panel", panel_style)
+	_card.add_child(panel)
 
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 16)
-	_panel.add_child(box)
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.add_theme_constant_override("separation", 12)
+	panel.add_child(box)
 
+	# 顶部内边距容器
+	var top_margin := MarginContainer.new()
+	top_margin.add_theme_constant_override("margin_top", 30)
+	top_margin.add_theme_constant_override("margin_left", 24)
+	top_margin.add_theme_constant_override("margin_right", 24)
+	box.add_child(top_margin)
+
+	var inner_vbox := VBoxContainer.new()
+	inner_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner_vbox.add_theme_constant_override("separation", 12)
+	top_margin.add_child(inner_vbox)
+
+	# 标题
 	_title = Label.new()
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_style_label(_title, 27, Palette.AMBER)
-	box.add_child(_title)
+	_title.add_theme_color_override("font_color", Color("#4F453C"))
+	_title.add_theme_font_size_override("font_size", 27)
+	inner_vbox.add_child(_title)
 
+	# 图片占位区
 	var art := ColorRect.new()
-	art.custom_minimum_size = Vector2(0, 130)
-	art.color = Color("#F6E6C8")
-	box.add_child(art)
+	art.custom_minimum_size = Vector2(0, 100)
+	art.color = Color(0.92, 0.88, 0.82, 0.6)
+	art.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner_vbox.add_child(art)
 
+	# 描述
 	_body = Label.new()
 	_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(_body, 16, Color.WHITE)
-	box.add_child(_body)
+	_body.add_theme_color_override("font_color", Color("#7A6E63"))
+	_body.add_theme_font_size_override("font_size", 16)
+	_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	inner_vbox.add_child(_body)
 
-	var ok := Button.new()
-	ok.text = "收下"
-	ok.custom_minimum_size = Vector2(0, 52)
-	_style_button(ok)
-	ok.pressed.connect(func() -> void:
+	# 收下按钮
+	var ok_btn := TextureButton.new()
+	ok_btn.name = "OkBtn"
+	ok_btn.custom_minimum_size = Vector2(200, 50)
+	ok_btn.texture_normal = BTN_EXPLORE_NORMAL
+	ok_btn.texture_hover = BTN_EXPLORE_HOVER
+	ok_btn.texture_pressed = BTN_EXPLORE_PRESSED
+	ok_btn.ignore_texture_size = true
+	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
+	ok_btn.pressed.connect(func() -> void:
 		closed.emit()
 	)
-	box.add_child(ok)
+	inner_vbox.add_child(ok_btn)
 
+	# Text label for button (normal label since btn_explore has no text)
+	var ok_label := Label.new()
+	ok_label.name = "OkLabel"
+	ok_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ok_label.text = "收下"
+	ok_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ok_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ok_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ok_label.add_theme_color_override("font_color", Color("#4F453C"))
+	ok_label.add_theme_font_size_override("font_size", 18)
+	ok_btn.add_child(ok_label)
+
+	# 聚光灯角标
 	_spotlight_badge = ColorRect.new()
 	_spotlight_badge.custom_minimum_size = Vector2(60, 60)
 	_spotlight_badge.size = Vector2(60, 60)
@@ -97,7 +147,7 @@ func _build_ui() -> void:
 	_spotlight_badge.offset_bottom = 76
 	_spotlight_badge.color = Color(1.0, 0.85, 0.4, 0.9)
 	_spotlight_badge.visible = false
-	card.add_child(_spotlight_badge)
+	_card.add_child(_spotlight_badge)
 
 	var badge_label := Label.new()
 	badge_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -105,7 +155,8 @@ func _build_ui() -> void:
 	badge_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	badge_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	badge_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_style_label(badge_label, 11, Color.WHITE)
+	badge_label.add_theme_color_override("font_color", Color.WHITE)
+	badge_label.add_theme_font_size_override("font_size", 11)
 	_spotlight_badge.add_child(badge_label)
 	_refresh_spotlight_visual()
 
@@ -121,67 +172,22 @@ func _refresh_text() -> void:
 func _refresh_spotlight_visual() -> void:
 	if _spotlight_badge != null:
 		_spotlight_badge.visible = _spotlight_active
-	if _panel != null:
-		_style_panel(_panel, _spotlight_active)
 
 
 func _title_text(reward_type: String) -> String:
 	match reward_type:
-		"ingredient":
-			return "新食材"
-		"decoration":
-			return "新装饰"
-		"hidden":
-			return "隐藏发现"
-		_:
-			return "城市明信片"
+		"ingredient": return "新食材"
+		"decoration": return "新装饰"
+		"hidden":     return "隐藏发现"
+		_:           return "城市明信片"
 
 
 func _body_text(reward_type: String) -> String:
 	match reward_type:
-		"ingredient":
-			return "带回了一份可以收藏的探索食材。"
-		"decoration":
-			return "找到了适合小窝的新装饰灵感。"
-		"hidden":
-			return "发现了一处平时看不见的秘密角落。"
-		_:
-			return "从城市的一角寄回了新的风景。"
-
-
-func _style_label(label: Label, font_size: int, color: Color) -> void:
-	label.add_theme_color_override("font_color", color)
-	label.add_theme_font_size_override("font_size", font_size)
-
-
-func _style_button(button: Button) -> void:
-	button.add_theme_color_override("font_color", Color.WHITE)
-	button.add_theme_font_size_override("font_size", 18)
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = Palette.AMBER
-	normal.set_corner_radius_all(8)
-	button.add_theme_stylebox_override("normal", normal)
-	var hover := StyleBoxFlat.new()
-	hover.bg_color = Palette.AMBER.lightened(0.08)
-	hover.set_corner_radius_all(8)
-	button.add_theme_stylebox_override("hover", hover)
-	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = Palette.UI_PRESSED_AMBER
-	pressed.set_corner_radius_all(8)
-	button.add_theme_stylebox_override("pressed", pressed)
-
-
-func _style_panel(panel: PanelContainer, spotlight_active: bool = false) -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("#3C2A1C")
-	style.border_color = Color(1.0, 0.85, 0.4, 1.0) if spotlight_active else Palette.AMBER
-	style.set_border_width_all(4 if spotlight_active else 2)
-	style.set_corner_radius_all(10)
-	style.content_margin_left = 24
-	style.content_margin_top = 24
-	style.content_margin_right = 24
-	style.content_margin_bottom = 24
-	panel.add_theme_stylebox_override("panel", style)
+		"ingredient": return "带回了一份可以收藏的探索食材。"
+		"decoration": return "找到了适合小窝的新装饰灵感。"
+		"hidden":     return "发现了一处平时看不见的秘密角落。"
+		_:           return "从城市的一角寄回了新的风景。"
 
 
 func _center_control(control: Control, control_size: Vector2) -> void:
