@@ -33,8 +33,16 @@ var _connected := false
 
 func _ready() -> void:
 	_connect_step_engine()
-	# 冷启动首帧过早，UIManager 根页面可能还没就绪；延后一拍再评估小结。
-	call_deferred("_evaluate_summary_on_start")
+	# 散步小结延迟到花园加载完成后展示（避免在加载页一闪而过）
+	if UIManager and UIManager.has_signal("page_changed") and not UIManager.page_changed.is_connected(_on_page_changed_for_summary):
+		UIManager.page_changed.connect(_on_page_changed_for_summary)
+
+
+func _on_page_changed_for_summary(page_name: String) -> void:
+	if page_name == "S04_GardenMain":
+		_evaluate_summary_on_start()
+		if UIManager and UIManager.page_changed.is_connected(_on_page_changed_for_summary):
+			UIManager.page_changed.disconnect(_on_page_changed_for_summary)
 
 
 # app 从后台回到前台：可能已经跨天，需要重新评估小结与每日重置。
