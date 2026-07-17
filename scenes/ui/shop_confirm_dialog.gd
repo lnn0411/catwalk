@@ -1,11 +1,16 @@
 extends Control
 
-const DIALOG_SIZE := Vector2(507.0, 420.0)
-const DESIGN_SIZE := Vector2(720.0, 1280.0)
+const POPUP_BG := preload("res://assets/art/ui/panels/popup_bg.png")
+const BTN_CONFIRM := preload("res://assets/art/ui/incubation/components/btn_confirm_name.png")
+const BTN_SECONDARY := preload("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
+const DIALOG_SIZE := Vector2(560, 380)
+const TEXT_PRIMARY := Color("#4F453C")
+const TEXT_SECONDARY := Color("#A2978C")
 
 var product: Dictionary = {}
 var on_confirm: Callable
 var on_cancel: Callable
+
 
 func setup(p: Dictionary, confirm_cb: Callable, cancel_cb: Callable) -> void:
 	product = p
@@ -13,55 +18,59 @@ func setup(p: Dictionary, confirm_cb: Callable, cancel_cb: Callable) -> void:
 	on_cancel = cancel_cb
 	_build_ui()
 
+
 func _build_ui() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+
+	# 淡入
 	modulate.a = 0.0
 	var fade_in := create_tween()
 	fade_in.tween_property(self, "modulate:a", 1.0, 0.16)
 
-	var font := ThemeDB.fallback_font
-	# Backdrop
-	var shade := Color(Palette.TEXT_PRIMARY)
-	shade.a = 0.5
-	var backdrop := ColorRect.new()
-	backdrop.color = shade
-	backdrop.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	backdrop.mouse_filter = Control.MOUSE_FILTER_STOP
-	backdrop.gui_input.connect(_on_backdrop_input)
-	add_child(backdrop)
+	# 遮罩
+	var shade := ColorRect.new()
+	shade.color = Color(0, 0, 0, 0.5)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	shade.gui_input.connect(_on_backdrop_input)
+	add_child(shade)
 
-	# Dialog card
-	var dialog := PanelContainer.new()
-	dialog.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	dialog.custom_minimum_size = DIALOG_SIZE
-	var bg := StyleBoxFlat.new()
-	bg.bg_color = Palette.BG_WARM_WHITE
-	bg.set_corner_radius_all(8)
-	bg.set_border_width_all(1)
-	bg.border_color = Palette.BORDER_DEFAULT
-	bg.shadow_color = Palette.UI_SHADOW_MID
-	bg.shadow_size = 8
-	dialog.add_theme_stylebox_override("panel", bg)
-	add_child(dialog)
+	# 弹窗面板
+	var card := Control.new()
+	_center_control(card, DIALOG_SIZE)
+	add_child(card)
+
+	var panel := TextureRect.new()
+	panel.texture = POPUP_BG
+	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	panel.stretch_mode = TextureRect.STRETCH_SCALE
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	card.add_child(panel)
+
+	var outer_margin := MarginContainer.new()
+	outer_margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	outer_margin.add_theme_constant_override("margin_left", 30)
+	outer_margin.add_theme_constant_override("margin_right", 30)
+	outer_margin.add_theme_constant_override("margin_top", 30)
+	outer_margin.add_theme_constant_override("margin_bottom", 20)
+	panel.add_child(outer_margin)
 
 	var vb := VBoxContainer.new()
-	vb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	vb.add_theme_constant_override("separation", 8)
-	dialog.add_child(vb)
+	outer_margin.add_child(vb)
 
 	# Title
 	var title := Label.new()
 	title.text = "确认购买？"
-	title.add_theme_font_size_override("font_size", 21)
+	title.add_theme_font_size_override("font_size", 27)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+	title.add_theme_color_override("font_color", TEXT_PRIMARY)
 	vb.add_child(title)
 
 	# Spacer
-	var spacer := Control.new()
-	spacer.custom_minimum_size.y = 8
-	vb.add_child(spacer)
+	vb.add_child(Control.new())
 
 	# Product info
 	var icon: String = String(product.get("icon", "🎁"))
@@ -86,73 +95,98 @@ func _build_ui() -> void:
 	nl.text = pname
 	nl.add_theme_font_size_override("font_size", 18)
 	nl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	nl.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+	nl.add_theme_color_override("font_color", TEXT_PRIMARY)
 	info.add_child(nl)
 
 	var dl := Label.new()
 	dl.text = pdesc
 	dl.add_theme_font_size_override("font_size", 14)
 	dl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	dl.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	dl.add_theme_color_override("font_color", TEXT_SECONDARY)
 	info.add_child(dl)
 
 	var pl := Label.new()
 	pl.text = "%s %d" % [cur_icon, price]
 	pl.add_theme_font_size_override("font_size", 20)
 	pl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	pl.add_theme_color_override("font_color", Palette.AMBER)
+	pl.add_theme_color_override("font_color", Color("#D89B42"))
 	info.add_child(pl)
 
-	# Spacer
+	# 撑满
 	vb.add_child(Control.new())
 
-	# Buttons row
+	# 按钮行
 	var hb := HBoxContainer.new()
 	hb.alignment = BoxContainer.ALIGNMENT_CENTER
-	hb.add_theme_constant_override("separation", 24)
-	hb.custom_minimum_size.y = 48
+	hb.add_theme_constant_override("separation", 16)
 	vb.add_child(hb)
 
-	var cancel_btn := Button.new()
-	cancel_btn.text = "取消"
-	cancel_btn.custom_minimum_size = Vector2(140, 44)
+	# 取消按钮
+	var cancel_btn := TextureButton.new()
+	cancel_btn.custom_minimum_size = Vector2(170, 70)
+	cancel_btn.texture_normal = BTN_SECONDARY
+	cancel_btn.ignore_texture_size = true
+	cancel_btn.stretch_mode = TextureButton.STRETCH_SCALE
 	cancel_btn.pressed.connect(_on_cancel_clicked)
-	_style_button(cancel_btn, Palette.BG_CEMENT, Palette.TEXT_PRIMARY)
 	hb.add_child(cancel_btn)
 
-	var confirm_btn := Button.new()
-	confirm_btn.text = "确认购买"
-	confirm_btn.custom_minimum_size = Vector2(140, 44)
+	var cancel_label := Label.new()
+	cancel_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	cancel_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	cancel_label.text = "取消"
+	cancel_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	cancel_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cancel_label.add_theme_font_size_override("font_size", 18)
+	cancel_label.add_theme_color_override("font_color", TEXT_PRIMARY)
+	cancel_btn.add_child(cancel_label)
+
+	# 确认购买按钮
+	var confirm_btn := TextureButton.new()
+	confirm_btn.custom_minimum_size = Vector2(170, 70)
+	confirm_btn.texture_normal = BTN_CONFIRM
+	confirm_btn.ignore_texture_size = true
+	confirm_btn.stretch_mode = TextureButton.STRETCH_SCALE
 	confirm_btn.pressed.connect(_on_confirm_clicked)
-	_style_button(confirm_btn, Palette.AMBER, Palette.TEXT_ON_AMBER)
 	hb.add_child(confirm_btn)
 
-func _style_button(btn: Button, bg_color: Color, text_color: Color) -> void:
-	var normal := StyleBoxFlat.new()
-	normal.bg_color = bg_color
-	normal.set_corner_radius_all(6)
-	btn.add_theme_stylebox_override("normal", normal)
-	btn.add_theme_color_override("font_color", text_color)
-	btn.add_theme_font_size_override("font_size", 16)
+	var confirm_label := Label.new()
+	confirm_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	confirm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	confirm_label.text = "确认购买"
+	confirm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	confirm_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	confirm_label.add_theme_font_size_override("font_size", 18)
+	confirm_label.add_theme_color_override("font_color", TEXT_PRIMARY)
+	confirm_btn.add_child(confirm_label)
 
-	var pressed := StyleBoxFlat.new()
-	pressed.bg_color = bg_color.darkened(0.15)
-	pressed.set_corner_radius_all(6)
-	btn.add_theme_stylebox_override("pressed", pressed)
+
+func _center_control(control: Control, control_size: Vector2) -> void:
+	control.anchor_left = 0.5
+	control.anchor_top = 0.5
+	control.anchor_right = 0.5
+	control.anchor_bottom = 0.5
+	control.offset_left = -control_size.x * 0.5
+	control.offset_top = -control_size.y * 0.5
+	control.offset_right = control_size.x * 0.5
+	control.offset_bottom = control_size.y * 0.5
+
 
 func _on_backdrop_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		_on_cancel_clicked()
+
 
 func _on_confirm_clicked() -> void:
 	if on_confirm.is_valid():
 		on_confirm.call()
 	_close()
 
+
 func _on_cancel_clicked() -> void:
 	if on_cancel.is_valid():
 		on_cancel.call()
 	_close()
+
 
 func _close() -> void:
 	var fade := create_tween()
