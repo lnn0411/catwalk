@@ -127,6 +127,26 @@ func get_progress(id: String) -> float:
 	return 0.0
 
 
+func get_current_value(id: String) -> float:
+	var def_dict := _find_def(id)
+	if def_dict.is_empty():
+		return 0.0
+	var type: String = String(def_dict.get("type", ""))
+	match type:
+		"steps_total": return float(_total_steps)
+		"steps_streak": return float(_step_streak)
+		"hatch_count": return float(_hatch_count)
+		"album_entries": return float(_album_entry_count)
+		"breeds_all": return float(_collected_breeds.size())
+		"cat_level": return float(_max_level)
+		"affection": return float(_max_affection)
+		"postcards": return float(_postcard_count)
+		"city_postcards": return float(_city_postcard_count)
+		"midnight": return 1.0 if _midnight_accessed else 0.0
+		"friend_streak": return float(_cat_streak.size())
+	return 0.0
+
+
 func get_unlocked_count() -> int:
 	return _unlocked.size()
 
