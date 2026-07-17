@@ -3,9 +3,7 @@ extends Control
 signal closed
 
 const POPUP_BG := preload("res://assets/art/ui/panels/popup_bg.png")
-const BTN_EXPLORE_NORMAL := preload("res://assets/art/ui/catcard/btn_explore_normal.png")
-const BTN_EXPLORE_HOVER := preload("res://assets/art/ui/catcard/btn_explore_hover.png")
-const BTN_EXPLORE_PRESSED := preload("res://assets/art/ui/catcard/btn_explore_pressed.png")
+const BTN_CONFIRM := preload("res://assets/art/ui/incubation/components/btn_confirm_name.png")
 
 var _cat_name := "猫咪"
 var _reward_type := "postcard"
@@ -108,9 +106,7 @@ func _build_ui() -> void:
 	var ok_btn := TextureButton.new()
 	ok_btn.name = "OkBtn"
 	ok_btn.custom_minimum_size = Vector2(200, 50)
-	ok_btn.texture_normal = BTN_EXPLORE_NORMAL
-	ok_btn.texture_hover = BTN_EXPLORE_HOVER
-	ok_btn.texture_pressed = BTN_EXPLORE_PRESSED
+	ok_btn.texture_normal = BTN_CONFIRM
 	ok_btn.ignore_texture_size = true
 	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
 	ok_btn.pressed.connect(func() -> void:
