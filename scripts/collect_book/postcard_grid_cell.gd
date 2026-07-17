@@ -26,7 +26,7 @@ var _is_known: bool = false
 
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(300, 220)
+	custom_minimum_size = Vector2(330, 220)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	gui_input.connect(_on_gui_input)
 

@@ -10,7 +10,7 @@ const LOCATION_COLORS := {
 	"bookstore": Color(0.7, 0.5, 0.4),
 	"flower": Color(0.9, 0.6, 0.7),
 }
-const CARD_SIZE := Vector2(540, 720)
+const CARD_SIZE := Vector2(540, 360)
 const PAPER_COLOR := Color(0.96, 0.93, 0.85)
 
 var _data
@@ -161,7 +161,7 @@ func _draw_front(c: Control, font: Font, rect: Rect2) -> void:
 	c.draw_rect(rect, col, true)
 	c.draw_rect(rect, Color(1, 1, 1, 0.6), false, 5.0)
 	# 内框装饰
-	c.draw_rect(Rect2(30, 30, CARD_SIZE.x - 60, CARD_SIZE.y - 60), Color(1, 1, 1, 0.4), false, 2.0)
+	c.draw_rect(Rect2(30, 15, CARD_SIZE.x - 60, CARD_SIZE.y - 30), Color(1, 1, 1, 0.4), false, 2.0)
 
 	_text(c, font, lname, 40, Color(0.1, 0.1, 0.1), CARD_SIZE.y * 0.45)
 	_text(c, font, _type_label(ltype), 24, Color(0.2, 0.2, 0.2, 0.85), CARD_SIZE.y * 0.55)
@@ -176,40 +176,40 @@ func _draw_back(c: Control, font: Font, rect: Rect2) -> void:
 
 	# 中线分隔 (左文字区, 右地址区)
 	var mid_x := CARD_SIZE.x * 0.62
-	c.draw_line(Vector2(mid_x, 60), Vector2(mid_x, CARD_SIZE.y - 60), Color(0.7, 0.65, 0.55, 0.6), 2.0)
+	c.draw_line(Vector2(mid_x, 30), Vector2(mid_x, CARD_SIZE.y - 30), Color(0.7, 0.65, 0.55, 0.6), 2.0)
 
 	# 邮戳 (右上圆形)
-	var stamp_c := Vector2(CARD_SIZE.x - 90, 100)
+	var stamp_c := Vector2(CARD_SIZE.x - 90, 50)
 	c.draw_arc(stamp_c, 50, 0, TAU, 32, Color(0.55, 0.35, 0.3, 0.7), 3.0)
 	c.draw_arc(stamp_c, 42, 0, TAU, 32, Color(0.55, 0.35, 0.3, 0.5), 2.0)
 	var date_str := _today_str()
 	var ds_w := font.get_string_size(date_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
-	c.draw_string(font, stamp_c - Vector2(ds_w * 0.5, -4), date_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.55, 0.35, 0.3, 0.85))
+	c.draw_string(font, stamp_c - Vector2(ds_w * 0.5, -2), date_str, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.55, 0.35, 0.3, 0.85))
 
 	# 手写文字区横线
 	var sender: String = _data.sender_cat_species if "sender_cat_species" in _data else "一只猫"
 	var lname: String = _data.location_name if "location_name" in _data else String(_data.id)
 	var msg: String = _data.back_text if "back_text" in _data else "今天的风景很好，想与你分享。"
 
-	var line_y := 180.0
+	var line_y := 90.0
 	var line_x0 := 50.0
 	var line_x1 := mid_x - 30.0
 	for i in range(6):
 		c.draw_line(Vector2(line_x0, line_y), Vector2(line_x1, line_y), Color(0.7, 0.65, 0.55, 0.4), 1.5)
-		line_y += 44.0
+		line_y += 22.0
 
 	# 手写正文 (简单换行)
-	_draw_wrapped(c, font, msg, 22, Color(0.25, 0.2, 0.15), line_x0 + 4, 172.0, line_x1 - line_x0 - 8, 44.0)
+	_draw_wrapped(c, font, msg, 22, Color(0.25, 0.2, 0.15), line_x0 + 4, 86.0, line_x1 - line_x0 - 8, 22.0)
 
 	# 落款
-	c.draw_string(font, Vector2(line_x0 + 6, CARD_SIZE.y - 120), "—— 来自 " + sender, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.25, 0.2, 0.15))
-	c.draw_string(font, Vector2(line_x0 + 6, CARD_SIZE.y - 90), "寄自 " + lname, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0.35, 0.3, 0.25))
+	c.draw_string(font, Vector2(line_x0 + 6, CARD_SIZE.y - 60), "—— 来自 " + sender, HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.25, 0.2, 0.15))
+	c.draw_string(font, Vector2(line_x0 + 6, CARD_SIZE.y - 45), "寄自 " + lname, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0.35, 0.3, 0.25))
 
 	# 收件区
-	c.draw_string(font, Vector2(mid_x + 20, 220), "TO:", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.35, 0.3, 0.25))
-	c.draw_string(font, Vector2(mid_x + 20, 260), "亲爱的你", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0.3, 0.25, 0.2))
+	c.draw_string(font, Vector2(mid_x + 20, 110), "TO:", HORIZONTAL_ALIGNMENT_LEFT, -1, 22, Color(0.35, 0.3, 0.25))
+	c.draw_string(font, Vector2(mid_x + 20, 130), "亲爱的你", HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(0.3, 0.25, 0.2))
 	for i in range(3):
-		var ly := 300.0 + i * 40.0
+		var ly := 150.0 + i * 20.0
 		c.draw_line(Vector2(mid_x + 20, ly), Vector2(CARD_SIZE.x - 50, ly), Color(0.7, 0.65, 0.55, 0.4), 1.5)
 
 	_text(c, font, "美术待补", 18, Color(0.4, 0.35, 0.3, 0.6), CARD_SIZE.y * 0.96)
