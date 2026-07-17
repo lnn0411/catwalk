@@ -13,16 +13,16 @@ const ICON_CHECK := preload("res://assets/art/delivery/achievement/ach_icon_chec
 const ICON_DIAMOND := preload("res://assets/art/delivery/achievement/ach_icon_diamond.png")
 const ICON_COIN := preload("res://assets/art/delivery/achievement/ach_icon_coin.png")
 
-const COLOR_CARD_BG := Color("0xfffff7")
-const COLOR_CARD_BORDER_LIGHT := Color("0xeae0cf")
-const COLOR_CARD_BORDER_DARK := Color("0xd4c5a8")
-const COLOR_TEXT_PRIMARY := Color("0x4f453c")
-const COLOR_TEXT_SECONDARY := Color("0xa2978c")
-const COLOR_TEXT_LOCKED := Color("0xc0b8a8")
-const COLOR_PROGRESS_BG := Color("0xf6efe2")
-const COLOR_PROGRESS_FILL := Color("0xf2c572")
-const COLOR_GREEN_CHECK := Color("0x4db34d")
-const COLOR_GOLD := Color("0xe6a61a")
+const COLOR_CARD_BG := Color("#fffff7")
+const COLOR_CARD_BORDER_LIGHT := Color("#eae0cf")
+const COLOR_CARD_BORDER_DARK := Color("#d4c5a8")
+const COLOR_TEXT_PRIMARY := Color("#4f453c")
+const COLOR_TEXT_SECONDARY := Color("#a2978c")
+const COLOR_TEXT_LOCKED := Color("#c0b8a8")
+const COLOR_PROGRESS_BG := Color("#f6efe2")
+const COLOR_PROGRESS_FILL := Color("#f2c572")
+const COLOR_GREEN_CHECK := Color("#4db34d")
+const COLOR_GOLD := Color("#e6a61a")
 
 const CATEGORIES := [
 	{"id": "steps", "name": "步数"},

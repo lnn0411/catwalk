@@ -11,8 +11,8 @@ const BANNER_WIDTH := 620
 const BANNER_HEIGHT := 120
 const FONT_SIZE_TITLE := 20
 const FONT_SIZE_REWARD := 15
-const FONT_COLOR_TITLE := Color("0x4f453c")
-const FONT_COLOR_REWARD := Color("0x7a6e63")
+const FONT_COLOR_TITLE := Color("#4f453c")
+const FONT_COLOR_REWARD := Color("#7a6e63")
 const PANEL_BG := Color(0.98, 0.94, 0.84, 0.98)
 const PANEL_CORNER := 18.0
 const SHADOW_SIZE := 12
@@ -141,19 +141,19 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	confirm.focus_mode = Control.FOCUS_NONE
 	
 	var btn_style := StyleBoxFlat.new()
-	btn_style.bg_color = Color("0xd4b896")
+	btn_style.bg_color = Color("#d4b896")
 	btn_style.set_corner_radius_all(22)
 	btn_style.border_width_left = 2
 	btn_style.border_width_top = 2
 	btn_style.border_width_right = 2
 	btn_style.border_width_bottom = 2
-	btn_style.border_color = Color("0x5a4f45")
+	btn_style.border_color = Color("#5a4f45")
 	btn_style.content_margin_left = 8
 	btn_style.content_margin_right = 8
 	btn_style.content_margin_top = 4
 	btn_style.content_margin_bottom = 4
 	confirm.add_theme_stylebox_override("normal", btn_style)
-	confirm.add_theme_color_override("font_color", Color("0x4f453c"))
+	confirm.add_theme_color_override("font_color", Color("#4f453c"))
 	confirm.add_theme_font_size_override("font_size", 14)
 	confirm.text = "知道了"
 	content.add_child(confirm)
