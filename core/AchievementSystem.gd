@@ -535,10 +535,20 @@ func _try_show_next_achievement_popup() -> void:
 	content.add_theme_constant_override("separation", 14)
 	margin.add_child(content)
 
-	var icon := ColorRect.new()
+	var ach_category := String(definition.get("category", ""))
+	var icon_path := "res://assets/art/delivery/achievement/ach_icon_%s.png" % {
+		"steps": "steps", "collection": "collection", "growth": "growth",
+		"postcards": "postcard", "easter_egg": "easter",
+	}.get(ach_category, "steps")
+	var icon := TextureRect.new()
 	icon.custom_minimum_size = Vector2(64.0, 64.0)
-	icon.color = Color(0.88, 0.65, 0.28, 1.0)
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if ResourceLoader.exists(icon_path):
+		icon.texture = load(icon_path)
+	else:
+		icon.modulate = Color(0.88, 0.65, 0.28, 1.0)
 	content.add_child(icon)
 
 	var copy := VBoxContainer.new()
