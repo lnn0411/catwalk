@@ -1,6 +1,5 @@
-# AchievementSystem — 成就系统 (Autoload)
-# 不要加 class_name，autoload 注册已提供全局名称
 extends Node
+class_name AchievementSystem
 
 signal achievement_unlocked(id: String, reward: Dictionary)
 
@@ -51,8 +50,9 @@ var _step_streak: int = 0
 var _step_streak_checked_today: String = ""
 var _daily_step_accumulator: int = 0
 
-# D2: per-cat daily interaction streak
+# D2: per-cat daily interaction count + streak
 var _cat_streak: Dictionary = {}
+var _cat_daily_interaction_count: Dictionary = {}
 var _cat_streak_checked_today: String = ""
 
 # D1: midnight flag
@@ -143,7 +143,11 @@ func get_current_value(id: String) -> float:
 		"postcards": return float(_postcard_count)
 		"city_postcards": return float(_city_postcard_count)
 		"midnight": return 1.0 if _midnight_accessed else 0.0
-		"friend_streak": return float(_cat_streak.size())
+		"friend_streak": 
+			var best := 0
+			for cat_id in _cat_streak:
+				best = max(best, int(_cat_streak[cat_id]))
+			return float(best)
 	return 0.0
 
 
@@ -177,6 +181,7 @@ func get_save_data() -> Dictionary:
 		"daily_step_accumulator": _daily_step_accumulator,
 		"step_streak_checked_today": _step_streak_checked_today,
 		"cat_streak": _cat_streak.duplicate(),
+		"cat_daily_interaction_count": _cat_daily_interaction_count.duplicate(),
 		"cat_streak_checked_today": _cat_streak_checked_today,
 		"midnight_accessed": _midnight_accessed,
 	}
@@ -206,6 +211,9 @@ func apply_save(data: Dictionary) -> void:
 	_cat_streak = {}
 	for k in Dictionary(data.get("cat_streak", {})):
 		_cat_streak[String(k)] = max(int(data["cat_streak"][k]), 0)
+	_cat_daily_interaction_count = {}
+	for k in Dictionary(data.get("cat_daily_interaction_count", {})):
+		_cat_daily_interaction_count[String(k)] = max(int(data["cat_daily_interaction_count"][k]), 0)
 	_cat_streak_checked_today = String(data.get("cat_streak_checked_today", ""))
 	_midnight_accessed = bool(data.get("midnight_accessed", false))
 
@@ -230,6 +238,7 @@ func reset_all() -> void:
 	_daily_step_accumulator = 0
 	_step_streak_checked_today = ""
 	_cat_streak = {}
+	_cat_daily_interaction_count = {}
 	_cat_streak_checked_today = ""
 	_midnight_accessed = false
 
@@ -374,6 +383,10 @@ func _try_unlock(id: String, skip_reward := false) -> void:
 		var amount: int = int(reward.get("diamonds", 0))
 		if amount > 0 and CurrencyManager:
 			CurrencyManager.add_diamonds(amount, "achievement:" + id)
+	# Non-currency rewards (title, garden_decor, etc.) - log warning as they're not yet implemented
+	for rkey in reward:
+		if rkey not in ["gold_coins", "diamonds"]:
+			push_warning("AchievementSystem: non-currency reward '%s' for achievement '%s' not yet implemented" % [rkey, id])
 
 	achievement_unlocked.emit(id, reward)
 	if EventBus:
@@ -441,10 +454,20 @@ func _record_daily_step_met(steps: int) -> void:
 			_check_def(def_dict)
 
 
-func _record_daily_interaction(cat_id: String, count: int) -> void:
+func _record_daily_interaction(cat_id: String, _count: int) -> void:
 	if cat_id == "":
 		return
-	if count >= 3:
+
+	var today := _today_key()
+	if _cat_streak_checked_today != today:
+		_cat_streak_checked_today = today
+		_cat_daily_interaction_count = {}
+
+	if not _cat_daily_interaction_count.has(cat_id):
+		_cat_daily_interaction_count[cat_id] = 0
+	_cat_daily_interaction_count[cat_id] = int(_cat_daily_interaction_count[cat_id]) + 1
+
+	if int(_cat_daily_interaction_count[cat_id]) >= 3:
 		if not _cat_streak.has(cat_id):
 			_cat_streak[cat_id] = 0
 		_cat_streak[cat_id] = int(_cat_streak[cat_id]) + 1
@@ -480,138 +503,9 @@ func _is_city_postcard(postcard_id: String, location_type: String) -> bool:
 
 
 func show_achievement_unlock(achievement_id: String, reward: Dictionary) -> void:
-	_achievement_popup_queue.append({
-		"id": achievement_id,
-		"reward": reward.duplicate(true),
-	})
-	_try_show_next_achievement_popup()
-
-
-func _try_show_next_achievement_popup() -> void:
-	if _achievement_popup_active:
-		return
-	if _achievement_popups_shown >= MAX_ACHIEVEMENT_POPUPS_PER_SESSION:
-		return
-	if _achievement_popup_queue.is_empty() or not is_inside_tree():
-		return
-
-	var popup_data: Dictionary = _achievement_popup_queue.pop_front()
-	var achievement_id := String(popup_data.get("id", ""))
-	var reward := Dictionary(popup_data.get("reward", {}))
-	var definition := _find_def(achievement_id)
-	var achievement_name := String(definition.get("name", achievement_id))
-
-	var layer := CanvasLayer.new()
-	layer.name = "AchievementUnlockLayer"
-	layer.layer = 100
-	add_child(layer)
-
-	var banner := PanelContainer.new()
-	banner.name = "AchievementUnlockBanner"
-	banner.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	banner.offset_left = -310.0
-	banner.offset_right = 310.0
-	banner.offset_top = -120.0
-	banner.offset_bottom = -8.0
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color(0.98, 0.94, 0.84, 0.98)
-	panel_style.corner_radius_top_left = 18
-	panel_style.corner_radius_top_right = 18
-	panel_style.corner_radius_bottom_left = 18
-	panel_style.corner_radius_bottom_right = 18
-	panel_style.shadow_color = Color(0.15, 0.1, 0.05, 0.24)
-	panel_style.shadow_size = 12
-	banner.add_theme_stylebox_override("panel", panel_style)
-	layer.add_child(banner)
-
-	var margin := MarginContainer.new()
-	margin.add_theme_constant_override("margin_left", 18)
-	margin.add_theme_constant_override("margin_right", 18)
-	margin.add_theme_constant_override("margin_top", 14)
-	margin.add_theme_constant_override("margin_bottom", 14)
-	banner.add_child(margin)
-
-	var content := HBoxContainer.new()
-	content.add_theme_constant_override("separation", 14)
-	margin.add_child(content)
-
-	var ach_category := String(definition.get("category", ""))
-	var icon_path := "res://assets/art/delivery/achievement/ach_icon_%s.png" % {
-		"steps": "steps", "collection": "collection", "growth": "growth",
-		"postcards": "postcard", "easter_egg": "easter",
-	}.get(ach_category, "steps")
-	var icon := TextureRect.new()
-	icon.custom_minimum_size = Vector2(64.0, 64.0)
-	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	if ResourceLoader.exists(icon_path):
-		icon.texture = load(icon_path)
-	else:
-		icon.modulate = Color(0.88, 0.65, 0.28, 1.0)
-	content.add_child(icon)
-
-	var copy := VBoxContainer.new()
-	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	copy.alignment = BoxContainer.ALIGNMENT_CENTER
-	content.add_child(copy)
-
-	var title := Label.new()
-	title.text = "成就解锁 · " + achievement_name
-	title.add_theme_font_size_override("font_size", 20)
-	title.add_theme_color_override("font_color", Color(0.28, 0.22, 0.17, 1.0))
-	copy.add_child(title)
-
-	var reward_label := Label.new()
-	reward_label.text = _format_reward_text(reward)
-	reward_label.add_theme_font_size_override("font_size", 15)
-	reward_label.add_theme_color_override("font_color", Color(0.48, 0.38, 0.27, 1.0))
-	copy.add_child(reward_label)
-
-	var confirm := Button.new()
-	confirm.text = "知道了"
-	confirm.custom_minimum_size = Vector2(88.0, 44.0)
-	confirm.focus_mode = Control.FOCUS_NONE
-	content.add_child(confirm)
-
-	var auto_dismiss := Timer.new()
-	auto_dismiss.one_shot = true
-	auto_dismiss.wait_time = 5.0
-	layer.add_child(auto_dismiss)
-	confirm.pressed.connect(_dismiss_achievement_popup.bind(layer, banner))
-	auto_dismiss.timeout.connect(_dismiss_achievement_popup.bind(layer, banner))
-
-	_achievement_popup_active = true
-	_achievement_popups_shown += 1
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.set_trans(Tween.TRANS_CUBIC)
-	tween.set_ease(Tween.EASE_OUT)
-	tween.tween_property(banner, "offset_top", 24.0, 0.4)
-	tween.tween_property(banner, "offset_bottom", 136.0, 0.4)
-	auto_dismiss.start()
-
-
-func _dismiss_achievement_popup(layer: CanvasLayer, banner: PanelContainer) -> void:
-	if not is_instance_valid(layer) or layer.has_meta("dismissing"):
-		return
-	layer.set_meta("dismissing", true)
-	var tween := create_tween()
-	tween.set_parallel(true)
-	tween.set_trans(Tween.TRANS_CUBIC)
-	tween.set_ease(Tween.EASE_IN)
-	tween.tween_property(banner, "offset_top", -12.0, 0.15)
-	tween.tween_property(banner, "offset_bottom", 100.0, 0.15)
-	tween.tween_property(banner, "modulate:a", 0.0, 0.15)
-	tween.set_parallel(false)
-	tween.tween_callback(_finish_achievement_popup.bind(layer))
-
-
-func _finish_achievement_popup(layer: CanvasLayer) -> void:
-	if is_instance_valid(layer):
-		layer.queue_free()
-	_achievement_popup_active = false
-	_try_show_next_achievement_popup()
+	# Delegated to AchievementUnlockPopup via signal
+	# Popup UI moved to scripts/collect_book/achievement_unlock_popup.gd
+	pass
 
 
 func _format_reward_text(reward: Dictionary) -> String:
