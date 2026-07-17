@@ -110,13 +110,13 @@ func _build_ui() -> void:
 	# 确定按钮
 	var ok_btn := TextureButton.new()
 	ok_btn.name = "OkBtn"
-	ok_btn.custom_minimum_size = Vector2(200, 50)
+	ok_btn.custom_minimum_size = Vector2(170, 70)
 	ok_btn.texture_normal = BTN_CONFIRM
 	ok_btn.ignore_texture_size = true
 	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
 	ok_btn.visible = false
 	ok_btn.disabled = true
-	ok_btn.position = Vector2((PANEL_SIZE.x - 200) * 0.5, PANEL_SIZE.y - 70)
+	ok_btn.position = Vector2((PANEL_SIZE.x - 170) * 0.5, PANEL_SIZE.y - 90)
 	ok_btn.pressed.connect(_on_ok)
 	panel.add_child(ok_btn)
 
