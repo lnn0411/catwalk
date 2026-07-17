@@ -1,5 +1,4 @@
 extends Node
-class_name AchievementSystem
 
 signal achievement_unlocked(id: String, reward: Dictionary)
 
