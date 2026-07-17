@@ -2,16 +2,14 @@ extends Control
 
 signal finished
 
-const CATCARD_PANEL := preload("res://assets/art/ui/catcard/catcard_panel.png")
-const CLOSE_NORMAL := preload("res://assets/art/ui/catcard/btn_close_normal.png")
-const CLOSE_HOVER := preload("res://assets/art/ui/catcard/btn_close_hover.png")
-const PANEL_SIZE := Vector2(600, 320)
-const BTN_CLOSE_SIZE := Vector2(44, 44)
+const POPUP_BG := preload("res://assets/art/ui/panels/popup_bg.png")
+const BTN_EXPLORE_NORMAL := preload("res://assets/art/ui/catcard/btn_explore_normal.png")
+const BTN_EXPLORE_HOVER := preload("res://assets/art/ui/catcard/btn_explore_hover.png")
+const BTN_EXPLORE_PRESSED := preload("res://assets/art/ui/catcard/btn_explore_pressed.png")
+const PANEL_SIZE := Vector2(560, 280)
 
 var _cat_name := "猫咪"
 var _reward_type := "postcard"
-var _cat_species := ""
-var _cat_level := 1
 
 
 func _ready() -> void:
@@ -21,11 +19,9 @@ func _ready() -> void:
 	_build_ui()
 
 
-func play(cat_name: String, reward_type: String, species: String = "", level: int = 1) -> void:
+func play(cat_name: String, reward_type: String) -> void:
 	_cat_name = cat_name
 	_reward_type = reward_type
-	_cat_species = species
-	_cat_level = level
 	_refresh_labels()
 
 	modulate.a = 0.0
@@ -36,22 +32,20 @@ func play(cat_name: String, reward_type: String, species: String = "", level: in
 	tween.tween_property(self, "modulate:a", 1.0, 0.18)
 	tween.parallel().tween_property(self, "scale", Vector2.ONE, 0.18)
 	tween.tween_interval(1.5)
-	var close_btn := get_node_or_null("Panel/CloseBtn") as TextureButton
-	if close_btn:
-		close_btn.disabled = false
-		close_btn.visible = true
+
+	var ok_btn := get_node_or_null("Panel/OkBtn") as TextureButton
+	if ok_btn:
+		ok_btn.visible = true
+		ok_btn.disabled = false
 
 
 func _refresh_labels() -> void:
-	var name_lbl := get_node_or_null("Panel/Margin/VBox/NameLabel") as Label
-	var reward_lbl := get_node_or_null("Panel/Margin/VBox/RewardLabel") as Label
-	_set_text(name_lbl, "%s 回来了" % _cat_name)
-	_set_text(reward_lbl, _reward_text(_reward_type))
-
-
-func _set_text(label: Label, text: String) -> void:
-	if label:
-		label.text = text
+	var name_lbl := get_node_or_null("Panel/Box/NameLabel") as Label
+	var reward_lbl := get_node_or_null("Panel/Box/RewardLabel") as Label
+	if name_lbl:
+		name_lbl.text = "%s 回来了" % _cat_name
+	if reward_lbl:
+		reward_lbl.text = _reward_text(_reward_type)
 
 
 func _reward_text(reward_type: String) -> String:
@@ -66,59 +60,34 @@ func _reward_text(reward_type: String) -> String:
 func _build_ui() -> void:
 	# 遮罩
 	var dim := ColorRect.new()
-	dim.name = "Dim"
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	dim.color = Color(0, 0, 0, 0.45)
+	dim.color = Color(0, 0, 0, 0.52)
 	dim.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(dim)
 
-	# 面板容器
+	# 面板
 	var panel := TextureRect.new()
 	panel.name = "Panel"
-	panel.texture = CATCARD_PANEL
+	panel.texture = POPUP_BG
 	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	panel.stretch_mode = TextureRect.STRETCH_SCALE
-	panel.anchor_left = 0.5
-	panel.anchor_top = 1.0
-	panel.anchor_right = 0.5
-	panel.anchor_bottom = 1.0
-	panel.offset_left = -PANEL_SIZE.x * 0.5
-	panel.offset_top = -PANEL_SIZE.y
-	panel.offset_right = PANEL_SIZE.x * 0.5
-	panel.offset_bottom = 0.0
+	_center_control(panel, PANEL_SIZE)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(panel)
 
-	# 关闭按钮
-	var close_btn := TextureButton.new()
-	close_btn.name = "CloseBtn"
-	close_btn.texture_normal = CLOSE_NORMAL
-	close_btn.texture_hover = CLOSE_HOVER
-	close_btn.ignore_texture_size = true
-	close_btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-	close_btn.custom_minimum_size = BTN_CLOSE_SIZE
-	close_btn.position = Vector2(PANEL_SIZE.x - BTN_CLOSE_SIZE.x - 10, 10)
-	close_btn.disabled = true
-	close_btn.visible = false
-	close_btn.pressed.connect(_on_close)
-	panel.add_child(close_btn)
-
-	# 内容区
-	var margin := MarginContainer.new()
-	margin.name = "Margin"
-	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 30)
-	margin.add_theme_constant_override("margin_right", 30)
-	margin.add_theme_constant_override("margin_top", 60)
-	margin.add_theme_constant_override("margin_bottom", 30)
-	panel.add_child(margin)
-
-	var vbox := VBoxContainer.new()
-	vbox.name = "VBox"
-	vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	vbox.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	vbox.add_theme_constant_override("separation", 12)
-	margin.add_child(vbox)
+	# 内容
+	var box := VBoxContainer.new()
+	box.name = "Box"
+	box.anchor_left = 0.0
+	box.anchor_top = 0.0
+	box.anchor_right = 1.0
+	box.anchor_bottom = 1.0
+	box.offset_left = 28
+	box.offset_top = 20
+	box.offset_right = -28
+	box.offset_bottom = -60
+	box.add_theme_constant_override("separation", 8)
+	panel.add_child(box)
 
 	# "XXX 回来了"
 	var name_lbl := Label.new()
@@ -126,9 +95,9 @@ func _build_ui() -> void:
 	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	name_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	name_lbl.add_theme_color_override("font_color", Color(0.31, 0.27, 0.24, 1))
-	name_lbl.add_theme_font_size_override("font_size", 30)
-	vbox.add_child(name_lbl)
+	name_lbl.add_theme_color_override("font_color", Color("#4F453C"))
+	name_lbl.add_theme_font_size_override("font_size", 28)
+	box.add_child(name_lbl)
 
 	# 奖励描述
 	var reward_lbl := Label.new()
@@ -136,10 +105,46 @@ func _build_ui() -> void:
 	reward_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	reward_lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	reward_lbl.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	reward_lbl.add_theme_color_override("font_color", Color(0.64, 0.59, 0.55, 1))
+	reward_lbl.add_theme_color_override("font_color", Color("#A2978C"))
 	reward_lbl.add_theme_font_size_override("font_size", 22)
-	vbox.add_child(reward_lbl)
+	box.add_child(reward_lbl)
+
+	# 确定按钮
+	var ok_btn := TextureButton.new()
+	ok_btn.name = "OkBtn"
+	ok_btn.custom_minimum_size = Vector2(200, 50)
+	ok_btn.texture_normal = BTN_EXPLORE_NORMAL
+	ok_btn.texture_hover = BTN_EXPLORE_HOVER
+	ok_btn.texture_pressed = BTN_EXPLORE_PRESSED
+	ok_btn.ignore_texture_size = true
+	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
+	ok_btn.visible = false
+	ok_btn.disabled = true
+	ok_btn.position = Vector2((PANEL_SIZE.x - 200) * 0.5, PANEL_SIZE.y - 70)
+	ok_btn.pressed.connect(_on_ok)
+	panel.add_child(ok_btn)
+
+	var ok_label := Label.new()
+	ok_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	ok_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ok_label.text = "好的"
+	ok_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	ok_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	ok_label.add_theme_font_size_override("font_size", 18)
+	ok_label.add_theme_color_override("font_color", Color("#4F453C"))
+	ok_btn.add_child(ok_label)
 
 
-func _on_close() -> void:
+func _on_ok() -> void:
 	finished.emit()
+
+
+func _center_control(control: Control, control_size: Vector2) -> void:
+	control.anchor_left = 0.5
+	control.anchor_top = 0.5
+	control.anchor_right = 0.5
+	control.anchor_bottom = 0.5
+	control.offset_left = -control_size.x * 0.5
+	control.offset_top = -control_size.y * 0.5
+	control.offset_right = control_size.x * 0.5
+	control.offset_bottom = control_size.y * 0.5
