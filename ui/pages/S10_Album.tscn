@@ -153,6 +153,7 @@ theme_override_constants/margin_bottom = 24
 
 [node name="CatsGrid" type="GridContainer" parent="CardScroll/GridMargin"]
 layout_mode = 2
+size_flags_horizontal = 0
 columns = 2
 theme_override_constants/h_separation = 8
 theme_override_constants/v_separation = 8
