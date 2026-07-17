@@ -64,7 +64,7 @@ theme_override_constants/separation = 8
 alignment = 1
 
 [node name="TabCats" type="TextureButton" parent="TabBar"]
-custom_minimum_size = Vector2(235, 100)
+custom_minimum_size = Vector2(282, 120)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("4_tab_selected")
@@ -80,14 +80,14 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 text = "猫咪"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="TabCards" type="TextureButton" parent="TabBar"]
 modulate = Color(1, 1, 1, 0.78)
-custom_minimum_size = Vector2(235, 100)
+custom_minimum_size = Vector2(282, 120)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("5_tab_unselected")
@@ -103,14 +103,14 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 text = "明信片"
 horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="TabAch" type="TextureButton" parent="TabBar"]
 modulate = Color(1, 1, 1, 0.78)
-custom_minimum_size = Vector2(235, 100)
+custom_minimum_size = Vector2(282, 120)
 layout_mode = 2
 mouse_default_cursor_shape = 2
 texture_normal = ExtResource("5_tab_unselected")
@@ -126,7 +126,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 theme_override_colors/font_color = Color(0.309804, 0.270588, 0.235294, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 24
 text = "成就"
 horizontal_alignment = 1
 vertical_alignment = 1
