@@ -45,6 +45,9 @@ func set_data(collected_ids: Array) -> void:
 		var is_known: bool = is_collected
 		if not is_collected and "is_known" in postcard:
 			is_known = postcard.is_known
+		# 完全未知的明信片不显示
+		if not is_collected and not is_known:
+			continue
 
 		var cell := Control.new()
 		cell.set_script(PostcardGridCellScript)
