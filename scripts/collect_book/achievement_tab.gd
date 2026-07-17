@@ -229,7 +229,7 @@ func _add_progress_card_content(info: VBoxContainer, a: Dictionary, progress: fl
 	var bar_row := HBoxContainer.new()
 	bar_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	bar_row.add_theme_constant_override("separation", 8)
-	bar_row.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bar_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	info.add_child(bar_row)
 
 	# Progress bar background
