@@ -4,7 +4,7 @@
 # 遵循 popup-spec.md 顶部通知横幅规范
 
 extends CanvasLayer
-class_name AchievementUnlockPopup
+# 无 class_name：已注册为同名 autoload，class_name 会与单例命名冲突。
 
 const MAX_POPUPS_PER_SESSION := 2
 const BANNER_WIDTH := 620
