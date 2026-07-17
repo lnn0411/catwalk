@@ -2,6 +2,7 @@ extends Control
 
 signal closed
 
+const POPUP_BG := preload("res://assets/art/ui/panels/popup_bg.png")
 const BTN_EXPLORE_NORMAL := preload("res://assets/art/ui/catcard/btn_explore_normal.png")
 const BTN_EXPLORE_HOVER := preload("res://assets/art/ui/catcard/btn_explore_hover.png")
 const BTN_EXPLORE_PRESSED := preload("res://assets/art/ui/catcard/btn_explore_pressed.png")
@@ -55,16 +56,12 @@ func _build_ui() -> void:
 	_center_control(_card, Vector2(560, 320))
 	add_child(_card)
 
-	# 面板底图 — 用白色圆角垫底
-	var panel := ColorRect.new()
+	# 面板底图
+	var panel := TextureRect.new()
+	panel.texture = POPUP_BG
+	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	panel.stretch_mode = TextureRect.STRETCH_SCALE
 	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	panel.color = Color("#F5EFE6")
-	var panel_style := StyleBoxFlat.new()
-	panel_style.bg_color = Color("#F5EFE6")
-	panel_style.set_corner_radius_all(12)
-	panel_style.set_border_width_all(2)
-	panel_style.border_color = Color(0.35, 0.25, 0.2, 0.3)
-	panel.add_theme_stylebox_override("panel", panel_style)
 	_card.add_child(panel)
 
 	var box := VBoxContainer.new()
