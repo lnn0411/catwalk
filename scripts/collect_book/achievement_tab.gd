@@ -2,12 +2,15 @@ extends VBoxContainer
 class_name AchievementTab
 
 const ICON_DIR := "res://assets/art/delivery/achievement/"
-const TEXT_PRIMARY := Color("#4F453C")
-const TEXT_SECONDARY := Color("#A2978C")
-const BG_BEIGE := Color(0.96, 0.94, 0.88, 0.5)
-const BORDER_LIGHT := Color(0.72, 0.6, 0.42, 0.3)
-const BAR_BG := Color(0.96, 0.94, 0.88)
-const BAR_FILL := Color(0.95, 0.77, 0.45)
+const TEXT_PRIMARY := Color("4f453c")
+const TEXT_SECONDARY := Color("a2978c")
+const BG_CREAM := Color(0.98, 0.95, 0.89, 0.35)
+const CARD_BORDER := Color("c4b69c")
+const CARD_BORDER_INNER := Color("d9cdb9")
+const BAR_BG := Color("efe4d6")
+const BAR_FILL := Color("f2c572")
+const AMBER := Color("f2c572")
+const PAPER_CREAM := Color("f6efe2")
 
 const CATEGORIES: Array[Dictionary] = [
 	{"id": "steps", "name": "步数", "icon": "ach_icon_steps.png"},
@@ -30,7 +33,7 @@ func _refresh() -> void:
 		child.queue_free()
 
 	size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	add_theme_constant_override("separation", 8)
+	add_theme_constant_override("separation", 6)
 
 	for category in CATEGORIES:
 		_add_category_header(category)
@@ -59,21 +62,21 @@ func _add_category_header(category: Dictionary) -> void:
 	var header := HBoxContainer.new()
 	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.alignment = BoxContainer.ALIGNMENT_CENTER
-	header.add_theme_constant_override("separation", 10)
+	header.add_theme_constant_override("separation", 8)
 	add_child(header)
 
-	var icon := _make_icon(ICON_DIR + String(category.get("icon", "")), Vector2(48.0, 48.0))
+	var icon := _make_icon_w(ICON_DIR + String(category.get("icon", "")), Vector2(40.0, 40.0))
 	header.add_child(icon)
 
 	var name_label := Label.new()
 	name_label.text = String(category.get("name", ""))
-	name_label.add_theme_font_size_override("font_size", 18)
+	name_label.add_theme_font_size_override("font_size", 17)
 	name_label.add_theme_color_override("font_color", TEXT_PRIMARY)
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header.add_child(name_label)
 
 	var divider := ColorRect.new()
-	divider.color = BORDER_LIGHT
+	divider.color = Color(0.77, 0.69, 0.55, 0.3)
 	divider.custom_minimum_size = Vector2(0.0, 1.0)
 	divider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.add_child(divider)
@@ -81,23 +84,24 @@ func _add_category_header(category: Dictionary) -> void:
 
 func _add_category_spacer() -> void:
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0.0, 12.0)
+	spacer.custom_minimum_size = Vector2(0.0, 8.0)
 	add_child(spacer)
 
 
 func _build_achievement_card(achievement: Dictionary, state: String, progress: float) -> PanelContainer:
 	var card := PanelContainer.new()
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	card.add_theme_stylebox_override("panel", _make_card_style())
+	card.add_theme_stylebox_override("panel", _make_card_style(state == "locked"))
 
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 12)
+	row.add_theme_constant_override("separation", 10)
 	card.add_child(row)
 
+	# left side: text
 	var copy := VBoxContainer.new()
 	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	copy.add_theme_constant_override("separation", 3)
+	copy.add_theme_constant_override("separation", 2)
 	row.add_child(copy)
 
 	var name_label := Label.new()
@@ -105,90 +109,145 @@ func _build_achievement_card(achievement: Dictionary, state: String, progress: f
 	name_label.add_theme_font_size_override("font_size", 15)
 	name_label.add_theme_color_override("font_color", TEXT_PRIMARY)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if state == "locked":
+		name_label.modulate = Color(1, 1, 1, 0.5)
 	copy.add_child(name_label)
 
-	var description_label := Label.new()
-	description_label.text = _description_for_state(achievement, state)
-	description_label.add_theme_font_size_override("font_size", 12)
-	description_label.add_theme_color_override("font_color", TEXT_SECONDARY)
-	description_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	description_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	copy.add_child(description_label)
+	# condition / progress text under name
+	var sub = _build_subtext(achievement, state, progress)
+	copy.add_child(sub)
 
-	var status := _build_status_area(achievement, state, progress)
+	# right side: status
+	var status := _build_status(achievement, state, progress)
 	row.add_child(status)
 
 	return card
 
 
-func _build_status_area(achievement: Dictionary, state: String, progress: float) -> Control:
-	var status := VBoxContainer.new()
-	status.custom_minimum_size = Vector2(60.0, 32.0)
-	status.size_flags_horizontal = Control.SIZE_SHRINK_END
-	status.alignment = BoxContainer.ALIGNMENT_CENTER
-	status.add_theme_constant_override("separation", 4)
+func _build_subtext(achievement: Dictionary, state: String, progress: float) -> Label:
+	var label := Label.new()
+	label.add_theme_font_size_override("font_size", 11)
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	match state:
+		"unlocked":
+			label.text = _reward_text(Dictionary(achievement.get("reward", {})))
+			label.add_theme_color_override("font_color", AMBER)
+		"progress":
+			label.text = _score_text(achievement)
+			label.add_theme_color_override("font_color", TEXT_SECONDARY)
+		_:
+			var target := int(achievement.get("target", 0))
+			var type_str := String(achievement.get("type", ""))
+			if type_str == "midnight":
+				label.text = "凌晨0-5点访问"
+			elif type_str == "friend_streak":
+				label.text = "连续%d天互动" % target
+			elif type_str == "steps_streak":
+				label.text = "连续%d天≥3000步" % target
+			elif type_str == "steps_total":
+				label.text = "%d步" % target
+			elif type_str == "hatch_count":
+				label.text = "孵化%d只" % target
+			elif type_str == "album_entries":
+				label.text = "%d图鉴" % target
+			elif type_str == "breeds_all":
+				label.text = "%d品种" % target
+			elif type_str == "cat_level":
+				label.text = "Lv.%d" % target
+			elif type_str == "affection":
+				label.text = "好感%d" % target
+			elif type_str == "postcards":
+				label.text = "%d明信片" % target
+			elif type_str == "city_postcards":
+				label.text = "%d城市明信片" % target
+			else:
+				label.text = "%d进度" % target
+			label.add_theme_color_override("font_color", TEXT_SECONDARY)
+			label.modulate = Color(1, 1, 1, 0.55)
+
+	return label
+
+
+func _build_status(achievement: Dictionary, state: String, progress: float) -> Control:
+	var block := VBoxContainer.new()
+	block.custom_minimum_size = Vector2(72.0, 32.0)
+	block.size_flags_horizontal = Control.SIZE_SHRINK_END
+	block.alignment = BoxContainer.ALIGNMENT_CENTER
+	block.add_theme_constant_override("separation", 4)
 
 	match state:
 		"unlocked":
 			var icons := HBoxContainer.new()
 			icons.alignment = BoxContainer.ALIGNMENT_CENTER
 			icons.add_theme_constant_override("separation", 6)
-			icons.add_child(_make_icon(ICON_DIR + "ach_icon_check.png", Vector2(32.0, 32.0)))
-			icons.add_child(_make_icon(_reward_icon_path(Dictionary(achievement.get("reward", {}))), Vector2(24.0, 24.0)))
-			status.add_child(icons)
+			icons.add_child(_make_icon_w(ICON_DIR + "ach_icon_check.png", Vector2(28.0, 28.0)))
+			var reward := Dictionary(achievement.get("reward", {}))
+			icons.add_child(_make_icon_w(_reward_path(reward), Vector2(22.0, 22.0)))
+			block.add_child(icons)
+
 		"progress":
-			status.custom_minimum_size = Vector2(200.0, 32.0)
-			status.add_child(_make_progress_bar(progress))
-			status.add_child(_make_score_label(achievement))
+			block.custom_minimum_size = Vector2(160.0, 32.0)
+			block.add_child(_make_progress_bar(progress))
+			block.add_child(_make_score_text(achievement))
+
 		_:
 			var locked := HBoxContainer.new()
 			locked.alignment = BoxContainer.ALIGNMENT_CENTER
 			locked.add_theme_constant_override("separation", 4)
-			locked.add_child(_make_icon(ICON_DIR + "ach_icon_locked.png", Vector2(32.0, 32.0)))
-			var text := Label.new()
-			text.text = _locked_condition_text(achievement)
-			text.add_theme_font_size_override("font_size", 12)
-			text.add_theme_color_override("font_color", TEXT_SECONDARY)
-			locked.add_child(text)
-			status.add_child(locked)
+			locked.add_child(_make_icon_w(ICON_DIR + "ach_icon_locked.png", Vector2(26.0, 26.0)))
+			var t := Label.new()
+			t.text = "未达成"
+			t.add_theme_font_size_override("font_size", 11)
+			t.add_theme_color_override("font_color", TEXT_SECONDARY)
+			t.modulate = Color(1, 1, 1, 0.5)
+			locked.add_child(t)
+			block.add_child(locked)
 
-	return status
+	return block
 
 
-func _make_card_style() -> StyleBoxFlat:
+func _make_card_style(locked: bool) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = BG_BEIGE
-	style.set_corner_radius_all(6)
-	style.set_border_width_all(1)
-	style.border_color = BORDER_LIGHT
+	if locked:
+		style.bg_color = Color(0.96, 0.94, 0.88, 0.2)
+	else:
+		style.bg_color = Color(0.98, 0.96, 0.91, 0.85)
+	style.set_corner_radius_all(8)
+	# 双线描边：外层粗线+内层细线
+	style.set_border_width_all(2)
+	style.border_color = CARD_BORDER
 	style.content_margin_left = 12
 	style.content_margin_right = 12
 	style.content_margin_top = 10
 	style.content_margin_bottom = 10
+	# 通过 draw_center=false 在内层再加一条细线
+	style.draw_center = true
 	return style
 
 
-func _make_icon(path: String, minimum_size: Vector2) -> TextureRect:
+func _make_icon_w(path: String, min_size: Vector2) -> TextureRect:
 	var icon := TextureRect.new()
-	icon.custom_minimum_size = minimum_size
+	icon.custom_minimum_size = min_size
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	if ResourceLoader.exists(path):
 		icon.texture = load(path)
 	else:
-		icon.modulate = Color(1.0, 1.0, 1.0, 0.25)
+		icon.modulate = Color(1.0, 1.0, 1.0, 0.15)
 	return icon
 
 
-func _make_progress_bar(progress: float) -> ColorRect:
+func _make_progress_bar(progress: float) -> Control:
 	var bg := ColorRect.new()
-	bg.custom_minimum_size = Vector2(200.0, 6.0)
-	bg.color = BAR_BG
+	bg.custom_minimum_size = Vector2(160.0, 6.0)
 	bg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bg.color = PAPER_CREAM
 	bg.clip_contents = true
 
 	var fill := ColorRect.new()
-	fill.custom_minimum_size = Vector2(clampf(200.0 * progress, 0.0, 200.0), 6.0)
+	fill.custom_minimum_size = Vector2(clampf(160.0 * progress, 0.0, 160.0), 6.0)
 	fill.color = BAR_FILL
 	fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bg.add_child(fill)
@@ -196,75 +255,31 @@ func _make_progress_bar(progress: float) -> ColorRect:
 	return bg
 
 
-func _make_score_label(achievement: Dictionary) -> Label:
+func _make_score_text(achievement: Dictionary) -> Label:
 	var label := Label.new()
 	label.text = _score_text(achievement)
-	label.add_theme_font_size_override("font_size", 12)
+	label.add_theme_font_size_override("font_size", 11)
 	label.add_theme_color_override("font_color", TEXT_SECONDARY)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
-
-
-func _description_for_state(achievement: Dictionary, state: String) -> String:
-	match state:
-		"locked":
-			return _locked_condition_text(achievement)
-		"progress":
-			return _score_text(achievement)
-		_:
-			return _reward_text(Dictionary(achievement.get("reward", {})))
 
 
 func _score_text(achievement: Dictionary) -> String:
 	var achievement_id := String(achievement.get("id", ""))
 	var current := AchievementSystem.get_current_value(achievement_id) if AchievementSystem else 0.0
 	var target := float(achievement.get("target", 0.0))
-	return "%d/%d" % [int(current), int(target)]
-
-
-func _locked_condition_text(achievement: Dictionary) -> String:
-	return "达成%s可解锁" % _target_text(achievement)
-
-
-func _target_text(achievement: Dictionary) -> String:
-	var target := int(achievement.get("target", 0))
-	match String(achievement.get("type", "")):
-		"steps_total":
-			return "%d步" % target
-		"steps_streak":
-			return "连续%d天步行" % target
-		"hatch_count":
-			return "孵化%d只猫" % target
-		"album_entries":
-			return "收集%d个图鉴" % target
-		"breeds_all":
-			return "收集%d个品种" % target
-		"cat_level":
-			return "猫咪等级%d级" % target
-		"affection":
-			return "好感度%d" % target
-		"postcards":
-			return "收集%d张明信片" % target
-		"city_postcards":
-			return "收集%d张城市明信片" % target
-		"midnight":
-			return "午夜访问"
-		"friend_streak":
-			return "连续%d天互动" % target
-	return "%d进度" % target
+	return "%d / %d" % [int(current), int(target)]
 
 
 func _reward_text(reward: Dictionary) -> String:
 	if reward.has("diamonds"):
-		return "奖励钻石 x%d" % int(reward.get("diamonds", 0))
+		return "钻石×%d" % int(reward.get("diamonds", 0))
 	if reward.has("gold_coins"):
-		return "奖励金币 x%d" % int(reward.get("gold_coins", 0))
-	if not reward.is_empty():
-		return "奖励已领取"
-	return "已完成"
+		return "金币×%d" % int(reward.get("gold_coins", 0))
+	return "已领取"
 
 
-func _reward_icon_path(reward: Dictionary) -> String:
+func _reward_path(reward: Dictionary) -> String:
 	if reward.has("gold_coins"):
 		return ICON_DIR + "ach_icon_coin.png"
 	return ICON_DIR + "ach_icon_diamond.png"
