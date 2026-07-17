@@ -53,7 +53,7 @@ var _close_playing := false
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_D and event.ctrl_pressed and OS.is_debug_build():
-		var mock_reward := ["postcard", "ingredient", "decoration", "hidden"].pick_random()
+		var mock_reward: String = ["postcard", "ingredient", "decoration", "hidden"].pick_random()
 		_show_return_animation(mock_reward, "")
 		get_viewport().set_input_as_handled()
 
