@@ -38,6 +38,7 @@ func _refresh() -> void:
 	for category in CATEGORIES:
 		_add_category_header(category)
 
+		var shown_locked := false
 		for achievement in _achievement_data:
 			if String(achievement.get("category", "")) != String(category.get("id", "")):
 				continue
@@ -50,8 +51,9 @@ func _refresh() -> void:
 				add_child(_build_achievement_card(achievement, "unlocked", progress))
 			elif progress > 0.0:
 				add_child(_build_achievement_card(achievement, "progress", progress))
-			else:
+			elif not shown_locked:
 				add_child(_build_achievement_card(achievement, "locked", progress))
+				shown_locked = true
 
 		_add_category_spacer()
 
