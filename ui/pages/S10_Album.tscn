@@ -165,7 +165,7 @@ theme_override_constants/margin_bottom = 24
 layout_mode = 2
 columns = 2
 theme_override_constants/h_separation = 8
-theme_override_constants/v_separation = 8
+theme_override_constants/v_separation = 4
 
 [node name="Placeholder01" type="ColorRect" parent="CardScroll/GridMargin/CatsGrid"]
 custom_minimum_size = Vector2(330, 200)
