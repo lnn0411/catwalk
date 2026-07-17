@@ -144,9 +144,9 @@ func _t_energy_engine() -> void:
 func _t_step_engine() -> void:
 	_sec("B. StepEngine 步数逻辑")
 	if not FileAccess.file_exists("res://core/StepEngine.gd"):
-	print("  [⏭] 跳过 — StepEngine.gd 未加载")
-	await get_tree().process_frame
-	return
+		print("  [⏭] 跳过 — StepEngine.gd 未加载")
+		await get_tree().process_frame
+		return
 	var S = StepEngine
 
 	# B1 mock 步数累加
@@ -532,9 +532,9 @@ func _find_child_named(node: Node, target: String, depth: int = 3) -> bool:
 func _t_explore_engine() -> void:
 	_sec("J. ExploreEngine 探索系统")
 	if not FileAccess.file_exists("res://core/ExploreEngine.gd"):
-	print("  [⏭] 跳过 — ExploreEngine.gd 尚未创建")
-	await get_tree().process_frame
-	return
+		print("  [⏭] 跳过 — ExploreEngine.gd 尚未创建")
+		await get_tree().process_frame
+		return
 	var E = load("res://core/ExploreEngine.gd")
 
 	# J1 探索槽初始化
@@ -595,9 +595,9 @@ func _t_explore_engine() -> void:
 func _t_emotion_state_machine() -> void:
 	_sec("K. EmotionStateMachine 情绪状态机")
 	if not FileAccess.file_exists("res://core/EmotionStateMachine.gd"):
-	print("  [⏭] 跳过 — EmotionStateMachine.gd 尚未创建")
-	await get_tree().process_frame
-	return
+		print("  [⏭] 跳过 — EmotionStateMachine.gd 尚未创建")
+		await get_tree().process_frame
+		return
 	var M = load("res://core/EmotionStateMachine.gd")
 
 	# K1 初始状态
@@ -656,9 +656,9 @@ func _t_emotion_state_machine() -> void:
 func _t_cat_schedule() -> void:
 	_sec("L. CatSchedule 作息时段")
 	if not FileAccess.file_exists("res://core/CatSchedule.gd"):
-	print("  [⏭] 跳过 — CatSchedule.gd 尚未创建")
-	await get_tree().process_frame
-	return
+		print("  [⏭] 跳过 — CatSchedule.gd 尚未创建")
+		await get_tree().process_frame
+		return
 	var C = load("res://core/CatSchedule.gd")
 
 	# L1 6时段定义
@@ -753,9 +753,9 @@ func _t_cat_schedule() -> void:
 func _t_level_system() -> void:
 	_sec("M. LevelSystem 等级系统")
 	if not FileAccess.file_exists("res://core/LevelSystem.gd"):
-	print("  [⏭] 跳过 — LevelSystem.gd 尚未创建")
-	await get_tree().process_frame
-	return
+		print("  [⏭] 跳过 — LevelSystem.gd 尚未创建")
+		await get_tree().process_frame
+		return
 	var L = load("res://core/LevelSystem.gd")
 
 	# M1 品种系数
@@ -800,9 +800,9 @@ func _t_level_system() -> void:
 func _t_interaction_system() -> void:
 	_sec("N. InteractionSystem 互动系统")
 	if not FileAccess.file_exists("res://core/InteractionSystem.gd"):
-	print("  [⏭] 跳过 — InteractionSystem.gd 尚未创建")
-	await get_tree().process_frame
-	return
+		print("  [⏭] 跳过 — InteractionSystem.gd 尚未创建")
+		await get_tree().process_frame
+		return
 	var I = load("res://core/InteractionSystem.gd")
 
 	# N1 冷却定义（分钟）
