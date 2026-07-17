@@ -62,7 +62,6 @@ func _add_category_header(cat: Dictionary) -> void:
 	var header := HBoxContainer.new()
 	header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	header.custom_minimum_size = Vector2(0, 56)
-	add_child(header)
 
 	# Category icon
 	var icon := TextureRect.new()
