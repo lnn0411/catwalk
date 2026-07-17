@@ -70,7 +70,7 @@ func _add_category_header(category: Dictionary) -> void:
 
 	var name_label := Label.new()
 	name_label.text = String(category.get("name", ""))
-	name_label.add_theme_font_size_override("font_size", 17)
+	name_label.add_theme_font_size_override("font_size", 20)
 	name_label.add_theme_color_override("font_color", TEXT_PRIMARY)
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	header.add_child(name_label)
@@ -106,7 +106,7 @@ func _build_achievement_card(achievement: Dictionary, state: String, progress: f
 
 	var name_label := Label.new()
 	name_label.text = String(achievement.get("name", ""))
-	name_label.add_theme_font_size_override("font_size", 15)
+	name_label.add_theme_font_size_override("font_size", 18)
 	name_label.add_theme_color_override("font_color", TEXT_PRIMARY)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if state == "locked":
@@ -126,7 +126,7 @@ func _build_achievement_card(achievement: Dictionary, state: String, progress: f
 
 func _build_subtext(achievement: Dictionary, state: String, progress: float) -> Label:
 	var label := Label.new()
-	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_font_size_override("font_size", 13)
 	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 
@@ -134,6 +134,7 @@ func _build_subtext(achievement: Dictionary, state: String, progress: float) -> 
 		"unlocked":
 			label.text = _reward_text(Dictionary(achievement.get("reward", {})))
 			label.add_theme_color_override("font_color", AMBER)
+			label.modulate = Color(1, 1, 1, 0.85)
 		"progress":
 			label.text = _score_text(achievement)
 			label.add_theme_color_override("font_color", TEXT_SECONDARY)
@@ -199,7 +200,7 @@ func _build_status(achievement: Dictionary, state: String, progress: float) -> C
 			locked.add_child(_make_icon_w(ICON_DIR + "ach_icon_locked.png", Vector2(26.0, 26.0)))
 			var t := Label.new()
 			t.text = "未达成"
-			t.add_theme_font_size_override("font_size", 11)
+			t.add_theme_font_size_override("font_size", 13)
 			t.add_theme_color_override("font_color", TEXT_SECONDARY)
 			t.modulate = Color(1, 1, 1, 0.5)
 			locked.add_child(t)
@@ -258,7 +259,7 @@ func _make_progress_bar(progress: float) -> Control:
 func _make_score_text(achievement: Dictionary) -> Label:
 	var label := Label.new()
 	label.text = _score_text(achievement)
-	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_font_size_override("font_size", 13)
 	label.add_theme_color_override("font_color", TEXT_SECONDARY)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return label
