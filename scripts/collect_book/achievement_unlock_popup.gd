@@ -110,7 +110,7 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	var icon_path := ICON_MAP.get(ach_category, "res://assets/art/delivery/achievement/ach_icon_steps.png")
+	var icon_path: String = ICON_MAP.get(ach_category, "res://assets/art/delivery/achievement/ach_icon_steps.png")
 	if ResourceLoader.exists(icon_path):
 		icon.texture = load(icon_path)
 	else:
