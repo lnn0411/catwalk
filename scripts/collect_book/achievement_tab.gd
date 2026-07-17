@@ -98,7 +98,7 @@ func _add_category_header(cat: Dictionary) -> void:
 
 
 func _add_category_items(cat: Dictionary) -> void:
-	var items := _get_filtered_achievements(cat.id)
+	var items: Array = _get_filtered_achievements(cat.id)
 	for a in items:
 		_add_achievement_card(a)
 	# Category bottom spacer
