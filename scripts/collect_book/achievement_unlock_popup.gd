@@ -18,7 +18,7 @@ const PANEL_CORNER := 18.0
 const SHADOW_SIZE := 12
 const SHADOW_COLOR := Color(0.15, 0.1, 0.05, 0.24)
 const ICON_SIZE := 64.0
-const BTN_CONFIRM_SIZE := Vector2(88.0, 44.0)
+const BTN_CONFIRM_SIZE := Vector2(64.0, 44.0)
 const AUTO_DISMISS_TIME := 5.0
 
 const ICON_MAP := {
@@ -135,11 +135,27 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	reward_label.add_theme_color_override("font_color", FONT_COLOR_REWARD)
 	copy.add_child(reward_label)
 
-	# 确认按钮
+	# 确认按钮（代码绘制 — 暖褐手绘风）
 	var confirm := Button.new()
-	confirm.text = "知道了"
 	confirm.custom_minimum_size = BTN_CONFIRM_SIZE
 	confirm.focus_mode = Control.FOCUS_NONE
+	
+	var btn_style := StyleBoxFlat.new()
+	btn_style.bg_color = Color("0xd4b896")
+	btn_style.set_corner_radius_all(22)
+	btn_style.border_width_left = 2
+	btn_style.border_width_top = 2
+	btn_style.border_width_right = 2
+	btn_style.border_width_bottom = 2
+	btn_style.border_color = Color("0x5a4f45")
+	btn_style.content_margin_left = 8
+	btn_style.content_margin_right = 8
+	btn_style.content_margin_top = 4
+	btn_style.content_margin_bottom = 4
+	confirm.add_theme_stylebox_override("normal", btn_style)
+	confirm.add_theme_color_override("font_color", Color("0x4f453c"))
+	confirm.add_theme_font_size_override("font_size", 14)
+	confirm.text = "知道了"
 	content.add_child(confirm)
 
 	var auto_dismiss := Timer.new()
