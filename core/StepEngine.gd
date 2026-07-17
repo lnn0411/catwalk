@@ -8,6 +8,8 @@ var today_steps: int = 0
 var total_steps: int = 0
 var last_plugin_steps: int = 0
 var last_step_date: String = ""
+var _fresh_sensor_init: bool = false
+var _fresh_hc_init: bool = false
 var step_plugin: Object
 var _poll_attempts: int = 0
 
@@ -46,6 +48,8 @@ func apply_save(data: Dictionary) -> void:
 	total_steps = max(int(data.get("total_steps", 0)), 0)
 	last_plugin_steps = max(int(data.get("last_plugin_steps", 0)), 0)
 	last_step_date = String(data.get("last_step_date", _today_key()))
+	_fresh_sensor_init = (total_steps == 0 and last_plugin_steps == 0)
+	_fresh_hc_init = _fresh_sensor_init
 	_check_daily_reset()
 	_emit_steps_updated(0)
 
@@ -84,6 +88,11 @@ func _refresh_plugin_steps() -> void:
 func _on_plugin_steps_changed(raw_steps: int) -> void:
 	_check_daily_reset()
 	raw_steps = max(raw_steps, 0)
+	if _fresh_sensor_init and raw_steps > 0:
+		_fresh_sensor_init = false
+		last_plugin_steps = raw_steps
+		_emit_steps_updated(0)
+		return
 	if raw_steps < last_plugin_steps:
 		last_plugin_steps = raw_steps
 		_emit_steps_updated(0)
@@ -138,6 +147,9 @@ func _apply_health_connect_steps(hc_steps: int) -> void:
 	_check_daily_reset()
 	if hc_steps < 0:
 		return  # HC 不可用（返回 -1）：静默跳过
+	if _fresh_hc_init:
+		_fresh_hc_init = false
+		return
 	if hc_steps <= today_steps:
 		return  # 旧日桶值不回退今日步数
 	var delta: int = hc_steps - today_steps
