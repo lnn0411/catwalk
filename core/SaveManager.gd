@@ -22,6 +22,7 @@ func save_all() -> void:
 	_write_cat_screen()
 	_write_iap()
 	_write_walk_companion()
+	_write_tickets()
 	_config.save(SAVE_PATH)
 
 func load_and_apply() -> void:
@@ -59,11 +60,17 @@ func load_and_apply() -> void:
 	var wc := get_node_or_null("/root/WalkCompanion")
 	if wc and wc.has_method("apply_save"):
 		wc.apply_save(_read_walk_companion())
+	var tm := get_node_or_null("/root/TicketManager")
+	if tm and tm.has_method("apply_save"):
+		tm.apply_save(_read_tickets())
 	_is_applying = false
 	# 存档应用完后，让步数引擎按硬件累计值重新对齐一次，
 	# 避免冷启动时"应用关闭期间累积的步数"在首帧丢失。
 	if StepEngine and StepEngine.has_method("_refresh_plugin_steps"):
 		StepEngine._refresh_plugin_steps()
+	# 首次登录发放门票奖励（跨天自动触发）
+	if tm and tm.has_method("add_login_bonus"):
+		tm.add_login_bonus(false)
 
 func reset_all() -> void:
 	_config.clear()
@@ -419,4 +426,34 @@ func _write_iap() -> void:
 	_config.set_value("iap_store", "limited_skin_owned", bool(data.get("limited_skin_owned", false)))
 	_config.set_value("iap_store", "monthly_card_end_time", float(data.get("monthly_card_end_time", 0.0)))
 	_config.set_value("iap_store", "monthly_card_last_grant_date", String(data.get("monthly_card_last_grant_date", "")))
+
+# ── TicketManager section ──
+
+func _read_tickets() -> Dictionary:
+	return {
+		"tickets": int(_config.get_value("tickets", "tickets", 0)),
+		"daily_step_progress": int(_config.get_value("tickets", "daily_step_progress", 0)),
+		"daily_step_tickets": int(_config.get_value("tickets", "daily_step_tickets", 0)),
+		"daily_interaction_count": int(_config.get_value("tickets", "daily_interaction_count", 0)),
+		"daily_interaction_tickets": int(_config.get_value("tickets", "daily_interaction_tickets", 0)),
+		"daily_ad_tickets": int(_config.get_value("tickets", "daily_ad_tickets", 0)),
+		"daily_coin_tickets": int(_config.get_value("tickets", "daily_coin_tickets", 0)),
+		"last_ticket_date": String(_config.get_value("tickets", "last_ticket_date", "")),
+		"login_claimed_today": bool(_config.get_value("tickets", "login_claimed_today", false)),
+	}
+
+func _write_tickets() -> void:
+	var tm := get_node_or_null("/root/TicketManager")
+	if tm == null or not tm.has_method("get_save_data"):
+		return
+	var data: Dictionary = tm.get_save_data()
+	_config.set_value("tickets", "tickets", int(data.get("tickets", 0)))
+	_config.set_value("tickets", "daily_step_progress", int(data.get("daily_step_progress", 0)))
+	_config.set_value("tickets", "daily_step_tickets", int(data.get("daily_step_tickets", 0)))
+	_config.set_value("tickets", "daily_interaction_count", int(data.get("daily_interaction_count", 0)))
+	_config.set_value("tickets", "daily_interaction_tickets", int(data.get("daily_interaction_tickets", 0)))
+	_config.set_value("tickets", "daily_ad_tickets", int(data.get("daily_ad_tickets", 0)))
+	_config.set_value("tickets", "daily_coin_tickets", int(data.get("daily_coin_tickets", 0)))
+	_config.set_value("tickets", "last_ticket_date", String(data.get("last_ticket_date", "")))
+	_config.set_value("tickets", "login_claimed_today", bool(data.get("login_claimed_today", false)))
 	_config.set_value("iap_store", "makeup_cards", max(int(data.get("makeup_cards", 0)), 0))

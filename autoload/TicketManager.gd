@@ -28,6 +28,8 @@ var _login_claimed_today: bool = false
 func _ready() -> void:
 	_last_ticket_date = _today_key()
 	_connect_step_engine()
+	if EventBus != null and not EventBus.cat_interacted.is_connected(_on_cat_interacted):
+		EventBus.cat_interacted.connect(_on_cat_interacted)
 	await get_tree().process_frame
 	_connect_step_engine()
 
@@ -43,6 +45,9 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 		daily_step_progress -= STEPS_PER_TICKET
 		daily_step_tickets += 1
 		_add_tickets(1, "steps")
+
+func _on_cat_interacted(_cat_id: String, _interaction_type: String) -> void:
+	add_interaction(1)
 
 func add_interaction(count: int = 1) -> void:
 	_check_daily_reset()
