@@ -156,17 +156,28 @@ func _on_card_draw() -> void:
 func _draw_front(c: Control, font: Font, rect: Rect2) -> void:
 	var ltype: String = _data.location_type if "location_type" in _data else ""
 	var lname: String = _data.location_name if "location_name" in _data else String(_data.id)
-	var col: Color = LOCATION_COLORS.get(ltype, Color(0.6, 0.6, 0.6))
-
-	c.draw_rect(rect, col, true)
-	c.draw_rect(rect, Color(1, 1, 1, 0.6), false, 5.0)
-	# 内框装饰
-	c.draw_rect(Rect2(40, 20, CARD_SIZE.x - 80, CARD_SIZE.y - 40), Color(1, 1, 1, 0.4), false, 2.0)
-
-	_text(c, font, lname, 40, Color(0.1, 0.1, 0.1), CARD_SIZE.y * 0.45)
-	_text(c, font, _type_label(ltype), 24, Color(0.2, 0.2, 0.2, 0.85), CARD_SIZE.y * 0.55)
-	_text(c, font, "美术待补", 20, Color(0.15, 0.15, 0.15, 0.6), CARD_SIZE.y * 0.85)
-	_text(c, font, "点击翻转 ↻", 18, Color(0.1, 0.1, 0.1, 0.5), CARD_SIZE.y * 0.93)
+	
+	# 尝试加载明信片贴图
+	var tex_path := "res://assets/art/postcards/%s.png" % _data.id
+	var tex: Texture2D = null
+	if ResourceLoader.exists(tex_path):
+		tex = load(tex_path)
+	
+	if tex:
+		# 有贴图：直接绘制图片 + 叠加信息层
+		c.draw_texture_rect(tex, rect, false)
+		# 半透明渐变底条（底部信息区可读性）
+		var bar := Rect2(0, rect.size.y - 50, rect.size.x, 50)
+		c.draw_rect(bar, Color(0, 0, 0, 0.45), true)
+		_text(c, font, lname, 28, Color.WHITE, rect.size.y - 16)
+	else:
+		# 无贴图：回退颜色块
+		var col: Color = LOCATION_COLORS.get(ltype, Color(0.6, 0.6, 0.6))
+		c.draw_rect(rect, col, true)
+		c.draw_rect(rect, Color(1, 1, 1, 0.6), false, 5.0)
+		c.draw_rect(Rect2(40, 20, CARD_SIZE.x - 80, CARD_SIZE.y - 40), Color(1, 1, 1, 0.4), false, 2.0)
+		_text(c, font, lname, 40, Color(0.1, 0.1, 0.1), CARD_SIZE.y * 0.45)
+		_text(c, font, _type_label(ltype), 24, Color(0.2, 0.2, 0.2, 0.85), CARD_SIZE.y * 0.55)
 
 
 func _draw_back(c: Control, font: Font, rect: Rect2) -> void:

@@ -52,14 +52,25 @@ func _draw() -> void:
 	var small_size := 16
 
 	if _is_collected:
-		var col: Color = LOCATION_COLORS.get(_location_type, Color(0.6, 0.6, 0.6))
-		draw_rect(rect, col, true)
-		draw_rect(rect, Color(1, 1, 1, 0.5), false, 3.0)
-		_draw_centered_text(font, _location_name, font_size, Color(0.1, 0.1, 0.1), size.y * 0.45)
+		var tex_path := \"res://assets/art/postcards/%s.png\" % _postcard_id
+		var tex: Texture2D = null
+		if ResourceLoader.exists(tex_path):
+			tex = load(tex_path)
+		if tex:
+			# 有贴图：显示缩略图
+			draw_texture_rect(tex, rect, false)
+			var bar := Rect2(0, rect.size.y - 36, rect.size.x, 36)
+			draw_rect(bar, Color(0, 0, 0, 0.45), true)
+			_draw_centered_text(font, _location_name, 18, Color.WHITE, rect.size.y - 8)
+		else:
+			var col: Color = LOCATION_COLORS.get(_location_type, Color(0.6, 0.6, 0.6))
+			draw_rect(rect, col, true)
+			draw_rect(rect, Color(1, 1, 1, 0.5), false, 3.0)
+			_draw_centered_text(font, _location_name, font_size, Color(0.1, 0.1, 0.1), size.y * 0.45)
+			_draw_centered_text(font, \"美术待补\", small_size, Color(0.2, 0.2, 0.2, 0.7), size.y * 0.75)
 		# 收集标记 (右上角圆点)
 		draw_circle(Vector2(size.x - 28, 28), 12, Color(1, 1, 1, 0.9))
 		draw_circle(Vector2(size.x - 28, 28), 7, Color(0.3, 0.7, 0.4))
-		_draw_centered_text(font, "美术待补", small_size, Color(0.2, 0.2, 0.2, 0.7), size.y * 0.75)
 	elif _is_known:
 		draw_rect(rect, Color(0.55, 0.55, 0.55), true)
 		draw_rect(rect, Color(0.3, 0.3, 0.3), false, 3.0)
