@@ -52,7 +52,7 @@ func _draw() -> void:
 	var small_size := 16
 
 	if _is_collected:
-		var tex_path := \"res://assets/art/postcards/%s.png\" % _postcard_id
+		var tex_path := "res://assets/art/postcards/%s.png" % _postcard_id
 		var tex: Texture2D = null
 		if ResourceLoader.exists(tex_path):
 			tex = load(tex_path)
@@ -67,7 +67,7 @@ func _draw() -> void:
 			draw_rect(rect, col, true)
 			draw_rect(rect, Color(1, 1, 1, 0.5), false, 3.0)
 			_draw_centered_text(font, _location_name, font_size, Color(0.1, 0.1, 0.1), size.y * 0.45)
-			_draw_centered_text(font, \"美术待补\", small_size, Color(0.2, 0.2, 0.2, 0.7), size.y * 0.75)
+			_draw_centered_text(font, "美术待补", small_size, Color(0.2, 0.2, 0.2, 0.7), size.y * 0.75)
 		# 收集标记 (右上角圆点)
 		draw_circle(Vector2(size.x - 28, 28), 12, Color(1, 1, 1, 0.9))
 		draw_circle(Vector2(size.x - 28, 28), 7, Color(0.3, 0.7, 0.4))
