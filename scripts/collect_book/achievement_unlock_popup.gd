@@ -66,14 +66,11 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	var ach_name := String(definition.get("name", achievement_id))
 	var ach_category := String(definition.get("category", ""))
 
-	# 遮罩背景效果 — 用半透明底（不阻隔操作）
+	# 遮罩背景效果 — 可点击关闭
 	var dim := ColorRect.new()
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0, 0, 0, 0.3)
-	dim.mouse_filter = Control.MOUSE_FILTER_STOP
-	dim.gui_input.connect(func(event: InputEvent):
-		if event is InputEventMouseButton and event.pressed:
-			_dismiss(banner, dim, auto_dismiss))
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(dim)
 
 	# Banner 面板
@@ -143,6 +140,11 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	auto_dismiss.wait_time = AUTO_DISMISS_TIME
 	add_child(auto_dismiss)
 	auto_dismiss.timeout.connect(_dismiss.bind(banner, dim, auto_dismiss))
+	
+	# 点击 banner 关闭（在 auto_dismiss 声明之后，防 lambda 前向引用）
+	banner.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed:
+			_dismiss(banner, dim, auto_dismiss))
 
 	# 入场动画
 	var tween := create_tween()
