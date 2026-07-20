@@ -7,18 +7,12 @@ class_name WalkSummaryCard
 # 展示 15 秒后自动关闭，或点击任意处关闭；同一天不重复展示由 WalkCompanion 保证。
 
 const AUTO_DISMISS_SEC := 15.0
-const CARD_SIZE := Vector2(500, 400)
+const CARD_SIZE := Vector2(560, 320)
 const HEAD_SIZE := 96.0
+const PORTRAIT_BASE := "res://assets/art/delivery/portraits/portrait_"
 
 # 品种化趣味文案数据源，常驻预载（避免运行时 load）。
 const CompanionChatter := preload("res://config/companion_chatter.gd")
-
-# 品种色，作为猫头占位圆的颜色（无美术依赖）。
-const BREED_COLORS := {
-	"orange": Color(0.95, 0.62, 0.23),
-	"british": Color(0.55, 0.60, 0.66),
-	"siamese": Color(0.80, 0.68, 0.55),
-}
 
 var _dismissed := false
 var _timer: Timer
@@ -39,56 +33,65 @@ func _build_ui() -> void:
 	var overlay := ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.55)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	# IGNORE：让点击穿透到根节点的 _gui_input，实现点击遮罩任意处关闭。
-	# 若设为 STOP，遮罩会吞掉点击，tap-to-dismiss 失效。
 	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(overlay)
 
-	# 居中卡片
-	var card := PanelContainer.new()
-	card.custom_minimum_size = CARD_SIZE
-	# 不用 PRESET_CENTER（会和手动 position 冲突，推偏到右下角）
-	card.pivot_offset = CARD_SIZE * 0.5
-	card.position = Vector2(
-		(_viewport_size().x - CARD_SIZE.x) * 0.5,
-		(_viewport_size().y - CARD_SIZE.y) * 0.5
-	)
-	card.mouse_filter = Control.MOUSE_FILTER_STOP
-
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.99, 0.97, 0.92)
-	style.set_corner_radius_all(28)
-	style.set_content_margin_all(28)
-	style.shadow_color = Color(0, 0, 0, 0.25)
-	style.shadow_size = 12
-	card.add_theme_stylebox_override("panel", style)
-	add_child(card)
+	# 弹窗底图（popup_bg.png）
+	var panel := TextureRect.new()
+	panel.texture = load("res://assets/art/ui/panels/popup_bg.png")
+	panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	panel.stretch_mode = TextureRect.STRETCH_SCALE
+	_center_control(panel, CARD_SIZE)
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(panel)
 
 	var vbox := VBoxContainer.new()
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	vbox.add_theme_constant_override("separation", 14)
-	card.add_child(vbox)
+	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	vbox.add_theme_constant_override("margin_left", 40)
+	vbox.add_theme_constant_override("margin_right", 40)
+	vbox.add_theme_constant_override("margin_top", 20)
+	vbox.add_theme_constant_override("margin_bottom", 20)
+	vbox.add_theme_constant_override("separation", 10)
+	panel.add_child(vbox)
 
-	# 随行猫头（占位彩色圆）
-	var head_wrap := CenterContainer.new()
-	vbox.add_child(head_wrap)
-	var head := _make_head_circle(breed)
-	head_wrap.add_child(head)
+	# 随行猫头像（图鉴同款贴图）
+	var portrait_path := PORTRAIT_BASE + breed + ".png"
+	var head := TextureRect.new()
+	head.texture = load(portrait_path) if ResourceLoader.exists(portrait_path) else null
+	if head.texture == null:
+		# 回退品种色圆
+		head.custom_minimum_size = Vector2(HEAD_SIZE, HEAD_SIZE)
+		head.modulate = {
+			"orange": Color(0.95, 0.62, 0.23),
+			"british": Color(0.55, 0.60, 0.66),
+			"siamese": Color(0.80, 0.68, 0.55),
+		}.get(breed, Color(0.95, 0.62, 0.23))
+	else:
+		head.custom_minimum_size = Vector2(HEAD_SIZE, HEAD_SIZE)
+		head.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		head.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	var head_center := CenterContainer.new()
+	head_center.add_child(head)
+	vbox.add_child(head_center)
 
 	# 标题
 	var title := Label.new()
 	title.text = "今日散步"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 28)
-	title.add_theme_color_override("font_color", Color(0.28, 0.24, 0.20))
+	title.add_theme_font_size_override("font_size", 27)
+	title.add_theme_color_override("font_color", Color("#4F453C"))
 	vbox.add_child(title)
 
-	# 步数（大号）
+	# 步数
 	var steps_label := Label.new()
 	steps_label.text = "%d 步" % steps
 	steps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	steps_label.add_theme_font_size_override("font_size", 48)
-	steps_label.add_theme_color_override("font_color", BREED_COLORS.get(breed, BREED_COLORS["orange"]))
+	steps_label.add_theme_color_override("font_color", {
+		"orange": Color(0.95, 0.62, 0.23),
+		"british": Color(0.55, 0.60, 0.66),
+		"siamese": Color(0.80, 0.68, 0.55),
+	}.get(breed, Color(0.95, 0.62, 0.23)))
 	vbox.add_child(steps_label)
 
 	# 趣味文案
@@ -96,18 +99,29 @@ func _build_ui() -> void:
 	msg.text = _build_message(companion_name, breed)
 	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	msg.custom_minimum_size = Vector2(CARD_SIZE.x - 80, 0)
-	msg.add_theme_font_size_override("font_size", 20)
-	msg.add_theme_color_override("font_color", Color(0.42, 0.38, 0.34))
+	msg.custom_minimum_size = Vector2(460, 0)
+	msg.add_theme_font_size_override("font_size", 22)
+	msg.add_theme_color_override("font_color", Color("#A2978C"))
 	vbox.add_child(msg)
 
-	# 点击关闭提示
+	# 关闭提示
 	var hint := Label.new()
 	hint.text = "点击任意处关闭"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_font_size_override("font_size", 16)
-	hint.add_theme_color_override("font_color", Color(0.60, 0.56, 0.52))
+	hint.add_theme_color_override("font_color", Color("#A2978C"))
 	vbox.add_child(hint)
+
+
+func _center_control(control: Control, control_size: Vector2) -> void:
+	control.anchor_left = 0.5
+	control.anchor_top = 0.5
+	control.anchor_right = 0.5
+	control.anchor_bottom = 0.5
+	control.offset_left = -control_size.x * 0.5
+	control.offset_top = -control_size.y * 0.5
+	control.offset_right = control_size.x * 0.5
+	control.offset_bottom = control_size.y * 0.5
 
 
 func _make_head_circle(breed: String) -> Control:
