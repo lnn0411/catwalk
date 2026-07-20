@@ -51,7 +51,8 @@ func apply_save(data: Dictionary) -> void:
 	_fresh_sensor_init = (total_steps == 0 and last_plugin_steps == 0)
 	_fresh_hc_init = _fresh_sensor_init
 	_check_daily_reset()
-	_emit_steps_updated(0)
+	# 不在此 emit steps_updated：加载后 _refresh_plugin_steps 统一对齐，避免在
+	# AchievementSystem.apply_save() 之前触发成就检查导致错误弹窗。
 
 func get_today_steps() -> int:
 	_check_daily_reset()
