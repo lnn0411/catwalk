@@ -135,31 +135,31 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	reward_label.add_theme_color_override("font_color", FONT_COLOR_REWARD)
 	copy.add_child(reward_label)
 
-	# 确认按钮（代码绘制 — 命名弹窗风格：正方形，两状态配色）
+	# 确认按钮（正方形，保留圆角；按下状态对齐命名弹窗确认按钮）
 	var confirm := Button.new()
 	confirm.custom_minimum_size = BTN_CONFIRM_SIZE
 	confirm.focus_mode = Control.FOCUS_NONE
 	
-	# 松开状态 — 浅米色、深棕字（匹配 btn_secondary_blank）
+	# 松开状态 — 保持原有暖褐手绘风
 	var btn_normal := StyleBoxFlat.new()
-	btn_normal.bg_color = Color8(254, 239, 204)
-	btn_normal.set_corner_radius_all(0)
+	btn_normal.bg_color = Color("#d4b896")
+	btn_normal.set_corner_radius_all(22)
 	btn_normal.border_width_left = 2
 	btn_normal.border_width_top = 2
 	btn_normal.border_width_right = 2
 	btn_normal.border_width_bottom = 2
-	btn_normal.border_color = Color8(180, 118, 40)
+	btn_normal.border_color = Color("#5a4f45")
 	btn_normal.content_margin_left = 8
 	btn_normal.content_margin_right = 8
 	btn_normal.content_margin_top = 4
 	btn_normal.content_margin_bottom = 4
 	confirm.add_theme_stylebox_override("normal", btn_normal)
-	confirm.add_theme_color_override("font_color", Color8(92, 59, 30))
+	confirm.add_theme_color_override("font_color", Color("#4f453c"))
 	
 	# 按下状态 — 灰绿色、白字（匹配 btn_confirm_name）
 	var btn_pressed := StyleBoxFlat.new()
 	btn_pressed.bg_color = Color8(181, 197, 150)
-	btn_pressed.set_corner_radius_all(0)
+	btn_pressed.set_corner_radius_all(22)
 	btn_pressed.border_width_left = 2
 	btn_pressed.border_width_top = 2
 	btn_pressed.border_width_right = 2
