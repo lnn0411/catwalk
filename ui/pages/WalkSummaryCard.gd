@@ -8,7 +8,7 @@ class_name WalkSummaryCard
 
 const AUTO_DISMISS_SEC := 15.0
 const CARD_SIZE := Vector2(560, 320)
-const HEAD_SIZE := 96.0
+const HEAD_SIZE := 80.0
 const PORTRAIT_BASE := "res://assets/art/delivery/portraits/portrait_"
 
 # 品种化趣味文案数据源，常驻预载（避免运行时 load）。
@@ -68,7 +68,7 @@ func _build_ui() -> void:
 		}.get(breed, Color(0.95, 0.62, 0.23))
 	else:
 		head.custom_minimum_size = Vector2(HEAD_SIZE, HEAD_SIZE)
-		head.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		head.expand_mode = TextureRect.EXPAND_FIT_WIDTH  # 贴图宽适应容器，不自爆撑破弹窗
 		head.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	var head_center := CenterContainer.new()
 	head_center.add_child(head)
