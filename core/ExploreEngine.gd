@@ -38,6 +38,10 @@ const BREED_LOCATION_PREFERENCES := {
 static var _explorers: Dictionary = {}
 static var _hatched_count: int = 0
 static var _collected_postcards: Array = []
+
+# 公开 getter
+static func get_collected_postcard_ids() -> Array:
+	return _collected_postcards.duplicate()
 static var _first_explore_flags: Dictionary = {}
 # cat_id -> 上一次 roll 出的奖励类型，用于「连续 postcard 防重复」。
 static var _last_reward_type: Dictionary = {}

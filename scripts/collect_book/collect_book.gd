@@ -101,7 +101,7 @@ func _refresh() -> void:
 	_cat_tab.set_data(cats, all_species)
 
 	# 明信片数据
-	var collected_ids: Array = ExploreEngine._collected_postcards if ExploreEngine else []
+	var collected_ids: Array = ExploreEngine.get_collected_postcard_ids() if ExploreEngine else []
 	_postcard_tab.set_data(collected_ids)
 	_achievement_tab.setup()
 	queue_redraw()
@@ -184,7 +184,7 @@ func _on_cat_cell_pressed(cat_data: Variant) -> void:
 
 
 func _on_postcard_cell_pressed(postcard_id: String) -> void:
-	var collected_ids: Array = ExploreEngine._collected_postcards if ExploreEngine else []
+	var collected_ids: Array = ExploreEngine.get_collected_postcard_ids() if ExploreEngine else []
 	var is_collected: bool = collected_ids.has(postcard_id)
 	var popup: Control = PostcardPopupScript.new()
 	add_child(popup)

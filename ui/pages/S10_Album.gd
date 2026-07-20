@@ -63,7 +63,7 @@ func _switch_tab(tab: Tab) -> void:
 	if tab == Tab.CATS:
 		_refresh_cats()
 	elif tab == Tab.CARDS and _postcard_tab:
-		var collected_ids: Array = ExploreEngine._collected_postcards if ExploreEngine else []
+		var collected_ids: Array = ExploreEngine.get_collected_postcard_ids() if ExploreEngine else []
 		_postcard_tab.set_data(collected_ids)
 	elif tab == Tab.ACH and _achievement_tab:
 		_achievement_tab.setup()
