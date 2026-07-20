@@ -59,20 +59,37 @@ func _build_ui() -> void:
 	var head := TextureRect.new()
 	head.texture = load(portrait_path) if ResourceLoader.exists(portrait_path) else null
 	if head.texture == null:
-		# 回退品种色圆
-		head.custom_minimum_size = Vector2(HEAD_SIZE, HEAD_SIZE)
-		head.modulate = {
+		# 回退品种色圆（Panel + StyleBoxFlat 圆角，确保可见）
+		head.queue_free()
+		var circle := Panel.new()
+		circle.custom_minimum_size = Vector2(HEAD_SIZE, HEAD_SIZE)
+		circle.size = Vector2(HEAD_SIZE, HEAD_SIZE)
+		circle.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		circle.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var st := StyleBoxFlat.new()
+		st.bg_color = {
 			"orange": Color(0.95, 0.62, 0.23),
 			"british": Color(0.55, 0.60, 0.66),
 			"siamese": Color(0.80, 0.68, 0.55),
 		}.get(breed, Color(0.95, 0.62, 0.23))
+		st.set_corner_radius_all(int(HEAD_SIZE / 2.0))
+		st.border_color = Color(1, 1, 1, 0.9)
+		st.set_border_width_all(4)
+		circle.add_theme_stylebox_override("panel", st)
+		circle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var head_center := CenterContainer.new()
+		head_center.add_child(circle)
+		vbox.add_child(head_center)
 	else:
 		head.custom_minimum_size = Vector2(HEAD_SIZE, HEAD_SIZE)
-		head.expand_mode = TextureRect.EXPAND_FIT_WIDTH  # 贴图宽适应容器，不自爆撑破弹窗
+		head.size = Vector2(HEAD_SIZE, HEAD_SIZE)
+		head.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		head.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	var head_center := CenterContainer.new()
-	head_center.add_child(head)
-	vbox.add_child(head_center)
+		head.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		head.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		var head_center := CenterContainer.new()
+		head_center.add_child(head)
+		vbox.add_child(head_center)
 
 	# 标题
 	var title := Label.new()
@@ -122,20 +139,6 @@ func _center_control(control: Control, control_size: Vector2) -> void:
 	control.offset_top = -control_size.y * 0.5
 	control.offset_right = control_size.x * 0.5
 	control.offset_bottom = control_size.y * 0.5
-
-
-func _make_head_circle(breed: String) -> Control:
-	# 用带圆角的 Panel 近似圆形头像占位（32×32 区域放大到可见尺寸），无纹理依赖。
-	var circle := Panel.new()
-	circle.custom_minimum_size = Vector2(HEAD_SIZE, HEAD_SIZE)
-	var st := StyleBoxFlat.new()
-	st.bg_color = BREED_COLORS.get(breed, BREED_COLORS["orange"])
-	st.set_corner_radius_all(int(HEAD_SIZE / 2.0))
-	st.border_color = Color(1, 1, 1, 0.9)
-	st.set_border_width_all(4)
-	circle.add_theme_stylebox_override("panel", st)
-	circle.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return circle
 
 
 func _build_message(companion_name: String, breed: String) -> String:
