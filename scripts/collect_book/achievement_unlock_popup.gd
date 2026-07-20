@@ -135,53 +135,51 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	reward_label.add_theme_color_override("font_color", FONT_COLOR_REWARD)
 	copy.add_child(reward_label)
 
-	# 确认按钮（正方形，保留圆角；按下状态对齐命名弹窗确认按钮）
-	var confirm := Button.new()
+	# 确认按钮（TextureButton，复用命名弹窗贴图，视觉一致且避开了 CanvasLayer theme override 问题）
+	var confirm := TextureButton.new()
+	var btn_secondary := load("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
+	var btn_confirm := load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
+	if btn_secondary:
+		confirm.texture_normal = btn_secondary
+	if btn_confirm:
+		confirm.texture_pressed = btn_confirm
 	confirm.custom_minimum_size = BTN_CONFIRM_SIZE
+	confirm.ignore_texture_size = true
+	confirm.stretch_mode = TextureButton.STRETCH_SCALE
 	confirm.focus_mode = Control.FOCUS_NONE
-	confirm.text = "知道了"
-	confirm.add_theme_font_size_override("font_size", 14)
 	content.add_child(confirm)
 	
-	# 松开状态 — 暖褐手绘风（add_child 之后设 override，防止 Godot CanvasLayer 下失效）
-	var btn_normal := StyleBoxFlat.new()
-	btn_normal.bg_color = Color("#d4b896")
-	btn_normal.set_corner_radius_all(22)
-	btn_normal.border_width_left = 2
-	btn_normal.border_width_top = 2
-	btn_normal.border_width_right = 2
-	btn_normal.border_width_bottom = 2
-	btn_normal.border_color = Color("#5a4f45")
-	btn_normal.content_margin_left = 8
-	btn_normal.content_margin_right = 8
-	btn_normal.content_margin_top = 4
-	btn_normal.content_margin_bottom = 4
-	confirm.add_theme_stylebox_override("normal", btn_normal)
-	confirm.add_theme_color_override("font_color", Color("#4f453c"))
+	# 按钮文字
+	var confirm_label := Label.new()
+	confirm_label.text = "知道了"
+	confirm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	confirm_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	confirm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	confirm_label.add_theme_font_size_override("font_size", 14)
+	confirm_label.add_theme_color_override("font_color", Color("#4f453c"))
+	confirm.add_child(confirm_label)
 	
-	# 按下状态 — 灰绿色、白字（匹配 btn_confirm_name）
-	var btn_pressed := StyleBoxFlat.new()
-	btn_pressed.bg_color = Color8(181, 197, 150)
-	btn_pressed.set_corner_radius_all(22)
-	btn_pressed.border_width_left = 2
-	btn_pressed.border_width_top = 2
-	btn_pressed.border_width_right = 2
-	btn_pressed.border_width_bottom = 2
-	btn_pressed.border_color = Color8(180, 118, 40)
-	btn_pressed.content_margin_left = 8
-	btn_pressed.content_margin_right = 8
-	btn_pressed.content_margin_top = 4
-	btn_pressed.content_margin_bottom = 4
-	confirm.add_theme_stylebox_override("pressed", btn_pressed)
-	confirm.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
+	# 按下时文字变白
+	var confirm_label_pressed := Label.new()
+	confirm_label_pressed.text = "知道了"
+	confirm_label_pressed.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	confirm_label_pressed.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	confirm_label_pressed.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	confirm_label_pressed.add_theme_font_size_override("font_size", 14)
+	confirm_label_pressed.add_theme_color_override("font_color", Color(1, 1, 1))
+	confirm_label_pressed.visible = false
+	confirm.add_child(confirm_label_pressed)
+	
+	# 按下切换文字显隐
+	confirm.pressed.connect(_on_confirm_pressed.bind(confirm, confirm_label, confirm_label_pressed))
 
 	var auto_dismiss := Timer.new()
 	auto_dismiss.one_shot = true
 	auto_dismiss.wait_time = AUTO_DISMISS_TIME
 	add_child(auto_dismiss)
 
-	confirm.pressed.connect(_dismiss.bind(banner, dim, auto_dismiss))
-	auto_dismiss.timeout.connect(_dismiss.bind(banner, dim, auto_dismiss))
+	confirm.pressed.connect(_on_confirm_pressed.bind(banner, dim, auto_dismiss, confirm_label, confirm_label_pressed))
+	auto_dismiss.timeout.connect(_on_confirm_pressed.bind(banner, dim, auto_dismiss, confirm_label, confirm_label_pressed))
 
 	# 入场动画
 	var tween := create_tween()
@@ -191,6 +189,14 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	tween.tween_property(banner, "offset_top", 24.0, 0.4)
 	tween.tween_property(banner, "offset_bottom", float(24 + BANNER_HEIGHT), 0.4)
 	auto_dismiss.start()
+
+
+func _on_confirm_pressed(banner: PanelContainer, dim: ColorRect, timer: Timer,
+		label_normal: Label, label_pressed: Label) -> void:
+	label_normal.visible = false
+	label_pressed.visible = true
+	await get_tree().create_timer(0.08).timeout
+	_dismiss(banner, dim, timer)
 
 
 func _dismiss(banner: PanelContainer, dim: ColorRect, timer: Timer) -> void:
