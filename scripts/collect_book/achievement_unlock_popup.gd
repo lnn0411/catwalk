@@ -70,7 +70,10 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	var dim := ColorRect.new()
 	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	dim.color = Color(0, 0, 0, 0.3)
-	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE  # 穿通点击
+	dim.mouse_filter = Control.MOUSE_FILTER_STOP
+	dim.gui_input.connect(func(event: InputEvent):
+		if event is InputEventMouseButton and event.pressed:
+			_dismiss(banner, dim, auto_dismiss))
 	add_child(dim)
 
 	# Banner 面板
@@ -135,51 +138,11 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	reward_label.add_theme_color_override("font_color", FONT_COLOR_REWARD)
 	copy.add_child(reward_label)
 
-	# 确认按钮（TextureButton，复用命名弹窗贴图，视觉一致且避开了 CanvasLayer theme override 问题）
-	var confirm := TextureButton.new()
-	var btn_secondary := load("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
-	var btn_confirm := load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
-	if btn_secondary:
-		confirm.texture_normal = btn_secondary
-	if btn_confirm:
-		confirm.texture_pressed = btn_confirm
-	confirm.custom_minimum_size = BTN_CONFIRM_SIZE
-	confirm.ignore_texture_size = true
-	confirm.stretch_mode = TextureButton.STRETCH_SCALE
-	confirm.focus_mode = Control.FOCUS_NONE
-	content.add_child(confirm)
-	
-	# 按钮文字
-	var confirm_label := Label.new()
-	confirm_label.text = "知道了"
-	confirm_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	confirm_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	confirm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	confirm_label.add_theme_font_size_override("font_size", 14)
-	confirm_label.add_theme_color_override("font_color", Color("#4f453c"))
-	confirm.add_child(confirm_label)
-	
-	# 按下时文字变白
-	var confirm_label_pressed := Label.new()
-	confirm_label_pressed.text = "知道了"
-	confirm_label_pressed.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	confirm_label_pressed.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	confirm_label_pressed.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	confirm_label_pressed.add_theme_font_size_override("font_size", 14)
-	confirm_label_pressed.add_theme_color_override("font_color", Color(1, 1, 1))
-	confirm_label_pressed.visible = false
-	confirm.add_child(confirm_label_pressed)
-	
-	# 按下切换文字显隐
-	confirm.pressed.connect(_on_confirm_pressed.bind(confirm, confirm_label, confirm_label_pressed))
-
 	var auto_dismiss := Timer.new()
 	auto_dismiss.one_shot = true
 	auto_dismiss.wait_time = AUTO_DISMISS_TIME
 	add_child(auto_dismiss)
-
-	confirm.pressed.connect(_on_confirm_pressed.bind(banner, dim, auto_dismiss, confirm_label, confirm_label_pressed))
-	auto_dismiss.timeout.connect(_on_confirm_pressed.bind(banner, dim, auto_dismiss, confirm_label, confirm_label_pressed))
+	auto_dismiss.timeout.connect(_dismiss.bind(banner, dim, auto_dismiss))
 
 	# 入场动画
 	var tween := create_tween()
@@ -189,14 +152,6 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	tween.tween_property(banner, "offset_top", 24.0, 0.4)
 	tween.tween_property(banner, "offset_bottom", float(24 + BANNER_HEIGHT), 0.4)
 	auto_dismiss.start()
-
-
-func _on_confirm_pressed(banner: PanelContainer, dim: ColorRect, timer: Timer,
-		label_normal: Label, label_pressed: Label) -> void:
-	label_normal.visible = false
-	label_pressed.visible = true
-	await get_tree().create_timer(0.08).timeout
-	_dismiss(banner, dim, timer)
 
 
 func _dismiss(banner: PanelContainer, dim: ColorRect, timer: Timer) -> void:
