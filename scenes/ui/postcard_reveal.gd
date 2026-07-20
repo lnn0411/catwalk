@@ -105,7 +105,7 @@ func _build_ui() -> void:
 	# 收下按钮
 	var ok_btn := TextureButton.new()
 	ok_btn.name = "OkBtn"
-	ok_btn.custom_minimum_size = Vector2(200, 50)
+	ok_btn.custom_minimum_size = Vector2(170, 70)
 	ok_btn.texture_normal = BTN_CONFIRM
 	ok_btn.ignore_texture_size = true
 	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
