@@ -47,7 +47,7 @@ func _build_ui() -> void:
 	# 居中卡片
 	var card := PanelContainer.new()
 	card.custom_minimum_size = CARD_SIZE
-	card.set_anchors_preset(Control.PRESET_CENTER)
+	# 不用 PRESET_CENTER（会和手动 position 冲突，推偏到右下角）
 	card.pivot_offset = CARD_SIZE * 0.5
 	card.position = Vector2(
 		(_viewport_size().x - CARD_SIZE.x) * 0.5,
