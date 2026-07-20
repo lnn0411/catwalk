@@ -4,6 +4,12 @@ const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const SHOP_BG_PATH := "res://assets/art/ui/shop_bg.png"
 const GARDEN_PATH := "res://scenes/S04_GardenMain.tscn"
 
+const CUR_ICON_PATHS := {
+	"diamonds": "res://assets/art/ui/icons/icon_gem.png",
+	"gold": "res://assets/art/ui/icons/icon_coin.png",
+	"petals": "res://assets/art/ui/icons/icon_petal.png",
+}
+
 const CUR_ICONS := {"gold": "💰", "diamonds": "💎", "petals": "🌸"}
 const CUR_NAMES := {"gold": "金币", "diamonds": "钻石", "petals": "爱心花瓣"}
 
@@ -86,7 +92,7 @@ func _build_currency_bar(parent: VBoxContainer) -> void:
 	bar.add_theme_constant_override("separation", 10)
 	parent.add_child(bar)
 
-	for data in [["diamonds", CUR_ICONS["diamonds"], Palette.MIST_BLUE], ["gold", CUR_ICONS["gold"], Palette.AMBER], ["petals", CUR_ICONS["petals"], Palette.BRICK_RED]]:
+	for data in [["diamonds", CUR_ICON_PATHS["diamonds"], Palette.MIST_BLUE], ["gold", CUR_ICON_PATHS["gold"], Palette.AMBER], ["petals", CUR_ICON_PATHS["petals"], Palette.BRICK_RED]]:
 		var key := String(data[0])
 		var panel := PanelContainer.new()
 		panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -98,10 +104,11 @@ func _build_currency_bar(parent: VBoxContainer) -> void:
 		row.add_theme_constant_override("separation", 6)
 		panel.add_child(row)
 
-		var icon := Label.new()
-		icon.text = String(data[1])
-		icon.add_theme_font_size_override("font_size", 19)
-		icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		var icon := TextureRect.new()
+		icon.texture = load(String(data[1]))
+		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon.custom_minimum_size = Vector2(28, 28)
 		row.add_child(icon)
 
 		var value := Label.new()
@@ -154,12 +161,24 @@ func _build_product_card(parent: VBoxContainer, product: Dictionary) -> void:
 	row.add_theme_constant_override("separation", 12)
 	card.add_child(row)
 
-	var icon := Label.new()
-	icon.text = String(product.get("icon", "🎁"))
+	var icon: Control
+	var emoji_str := String(product.get("icon", "🎁"))
+	var tex_path := _emoji_to_icon_path(emoji_str)
+	if tex_path != "" and ResourceLoader.exists(tex_path):
+		var tr := TextureRect.new()
+		tr.texture = load(tex_path)
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.custom_minimum_size = Vector2(40, 40)
+		icon = tr
+	else:
+		var lb := Label.new()
+		lb.text = emoji_str
+		lb.add_theme_font_size_override("font_size", 30)
+		lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		icon = lb
 	icon.custom_minimum_size.x = 54.0
-	icon.add_theme_font_size_override("font_size", 30)
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(icon)
 
 	var info := VBoxContainer.new()
@@ -362,6 +381,14 @@ func _save_all() -> void:
 	if save_manager and save_manager.has_method("save_all"):
 		save_manager.save_all()
 
+func _emoji_to_icon_path(emoji: String) -> String:
+	match emoji:
+		"💎": return "res://assets/art/ui/icons/icon_gem.png"
+		"💰": return "res://assets/art/ui/icons/icon_coin.png"
+		"🌸": return "res://assets/art/ui/icons/icon_petal.png"
+	return ""
+
+
 func _play_obtain_animation(product: Dictionary) -> void:
 	var overlay := Control.new()
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -373,11 +400,23 @@ func _play_obtain_animation(product: Dictionary) -> void:
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	overlay.add_child(shade)
 
-	var icon := Label.new()
-	icon.text = String(product.get("icon", "🎁"))
-	icon.add_theme_font_size_override("font_size", 58)
-	icon.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	icon.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	var icon: Control
+	var emoji_str := String(product.get("icon", "🎁"))
+	var tex_path := _emoji_to_icon_path(emoji_str)
+	if tex_path != "" and ResourceLoader.exists(tex_path):
+		var tr := TextureRect.new()
+		tr.texture = load(tex_path)
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.custom_minimum_size = Vector2(80, 80)
+		icon = tr
+	else:
+		var lb := Label.new()
+		lb.text = emoji_str
+		lb.add_theme_font_size_override("font_size", 58)
+		lb.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		icon = lb
 	icon.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	icon.offset_left = -60.0
 	icon.offset_top = -66.0
