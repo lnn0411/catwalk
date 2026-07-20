@@ -139,8 +139,11 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	var confirm := Button.new()
 	confirm.custom_minimum_size = BTN_CONFIRM_SIZE
 	confirm.focus_mode = Control.FOCUS_NONE
+	confirm.text = "知道了"
+	confirm.add_theme_font_size_override("font_size", 14)
+	content.add_child(confirm)
 	
-	# 松开状态 — 保持原有暖褐手绘风
+	# 松开状态 — 暖褐手绘风（add_child 之后设 override，防止 Godot CanvasLayer 下失效）
 	var btn_normal := StyleBoxFlat.new()
 	btn_normal.bg_color = Color("#d4b896")
 	btn_normal.set_corner_radius_all(22)
@@ -171,10 +174,6 @@ func show_banner(achievement_id: String, reward: Dictionary) -> void:
 	btn_pressed.content_margin_bottom = 4
 	confirm.add_theme_stylebox_override("pressed", btn_pressed)
 	confirm.add_theme_color_override("font_pressed_color", Color(1, 1, 1))
-	
-	confirm.add_theme_font_size_override("font_size", 14)
-	confirm.text = "知道了"
-	content.add_child(confirm)
 
 	var auto_dismiss := Timer.new()
 	auto_dismiss.one_shot = true
