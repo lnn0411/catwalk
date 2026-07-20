@@ -41,13 +41,8 @@ func set_data(collected_ids: Array) -> void:
 	var all_postcards: Array = PostcardData.get_all()
 	for postcard in all_postcards:
 		var is_collected: bool = collected_ids.has(postcard.id)
-		# 已知: 已收集, 或数据标记为已知(可被发现). 完全未知则黑色问号.
+		# 已收集 = 彩色卡；未收集 = 黑色 "?" 卡（postcard_grid_cell 已有对应渲染）
 		var is_known: bool = is_collected
-		if not is_collected and "is_known" in postcard:
-			is_known = postcard.is_known
-		# 完全未知的明信片不显示
-		if not is_collected and not is_known:
-			continue
 
 		var cell := Control.new()
 		cell.set_script(PostcardGridCellScript)
