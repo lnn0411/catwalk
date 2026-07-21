@@ -31,6 +31,13 @@ const ACHIEVEMENTS: Array[Dictionary] = [
 	{id = "D2", name = "雨天的访客", category = "easter_egg", type = "friend_streak", target = 7, reward = {hidden_diary_5 = 1}},
 ]
 
+const HIDDEN_POSTCARD_MAP := {
+	"orange": "hidden_orange_01",
+	"british": "hidden_british_01",
+	"siamese": "hidden_siamese_01",
+}
+const AFFECTION_LV5 := 360
+
 # ── Instance state ──
 var _unlocked: Dictionary = {}
 var _progress: Dictionary = {}
@@ -43,6 +50,7 @@ var _collected_city_postcards: Dictionary = {}
 var _max_level: int = 0
 var _max_affection: int = 0
 var _total_steps: int = 0
+var _awarded_hidden: Dictionary = {}
 
 # A6: daily step streak
 var _step_streak: int = 0
@@ -222,17 +230,18 @@ func apply_save(data: Dictionary) -> void:
 
 
 func reset_all() -> void:
-	_unlocked = {}
-	_progress = {}
+	_unlocked.clear()
+	_progress.clear()
 	_hatch_count = 0
 	_album_entry_count = 0
-	_collected_breeds = []
+	_collected_breeds.clear()
 	_postcard_count = 0
 	_city_postcard_count = 0
-	_collected_city_postcards = {}
+	_collected_city_postcards.clear()
 	_max_level = 0
 	_max_affection = 0
 	_total_steps = 0
+	_awarded_hidden.clear()
 	_step_streak = 0
 	_daily_step_accumulator = 0
 	_step_streak_checked_today = ""
@@ -300,9 +309,54 @@ func _on_postcard_obtained(postcard_id: String, location_type: String) -> void:
 
 func _on_friendship_changed(_cat_id: String, friendship: int) -> void:
 	_max_affection = max(_max_affection, friendship)
+	# 好感 Lv5（360）→ 发放品种专属隐藏明信片
+	if friendship >= AFFECTION_LV5 and not _awarded_hidden.has(_cat_id):
+		_award_hidden_postcard(_cat_id)
 	for def_dict in ACHIEVEMENTS:
 		if String(def_dict.get("type", "")) == "affection":
 			_check_def(def_dict)
+
+
+func _award_hidden_postcard(cat_id: String) -> void:
+	if _awarded_hidden.has(cat_id):
+		return
+	# 从 HatchEngine 找猫品种
+	var breed := ""
+	if HatchEngine != null:
+		for cat in HatchEngine.get_cats():
+			var cid: String = ""
+			if cat is Dictionary:
+				cid = String(cat.get("id", ""))
+			else:
+				cid = String(cat.get("id")) if cat.has_method("get") else ""
+			if cid == cat_id:
+				breed = String(cat.get("species", "")) if cat is Dictionary else String(cat.species)
+				break
+	if breed == "":
+		breed = "orange"
+	var postcard_id: String = HIDDEN_POSTCARD_MAP.get(breed, "hidden_orange_01")
+	if postcard_id == "":
+		return
+	# 添加到收集
+	if ExploreEngine != null:
+		var collected: Array = ExploreEngine.get_collected_postcard_ids()
+		if postcard_id not in collected:
+			ExploreEngine._collected_postcards.append(postcard_id)
+			ExploreEngine._save()
+	# 标记已发放
+	_awarded_hidden[cat_id] = true
+	# 弹出提示
+	var postcard := PostcardData.get_by_id(postcard_id)
+	var loc_name: String = postcard.location_name if postcard != null else ""
+	if Engine.has_singleton("EventBus"):
+		Engine.get_singleton("EventBus").emit_postcard_obtained(postcard_id, "hidden")
+	# 弹出 postcard_reveal
+	if UIManager != null and UIManager.has_method("push"):
+		UIManager.push("res://scenes/ui/postcard_reveal.tscn", {
+			"cat_name": "",
+			"reward_type": "hidden",
+			"postcard_data": {"location_type": "hidden", "location_name": loc_name},
+		})
 
 
 func _on_cat_interacted(cat_id: String, _interaction_type: String) -> void:
