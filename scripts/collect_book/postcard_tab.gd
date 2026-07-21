@@ -41,14 +41,15 @@ func set_data(collected_ids: Array) -> void:
 	var all_postcards: Array = PostcardData.get_all()
 	for postcard in all_postcards:
 		var is_collected: bool = collected_ids.has(postcard.id)
-		# 已收集 = 彩色卡；未收集 = 黑色 "?" 卡（postcard_grid_cell 已有对应渲染）
-		var is_known: bool = is_collected
+		# 未获得明信片不展示
+		if not is_collected:
+			continue
 
 		var cell := Control.new()
 		cell.set_script(PostcardGridCellScript)
 		cell.custom_minimum_size = CELL_SIZE
 		_grid.add_child(cell)
-		cell.setup(postcard, is_collected, is_known)
+		cell.setup(postcard, is_collected, true)
 		cell.cell_pressed.connect(_on_cell_pressed)
 
 
