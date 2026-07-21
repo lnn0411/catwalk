@@ -30,6 +30,14 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(330, 220)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	gui_input.connect(_on_gui_input)
+	# 圆角底框（StyleBoxFlat，同孵化室风格）
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color.TRANSPARENT
+	sb.set_corner_radius_all(12)
+	sb.set_border_width_all(2)
+	sb.border_color = Color(0.4, 0.35, 0.28, 0.6)
+	sb.corner_detail = 12
+	add_theme_stylebox_override("panel", sb)
 
 
 func setup(postcard_data, is_collected: bool, is_known: bool) -> void:
@@ -71,6 +79,10 @@ func _draw() -> void:
 	var small_size := 16
 
 	if _is_collected:
+		# 圆角底框
+		var sb := get_theme_stylebox("panel")
+		if sb:
+			draw_style_box(sb, rect)
 		if _tex:
 			draw_texture_rect(_tex, rect, false)
 		else:
@@ -78,8 +90,6 @@ func _draw() -> void:
 			draw_rect(rect, col, true)
 			_draw_centered_text(font, _location_name, font_size, Color(0.1, 0.1, 0.1), size.y * 0.45)
 			_draw_centered_text(font, "美术待补", small_size, Color(0.2, 0.2, 0.2, 0.7), size.y * 0.75)
-		# 边框
-		draw_rect(rect, Color(0.4, 0.35, 0.28, 0.6), false, 3.0)
 		# 底部地点名条
 		var bar := Rect2(0, rect.size.y - 36, rect.size.x, 36)
 		draw_rect(bar, Color(0, 0, 0, 0.45), true)
