@@ -41,19 +41,18 @@ func _ready() -> void:
 	# 圆角裁切着色器（平滑过渡）
 	var shader := Shader.new()
 	shader.code = """shader_type canvas_item;
-uniform float radius : hint_range(0, 100) = 24.0;
+uniform vec2 cell_size = vec2(330.0, 220.0);
+uniform float radius = 24.0;
 
 void fragment() {
-	vec2 size = 1.0 / TEXTURE_PIXEL_SIZE;
-	vec2 r = radius / size;
-	vec2 uv = UV * size;
-	vec2 d = min(uv, size - uv);
+	vec2 d = min(UV * cell_size, (1.0 - UV) * cell_size);
 	float dist = min(d.x, d.y);
 	float alpha = smoothstep(radius, radius - 2.0, dist);
 	COLOR.a = mix(COLOR.a, 0.0, alpha);
 }"""
 	material = ShaderMaterial.new()
 	material.shader = shader
+	material.set_shader_parameter("cell_size", Vector2(330, 220))
 	material.set_shader_parameter("radius", 24.0)
 
 
