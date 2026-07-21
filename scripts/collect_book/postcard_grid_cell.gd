@@ -85,6 +85,11 @@ func _draw() -> void:
 			draw_style_box(sb, rect)
 		if _tex:
 			draw_texture_rect(_tex, rect, false)
+			# 四角画背景色圆遮住图片的直角
+			var r := 12.0
+			var bg := Color(0.96, 0.94, 0.88)
+			for c in [Vector2(r, r), Vector2(size.x - r, r), Vector2(r, size.y - r), Vector2(size.x - r, size.y - r)]:
+				draw_circle(c, r, bg)
 		else:
 			var col: Color = LOCATION_COLORS.get(_location_type, Color(0.6, 0.6, 0.6))
 			draw_rect(rect, col, true)
