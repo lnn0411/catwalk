@@ -30,30 +30,14 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(330, 220)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	gui_input.connect(_on_gui_input)
-	# 圆角底框（StyleBoxFlat）
+	# 圆角底框（StyleBoxFlat，同孵化室风格）
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color.TRANSPARENT
-	sb.set_corner_radius_all(24)
-	sb.set_border_width_all(3)
-	sb.border_color = Color(0.4, 0.35, 0.28, 0.8)
+	sb.set_corner_radius_all(12)
+	sb.set_border_width_all(2)
+	sb.border_color = Color(0.4, 0.35, 0.28, 0.6)
 	sb.corner_detail = 12
 	add_theme_stylebox_override("panel", sb)
-	# 圆角裁切着色器（平滑过渡）
-	var shader := Shader.new()
-	shader.code = """shader_type canvas_item;
-uniform vec2 cell_size = vec2(330.0, 220.0);
-uniform float radius = 24.0;
-
-void fragment() {
-	vec2 d = min(UV * cell_size, (1.0 - UV) * cell_size);
-	float dist = min(d.x, d.y);
-	float alpha = smoothstep(radius, radius - 2.0, dist);
-	COLOR.a = mix(COLOR.a, 0.0, alpha);
-}"""
-	material = ShaderMaterial.new()
-	material.shader = shader
-	material.set_shader_parameter("cell_size", Vector2(330, 220))
-	material.set_shader_parameter("radius", 24.0)
 
 
 func setup(postcard_data, is_collected: bool, is_known: bool) -> void:
@@ -95,15 +79,12 @@ func _draw() -> void:
 	var small_size := 16
 
 	if _is_collected:
+		# 圆角底框
+		var sb := get_theme_stylebox("panel")
+		if sb:
+			draw_style_box(sb, rect)
 		if _tex:
 			draw_texture_rect(_tex, rect, false)
-			# 圆角边框盖在贴图之上
-			var sb := StyleBoxFlat.new()
-			sb.bg_color = Color.TRANSPARENT
-			sb.set_corner_radius_all(24)
-			sb.set_border_width_all(3)
-			sb.border_color = Color(0.4, 0.35, 0.28, 0.8)
-			draw_style_box(sb, rect)
 		else:
 			var col: Color = LOCATION_COLORS.get(_location_type, Color(0.6, 0.6, 0.6))
 			draw_rect(rect, col, true)
