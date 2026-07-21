@@ -54,8 +54,13 @@ func _draw() -> void:
 	if _is_collected:
 		var tex_path := "res://assets/art/postcards/%s.png" % _postcard_id
 		var tex: Texture2D = null
+		# 先走 Godot 导入缓存，不行则直接从文件系统读取 PNG
 		if ResourceLoader.exists(tex_path):
 			tex = load(tex_path)
+		if tex == null:
+			var img := Image.new()
+			if img.load(tex_path) == OK:
+				tex = ImageTexture.create_from_image(img)
 		if tex:
 			# 有贴图：显示缩略图
 			draw_texture_rect(tex, rect, false)
