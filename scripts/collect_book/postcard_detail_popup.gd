@@ -66,7 +66,7 @@ func _ready() -> void:
 	flip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	flip_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	flip_label.add_theme_font_size_override("font_size", 28)
-	flip_label.add_theme_color_override("font_color", Color(0.31, 0.27, 0.22))
+	flip_label.add_theme_color_override("font_color", Color.WHITE)
 	flip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	flip_btn.add_child(flip_label)
 
