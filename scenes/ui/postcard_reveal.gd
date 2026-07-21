@@ -109,6 +109,7 @@ func _build_ui() -> void:
 	ok_btn.texture_normal = BTN_CONFIRM
 	ok_btn.ignore_texture_size = true
 	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
+	ok_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	ok_btn.pressed.connect(func() -> void:
 		closed.emit()
 	)
@@ -122,7 +123,7 @@ func _build_ui() -> void:
 	ok_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	ok_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	ok_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	ok_label.add_theme_color_override("font_color", Color("#4F453C"))
+	ok_label.add_theme_color_override("font_color", Color.WHITE)
 	ok_label.add_theme_font_size_override("font_size", 18)
 	ok_btn.add_child(ok_label)
 
