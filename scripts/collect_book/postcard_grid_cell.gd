@@ -37,41 +37,7 @@ func setup(postcard_data, is_collected: bool, is_known: bool) -> void:
 	_location_type = postcard_data.location_type if "location_type" in postcard_data else ""
 	_is_collected = is_collected
 	_is_known = is_known
-	_load_thumbnail()
 	queue_redraw()
-
-
-func _load_thumbnail() -> void:
-	# 移除旧贴图节点
-	for child in get_children():
-		if child is TextureRect:
-			child.queue_free()
-	if not _is_collected:
-		return
-	var tex_path := "res://assets/art/postcards/%s.png" % _postcard_id
-	var tex: Texture2D = null
-	if ResourceLoader.exists(tex_path):
-		tex = load(tex_path)
-	if tex == null:
-		var img := Image.new()
-		var abs_path := ProjectSettings.globalize_path(tex_path)
-		if img.load(abs_path) == OK:
-			tex = ImageTexture.create_from_image(img)
-	if tex == null:
-		# 尝试直接用 res:// 路径
-		var img2 := Image.new()
-		if img2.load(tex_path) == OK:
-			tex = ImageTexture.create_from_image(img2)
-	if tex == null:
-		return
-	var tr := TextureRect.new()
-	tr.texture = tex
-	tr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(tr)
-	move_child(tr, 0)
 
 
 func _on_gui_input(event: InputEvent) -> void:
@@ -86,16 +52,25 @@ func _draw() -> void:
 	var small_size := 16
 
 	if _is_collected:
-		var rect := Rect2(Vector2.ZERO, size)
-		var font := get_theme_default_font()
-		# 底部地点名条
-		var bar := Rect2(0, rect.size.y - 36, rect.size.x, 36)
-		draw_rect(bar, Color(0, 0, 0, 0.45), true)
-		_draw_centered_text(font, _location_name, 18, Color.WHITE, rect.size.y - 8)
+		var tex_path := "res://assets/art/postcards/%s.png" % _postcard_id
+		var tex: Texture2D = null
+		if ResourceLoader.exists(tex_path):
+			tex = load(tex_path)
+		if tex:
+			# 有贴图：显示缩略图
+			draw_texture_rect(tex, rect, false)
+			var bar := Rect2(0, rect.size.y - 36, rect.size.x, 36)
+			draw_rect(bar, Color(0, 0, 0, 0.45), true)
+			_draw_centered_text(font, _location_name, 18, Color.WHITE, rect.size.y - 8)
+		else:
+			var col: Color = LOCATION_COLORS.get(_location_type, Color(0.6, 0.6, 0.6))
+			draw_rect(rect, col, true)
+			draw_rect(rect, Color(1, 1, 1, 0.5), false, 3.0)
+			_draw_centered_text(font, _location_name, font_size, Color(0.1, 0.1, 0.1), size.y * 0.45)
+			_draw_centered_text(font, "美术待补", small_size, Color(0.2, 0.2, 0.2, 0.7), size.y * 0.75)
 		# 收集标记 (右上角圆点)
 		draw_circle(Vector2(size.x - 28, 28), 12, Color(1, 1, 1, 0.9))
 		draw_circle(Vector2(size.x - 28, 28), 7, Color(0.3, 0.7, 0.4))
-		return
 	elif _is_known:
 		draw_rect(rect, Color(0.55, 0.55, 0.55), true)
 		draw_rect(rect, Color(0.3, 0.3, 0.3), false, 3.0)
