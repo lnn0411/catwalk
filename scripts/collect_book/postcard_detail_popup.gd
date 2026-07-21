@@ -12,7 +12,6 @@ const LOCATION_COLORS := {
 }
 const CARD_SIZE := Vector2(750, 500)
 const PAPER_COLOR := Color(0.96, 0.93, 0.85)
-const BTN_CONFIRM := preload("res://assets/art/ui/incubation/components/btn_confirm_name.png")
 
 var _data
 var _is_collected: bool = false
@@ -59,10 +58,12 @@ func _ready() -> void:
 
 	# 翻转按钮（明信片底部正下方）
 	var flip_btn := TextureButton.new()
-	flip_btn.texture_normal = BTN_CONFIRM
-	flip_btn.ignore_texture_size = true
-	flip_btn.stretch_mode = TextureButton.STRETCH_SCALE
-	flip_btn.custom_minimum_size = Vector2(240, 96)
+	var btn_tex := load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
+	if btn_tex != null:
+		flip_btn.texture_normal = btn_tex
+		flip_btn.ignore_texture_size = true
+		flip_btn.stretch_mode = TextureButton.STRETCH_SCALE
+		flip_btn.custom_minimum_size = Vector2(240, 96)
 	flip_btn.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	flip_btn.position += Vector2(-120, 270)  # 卡片底部+20px 居中
 	flip_btn.pressed.connect(_flip)
