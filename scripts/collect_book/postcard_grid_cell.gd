@@ -30,7 +30,7 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(330, 220)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	gui_input.connect(_on_gui_input)
-	# 圆角底框（StyleBoxFlat，同孵化室风格）
+	# 圆角底框 + 裁剪着色器
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color.TRANSPARENT
 	sb.set_corner_radius_all(12)
@@ -38,6 +38,16 @@ func _ready() -> void:
 	sb.border_color = Color(0.4, 0.35, 0.28, 0.6)
 	sb.corner_detail = 12
 	add_theme_stylebox_override("panel", sb)
+	# 着色器：裁剪圆角
+	var shader := Shader.new()
+	shader.code = """shader_type canvas_item;
+void fragment() {
+	vec2 r = vec2(12.0 / 330.0, 12.0 / 220.0);
+	vec2 d = max(UV - r, vec2(0.0)) + max(-UV + 1.0 - r, vec2(0.0));
+	if (length(max(vec2(0.0), r - d)) > 0.0) COLOR.a = 0.0;
+}"""
+	material = ShaderMaterial.new()
+	material.shader = shader
 
 
 func setup(postcard_data, is_collected: bool, is_known: bool) -> void:
@@ -85,11 +95,6 @@ func _draw() -> void:
 			draw_style_box(sb, rect)
 		if _tex:
 			draw_texture_rect(_tex, rect, false)
-			# 四角画背景色圆遮住图片的直角
-			var r := 12.0
-			var bg := Color(0.96, 0.94, 0.88)
-			for c in [Vector2(r, r), Vector2(size.x - r, r), Vector2(r, size.y - r), Vector2(size.x - r, size.y - r)]:
-				draw_circle(c, r, bg)
 		else:
 			var col: Color = LOCATION_COLORS.get(_location_type, Color(0.6, 0.6, 0.6))
 			draw_rect(rect, col, true)
