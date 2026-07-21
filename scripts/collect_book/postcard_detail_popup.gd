@@ -46,16 +46,6 @@ func _ready() -> void:
 	_card_face.draw.connect(_on_card_draw)
 	_card_container.add_child(_card_face)
 
-	# 关闭按钮
-	var close_btn := Button.new()
-	close_btn.text = "×"
-	close_btn.add_theme_font_size_override("font_size", 36)
-	close_btn.custom_minimum_size = Vector2(56, 56)
-	close_btn.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
-	close_btn.position += Vector2(-72, 24)
-	close_btn.pressed.connect(_close)
-	add_child(close_btn)
-
 	# 翻转按钮（明信片底部正下方）
 	var flip_btn := TextureButton.new()
 	var btn_tex := load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
@@ -69,6 +59,16 @@ func _ready() -> void:
 	flip_btn.pressed.connect(_flip)
 	flip_btn.name = "FlipButton"
 	add_child(flip_btn)
+	# 翻转按钮文字
+	var flip_label := Label.new()
+	flip_label.text = "翻  转"
+	flip_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	flip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	flip_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	flip_label.add_theme_font_size_override("font_size", 28)
+	flip_label.add_theme_color_override("font_color", Color(0.31, 0.27, 0.22))
+	flip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flip_btn.add_child(flip_label)
 
 	resized.connect(_recenter)
 	_recenter()
