@@ -20,17 +20,17 @@ const BREED_LOCATION_PREFERENCES := {
 	"orange": {
 		"high": ["convenience_store", "park_bench"],
 		"medium": ["bookstore", "cafe"],
-		"low": ["hospital_corridor", "subway_station"],
+		"low": ["hospital_corridor", "subway_station", "rainy_day"],
 	},
 	"british": {
 		"high": ["bookstore", "cafe"],
-		"medium": ["park_bench", "cafe"],
-		"low": ["convenience_store", "night_market"],
+		"medium": ["park_bench"],
+		"low": ["convenience_store", "night_market", "rainy_day"],
 	},
 	"siamese": {
 		"high": ["subway_station", "night_market", "playground"],
 		"medium": ["convenience_store"],
-		"low": ["bookstore", "hospital_corridor"],
+		"low": ["bookstore", "hospital_corridor", "rainy_day"],
 	},
 }
 
