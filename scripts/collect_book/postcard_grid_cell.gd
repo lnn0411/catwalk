@@ -59,7 +59,8 @@ func _draw() -> void:
 			tex = load(tex_path)
 		if tex == null:
 			var img := Image.new()
-			if img.load(tex_path) == OK:
+			var abs_path := ProjectSettings.globalize_path(tex_path)
+			if img.load(abs_path) == OK:
 				tex = ImageTexture.create_from_image(img)
 		if tex:
 			# 有贴图：显示缩略图
