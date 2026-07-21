@@ -162,6 +162,11 @@ func _draw_front(c: Control, font: Font, rect: Rect2) -> void:
 	var tex: Texture2D = null
 	if ResourceLoader.exists(tex_path, "Texture2D"):
 		tex = load(tex_path) as Texture2D
+	if tex == null:
+		var img := Image.new()
+		var abs_path := ProjectSettings.globalize_path(tex_path)
+		if img.load(abs_path) == OK:
+			tex = ImageTexture.create_from_image(img)
 	
 	if tex:
 		# 有贴图：直接绘制图片 + 叠加信息层

@@ -18,6 +18,7 @@ const PORTRAIT_BRITISH := preload("res://assets/art/cats/portraits/reveal/portra
 const PORTRAIT_SIAMESE := preload("res://assets/art/cats/portraits/reveal/portrait_siamese.png")
 const PostcardTabScript: GDScript = preload("res://scripts/collect_book/postcard_tab.gd")
 const AchievementTabScript: GDScript = preload("res://scripts/collect_book/achievement_tab.gd")
+const PostcardPopupScript: GDScript = preload("res://scripts/collect_book/postcard_detail_popup.gd")
 
 var _current_tab := Tab.CATS
 var _cats: Array = []
@@ -76,6 +77,7 @@ func _setup_collection_tabs() -> void:
 	_postcard_tab.name = "PostcardTab"
 	_postcard_tab.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	$PostcardsBox.add_child(_postcard_tab)
+	_postcard_tab.postcard_cell_pressed.connect(_on_postcard_cell_pressed)
 
 	for child in $AchBox.get_children():
 		child.queue_free()
@@ -323,3 +325,11 @@ func _on_back_pressed() -> void:
 		ui.replace("res://scenes/S04_GardenMain.tscn")
 	else:
 		back_requested.emit()
+
+
+func _on_postcard_cell_pressed(postcard_id: String) -> void:
+	var collected_ids: Array = ExploreEngine.get_collected_postcard_ids() if ExploreEngine else []
+	var is_collected: bool = collected_ids.has(postcard_id)
+	var popup: Control = PostcardPopupScript.new()
+	add_child(popup)
+	popup.setup(postcard_id, is_collected)
