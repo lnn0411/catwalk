@@ -30,24 +30,31 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(330, 220)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	gui_input.connect(_on_gui_input)
-	# 圆角底框 + 裁剪着色器
+	# 圆角底框（StyleBoxFlat）
 	var sb := StyleBoxFlat.new()
 	sb.bg_color = Color.TRANSPARENT
-	sb.set_corner_radius_all(12)
-	sb.set_border_width_all(2)
-	sb.border_color = Color(0.4, 0.35, 0.28, 0.6)
+	sb.set_corner_radius_all(24)
+	sb.set_border_width_all(3)
+	sb.border_color = Color(0.4, 0.35, 0.28, 0.8)
 	sb.corner_detail = 12
 	add_theme_stylebox_override("panel", sb)
-	# 着色器：裁剪圆角
+	# 圆角裁切着色器（平滑过渡）
 	var shader := Shader.new()
 	shader.code = """shader_type canvas_item;
+uniform float radius : hint_range(0, 100) = 24.0;
+
 void fragment() {
-	vec2 r = vec2(24.0 / 330.0, 24.0 / 220.0);
-	vec2 d = max(UV - r, vec2(0.0)) + max(-UV + 1.0 - r, vec2(0.0));
-	if (length(max(vec2(0.0), r - d)) > 0.0) COLOR.a = 0.0;
+	vec2 size = 1.0 / TEXTURE_PIXEL_SIZE;
+	vec2 r = radius / size;
+	vec2 uv = UV * size;
+	vec2 d = min(uv, size - uv);
+	float dist = min(d.x, d.y);
+	float alpha = smoothstep(radius, radius - 2.0, dist);
+	COLOR.a = mix(COLOR.a, 0.0, alpha);
 }"""
 	material = ShaderMaterial.new()
 	material.shader = shader
+	material.set_shader_parameter("radius", 24.0)
 
 
 func setup(postcard_data, is_collected: bool, is_known: bool) -> void:
