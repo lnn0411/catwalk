@@ -228,7 +228,6 @@ func _draw_back(c: Control, font: Font, rect: Rect2) -> void:
 		var ly := 210.0 + i * 28.0
 		c.draw_line(Vector2(mid_x + 20, ly), Vector2(CARD_SIZE.x - 50, ly), Color(0.7, 0.65, 0.55, 0.4), 1.5)
 
-func _draw_wrapped
 func _draw_wrapped(c: Control, font: Font, text: String, font_size: int, color: Color, x: float, y: float, max_w: float, line_h: float) -> void:
 	var cur := ""
 	var oy := y
