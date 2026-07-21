@@ -42,7 +42,7 @@ func _ready() -> void:
 	var shader := Shader.new()
 	shader.code = """shader_type canvas_item;
 void fragment() {
-	vec2 r = vec2(12.0 / 330.0, 12.0 / 220.0);
+	vec2 r = vec2(24.0 / 330.0, 24.0 / 220.0);
 	vec2 d = max(UV - r, vec2(0.0)) + max(-UV + 1.0 - r, vec2(0.0));
 	if (length(max(vec2(0.0), r - d)) > 0.0) COLOR.a = 0.0;
 }"""
@@ -89,12 +89,15 @@ func _draw() -> void:
 	var small_size := 16
 
 	if _is_collected:
-		# 圆角底框
-		var sb := get_theme_stylebox("panel")
-		if sb:
-			draw_style_box(sb, rect)
 		if _tex:
 			draw_texture_rect(_tex, rect, false)
+			# 圆角边框盖在贴图之上
+			var sb := StyleBoxFlat.new()
+			sb.bg_color = Color.TRANSPARENT
+			sb.set_corner_radius_all(24)
+			sb.set_border_width_all(3)
+			sb.border_color = Color(0.4, 0.35, 0.28, 0.8)
+			draw_style_box(sb, rect)
 		else:
 			var col: Color = LOCATION_COLORS.get(_location_type, Color(0.6, 0.6, 0.6))
 			draw_rect(rect, col, true)
