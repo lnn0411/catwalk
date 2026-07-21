@@ -108,6 +108,8 @@ func _restore_save() -> void:
 		UIManager.replace("res://scenes/S90_NetworkError.tscn")
 		return
 	SaveManager.load_and_apply()
+	# 启动时立即存一次档，更新 last_energy_date，避免每次重启都显示回归
+	SaveManager.save_all()
 	_load_finished = true
 	if _days_since_last_open() >= 3:
 		_show_return_toast()
