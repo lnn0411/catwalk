@@ -160,8 +160,8 @@ func _draw_front(c: Control, font: Font, rect: Rect2) -> void:
 	# 尝试加载明信片贴图
 	var tex_path := "res://assets/art/postcards/%s.png" % _data.id
 	var tex: Texture2D = null
-	if ResourceLoader.exists(tex_path):
-		tex = load(tex_path)
+	if ResourceLoader.exists(tex_path, "Texture2D"):
+		tex = load(tex_path) as Texture2D
 	
 	if tex:
 		# 有贴图：直接绘制图片 + 叠加信息层

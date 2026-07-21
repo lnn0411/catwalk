@@ -54,8 +54,8 @@ func _draw() -> void:
 	if _is_collected:
 		var tex_path := "res://assets/art/postcards/%s.png" % _postcard_id
 		var tex: Texture2D = null
-		if ResourceLoader.exists(tex_path):
-			tex = load(tex_path)
+		if ResourceLoader.exists(tex_path, "Texture2D"):
+			tex = load(tex_path) as Texture2D
 		if tex:
 			# 有贴图：显示缩略图
 			draw_texture_rect(tex, rect, false)
