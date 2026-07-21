@@ -56,13 +56,14 @@ func _ready() -> void:
 	close_btn.pressed.connect(_close)
 	add_child(close_btn)
 
-	# 翻转按钮
-	var flip_btn := Button.new()
-	flip_btn.text = "翻转"
-	flip_btn.add_theme_font_size_override("font_size", 24)
-	flip_btn.custom_minimum_size = Vector2(120, 52)
+	# 翻转按钮（明信片底部正下方）
+	var flip_btn := TextureButton.new()
+	flip_btn.texture_normal = load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
+	flip_btn.ignore_texture_size = true
+	flip_btn.stretch_mode = TextureButton.STRETCH_SCALE
+	flip_btn.custom_minimum_size = Vector2(240, 96)
 	flip_btn.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	flip_btn.position += Vector2(-60, -80)
+	flip_btn.position += Vector2(-120, 60)  # 卡片底下方20px
 	flip_btn.pressed.connect(_flip)
 	flip_btn.name = "FlipButton"
 	add_child(flip_btn)
