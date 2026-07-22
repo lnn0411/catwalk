@@ -563,7 +563,7 @@ func _start_game() -> void:
 	_excitement_label.text = "0/%d" % BoardGameData.EXCITEMENT_MAX
 	_frenzy_button.visible = false
 	for seg in _target_segments:
-		seg.color = Color(0.9, 0.9, 0.9)  # 全部灰色
+		seg.texture = load("res://assets/art/board_game/star_dim.png")  # 全部灰色
 	_refresh_all()
 
 
