@@ -659,10 +659,11 @@ func _build_get_ticket_dialog() -> void:
 	# VBox 内容
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_theme_constant_override("separation", 8)
 	box.add_theme_constant_override("margin_left", 36)
 	box.add_theme_constant_override("margin_right", 36)
-	box.add_theme_constant_override("margin_top", 24)
+	box.add_theme_constant_override("margin_top", 32)
 	box.add_theme_constant_override("margin_bottom", 24)
 	card.add_child(box)
 
