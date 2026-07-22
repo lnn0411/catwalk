@@ -682,7 +682,7 @@ func _get_empty_cells() -> Array:
 	for pos in BoardGameData.all_cells():
 		if pos == BoardGameData.GENERATOR_POS:
 			continue
-		if not grid.has(pos):
+		if not grid.has(pos) and pos not in special_tiles:
 			empty.append(pos)
 	return empty
 
