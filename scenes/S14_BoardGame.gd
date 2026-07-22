@@ -61,6 +61,12 @@ var _walk_cat_active: bool = false         # 是否在走动
 var _walk_cat_tween: Tween                 # 左右走 Tween
 var _walk_cat_hint: Label                  # 猫头顶文字标签
 var _banner_hint_token: int = 0            # 目标横幅临时提示的最新令牌
+var _grid_panel: PanelContainer            # 棋盘底板（改边框颜色）
+var _grid_container: GridContainer         # 棋盘格子容器（震动用）
+var _idle_side_frames: Array[Texture2D] = []  # idle 站姿序列帧缓存
+var _frenzy_active_local: bool = false     # 本局是否处于狂欢激活状态（影响走速/色调）
+var _last_frame_interval: float = 0.33     # 记住正常走速，用于从狂欢恢复
+var _frenzy_breathe_tween: Tween           # 狂欢按钮金色呼吸循环（避免重复堆叠）
 
 
 func _ready() -> void:
@@ -338,6 +344,8 @@ func _build_grid() -> Control:
 			grid_container.add_child(cell)
 			_cells[pos] = cell
 
+	_grid_panel = grid_panel
+	_grid_container = grid_container
 	return grid_panel
 
 
@@ -579,7 +587,9 @@ func _start_game() -> void:
 		seg.texture = load("res://assets/art/board_game/star_dim.png")  # 全部灰色
 	_refresh_all()
 	# 棋盘上方走动的小猫：重新加载序列帧并启动走动
+	_frenzy_active_local = false
 	_load_walk_cat_frames()
+	_load_idle_side_frames()
 	_start_walk_cat()
 
 
@@ -695,38 +705,48 @@ func _on_undo_performed(_action: Dictionary) -> void:
 
 
 func _on_mischief_warning(pos: Vector2i) -> void:
+	# 目标格子红色三闪
 	if _cells.has(pos):
 		var cell: Control = _cells[pos]
 		var tween := create_tween()
-		tween.set_loops(2)
-		tween.tween_property(cell, "modulate", Color(1.0, 0.3, 0.3, 0.7), 0.2)
-		tween.tween_property(cell, "modulate", Color.WHITE, 0.2)
-	# 捣乱预警：小猫愣住（暂停走动）+ 吓一跳的小动画 + 横幅提示
+		tween.tween_property(cell, "modulate", Color(1.0, 0.2, 0.2, 0.7), 0.15)
+		tween.tween_property(cell, "modulate", Color.WHITE, 0.15)
+		tween.tween_property(cell, "modulate", Color(1.0, 0.2, 0.2, 0.7), 0.15)
+		tween.tween_property(cell, "modulate", Color.WHITE, 0.15)
+		tween.tween_property(cell, "modulate", Color(1.0, 0.2, 0.2, 0.7), 0.15)
+		tween.tween_property(cell, "modulate", Color.WHITE, 0.15)
+	# 猫冻结 + 头顶 ⁉️ 气泡（红色）
 	_pause_walk_cat()
-	if _walk_cat_tex != null:
-		# scale 瞬间弹到 1.15 再弹回 1.0（0.15s 内完成），以自身中心为轴
-		_walk_cat_tex.pivot_offset = _walk_cat_tex.size * 0.5
-		var scare := create_tween()
-		scare.tween_property(_walk_cat_tex, "scale", Vector2(1.15, 1.15), 0.075)
-		scare.tween_property(_walk_cat_tex, "scale", Vector2.ONE, 0.075)
-	_show_banner_hint("⚠️ 不妙！猫咪要搞事情...", 1.5)
+	if _walk_cat_hint != null:
+		_walk_cat_hint.text = "⁉️"
+		_walk_cat_hint.visible = true
+		_walk_cat_hint.modulate = Color(1.0, 0.1, 0.1)
+	# 棋盘边框闪红
+	if _grid_panel != null:
+		var style: StyleBoxFlat = _grid_panel.get_theme_stylebox("panel").duplicate()
+		style.border_color = Color(1.0, 0.1, 0.1)
+		_grid_panel.add_theme_stylebox_override("panel", style)
+		get_tree().create_timer(0.4).timeout.connect(_reset_grid_border)
 
 
 func _on_mischief_triggered(pos: Vector2i, item: BoardItem) -> void:
-	# 物品被拍飞：先抓取纹理做飞出动画，再刷新棋盘
+	# 棋盘震动
+	if _grid_container != null:
+		var orig_x := _grid_container.position.x
+		var shake := create_tween()
+		shake.tween_property(_grid_container, "position:x", orig_x + 3.0, 0.05)
+		shake.tween_property(_grid_container, "position:x", orig_x - 3.0, 0.05)
+		shake.tween_property(_grid_container, "position:x", orig_x + 3.0, 0.05)
+		shake.tween_property(_grid_container, "position:x", orig_x - 3.0, 0.05)
+		shake.tween_property(_grid_container, "position:x", orig_x, 0.05)
+	# 猫切 idle + 😏 得意气泡
+	_switch_cat_to_idle_with_hint("😏")
+	# 物品飞出（带旋转）+ 星星粒子
 	_play_mischief_fly_out(pos, item)
-	_show_banner_hint("啪！猫咪把东西拍飞了！", 2.0)
-	# 小猫得意的轻微上下弹跳（类似偷笑）
-	if _walk_cat_tex != null:
-		var base_y := _walk_cat_tex.position.y
-		var giggle := create_tween()
-		giggle.tween_property(_walk_cat_tex, "position:y", base_y - 8.0, 0.1)
-		giggle.tween_property(_walk_cat_tex, "position:y", base_y, 0.1)
-		giggle.tween_property(_walk_cat_tex, "position:y", base_y - 8.0, 0.1)
-		giggle.tween_property(_walk_cat_tex, "position:y", base_y, 0.1)
+	# 刷新棋盘
 	_refresh_all()
-	# 捣乱执行完毕，小猫恢复走动
-	_resume_walk_cat()
+	# 得意停顿后恢复走动
+	get_tree().create_timer(1.0).timeout.connect(_resume_walk_cat)
 
 
 func _play_mischief_fly_out(pos: Vector2i, item: BoardItem) -> void:
@@ -756,7 +776,28 @@ func _play_mischief_fly_out(pos: Vector2i, item: BoardItem) -> void:
 		0.0, 1.0, 0.3)
 	tween.tween_property(flyer, "scale", Vector2(0.2, 0.2), 0.3)
 	tween.tween_property(flyer, "modulate:a", 0.0, 0.3)
+	tween.tween_property(flyer, "rotation", deg_to_rad(360.0), 0.3)
 	tween.finished.connect(flyer.queue_free)
+	# 金色星星粒子从格子中心飞散
+	_spawn_star_particles(cell.global_position + cell.size / 2.0)
+
+
+func _spawn_star_particles(global_pos: Vector2) -> void:
+	# 3 颗金色小方块朝右上飞散（ColorRect 实现，零美术资产）
+	for i in range(3):
+		var star := ColorRect.new()
+		star.color = Color(1.0, 0.85, 0.0)
+		star.custom_minimum_size = Vector2(4, 4)
+		star.size = Vector2(4, 4)
+		star.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(star)
+		star.global_position = global_pos
+		var tween := create_tween()
+		var target_x := global_pos.x + randf_range(-40.0, 40.0)
+		var target_y := global_pos.y - randf_range(30.0, 60.0)
+		tween.tween_property(star, "global_position", Vector2(target_x, target_y), 0.3)
+		tween.parallel().tween_property(star, "modulate:a", 0.0, 0.3)
+		tween.tween_callback(star.queue_free)
 
 
 func _on_cat_apology(_cat_name: String) -> void:
@@ -764,6 +805,7 @@ func _on_cat_apology(_cat_name: String) -> void:
 
 
 func _on_game_won() -> void:
+	_frenzy_active_local = false
 	_refresh_all()
 	_stop_walk_cat()
 
@@ -853,6 +895,7 @@ func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> void:
 
 
 func _on_game_lost() -> void:
+	_frenzy_active_local = false
 	_refresh_all()
 	_stop_walk_cat()
 	if board.ad_rescue_restore_used or board.swiped_items.is_empty():
@@ -1096,53 +1139,122 @@ func _on_combo_triggered(count: int) -> void:
 
 
 func _on_frenzy_ready() -> void:
-	# 兴奋值满，显示狂欢按钮
+	# 兴奋值满，显示狂欢按钮 + 弹入脉冲 + 金色呼吸循环
+	# frenzy_ready 会在兴奋值满时反复触发，已展示则跳过避免动画堆叠
+	if _frenzy_button.visible:
+		return
 	_frenzy_button.visible = true
+	_frenzy_button.scale = Vector2(0.5, 0.5)
+	var pulse := create_tween()
+	pulse.tween_property(_frenzy_button, "scale", Vector2(1.15, 1.15), 0.2).set_trans(Tween.TRANS_BACK)
+	pulse.tween_property(_frenzy_button, "scale", Vector2(1.0, 1.0), 0.15).set_trans(Tween.TRANS_QUAD)
+	if _frenzy_breathe_tween != null and _frenzy_breathe_tween.is_valid():
+		_frenzy_breathe_tween.kill()
+	_frenzy_breathe_tween = create_tween().set_loops()
+	_frenzy_breathe_tween.tween_method(func(v: float): _frenzy_button.modulate = Color(1.0, v, 0.2), 0.7, 1.0, 0.6)
+	_frenzy_breathe_tween.tween_method(func(v: float): _frenzy_button.modulate = Color(1.0, v, 0.2), 1.0, 0.7, 0.6)
 
 
 func _on_frenzy_pressed() -> void:
 	# K7: 点击狂欢即蓄一次「抵消下一次捣乱」，无倒计时，按钮变灰
 	if board.trigger_frenzy():
+		if _frenzy_breathe_tween != null and _frenzy_breathe_tween.is_valid():
+			_frenzy_breathe_tween.kill()
+		_frenzy_button.modulate = Color.WHITE
+		_frenzy_button.scale = Vector2.ONE
 		_frenzy_button.visible = false
 
 
 func _on_frenzy_activated() -> void:
-	# 狂欢激活：闪烁效果
-	_excitement_bar.value = 0
-	_excitement_label.text = "0/%d" % BoardGameData.EXCITEMENT_MAX
-	var tween := create_tween()
-	tween.tween_property(_excitement_bar, "modulate", Color(0.5, 1.0, 0.5, 1), 0.15)
-	tween.tween_property(_excitement_bar, "modulate", Color(1, 1, 1, 1), 0.3)
+	# 狂欢激活：猫加速金身 + 兴奋条爆闪 + 金色星光
+	# 记录正常走速（仅在非狂欢态时保存，避免二次激活把快速值当正常值）
+	if not _frenzy_active_local and _walk_cat_timer != null:
+		_last_frame_interval = _walk_cat_timer.wait_time
+	_frenzy_active_local = true
+	# 猫走速 10fps
+	if _walk_cat_timer != null:
+		_walk_cat_timer.wait_time = 0.1
+	# 猫全身金色 + 🎉气泡
+	if _walk_cat_tex != null:
+		_walk_cat_tex.modulate = Color(1.0, 0.9, 0.2)
+	if _walk_cat_hint != null:
+		_walk_cat_hint.text = "🎉"
+		_walk_cat_hint.visible = true
+		_walk_cat_hint.modulate = Color.WHITE
+	# 兴奋条金色爆闪 3 次
+	if _excitement_bar != null:
+		var flash := create_tween()
+		flash.tween_property(_excitement_bar, "modulate", Color(1.0, 0.8, 0.0), 0.1)
+		flash.tween_property(_excitement_bar, "modulate", Color.WHITE, 0.1)
+		flash.tween_property(_excitement_bar, "modulate", Color(1.0, 0.8, 0.0), 0.1)
+		flash.tween_property(_excitement_bar, "modulate", Color.WHITE, 0.1)
+		flash.tween_property(_excitement_bar, "modulate", Color(1.0, 0.8, 0.0), 0.1)
+		flash.tween_property(_excitement_bar, "modulate", Color.WHITE, 0.1)
+	# 金色星光粒子（9颗）
+	_spawn_golden_stars()
+
+
+func _spawn_golden_stars() -> void:
+	# 棋盘上方飞出 9 颗金色星光粒子（ColorRect 实现）
+	var grid_w := CELL_SIZE * BoardGameData.GRID_SIZE + CELL_GAP * float(BoardGameData.GRID_SIZE + 1)
+	var grid_x := (DESIGN_SIZE.x - grid_w) * 0.5
+	var grid_top := (DESIGN_SIZE.y - grid_w) * 0.5
+	for i in range(9):
+		var star := ColorRect.new()
+		star.color = Color(1.0, 0.85, 0.0)
+		var s := randf_range(3.0, 6.0)
+		star.custom_minimum_size = Vector2(s, s)
+		star.size = Vector2(s, s)
+		star.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(star)
+		star.position = Vector2(
+			grid_x + randf_range(0, grid_w),
+			grid_top - randf_range(10.0, 40.0)
+		)
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(star, "position", star.position + Vector2(randf_range(-60, 60), -randf_range(40, 80)), 0.6)
+		tween.tween_property(star, "modulate:a", 0.0, 0.6)
+		tween.tween_callback(star.queue_free)
 
 
 func _on_mischief_cancelled(pos: Vector2i) -> void:
-	# K7: 狂欢抵消了一次捣乱——物品没被拍飞，播猫嬉戏动画替代拍飞
-	# TODO: 接入猫嬉戏动画（占位：先做一下轻微高亮提示）
+	# K7: 狂欢抵消了一次捣乱——物品没被拍飞，猫切 idle + ✌️ + 金色光晕
 	if _cells.has(pos):
 		var cell: Control = _cells[pos]
 		var tween := create_tween()
 		tween.tween_property(cell, "modulate", Color(0.6, 1.0, 0.6, 1.0), 0.15)
 		tween.tween_property(cell, "modulate", Color.WHITE, 0.25)
-	# 狂欢抵消捣乱：小猫暂停 + 绿光反馈，反馈结束后恢复走动
+	# 猫暂停 → 切 idle + ✌️ 气泡 + 金色光晕
 	_pause_walk_cat()
+	_switch_cat_to_idle_with_hint("✌️")
 	if _walk_cat_tex != null:
-		# 绿光 3 次快速闪烁：透明度 0.3→1.0→0.3→1.0→0.3→1.0，约 300ms
-		var green := Color(0.6, 1.0, 0.6, 1.0)
-		var green_dim := Color(0.6, 1.0, 0.6, 0.3)
-		_walk_cat_tex.modulate = green_dim
-		var flash := 0.06
-		var cat_tween := create_tween()
-		cat_tween.tween_property(_walk_cat_tex, "modulate", green, flash)
-		cat_tween.tween_property(_walk_cat_tex, "modulate", green_dim, flash)
-		cat_tween.tween_property(_walk_cat_tex, "modulate", green, flash)
-		cat_tween.tween_property(_walk_cat_tex, "modulate", green_dim, flash)
-		cat_tween.tween_property(_walk_cat_tex, "modulate", green, flash)
-		cat_tween.tween_property(_walk_cat_tex, "modulate", Color.WHITE, 0.1)
-		cat_tween.finished.connect(_resume_walk_cat)
-	else:
-		_resume_walk_cat()
-	_show_banner_hint("✓ 狂欢抵消了捣乱！", 1.5)
+		_walk_cat_tex.modulate = Color(1.0, 0.9, 0.2)
+	# 棋盘边框金色闪烁
+	if _grid_panel != null:
+		var style: StyleBoxFlat = _grid_panel.get_theme_stylebox("panel").duplicate()
+		style.border_color = Color(1.0, 0.85, 0.0)
+		_grid_panel.add_theme_stylebox_override("panel", style)
+		get_tree().create_timer(0.5).timeout.connect(_reset_grid_border)
+	# 0.6s 后恢复走动
+	get_tree().create_timer(0.6).timeout.connect(_resume_walk_cat)
 	_refresh_all()
+
+
+func _reset_grid_border() -> void:
+	# 把棋盘底板边框还原为默认样式（红/金闪烁后调用）
+	if _grid_panel == null:
+		return
+	var reset_style := StyleBoxFlat.new()
+	reset_style.bg_color = Palette.BG_CEMENT
+	reset_style.border_color = Palette.BORDER
+	reset_style.set_border_width_all(3)
+	reset_style.set_corner_radius_all(20)
+	reset_style.content_margin_left = CELL_GAP
+	reset_style.content_margin_right = CELL_GAP
+	reset_style.content_margin_top = CELL_GAP
+	reset_style.content_margin_bottom = CELL_GAP
+	_grid_panel.add_theme_stylebox_override("panel", reset_style)
 
 
 func _on_highest_star_changed(star: int) -> void:
@@ -1224,6 +1336,55 @@ func _load_walk_cat_frames() -> void:
 			break
 
 
+func _load_idle_side_frames() -> void:
+	# 加载 idle 站姿侧向序列帧（与侧走同品种），用于捣蛋后的得意停顿
+	_idle_side_frames.clear()
+	var breed := _cat_breed
+	var i := 0
+	while true:
+		var path := "res://assets/art/cats/%s/idle_side_right_frame_%02d.png" % [breed, i]
+		if not ResourceLoader.exists(path):
+			break
+		var tex := load(path)
+		if tex is Texture2D:
+			_idle_side_frames.append(tex)
+		i += 1
+		if i > 64:
+			break
+
+
+func _switch_cat_to_idle_with_hint(hint_text: String) -> void:
+	# 猫已处于暂停状态（_pause_walk_cat 已调用），切到 idle 站姿序列并显示头顶气泡
+	if _idle_side_frames.is_empty() or _walk_cat_tex == null:
+		return
+	# 切到 idle 序列首帧
+	_walk_cat_frame_idx = 0
+	_walk_cat_tex.texture = _idle_side_frames[0]
+	# 停掉当前侧走 timer，改用临时 idle timer 循环播放 idle 帧（5fps）
+	if _walk_cat_timer != null:
+		_walk_cat_timer.stop()
+	var idle_timer := Timer.new()
+	idle_timer.name = "IdleAnimTimer"
+	idle_timer.wait_time = 0.2  # 5fps
+	idle_timer.one_shot = false
+	idle_timer.timeout.connect(func():
+		if _idle_side_frames.is_empty() or _walk_cat_tex == null:
+			idle_timer.queue_free()
+			return
+		_walk_cat_frame_idx = (_walk_cat_frame_idx + 1) % _idle_side_frames.size()
+		_walk_cat_tex.texture = _idle_side_frames[_walk_cat_frame_idx]
+	)
+	_walk_cat_container.add_child(idle_timer)
+	idle_timer.start()
+	# 临时接管 _walk_cat_timer（_resume_walk_cat 会重建侧走 timer）
+	_walk_cat_timer = idle_timer
+	# 头顶气泡
+	if _walk_cat_hint != null:
+		_walk_cat_hint.text = hint_text
+		_walk_cat_hint.modulate = Color.WHITE
+		_walk_cat_hint.visible = true
+
+
 func _start_walk_cat() -> void:
 	if _walk_cat_tex == null or _walk_cat_frames.is_empty():
 		return
@@ -1237,7 +1398,10 @@ func _start_walk_cat() -> void:
 	_walk_cat_tex.custom_minimum_size = Vector2(scaled_w, 120.0)
 	_walk_cat_tex.size = Vector2(scaled_w, 120.0)
 	_walk_cat_tex.position = Vector2.ZERO
+	_walk_cat_tex.modulate = Color.WHITE
 	_walk_cat_active = true
+	if _walk_cat_timer != null:
+		_walk_cat_timer.wait_time = _last_frame_interval  # 恢复正常走速（避免上一局狂欢残留）
 	_walk_cat_timer.start()
 	_start_walk_cat_tween()
 
@@ -1273,10 +1437,32 @@ func _pause_walk_cat() -> void:
 func _resume_walk_cat() -> void:
 	if not _walk_cat_active:
 		return
+	# 恢复猫的正常色调（狂欢状态下保持金色）
+	if not _frenzy_active_local and _walk_cat_tex != null:
+		_walk_cat_tex.modulate = Color.WHITE
+	# 重新创建侧走 timer（可能被 idle timer 替换过）
 	if _walk_cat_timer != null:
-		_walk_cat_timer.start()
+		_walk_cat_timer.stop()
+		_walk_cat_timer.queue_free()
+	_walk_cat_timer = Timer.new()
+	_walk_cat_timer.name = "WalkCatTimer"
+	_walk_cat_timer.wait_time = 0.1 if _frenzy_active_local else _last_frame_interval  # 狂欢态保持 10fps
+	_walk_cat_timer.one_shot = false
+	_walk_cat_timer.timeout.connect(_on_walk_cat_tick)
+	_walk_cat_container.add_child(_walk_cat_timer)
+	_walk_cat_timer.start()
+	# 恢复侧走帧
+	_walk_cat_frame_idx = 0
+	if not _walk_cat_frames.is_empty() and _walk_cat_tex != null:
+		_walk_cat_tex.texture = _walk_cat_frames[0]
+	# 恢复 position tween
 	if _walk_cat_tween != null and _walk_cat_tween.is_valid():
 		_walk_cat_tween.play()
+	else:
+		_start_walk_cat_tween()
+	# 清气泡
+	if _walk_cat_hint != null:
+		_walk_cat_hint.visible = false
 
 
 func _stop_walk_cat() -> void:
