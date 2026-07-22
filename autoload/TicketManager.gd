@@ -90,6 +90,10 @@ func spend_ticket() -> bool:
 
 func get_tickets() -> int: return tickets
 
+func is_login_claimed_today() -> bool:
+	_check_daily_reset()
+	return _login_claimed_today
+
 func get_daily_remaining() -> Dictionary:
 	_check_daily_reset()
 	return {

@@ -45,7 +45,13 @@ var _ad_rescue_selected: Dictionary = {}  # Vector2i -> true
 var _ad_rescue_highlights: Dictionary = {}  # Vector2i -> Panel
 var _ad_rescue_mode: bool = false
 var _dbg_ticket_btn: Button
-var _get_ticket_dialog: Control           # 门票不足弹窗
+var _get_ticket_dialog: Control           # 门票不足弹窗（行动面板）
+var _gt_step_label: Label                 # 步数进度行
+var _gt_interact_label: Label             # 互动进度行
+var _gt_login_label: Label                # 登录状态行
+var _gt_ad_btn: Button                    # 看广告按钮
+var _gt_coin_btn: Button                  # 金币兑换按钮
+var _gt_start_btn: Button                 # 门票≥1时的开始游戏按钮
 var _get_ticket_result_label: Label       # 弹窗内文字（备用）
 var _has_three_star_bonus: bool = false  # D4
 var _excitement_bar: ProgressBar          # 兴奋值条
@@ -91,6 +97,9 @@ func _ready() -> void:
 	if LevelStateManager != null and LevelStateManager.has_signal("win_milestone_reached"):  # M3-3.1
 		if not LevelStateManager.win_milestone_reached.is_connected(_on_win_milestone):
 			LevelStateManager.win_milestone_reached.connect(_on_win_milestone)
+	# 门票行动面板：后台获得门票（走路/互动）时若弹窗开着实时刷新
+	if TicketManager != null and not TicketManager.tickets_changed.is_connected(_on_tickets_changed):
+		TicketManager.tickets_changed.connect(_on_tickets_changed)
 	_build_ui()
 	_start_game()
 
@@ -633,9 +642,9 @@ func _build_get_ticket_dialog() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_get_ticket_dialog.add_child(dim)
 
-	# 居中卡片（比基础 560×280 高些容纳 5 条获取方式）
+	# 居中卡片（行动面板：3 状态行 + 2 按钮 + 直达入口）
 	var card := Control.new()
-	_center_control(card, Vector2(560, 370))
+	_center_control(card, Vector2(560, 500))
 	_get_ticket_dialog.add_child(card)
 
 	# 底图贴图（加载失败回退 StyleBoxFlat）
@@ -688,49 +697,65 @@ func _build_get_ticket_dialog() -> void:
 	get_title.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	box.add_child(get_title)
 
-	# row1: 步数 + 互动
-	var row1 := HBoxContainer.new()
-	row1.alignment = BoxContainer.ALIGNMENT_CENTER
-	row1.add_theme_constant_override("separation", 24)
-	box.add_child(row1)
+	# 行动面板：被动途径显示实时进度，主动途径挂可点按钮
+	_gt_step_label = Label.new()
+	_gt_step_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gt_step_label.add_theme_font_size_override("font_size", 16)
+	_gt_step_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	box.add_child(_gt_step_label)
 
-	var step_label := Label.new()
-	step_label.text = "🚶 每1500步 → 1张"
-	step_label.add_theme_font_size_override("font_size", 16)
-	step_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	row1.add_child(step_label)
+	_gt_interact_label = Label.new()
+	_gt_interact_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gt_interact_label.add_theme_font_size_override("font_size", 16)
+	_gt_interact_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	box.add_child(_gt_interact_label)
 
-	var interact_label := Label.new()
-	interact_label.text = "🐱 互动5次 → 1张"
-	interact_label.add_theme_font_size_override("font_size", 16)
-	interact_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	row1.add_child(interact_label)
+	_gt_login_label = Label.new()
+	_gt_login_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gt_login_label.add_theme_font_size_override("font_size", 16)
+	_gt_login_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	box.add_child(_gt_login_label)
 
-	# row2: 登录 + 广告
-	var row2 := HBoxContainer.new()
-	row2.alignment = BoxContainer.ALIGNMENT_CENTER
-	row2.add_theme_constant_override("separation", 24)
-	box.add_child(row2)
+	# 主动按钮行：看广告 + 金币兑换
+	var action_row := HBoxContainer.new()
+	action_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_row.add_theme_constant_override("separation", 20)
+	box.add_child(action_row)
 
-	var login_label := Label.new()
-	login_label.text = "🎁 每日登录 → 1张"
-	login_label.add_theme_font_size_override("font_size", 16)
-	login_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	row2.add_child(login_label)
+	_gt_ad_btn = Button.new()
+	_gt_ad_btn.custom_minimum_size = Vector2(220, 60)
+	_gt_ad_btn.add_theme_font_size_override("font_size", 17)
+	_gt_ad_btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	_gt_ad_btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
+	_gt_ad_btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	_gt_ad_btn.add_theme_color_override("font_disabled_color", Color(UI_TEXT_COLOR, 0.4))
+	_gt_ad_btn.pressed.connect(_on_gt_ad_pressed)
+	action_row.add_child(_gt_ad_btn)
 
-	var ad_label := Label.new()
-	ad_label.text = "📺 看广告 → 1张"
-	ad_label.add_theme_font_size_override("font_size", 16)
-	ad_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	row2.add_child(ad_label)
+	_gt_coin_btn = Button.new()
+	_gt_coin_btn.custom_minimum_size = Vector2(220, 60)
+	_gt_coin_btn.add_theme_font_size_override("font_size", 17)
+	_gt_coin_btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	_gt_coin_btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
+	_gt_coin_btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	_gt_coin_btn.add_theme_color_override("font_disabled_color", Color(UI_TEXT_COLOR, 0.4))
+	_gt_coin_btn.pressed.connect(_on_gt_coin_pressed)
+	action_row.add_child(_gt_coin_btn)
 
-	# 金币兑换
-	var coin_label := Label.new()
-	coin_label.text = "🪙 金币×50换1张（每日限2张）"
-	coin_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	coin_label.add_theme_font_size_override("font_size", 16)
-	coin_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	box.add_child(coin_label)
+	# 兑换成功后直达入口（门票≥1时显示）
+	_gt_start_btn = Button.new()
+	_gt_start_btn.text = "🎮 开始游戏"
+	_gt_start_btn.custom_minimum_size = Vector2(240, 64)
+	_gt_start_btn.add_theme_font_size_override("font_size", 20)
+	_gt_start_btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	_gt_start_btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
+	_gt_start_btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	_gt_start_btn.visible = false
+	_gt_start_btn.pressed.connect(func() -> void:
+		_get_ticket_dialog.visible = false
+		_start_game()
+	)
+	box.add_child(_gt_start_btn)
 
 	# 分隔线
 	var sep2 := HSeparator.new()
@@ -779,10 +804,77 @@ static func _center_control(control: Control, control_size: Vector2) -> void:
 
 
 func _show_get_ticket_dialog() -> void:
+	_refresh_get_ticket_dialog()
 	_get_ticket_dialog.visible = true
 	_get_ticket_dialog.modulate = Color(1, 1, 1, 0)
 	var tween := create_tween()
 	tween.tween_property(_get_ticket_dialog, "modulate:a", 1.0, 0.25)
+
+
+func _refresh_get_ticket_dialog() -> void:
+	"""行动面板实时状态：被动途径显示进度，主动按钮显示剩余次数与可用性"""
+	if TicketManager == null:
+		return
+	var remaining: Dictionary = TicketManager.get_daily_remaining()
+	# 步数：今日已得/上限 + 距下一张还差多少步
+	var steps_left: int = int(remaining.get("steps", 0))
+	var steps_progress: int = int(remaining.get("steps_progress", 0))
+	if steps_left > 0:
+		_gt_step_label.text = "🚶 走路：还差 %d 步 → 1张（今日还可得 %d 张）" % [TicketManager.STEPS_PER_TICKET - steps_progress, steps_left]
+	else:
+		_gt_step_label.text = "🚶 走路：今日已达上限 ✓"
+	# 互动
+	var interact_left: int = int(remaining.get("interaction", 0))
+	if interact_left > 0:
+		_gt_interact_label.text = "🐱 互动：每 %d 次 → 1张（今日还可得 %d 张）" % [TicketManager.INTERACTIONS_PER_TICKET, interact_left]
+	else:
+		_gt_interact_label.text = "🐱 互动：今日已达上限 ✓"
+	# 登录
+	if TicketManager.has_method("is_login_claimed_today") and TicketManager.is_login_claimed_today():
+		_gt_login_label.text = "🎁 每日登录：今日已领 ✓"
+	else:
+		_gt_login_label.text = "🎁 每日登录 → 1张"
+	# 看广告按钮
+	var ad_left: int = int(remaining.get("ad", 0))
+	_gt_ad_btn.text = "📺 看广告 +1（剩%d）" % ad_left
+	_gt_ad_btn.disabled = ad_left <= 0
+	# 金币兑换按钮
+	var coin_left: int = int(remaining.get("coin", 0))
+	var gold: int = int(CurrencyManager.gold_coins) if CurrencyManager != null else 0
+	_gt_coin_btn.text = "💰 %d金兑换（剩%d）" % [TicketManager.COIN_COST_PER_TICKET, coin_left]
+	_gt_coin_btn.disabled = coin_left <= 0 or gold < TicketManager.COIN_COST_PER_TICKET
+	if gold < TicketManager.COIN_COST_PER_TICKET and coin_left > 0:
+		_gt_coin_btn.text += " 金币不足"
+	# 门票≥1 → 显示开始按钮
+	_gt_start_btn.visible = TicketManager.get_tickets() > 0
+	_refresh_ticket_label()
+
+
+func _on_gt_coin_pressed() -> void:
+	if TicketManager == null:
+		return
+	if TicketManager.buy_with_coins():
+		Juice.reward()
+		Popups.show_toast("兑换成功！门票+1")
+	else:
+		Popups.show_toast("兑换失败：金币不足或今日已达上限")
+	_refresh_get_ticket_dialog()
+
+
+func _on_gt_ad_pressed() -> void:
+	# 广告桩：无 SDK 时确认即发放；接入激励视频后仅替换 _watch_ad_then 内部实现
+	_watch_ad_then(func() -> void:
+		if TicketManager != null and TicketManager.add_ad_ticket():
+			Juice.reward()
+			Popups.show_toast("感谢观看！门票+1")
+		_refresh_get_ticket_dialog()
+	)
+
+
+func _watch_ad_then(on_finished: Callable) -> void:
+	"""激励视频挂点。当前为占位实现（确认弹窗模拟观看完成）；
+	正式接入广告 SDK 时只改此函数：拉起视频 → 播放完成回调 on_finished"""
+	Popups.show_confirm("📺 观看广告", "观看一段广告视频\n完成后获得门票×1", on_finished)
 
 
 # ---------------- 对局流程 ----------------
@@ -861,6 +953,12 @@ func _refresh_all() -> void:
 func _refresh_ticket_label() -> void:
 	if TicketManager != null:
 		_ticket_label.text = "🎟 ×%d" % TicketManager.get_tickets()
+
+
+func _on_tickets_changed(_count: int) -> void:
+	_refresh_ticket_label()
+	if _get_ticket_dialog != null and _get_ticket_dialog.visible:
+		_refresh_get_ticket_dialog()
 
 
 func _get_total_board_wins() -> int:

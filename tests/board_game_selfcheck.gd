@@ -54,6 +54,7 @@ func _ready() -> void:
 	_t_order_click_limit()
 	_t_order_serialize()
 	_t_telemetry_roundtrip()
+	_t_ticket_purchase_limits()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -743,6 +744,43 @@ func _t_order_serialize() -> void:
 	_check(restored.undo_paid_count == 2, "付费撤销计数恢复")
 	restored.queue_free()
 	b.queue_free()
+
+
+func _t_ticket_purchase_limits() -> void:
+	print("[门票链路 金币兑换/广告日限]")
+	if TicketManager == null or CurrencyManager == null:
+		_check(false, "TicketManager/CurrencyManager autoload 可用")
+		return
+	# 快照现场，测试后恢复
+	var save_tickets: int = TicketManager.tickets
+	var save_coin: int = TicketManager.daily_coin_tickets
+	var save_ad: int = TicketManager.daily_ad_tickets
+	var save_gold: int = CurrencyManager.gold_coins
+	var save_login: bool = TicketManager._login_claimed_today
+
+	TicketManager.tickets = 0
+	TicketManager.daily_coin_tickets = 0
+	TicketManager.daily_ad_tickets = 0
+	CurrencyManager.gold_coins = 120
+	_check(TicketManager.buy_with_coins(), "金币充足第1次兑换成功")
+	_check(TicketManager.tickets == 1 and CurrencyManager.gold_coins == 70, "扣50金+1票")
+	_check(TicketManager.buy_with_coins(), "第2次兑换成功")
+	_check(not TicketManager.buy_with_coins(), "第3次达日限被拒")
+	CurrencyManager.gold_coins = 30
+	TicketManager.daily_coin_tickets = 0
+	_check(not TicketManager.buy_with_coins(), "金币不足被拒且不扣款")
+	_check(CurrencyManager.gold_coins == 30, "拒绝后金币不变")
+	for i in range(3):
+		_check(TicketManager.add_ad_ticket(), "第%d次广告票成功" % (i + 1))
+	_check(not TicketManager.add_ad_ticket(), "第4次广告达日限被拒")
+	_check(TicketManager.is_login_claimed_today() == save_login, "登录状态getter与内部一致")
+
+	# 恢复现场
+	TicketManager.tickets = save_tickets
+	TicketManager.daily_coin_tickets = save_coin
+	TicketManager.daily_ad_tickets = save_ad
+	CurrencyManager.gold_coins = save_gold
+	TicketManager.tickets_changed.emit(TicketManager.tickets)
 
 
 func _t_telemetry_roundtrip() -> void:
