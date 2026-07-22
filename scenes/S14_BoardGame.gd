@@ -737,6 +737,10 @@ func _build_get_ticket_dialog() -> void:
 	box.add_child(sep2)
 
 	# 知道了按钮（btn_confirm_name.png 贴图 + 叠加文字）
+	var btn_row := HBoxContainer.new()
+	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_child(btn_row)
+
 	var ok_btn := TextureButton.new()
 	ok_btn.custom_minimum_size = Vector2(170, 70)
 	var btn_tex := ResourceLoader.load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
@@ -744,16 +748,11 @@ func _build_get_ticket_dialog() -> void:
 		ok_btn.texture_normal = btn_tex
 	ok_btn.ignore_texture_size = true
 	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
-	ok_btn.set_anchors_preset(Control.PRESET_CENTER)
-	ok_btn.offset_left = -85.0
-	ok_btn.offset_right = 85.0
-	ok_btn.offset_top = -35.0
-	ok_btn.offset_bottom = 35.0
 	ok_btn.pressed.connect(func():
 		_get_ticket_dialog.visible = false
 		UIManager.pop()
 	)
-	box.add_child(ok_btn)
+	btn_row.add_child(ok_btn)
 
 	# 按钮 Label 叠加
 	var btn_label := Label.new()
