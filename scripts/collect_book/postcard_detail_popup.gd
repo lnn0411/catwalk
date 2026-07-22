@@ -55,7 +55,15 @@ func _ready() -> void:
 		flip_btn.stretch_mode = TextureButton.STRETCH_SCALE
 		flip_btn.custom_minimum_size = Vector2(240, 96)
 	flip_btn.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	flip_btn.position += Vector2(-120, 270)  # 卡片底部+20px 居中
+	# 明信片卡片右下角（卡片 750×500，距右下 10px 内边距）
+	var card_size := Vector2(750, 500)
+	var btn_w := int(flip_btn.custom_minimum_size.x)
+	var btn_h := int(flip_btn.custom_minimum_size.y)
+	var margin := 10
+	flip_btn.offset_left = int(card_size.x * 0.5 - btn_w - margin)
+	flip_btn.offset_top = int(card_size.y * 0.5 - btn_h - margin)
+	flip_btn.offset_right = flip_btn.offset_left + btn_w
+	flip_btn.offset_bottom = flip_btn.offset_top + btn_h
 	flip_btn.pressed.connect(_flip)
 	flip_btn.name = "FlipButton"
 	add_child(flip_btn)
