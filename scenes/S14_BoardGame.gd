@@ -1106,7 +1106,7 @@ func _show_reward_choice_dialog(stars: int) -> void:
 			display = "猫罐头×3"
 		btn.text = display
 		btn.custom_minimum_size = Vector2(0, 64)
-		var chosen := reward
+		var chosen: Dictionary = reward
 		btn.pressed.connect(func() -> void:
 			overlay.queue_free()
 			_finish_win_flow(stars, chosen)
