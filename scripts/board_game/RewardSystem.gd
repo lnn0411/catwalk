@@ -46,6 +46,12 @@ const REWARDS := REWARDS_LV1
 
 const DAILY_SNACK_LIMIT := 3
 
+# B6: 棋盘装饰奖励持有上限——超出后自动折算金币（防死道具堆积）。
+# 转化额 50 金：定位为「补偿」而非金币主要来源（签到主线 ~150金/日；
+# 若定 100 金，中活跃 LV3 玩家 B6 注入约180金/日会反超签到，见迭代方案偏差记录）
+const B6_DECOR_CAPS := {"cat_tree": 3, "cherry_tree": 1}
+const B6_CONVERT_GOLD := 50
+
 static func roll_reward(level: int = BoardGameData.BoardLevel.LV1) -> Dictionary:
 	var table: Dictionary = REWARDS_BY_LEVEL.get(level, REWARDS_LV1)
 	var total := 0

@@ -67,6 +67,8 @@ class SimState:
         # M4 alignment: board wins accumulate for level tiers + win milestones
         self.board_total_wins = 0
         self.board_milestones_claimed = set()
+        # B6 alignment: decor kept while under cap; only overflow converts to gold
+        self.board_decor_counts = {}
         self.first_expansion_day = None
         self.legendary_pity_triggers = 0
         self.dead_items = 0
@@ -586,10 +588,20 @@ class SimEngine:
         reward = reward or list(rewards.keys())[-1]
         state.flow("board_reward_" + reward, 1)
         if reward in ("cat_tree_x1", "cherry_tree_x1"):
-            gold = int(self.params["board_game"]["b6_conversion"]["convert_to_gold"])
-            state.gold += gold
-            state.total_b6_gold += gold
-            state.flow("gold_in_b6_conversion", gold)
+            # B6 alignment with client (LevelStateManager.process_board_decor):
+            # decor is kept while under its cap; only overflow converts to gold.
+            b6 = self.params["board_game"]["b6_conversion"]
+            decor_key = "cat_tree" if reward == "cat_tree_x1" else "cherry_tree"
+            cap = int(b6["%s_max" % decor_key])
+            held = int(state.board_decor_counts.get(decor_key, 0))
+            if held < cap:
+                state.board_decor_counts[decor_key] = held + 1
+                state.flow("board_decor_kept_" + decor_key, 1)
+            else:
+                gold = int(b6["convert_to_gold"])
+                state.gold += gold
+                state.total_b6_gold += gold
+                state.flow("gold_in_b6_conversion", gold)
         elif reward == "cat_can_pack_x3":
             self._apply_affection(state, int(self.params["interaction"]["board_snack_can_affection"]) * 3)
         else:

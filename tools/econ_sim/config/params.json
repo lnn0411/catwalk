@@ -203,7 +203,8 @@
     "b6_conversion": {
       "cat_tree_max": 3,
       "cherry_tree_max": 1,
-      "convert_to_gold": 100
+      "convert_to_gold": 50,
+      "_note": "B6 客户端已实装（LevelStateManager.process_board_decor）：上限内正常入库，超出折算50金。旧模型每个装饰无条件+100金已废弃"
     },
     "consolation_prize": "fish_treat_x1",
     "ticket_cost_per_game": 1,

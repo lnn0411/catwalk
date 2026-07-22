@@ -829,10 +829,10 @@ func _finish_win_flow(stars: int, reward: Dictionary) -> void:
 	var reward_id: String = String(reward.get("id", ""))
 	var reward_name: String = String(reward.get("name", "小鱼干"))
 
-	# 奖励入库
-	_add_reward_to_inventory(reward_id, reward_name)
+	# 奖励入库（B6: 装饰达上限时返回折算说明后缀）
+	var b6_suffix := _add_reward_to_inventory(reward_id, reward_name)
 
-	var display_text := reward_name
+	var display_text := reward_name + b6_suffix
 	if reward_id == "cat_can_pack":
 		display_text = "猫罐头×3"
 
@@ -970,10 +970,11 @@ func _on_sub_exit_lifeline(pos: Vector2i) -> void:
 		tween.tween_property(cell, "modulate", Color.WHITE, 0.25)
 
 
-# 奖励类型→InventoryManager 映射
-func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> void:
+# 奖励类型→InventoryManager 映射。
+# 返回展示后缀：B6 装饰折算时为「（已满，折算💰N）」，其余为空串
+func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> String:
 	if InventoryManager == null:
-		return
+		return ""
 	match reward_id:
 		"fish_dried":  # 小鱼干 → snack
 			InventoryManager.add_item("snack", 1)
@@ -985,10 +986,20 @@ func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> void:
 			InventoryManager.add_item("decoration_shard", 1)
 		"cat_wand":  # 逗猫棒 → decoration_shard（占位）
 			InventoryManager.add_item("decoration_shard", 1)
-		"cat_tree":  # 猫爬架 → decor（占位）
-			InventoryManager.add_item("decor", 1)
-		"cherry_tree":  # 樱花树 → decor（占位）
-			InventoryManager.add_item("decor", 1)
+		"cat_tree", "cherry_tree":  # B6: 装饰有持有上限，超出折算金币
+			return _process_b6_decor(reward_id)
+	return ""
+
+
+# B6: 棋盘装饰经 LevelStateManager 上限判定；未满入库，已满折算金币
+func _process_b6_decor(decor_id: String) -> String:
+	if LevelStateManager != null and LevelStateManager.has_method("process_board_decor"):
+		var result: Dictionary = LevelStateManager.call("process_board_decor", decor_id)
+		if bool(result.get("converted", false)):
+			return "（已满，折算💰%d）" % int(result.get("gold", 0))
+	if InventoryManager != null:
+		InventoryManager.add_item("decor", 1)
+	return ""
 
 
 func _on_game_lost() -> void:

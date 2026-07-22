@@ -52,6 +52,7 @@ var board_level: int = BoardGameData.BoardLevel.LV1
 var first_three_star_claimed: bool = false  # D4
 var claimed_milestones: Array = []  # M3-3.1: 已领取的里程碑胜场数
 var earned_titles: Array = []  # M3-3.1: 已获得的称号
+var board_decor_counts: Dictionary = {}  # B6: 棋盘装饰累计获得数（decor_id → count）
 
 
 func _ready() -> void:
@@ -207,6 +208,27 @@ func get_earned_titles() -> Array:
 	return earned_titles.duplicate()
 
 
+# ---------------- B6 棋盘装饰上限与折算 ----------------
+
+func process_board_decor(decor_id: String) -> Dictionary:
+	"""B6: 棋盘 roll 出装饰时调用。未达上限→计数+1并入库（返回 converted=false）；
+	达上限→折算金币入账（返回 converted=true, gold）。计数持久化于 meta。
+	仅棋盘掉落走此通道；里程碑等一次性装饰不占 B6 上限。"""
+	var BoardRewardS := preload("res://scripts/board_game/RewardSystem.gd")
+	var cap := int(BoardRewardS.B6_DECOR_CAPS.get(decor_id, 0))
+	if cap <= 0:
+		return {"converted": false, "gold": 0}  # 未配置上限的装饰直接放行
+	var count := int(board_decor_counts.get(decor_id, 0))
+	if count < cap:
+		board_decor_counts[decor_id] = count + 1
+		_save_meta()
+		return {"converted": false, "gold": 0}
+	var gold: int = BoardRewardS.B6_CONVERT_GOLD
+	if CurrencyManager != null:
+		CurrencyManager.add_gold(gold, "board_b6_%s" % decor_id)
+	return {"converted": true, "gold": gold}
+
+
 # M2-2.1: 首次三星里程碑奖励（一次性）——大礼包×3 + 钻石，与放弃安慰奖拉开梯度
 const FIRST_THREE_STAR_ITEM := "猫罐头大礼包"
 const FIRST_THREE_STAR_COUNT := 3
@@ -245,6 +267,7 @@ func _load_meta() -> void:
 	first_three_star_claimed = bool(cfg.get_value(META_SECTION, "first_three_star_claimed", false))  # D4
 	claimed_milestones = Array(cfg.get_value(META_SECTION, "claimed_milestones", []))  # M3-3.1
 	earned_titles = Array(cfg.get_value(META_SECTION, "earned_titles", []))  # M3-3.1
+	board_decor_counts = Dictionary(cfg.get_value(META_SECTION, "board_decor_counts", {}))  # B6
 	# 自愈：即便 board_level 丢失/损坏，也不低于当前胜场应有的等级（仍保证不降级）
 	board_level = maxi(board_level, BoardGameData.calc_board_level(total_wins))
 
@@ -258,6 +281,7 @@ func _save_meta() -> void:
 	cfg.set_value(META_SECTION, "first_three_star_claimed", first_three_star_claimed)  # D4
 	cfg.set_value(META_SECTION, "claimed_milestones", claimed_milestones)  # M3-3.1
 	cfg.set_value(META_SECTION, "earned_titles", earned_titles)  # M3-3.1
+	cfg.set_value(META_SECTION, "board_decor_counts", board_decor_counts)  # B6
 	var err := cfg.save(SAVE_PATH)
 	if err != OK:
 		push_warning("LevelStateManager._save_meta 失败: %d" % err)

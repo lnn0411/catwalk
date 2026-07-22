@@ -31,6 +31,7 @@ func _ready() -> void:
 	_t_win_milestones()
 	_t_milestone_persist()
 	_t_milestone_cycle()
+	_t_b6_decor_caps()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -247,4 +248,32 @@ func _t_milestone_cycle() -> void:
 	var info: Dictionary = m.get_next_milestone_info()
 	_check(int(info["wins"]) == 500, "下一循环点=500")
 	m.queue_free()
+	_wipe_save()
+
+
+# ---------------- B6 装饰上限与折算 ----------------
+
+func _t_b6_decor_caps() -> void:
+	print("[B6 装饰上限折算]")
+	_wipe_save()
+	var m := _fresh_manager()
+	# 猫爬架上限3：前3次入库，第4次折算50金
+	for i in range(3):
+		var r: Dictionary = m.process_board_decor("cat_tree")
+		_check(not bool(r["converted"]), "第%d个猫爬架正常入库" % (i + 1))
+	var gold_before: int = CurrencyManager.get("gold_coins") if CurrencyManager != null else 0
+	var r4: Dictionary = m.process_board_decor("cat_tree")
+	_check(bool(r4["converted"]) and int(r4["gold"]) == 50, "第4个猫爬架折算💰50")
+	if CurrencyManager != null:
+		_check(int(CurrencyManager.get("gold_coins")) - gold_before == 50, "金币入账50")
+	# 樱花树上限1
+	_check(not bool(m.process_board_decor("cherry_tree")["converted"]), "首个樱花树入库")
+	_check(bool(m.process_board_decor("cherry_tree")["converted"]), "第2个樱花树折算")
+	# 未配置上限的装饰直接放行
+	_check(not bool(m.process_board_decor("yarn_throne")["converted"]), "无上限装饰放行")
+	m.queue_free()
+	# 计数跨实例持久化：新实例第5个猫爬架仍折算
+	var m2 := _fresh_manager()
+	_check(bool(m2.process_board_decor("cat_tree")["converted"]), "装饰计数跨实例持久化（第5个仍折算）")
+	m2.queue_free()
 	_wipe_save()
