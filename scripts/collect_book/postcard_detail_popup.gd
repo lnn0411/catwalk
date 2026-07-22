@@ -53,7 +53,7 @@ func _ready() -> void:
 		flip_btn.texture_normal = btn_tex
 		flip_btn.ignore_texture_size = true
 		flip_btn.stretch_mode = TextureButton.STRETCH_SCALE
-		flip_btn.custom_minimum_size = Vector2(150, 60)
+		flip_btn.custom_minimum_size = Vector2(120, 60)
 	flip_btn.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	# 明信片卡片右下角（卡片 750×500，距右下 10px 内边距）
 	var card_size := Vector2(750, 500)
