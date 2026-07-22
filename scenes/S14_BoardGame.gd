@@ -345,6 +345,38 @@ static func _btn_style(texture: Texture2D) -> StyleBoxTexture:
 	return style
 
 
+# 统一按钮美术：四态贴图 + 文字配色一次成型（新增按钮一律走这里，禁止裸 Button）
+static func _apply_btn_art(btn: Button, texture: Texture2D) -> void:
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		btn.add_theme_stylebox_override(state, _btn_style(texture))
+	btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
+	btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	btn.add_theme_color_override("font_disabled_color", Color(UI_TEXT_COLOR, 0.4))
+
+
+# 统一弹窗底：popup_bg 贴图，缺失回退奶油底圆角
+static func _apply_dialog_panel_art(panel: PanelContainer) -> void:
+	var tex := ResourceLoader.load("res://assets/art/ui/panels/popup_bg.png")
+	if tex is Texture2D:
+		var style := StyleBoxTexture.new()
+		style.texture = tex
+		style.content_margin_left = 36.0
+		style.content_margin_right = 36.0
+		style.content_margin_top = 32.0
+		style.content_margin_bottom = 28.0
+		panel.add_theme_stylebox_override("panel", style)
+	else:
+		var flat := StyleBoxFlat.new()
+		flat.bg_color = Palette.PAPER_CREAM
+		flat.set_corner_radius_all(24)
+		flat.content_margin_left = 36.0
+		flat.content_margin_right = 36.0
+		flat.content_margin_top = 32.0
+		flat.content_margin_bottom = 28.0
+		panel.add_theme_stylebox_override("panel", flat)
+
+
 func _build_grid() -> Control:
 	var grid_panel := PanelContainer.new()
 	var style := StyleBoxFlat.new()
@@ -725,20 +757,14 @@ func _build_get_ticket_dialog() -> void:
 	_gt_ad_btn = Button.new()
 	_gt_ad_btn.custom_minimum_size = Vector2(220, 60)
 	_gt_ad_btn.add_theme_font_size_override("font_size", 17)
-	_gt_ad_btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	_gt_ad_btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
-	_gt_ad_btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	_gt_ad_btn.add_theme_color_override("font_disabled_color", Color(UI_TEXT_COLOR, 0.4))
+	_apply_btn_art(_gt_ad_btn, TX_BTN_PRIMARY)
 	_gt_ad_btn.pressed.connect(_on_gt_ad_pressed)
 	action_row.add_child(_gt_ad_btn)
 
 	_gt_coin_btn = Button.new()
 	_gt_coin_btn.custom_minimum_size = Vector2(220, 60)
 	_gt_coin_btn.add_theme_font_size_override("font_size", 17)
-	_gt_coin_btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	_gt_coin_btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
-	_gt_coin_btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	_gt_coin_btn.add_theme_color_override("font_disabled_color", Color(UI_TEXT_COLOR, 0.4))
+	_apply_btn_art(_gt_coin_btn, TX_BTN_PRIMARY)
 	_gt_coin_btn.pressed.connect(_on_gt_coin_pressed)
 	action_row.add_child(_gt_coin_btn)
 
@@ -747,9 +773,8 @@ func _build_get_ticket_dialog() -> void:
 	_gt_start_btn.text = "🎮 开始游戏"
 	_gt_start_btn.custom_minimum_size = Vector2(240, 64)
 	_gt_start_btn.add_theme_font_size_override("font_size", 20)
-	_gt_start_btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	_gt_start_btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
-	_gt_start_btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	_apply_btn_art(_gt_start_btn, TX_BTN_PRIMARY)
+	_gt_start_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER  # 不横向铺满
 	_gt_start_btn.visible = false
 	_gt_start_btn.pressed.connect(func() -> void:
 		_get_ticket_dialog.visible = false
@@ -1220,6 +1245,7 @@ func _show_reward_choice_dialog(stars: int) -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(460, 0)
 	panel.position = Vector2(-230, -120)
+	_apply_dialog_panel_art(panel)
 	overlay.add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -1239,6 +1265,8 @@ func _show_reward_choice_dialog(stars: int) -> void:
 			display = "猫罐头×3"
 		btn.text = display
 		btn.custom_minimum_size = Vector2(0, 64)
+		btn.add_theme_font_size_override("font_size", 20)
+		_apply_btn_art(btn, TX_BTN_PRIMARY)
 		var chosen: Dictionary = reward
 		btn.pressed.connect(func() -> void:
 			overlay.queue_free()
@@ -1715,6 +1743,7 @@ func _show_frenzy_choice_dialog() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(460, 0)
 	panel.position = Vector2(-230, -140)
+	_apply_dialog_panel_art(panel)
 	overlay.add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -1730,6 +1759,8 @@ func _show_frenzy_choice_dialog() -> void:
 	var guard_btn := Button.new()
 	guard_btn.text = "🛡 猫猫护卫\n抵消下一次捣乱"
 	guard_btn.custom_minimum_size = Vector2(0, 72)
+	guard_btn.add_theme_font_size_override("font_size", 18)
+	_apply_btn_art(guard_btn, TX_BTN_PRIMARY)
 	guard_btn.pressed.connect(func() -> void:
 		if board.trigger_frenzy(BoardGameData.FrenzyMode.GUARD):
 			_reset_frenzy_button_visuals()
@@ -1741,6 +1772,8 @@ func _show_frenzy_choice_dialog() -> void:
 	var help_btn := Button.new()
 	help_btn.text = "✨ 猫猫帮忙\n立即免费生成2个主链物品"
 	help_btn.custom_minimum_size = Vector2(0, 72)
+	help_btn.add_theme_font_size_override("font_size", 18)
+	_apply_btn_art(help_btn, TX_BTN_PRIMARY)
 	help_btn.pressed.connect(func() -> void:
 		if board.trigger_frenzy(BoardGameData.FrenzyMode.HELP):
 			_reset_frenzy_button_visuals()
@@ -1752,7 +1785,9 @@ func _show_frenzy_choice_dialog() -> void:
 
 	var later_btn := Button.new()
 	later_btn.text = "稍后再说"
-	later_btn.flat = true
+	later_btn.custom_minimum_size = Vector2(0, 56)
+	later_btn.add_theme_font_size_override("font_size", 17)
+	_apply_btn_art(later_btn, TX_BTN_SECONDARY)
 	later_btn.pressed.connect(overlay.queue_free)
 	vbox.add_child(later_btn)
 
@@ -1947,6 +1982,7 @@ func _show_order_prompt() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(480, 0)
 	panel.position = Vector2(-240, -140)
+	_apply_dialog_panel_art(panel)
 	overlay.add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -1968,6 +2004,8 @@ func _show_order_prompt() -> void:
 	var accept_btn := Button.new()
 	accept_btn.text = "接受委托"
 	accept_btn.custom_minimum_size = Vector2(0, 60)
+	accept_btn.add_theme_font_size_override("font_size", 20)
+	_apply_btn_art(accept_btn, TX_BTN_PRIMARY)
 	accept_btn.pressed.connect(func() -> void:
 		_order_mode_pref = 1
 		overlay.queue_free()
@@ -1978,6 +2016,8 @@ func _show_order_prompt() -> void:
 	var normal_btn := Button.new()
 	normal_btn.text = "普通对局"
 	normal_btn.custom_minimum_size = Vector2(0, 48)
+	normal_btn.add_theme_font_size_override("font_size", 17)
+	_apply_btn_art(normal_btn, TX_BTN_SECONDARY)
 	normal_btn.pressed.connect(func() -> void:
 		_order_mode_pref = 0
 		overlay.queue_free()
