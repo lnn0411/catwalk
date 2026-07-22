@@ -136,6 +136,11 @@ func _on_card_draw() -> void:
 	var rect := Rect2(Vector2.ZERO, CARD_SIZE)
 	var font := c.get_theme_default_font()
 
+	# 清除所有 TextureRect 子节点（前端/翻面切换时残留）
+	for child in c.get_children():
+		if child is TextureRect:
+			child.queue_free()
+
 	if _data == null:
 		c.draw_rect(rect, Color(0.5, 0.5, 0.5), true)
 		_text(c, font, "数据缺失", 28, Color.WHITE, CARD_SIZE.y * 0.5)
@@ -171,10 +176,6 @@ func _draw_front(c: Control, font: Font, rect: Rect2) -> void:
 		tex = ImageTexture.create_from_image(img)
 	
 	if tex:
-		# 用 TextureRect 替代 draw_texture_rect（与缩略图方式一致）
-		for child in c.get_children():
-			if child is TextureRect:
-				child.queue_free()
 		# 用 TextureRect 替代 draw_texture_rect（与缩略图方式一致）
 		var tex_rect := TextureRect.new()
 		tex_rect.texture = tex
