@@ -13,7 +13,7 @@ const CompanionChatter := preload("res://config/companion_chatter.gd")
 const STEP_MILESTONE := 1000            # 每 1000 步触发一次碎碎念
 const DAILY_CHATTER_CAP := 5            # 每日碎碎念上限
 const SUMMARY_MIN_STEPS := 1000         # 触发散步小结的今日最低步数
-const SUMMARY_CARD_SCENE := "res://ui/pages/WalkSummaryCard.tscn"
+# 不再使用 WalkSummaryCard.tscn（直接 WalkSummaryCard.new() 创建 CanvasLayer 叠加）
 
 # 碎碎念触发：品种 + 短语文本
 signal chatter_triggered(breed: String, phrase: String)
@@ -122,23 +122,28 @@ func _evaluate_summary_on_start() -> void:
 
 	# 卡片真正交给 UIManager 后，再标记「今日已展示」并落存档，防止同一天重复弹出；
 	# 若展示失败（UIManager 尚未就绪），不锁定当天，留待下次评估重试。
-	if not _show_summary_card(steps, companion_name):
+	if not _show_summary_card(steps, companion_name, _get_companion_breed()):
 		return
 	summary_shown_today = true
 	last_summary_date = _today_key()
 	_persist()
 
 
-func _show_summary_card(steps: int, companion_name: String) -> bool:
-	if UIManager == null or not UIManager.has_method("push"):
-		return false
-	var data := {
-		"steps": steps,
-		"companion_name": companion_name,
-		"breed": _get_companion_breed(),
-	}
-	UIManager.push(SUMMARY_CARD_SCENE, data)
-	return true
+func _show_summary_card(steps: int, companion_name: String, breed: String) -> bool:
+	var card := WalkSummaryCard.new()
+	card.setup(steps, companion_name, breed)
+	# 创建 CanvasLayer 叠加到花园场景之上
+	var canvas := CanvasLayer.new()
+	canvas.layer = 100
+	canvas.add_child(card)
+	# 窗口根加入
+	var root := Engine.get_main_loop()
+	if root and root.has_method("get_root"):
+		var scene_root := root.get_root()
+		if scene_root:
+			scene_root.add_child(canvas)
+			return true
+	return false
 
 
 # ------------------------------------------------------------------

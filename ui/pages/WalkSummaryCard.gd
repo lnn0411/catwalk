@@ -1,8 +1,8 @@
-extends UIPage
+extends Control
 class_name WalkSummaryCard
 
 # 散步小结卡片（B1 D1 伴走系统 / 特性2）
-# 由 WalkCompanion 通过 UIManager.push("res://ui/pages/WalkSummaryCard.tscn", data) 拉起。
+# 由 WalkCompanion 创建 CanvasLayer 叠加到花园场景之上。
 # data: { "steps": int, "companion_name": String, "breed": String }
 # 展示 15 秒后自动关闭，或点击任意处关闭；同一天不重复展示由 WalkCompanion 保证。
 
@@ -16,24 +16,36 @@ const CompanionChatter := preload("res://config/companion_chatter.gd")
 
 var _dismissed := false
 var _timer: Timer
+var _steps := 0
+var _companion_name := ""
+var _breed := "orange"
 
 
 func _ready() -> void:
-	super._ready()
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_STOP
 	_build_ui()
 	_start_timer()
 
 
-func _build_ui() -> void:
-	var steps: int = int(page_data.get("steps", 0))
-	var companion_name: String = String(page_data.get("companion_name", ""))
-	var breed: String = String(page_data.get("breed", "orange"))
+func setup(steps: int, companion_name: String, breed: String) -> void:
+	_steps = steps
+	_companion_name = companion_name
+	_breed = breed
+	if is_inside_tree():
+		_build_ui()
 
-	# 全屏半透明遮罩
+
+func _build_ui() -> void:
+	# 清空旧内容，支持热更新
+	for child in get_children():
+		child.queue_free()
+
+	# 全屏半透明遮罩（花园场景可见）
 	var overlay := ColorRect.new()
 	overlay.color = Color(0, 0, 0, 0.55)
 	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	overlay.mouse_filter = Control.MOUSE_FILTER_PASS
 	add_child(overlay)
 
 	# 弹窗底图（popup_bg.png）
@@ -55,11 +67,10 @@ func _build_ui() -> void:
 	panel.add_child(vbox)
 
 	# 随行猫头像（图鉴同款贴图）
-	var portrait_path := PORTRAIT_BASE + breed + ".png"
+	var portrait_path := PORTRAIT_BASE + _breed + ".png"
 	var head := TextureRect.new()
 	head.texture = load(portrait_path) if ResourceLoader.exists(portrait_path) else null
 	if head.texture == null:
-		# 回退品种色圆（Panel + StyleBoxFlat 圆角，确保可见）
 		head.queue_free()
 		var circle := Panel.new()
 		circle.custom_minimum_size = Vector2(HEAD_SIZE, HEAD_SIZE)
@@ -71,7 +82,7 @@ func _build_ui() -> void:
 			"orange": Color(0.95, 0.62, 0.23),
 			"british": Color(0.55, 0.60, 0.66),
 			"siamese": Color(0.80, 0.68, 0.55),
-		}.get(breed, Color(0.95, 0.62, 0.23))
+		}.get(_breed, Color(0.95, 0.62, 0.23))
 		st.set_corner_radius_all(int(HEAD_SIZE / 2.0))
 		st.border_color = Color(1, 1, 1, 0.9)
 		st.set_border_width_all(4)
@@ -101,19 +112,19 @@ func _build_ui() -> void:
 
 	# 步数
 	var steps_label := Label.new()
-	steps_label.text = "%d 步" % steps
+	steps_label.text = "%d 步" % _steps
 	steps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	steps_label.add_theme_font_size_override("font_size", 48)
 	steps_label.add_theme_color_override("font_color", {
 		"orange": Color(0.95, 0.62, 0.23),
 		"british": Color(0.55, 0.60, 0.66),
 		"siamese": Color(0.80, 0.68, 0.55),
-	}.get(breed, Color(0.95, 0.62, 0.23)))
+	}.get(_breed, Color(0.95, 0.62, 0.23)))
 	vbox.add_child(steps_label)
 
 	# 趣味文案
 	var msg := Label.new()
-	msg.text = _build_message(companion_name, breed)
+	msg.text = _build_message()
 	msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	msg.custom_minimum_size = Vector2(460, 0)
@@ -141,11 +152,10 @@ func _center_control(control: Control, control_size: Vector2) -> void:
 	control.offset_bottom = control_size.y * 0.5
 
 
-func _build_message(companion_name: String, breed: String) -> String:
-	# CompanionChatter 预载常驻，取品种化趣味文案（静态方法）。
-	var flavor: String = String(CompanionChatter.draw_summary_message(breed))
-	if companion_name != "":
-		return "%s说：%s" % [companion_name, flavor]
+func _build_message() -> String:
+	var flavor: String = String(CompanionChatter.draw_summary_message(_breed))
+	if _companion_name != "":
+		return "%s说：%s" % [_companion_name, flavor]
 	return flavor
 
 
@@ -184,15 +194,7 @@ func _dismiss() -> void:
 	_dismissed = true
 	if _timer and is_instance_valid(_timer):
 		_timer.stop()
-	if UIManager and UIManager.has_method("pop"):
-		UIManager.pop()
-
-
-# 系统返回键：关闭卡片而非穿透到下层。
-func handle_back() -> bool:
-	_dismiss()
-	return true
-
-
-func _viewport_size() -> Vector2:
-	return get_viewport().get_visible_rect().size
+	# 移除整个 CanvasLayer 宿主
+	var p := get_parent()
+	if is_instance_valid(p):
+		p.queue_free()
