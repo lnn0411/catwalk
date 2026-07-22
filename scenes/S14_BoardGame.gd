@@ -50,6 +50,17 @@ var _cat_react_tex: TextureRect      # 猫贴图
 var _cat_react_label: Label          # 反应文字气泡
 var _cat_breed: String = "orange"    # 携带猫品种
 
+# 棋盘上方走动的小猫（复用花园侧走序列帧）
+var _walk_cat_container: Control            # 容器节点
+var _walk_cat_tex: TextureRect             # 显示当前序列帧
+var _walk_cat_timer: Timer                 # 帧切换定时器
+var _walk_cat_frames: Array[Texture2D] = []  # 预加载的序列帧
+var _walk_cat_frame_idx: int = 0           # 当前帧索引
+var _walk_cat_dir: float = 1.0             # 移动方向(1=右, -1=左)
+var _walk_cat_active: bool = false         # 是否在走动
+var _walk_cat_tween: Tween                 # 左右走 Tween
+var _banner_hint_token: int = 0            # 目标横幅临时提示的最新令牌
+
 
 func _ready() -> void:
 	super()
@@ -115,6 +126,7 @@ func _build_ui() -> void:
 	_build_ad_rescue_dialog()
 	_build_cat_seat()
 	_build_debug_ticket_button()
+	_build_walk_cat()
 
 
 func _build_top_bar() -> Control:
@@ -565,6 +577,9 @@ func _start_game() -> void:
 	for seg in _target_segments:
 		seg.texture = load("res://assets/art/board_game/star_dim.png")  # 全部灰色
 	_refresh_all()
+	# 棋盘上方走动的小猫：重新加载序列帧并启动走动
+	_load_walk_cat_frames()
+	_start_walk_cat()
 
 
 func _refresh_all() -> void:
@@ -685,10 +700,48 @@ func _on_mischief_warning(pos: Vector2i) -> void:
 		tween.set_loops(2)
 		tween.tween_property(cell, "modulate", Color(1.0, 0.3, 0.3, 0.7), 0.2)
 		tween.tween_property(cell, "modulate", Color.WHITE, 0.2)
+	# 捣乱预警：小猫愣住（暂停走动）+ 横幅提示
+	_pause_walk_cat()
+	_show_banner_hint("⚠️ 不妙！猫咪要搞事情...", 1.5)
 
 
-func _on_mischief_triggered(_pos: Vector2i, _item: BoardItem) -> void:
+func _on_mischief_triggered(pos: Vector2i, item: BoardItem) -> void:
+	# 物品被拍飞：先抓取纹理做飞出动画，再刷新棋盘
+	_play_mischief_fly_out(pos, item)
+	_show_banner_hint("啪！猫咪把东西拍飞了！", 2.0)
 	_refresh_all()
+	# 捣乱执行完毕，小猫恢复走动
+	_resume_walk_cat()
+
+
+func _play_mischief_fly_out(pos: Vector2i, item: BoardItem) -> void:
+	# 在被捣乱格子处生成一个临时物品贴图，抛物线飞出 + 缩小 + 淡出
+	if item == null or not _cells.has(pos):
+		return
+	var tex := ItemChains.get_item_texture(item.chain, item.star)
+	if tex == null:
+		return
+	var cell: Control = _cells[pos]
+	var flyer := TextureRect.new()
+	flyer.texture = tex
+	flyer.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	flyer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	flyer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	flyer.custom_minimum_size = Vector2(CELL_SIZE, CELL_SIZE)
+	flyer.size = Vector2(CELL_SIZE, CELL_SIZE)
+	add_child(flyer)
+	flyer.global_position = cell.global_position
+	flyer.pivot_offset = flyer.size / 2.0
+	var start := flyer.position
+	var tween := create_tween()
+	tween.set_parallel(true)
+	# 抛物线：横向匀速飞出，纵向先抬升再下坠
+	tween.tween_method(func(t: float):
+		flyer.position = start + Vector2(200.0 * t, -140.0 * sin(t * PI) + 260.0 * t),
+		0.0, 1.0, 0.3)
+	tween.tween_property(flyer, "scale", Vector2(0.2, 0.2), 0.3)
+	tween.tween_property(flyer, "modulate:a", 0.0, 0.3)
+	tween.finished.connect(flyer.queue_free)
 
 
 func _on_cat_apology(_cat_name: String) -> void:
@@ -697,6 +750,7 @@ func _on_cat_apology(_cat_name: String) -> void:
 
 func _on_game_won() -> void:
 	_refresh_all()
+	_stop_walk_cat()
 
 	var stars := board.star_rating if board != null else 0  # D4
 	var star_str := ""  # D4
@@ -785,6 +839,7 @@ func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> void:
 
 func _on_game_lost() -> void:
 	_refresh_all()
+	_stop_walk_cat()
 	if board.ad_rescue_restore_used or board.swiped_items.is_empty():
 		_show_failure_result()
 		return
@@ -1053,6 +1108,16 @@ func _on_mischief_cancelled(pos: Vector2i) -> void:
 		var tween := create_tween()
 		tween.tween_property(cell, "modulate", Color(0.6, 1.0, 0.6, 1.0), 0.15)
 		tween.tween_property(cell, "modulate", Color.WHITE, 0.25)
+	# 狂欢抵消捣乱：小猫暂停 + 绿光反馈，反馈结束后恢复走动
+	_pause_walk_cat()
+	if _walk_cat_tex != null:
+		var cat_tween := create_tween()
+		cat_tween.tween_property(_walk_cat_tex, "modulate", Color(0.6, 1.0, 0.6, 1.0), 0.15)
+		cat_tween.tween_property(_walk_cat_tex, "modulate", Color.WHITE, 0.25)
+		cat_tween.finished.connect(_resume_walk_cat)
+	else:
+		_resume_walk_cat()
+	_show_banner_hint("✓ 狂欢抵消了捣乱！", 1.5)
 	_refresh_all()
 
 
@@ -1062,3 +1127,141 @@ func _on_highest_star_changed(star: int) -> void:
 	var dim_tex := load("res://assets/art/board_game/star_dim.png")
 	for i in range(BoardGameData.MAX_STAR_SEGMENTS):
 		_target_segments[i].texture = lit_tex if (i + 1) <= star else dim_tex
+
+
+# ---------------- 棋盘上方走动的小猫 ----------------
+
+func _build_walk_cat() -> void:
+	# 容器：棋盘上方，宽度同棋盘、高度 ~40px；不阻挡点击
+	var grid_w := CELL_SIZE * BoardGameData.GRID_SIZE + CELL_GAP * float(BoardGameData.GRID_SIZE + 1)
+	var grid_top := (DESIGN_SIZE.y - grid_w) * 0.5  # 参考 _show_cat_seat 的 grid_size 计算
+	_walk_cat_container = Control.new()
+	_walk_cat_container.name = "WalkCat"
+	_walk_cat_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_walk_cat_container.custom_minimum_size = Vector2(grid_w, 40.0)
+	_walk_cat_container.size = Vector2(grid_w, 40.0)
+	_walk_cat_container.position = Vector2((DESIGN_SIZE.x - grid_w) * 0.5, grid_top - 48.0)
+
+	_walk_cat_tex = TextureRect.new()
+	_walk_cat_tex.name = "WalkCatTex"
+	_walk_cat_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_walk_cat_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_walk_cat_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_walk_cat_container.add_child(_walk_cat_tex)
+
+	_walk_cat_timer = Timer.new()
+	_walk_cat_timer.name = "WalkCatTimer"
+	_walk_cat_timer.wait_time = 0.2  # 5fps 帧切换
+	_walk_cat_timer.one_shot = false
+	_walk_cat_timer.timeout.connect(_on_walk_cat_tick)
+	_walk_cat_container.add_child(_walk_cat_timer)
+
+	add_child(_walk_cat_container)
+
+
+func _load_walk_cat_frames() -> void:
+	# 根据携带猫品种加载侧走序列帧（花园 side_right 序列），从 00 起直到不存在
+	_cat_breed = _get_companion_cat_breed()
+	_walk_cat_frames.clear()
+	var i := 0
+	while true:
+		var path := "res://assets/art/cats/%s/side_right_frame_%02d.png" % [_cat_breed, i]
+		if not ResourceLoader.exists(path):
+			break
+		var tex := load(path)
+		if tex is Texture2D:
+			_walk_cat_frames.append(tex)
+		i += 1
+		if i > 64:  # 安全上限，避免异常时死循环
+			break
+
+
+func _start_walk_cat() -> void:
+	if _walk_cat_tex == null or _walk_cat_frames.is_empty():
+		return
+	_walk_cat_frame_idx = 0
+	_walk_cat_tex.texture = _walk_cat_frames[0]
+	_walk_cat_tex.flip_h = false
+	# 按帧实际比例等比缩放，高度固定 40px
+	var f0 := _walk_cat_frames[0]
+	var fh := f0.get_height()
+	var scaled_w := 40.0 * (float(f0.get_width()) / float(fh)) if fh > 0 else 40.0
+	_walk_cat_tex.custom_minimum_size = Vector2(scaled_w, 40.0)
+	_walk_cat_tex.size = Vector2(scaled_w, 40.0)
+	_walk_cat_tex.position = Vector2.ZERO
+	_walk_cat_active = true
+	_walk_cat_timer.start()
+	_start_walk_cat_tween()
+
+
+func _start_walk_cat_tween() -> void:
+	if _walk_cat_tex == null:
+		return
+	if _walk_cat_tween != null and _walk_cat_tween.is_valid():
+		_walk_cat_tween.kill()
+	var start_x := 0.0
+	_walk_cat_tex.position.x = start_x
+	# 右走 3s → 转身 → 左走 3s，循环往复
+	_walk_cat_tween = create_tween().set_loops()
+	_walk_cat_tween.tween_callback(func():
+		_walk_cat_dir = 1.0
+		_walk_cat_tex.flip_h = false)
+	_walk_cat_tween.tween_property(_walk_cat_tex, "position:x", start_x + 300.0, 3.0)
+	_walk_cat_tween.tween_callback(func():
+		_walk_cat_dir = -1.0
+		_walk_cat_tex.flip_h = true)
+	_walk_cat_tween.tween_property(_walk_cat_tex, "position:x", start_x, 3.0)
+
+
+func _pause_walk_cat() -> void:
+	if not _walk_cat_active:
+		return
+	if _walk_cat_timer != null:
+		_walk_cat_timer.stop()
+	if _walk_cat_tween != null and _walk_cat_tween.is_valid():
+		_walk_cat_tween.pause()
+
+
+func _resume_walk_cat() -> void:
+	if not _walk_cat_active:
+		return
+	if _walk_cat_timer != null:
+		_walk_cat_timer.start()
+	if _walk_cat_tween != null and _walk_cat_tween.is_valid():
+		_walk_cat_tween.play()
+
+
+func _stop_walk_cat() -> void:
+	_walk_cat_active = false
+	if _walk_cat_timer != null:
+		_walk_cat_timer.stop()
+	if _walk_cat_tween != null and _walk_cat_tween.is_valid():
+		_walk_cat_tween.kill()
+
+
+func _on_walk_cat_tick() -> void:
+	if _walk_cat_frames.is_empty() or _walk_cat_tex == null:
+		return
+	_walk_cat_frame_idx = (_walk_cat_frame_idx + 1) % _walk_cat_frames.size()
+	_walk_cat_tex.texture = _walk_cat_frames[_walk_cat_frame_idx]
+
+
+# ---------------- 目标横幅临时提示 ----------------
+
+func _show_banner_hint(text: String, duration: float) -> void:
+	# 复用目标横幅区域临时显示提示文字，duration 后恢复目标文案
+	if _target_banner_label == null:
+		return
+	_banner_hint_token += 1
+	var my_token := _banner_hint_token
+	_target_banner_label.text = text
+	get_tree().create_timer(duration).timeout.connect(func():
+		if my_token == _banner_hint_token:
+			_restore_banner_label())
+
+
+func _restore_banner_label() -> void:
+	if _target_banner_label == null or board == null:
+		return
+	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
+	_target_banner_label.text = "目标：%s ⭐5" % main_name
