@@ -683,7 +683,7 @@ func _build_get_ticket_dialog() -> void:
 	# 获取方式标题
 	var get_title := Label.new()
 	get_title.text = "🎯 获取门票"
-	get_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	get_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	get_title.add_theme_font_size_override("font_size", 18)
 	get_title.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	box.add_child(get_title)
