@@ -183,6 +183,9 @@ func _t_no_deadlock_when_mergeable() -> void:
 	print("[死局负向检测]")
 	var b := _fresh()
 	b.grid.clear()
+	# 毛线格随机落点可能与本用例的固定测试格重合（真实对局物品不会在毛线格上），
+	# 清掉以保证用例确定性
+	b.special_tiles.clear()
 	b.generator_remaining = 0
 	var p1 := Vector2i(0, 0)
 	var p2 := Vector2i(1, 0)
