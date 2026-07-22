@@ -138,12 +138,19 @@ func refresh() -> void:
 		_icon_fallback.visible = false
 		_icon_tex.texture = _load_texture(GEN_DEPLETED_TEX if depleted else GEN_ACTIVE_TEX)
 		_icon_tex.modulate = Color.WHITE
+		_star_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_star_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		_star_label.add_theme_font_size_override("font_size", 14)
 		_star_label.text = "生成器"
 		_badge_label.text = "×%d" % board.generator_remaining
 		_badge_label.visible = true
 	else:
 		style.bg_color = COLOR_CELL_BG
 		style.border_color = COLOR_CELL_BORDER
+		_star_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+		_star_label.offset_top = -26.0
+		_star_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+		_star_label.add_theme_font_size_override("font_size", 12)
 		var item: BoardItem = board.get_item(grid_pos)
 		if item != null and not _drag_hidden:
 			_render_item(item, Color.WHITE)
