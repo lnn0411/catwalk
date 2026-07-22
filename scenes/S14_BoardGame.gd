@@ -5,6 +5,7 @@ const BoardGame := preload("res://scripts/board_game/BoardGame.gd")
 const BoardGameData := preload("res://scripts/board_game/BoardGameData.gd")
 const BoardItem := preload("res://scripts/board_game/BoardItem.gd")
 const BoardRewardSystem := preload("res://scripts/board_game/RewardSystem.gd")
+const BoardTwists := preload("res://scripts/board_game/BoardTwists.gd")
 const ItemChains := preload("res://scripts/board_game/ItemChains.gd")
 
 # ============================================================
@@ -57,6 +58,9 @@ func _ready() -> void:
 	if LevelStateManager != null and LevelStateManager.has_signal("first_three_star_bonus_reward"):  # D4
 		if not LevelStateManager.first_three_star_bonus_reward.is_connected(_on_three_star_bonus):  # D4
 			LevelStateManager.first_three_star_bonus_reward.connect(_on_three_star_bonus)  # D4
+	if LevelStateManager != null and LevelStateManager.has_signal("win_milestone_reached"):  # M3-3.1
+		if not LevelStateManager.win_milestone_reached.is_connected(_on_win_milestone):
+			LevelStateManager.win_milestone_reached.connect(_on_win_milestone)
 	_build_ui()
 	_start_game()
 
@@ -555,7 +559,12 @@ func _start_game() -> void:
 		TicketManager.spend_ticket()
 	var board_level := _get_board_level()
 	var cat_name := _get_companion_cat_name()
-	board.start_new_game(board_level, cat_name)
+	# M3-3.2: 挂载当日变异（入口明示，规则透明）
+	var twist_id := BoardTwists.get_today_twist_id()
+	board.start_new_game(board_level, cat_name, twist_id)
+	var twist_banner := BoardTwists.get_twist_banner(twist_id)
+	if not twist_banner.is_empty():
+		Popups.show_toast(twist_banner)
 	_result_overlay.visible = false
 	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
 	var sub_name: String = ItemChains.get_chain_display_name(board.current_sub_chain)
@@ -739,15 +748,66 @@ func _on_game_won() -> void:
 	_refresh_all()
 
 	var stars := board.star_rating if board != null else 0  # D4
-	var star_str := ""  # D4
-	for _i in range(stars):  # D4
-		star_str += "⭐"  # D4
 
 	# 记录累计胜场；若触发升档则弹出说明卡（等级仅升不降，持久化）
 	_record_win_and_maybe_upgrade()
 
+	# M3-3.2: 捣蛋日通关奖励二选一（补偿多一次捣乱）
+	if bool(board.active_twist.get("reward_double_roll", false)):
+		_show_reward_choice_dialog(stars)
+		return
+
 	# M1-5: 奖励按棋盘等级分表 roll，兑现「奖励更丰厚」
 	var reward: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
+	_finish_win_flow(stars, reward)
+
+
+func _show_reward_choice_dialog(stars: int) -> void:
+	# M3-3.2: 捣蛋日——roll 两次奖励让玩家二选一
+	var reward_a: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
+	var reward_b: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
+	var overlay := ColorRect.new()
+	overlay.name = "RewardChoiceOverlay"
+	overlay.color = Color(0, 0, 0, 0.55)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(460, 0)
+	panel.position = Vector2(-230, -120)
+	overlay.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "😼 捣蛋日福利：奖励二选一！"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+
+	for reward in [reward_a, reward_b]:
+		var btn := Button.new()
+		var display: String = String(reward.get("name", "小鱼干"))
+		if String(reward.get("id", "")) == "cat_can_pack":
+			display = "猫罐头×3"
+		btn.text = display
+		btn.custom_minimum_size = Vector2(0, 64)
+		var chosen := reward
+		btn.pressed.connect(func() -> void:
+			overlay.queue_free()
+			_finish_win_flow(stars, chosen)
+		)
+		vbox.add_child(btn)
+
+
+func _finish_win_flow(stars: int, reward: Dictionary) -> void:
+	var star_str := ""  # D4
+	for _i in range(stars):  # D4
+		star_str += "⭐"  # D4
 	var reward_id: String = String(reward.get("id", ""))
 	var reward_name: String = String(reward.get("name", "小鱼干"))
 
@@ -765,9 +825,39 @@ func _on_game_won() -> void:
 		result_text += "\n⭐⭐⭐额外奖励：猫罐头×1"
 	if _has_three_star_bonus:  # D4
 		result_text += "\n🏆 首次⭐⭐⭐奖励：猫罐头大礼包×3 + 💎20"  # M2-2.1
+	# M3-3.1: 里程碑进度提示
+	if LevelStateManager != null and LevelStateManager.has_method("get_next_milestone_info"):
+		var info: Dictionary = LevelStateManager.call("get_next_milestone_info")
+		result_text += "\n🐾 累计%d胜 · 距下一里程碑还差%d胜" % [_get_total_board_wins(), int(info.get("remaining", 0))]
 	_result_label.text = result_text  # D4
 	_show_result()
 	Juice.pattern_legendary()
+
+
+# M3-3.1: 里程碑达成——物品入库 + 弹窗（钻石已由 LevelStateManager 入账）
+func _on_win_milestone(wins: int, reward: Dictionary) -> void:
+	var parts: Array = []
+	var diamonds := int(reward.get("diamonds", 0))
+	if diamonds > 0:
+		parts.append("💎%d" % diamonds)
+	for item in reward.get("items", []):
+		var item_id := String(item.get("id", ""))
+		var item_name := String(item.get("name", ""))
+		var count := int(item.get("count", 1))
+		if InventoryManager != null:
+			match item_id:
+				"decor_yarn_throne":
+					InventoryManager.add_item("decor", count)
+				"hidden_limited":
+					InventoryManager.add_item("hidden_item", count)
+				_:  # cat_can_pack 及其它零食类
+					InventoryManager.add_item("snack", count)
+		parts.append("%s×%d" % [item_name, count])
+	var title := String(reward.get("title", ""))
+	if not title.is_empty():
+		parts.append("称号「%s」" % title)
+	if Popups != null:
+		Popups.show_confirm("🏅 %d胜里程碑达成！" % wins, "猫咪们为你庆祝！\n获得：%s" % " + ".join(parts), Callable())
 
 
 # D4: Signal handler for first ⭐⭐⭐ bonus from LevelStateManager

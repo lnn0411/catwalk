@@ -45,6 +45,11 @@ func _ready() -> void:
 	_t_frenzy_guard_refund()
 	_t_excitement_overflow_bank()
 	_t_mischief_forewarning()
+	_t_twist_generous()
+	_t_twist_yarn()
+	_t_twist_mischief()
+	_t_twist_baseline()
+	_t_twist_serialize()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -580,6 +585,84 @@ func _t_mischief_forewarning() -> void:
 	for _i in range(9):
 		b.click_generator()
 	_check(warnings == [2, 1], "第8/9次点击发出预警[2,1]（实际=%s）" % str(warnings))
+	b.queue_free()
+
+
+# ---------------- M3-3.2 每日变异用例 ----------------
+
+func _t_twist_generous() -> void:
+	print("[M3 慷慨日]")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "generous_day")
+	var main_count := 0
+	for pos in b.grid:
+		if (b.grid[pos] as BoardItem).chain == b.current_main_chain:
+			main_count += 1
+	_check(main_count >= 7 and main_count <= 8, "初始主链+2（LV1: 7-8个，实际%d）" % main_count)
+	b.generator_remaining = 4
+	_check(b.calc_star_rating() == 2, "三星线收紧：剩余4只有二星")
+	b.generator_remaining = 5
+	_check(b.calc_star_rating() == 3, "剩余5达三星")
+	b.queue_free()
+
+
+func _t_twist_yarn() -> void:
+	print("[M3 毛线日]")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "yarn_day")
+	_check(b.special_tiles.size() == 4, "毛线格+2（LV1: 2+2=4，实际%d）" % b.special_tiles.size())
+	# 解格兴奋值 20→30：在毛线格旁合并验证
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.special_tiles[Vector2i(1, 1)] = BoardGameData.SpecialTile.YARN
+	b.excitement = 0
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(0, 1)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	_check(b.merge_items(p1, p2), "毛线格旁合并成功")
+	# 合并8 + 解格30 = 38
+	_check(b.excitement == 38, "解格兴奋值30（合并8+解格30=38，实际%d）" % b.excitement)
+	b.queue_free()
+
+
+func _t_twist_mischief() -> void:
+	print("[M3 捣蛋日]")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "mischief_day")
+	_check(b.mischief_triggers == [10, 16], "捣乱触发表追加16（实际%s）" % str(b.mischief_triggers))
+	_check(bool(b.active_twist.get("reward_double_roll", false)), "奖励二选一标记生效")
+	b.queue_free()
+
+
+func _t_twist_baseline() -> void:
+	print("[M3 无变异基线]")
+	var b := _fresh()
+	_check(b.active_twist_id == "" and b.active_twist.is_empty(), "默认无变异")
+	_check(b.mischief_triggers == [10], "LV1基线触发表=[10]")
+	b.generator_remaining = 4
+	_check(b.calc_star_rating() == 3, "基线三星线=剩余≥4")
+	_check(b.special_tiles.size() == 2, "基线毛线格=2")
+	b.queue_free()
+
+
+func _t_twist_serialize() -> void:
+	print("[M3 变异存档往返]")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "generous_day")
+	var saved := b.serialize_state()
+	var restored := BoardGame.new()
+	add_child(restored)
+	restored.deserialize_state(saved)
+	_check(restored.active_twist_id == "generous_day", "变异id恢复")
+	_check(int(restored.active_twist.get("star3_threshold", 0)) == 5, "变异配置重解析")
+	_check(restored.mischief_triggers == b.mischief_triggers, "触发表恢复")
+	restored.queue_free()
 	b.queue_free()
 
 

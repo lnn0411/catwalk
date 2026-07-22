@@ -26,14 +26,32 @@ signal won_reward_ready
 signal first_three_star_bonus_reward(item_name: String, count: int)  # D4
 # 棋盘升档（旧等级 -> 新等级）；record_win 触发升级时发出
 signal level_up(old_level: int, new_level: int)
+# M3-3.1: 胜场里程碑达成（钻石已入账，物品由 UI 层入库）
+signal win_milestone_reached(wins: int, reward: Dictionary)
 
 # 本管理器持有的对局实例（纯逻辑，UI 层通过 game 访问棋盘）
 var game: BoardGame = null
+
+# M3-3.1: 胜场里程碑表——15胜升满 LV3 后的长线目标
+# 「毛线王座」暂以随机装饰入库、「限定明信片」暂以隐藏道具入库
+# （专属美术与明信片配置就位后替换 item id，不影响本表结构）
+const WIN_MILESTONES := [
+	{"wins": 25, "diamonds": 30, "items": []},
+	{"wins": 50, "diamonds": 30, "items": [{"id": "cat_can_pack", "name": "猫罐头大礼包", "count": 3}]},
+	{"wins": 100, "diamonds": 0, "items": [{"id": "decor_yarn_throne", "name": "毛线王座", "count": 1}], "title": "合合小能手"},
+	{"wins": 200, "diamonds": 80, "items": [{"id": "hidden_limited", "name": "限定收藏品", "count": 1}]},
+]
+# 300 胜起每 100 胜循环奖励（长尾）
+const WIN_MILESTONE_CYCLE_START := 300
+const WIN_MILESTONE_CYCLE_STEP := 100
+const WIN_MILESTONE_CYCLE_DIAMONDS := 50
 
 # 跨对局累计的进度（持久化在 SAVE_PATH 的 [meta] section）
 var total_wins: int = 0
 var board_level: int = BoardGameData.BoardLevel.LV1
 var first_three_star_claimed: bool = false  # D4
+var claimed_milestones: Array = []  # M3-3.1: 已领取的里程碑胜场数
+var earned_titles: Array = []  # M3-3.1: 已获得的称号
 
 
 func _ready() -> void:
@@ -138,10 +156,55 @@ func record_win() -> int:
 		var old_level := board_level
 		board_level = new_level
 		leveled_up = new_level
+	_check_win_milestones()  # M3-3.1（内部触发 _save_meta 前先累积领取记录）
 	_save_meta()
 	if leveled_up > 0:
 		level_up.emit(board_level - 1, board_level)
 	return leveled_up
+
+
+# ---------------- M3-3.1 胜场里程碑 ----------------
+
+func _check_win_milestones() -> void:
+	"""结算所有已达成且未领取的里程碑（用 >= 保证漏领可补），钻石直接入账，
+	物品通过 win_milestone_reached 信号交 UI 入库。"""
+	for m in WIN_MILESTONES:
+		var wins := int(m["wins"])
+		if total_wins >= wins and wins not in claimed_milestones:
+			_grant_milestone(wins, m)
+	# 循环里程碑：300/400/500…
+	var cycle := WIN_MILESTONE_CYCLE_START
+	while cycle <= total_wins:
+		if cycle not in claimed_milestones:
+			_grant_milestone(cycle, {"wins": cycle, "diamonds": WIN_MILESTONE_CYCLE_DIAMONDS, "items": []})
+		cycle += WIN_MILESTONE_CYCLE_STEP
+
+
+func _grant_milestone(wins: int, reward: Dictionary) -> void:
+	claimed_milestones.append(wins)
+	var diamonds := int(reward.get("diamonds", 0))
+	if diamonds > 0 and CurrencyManager != null:
+		CurrencyManager.add_diamonds(diamonds, "board_win_milestone_%d" % wins)
+	var title := String(reward.get("title", ""))
+	if not title.is_empty() and title not in earned_titles:
+		earned_titles.append(title)
+	win_milestone_reached.emit(wins, reward)
+
+
+func get_next_milestone_info() -> Dictionary:
+	"""下一个未达成里程碑：{wins, remaining}。全部达成后指向下一个循环点。"""
+	for m in WIN_MILESTONES:
+		var wins := int(m["wins"])
+		if total_wins < wins:
+			return {"wins": wins, "remaining": wins - total_wins}
+	var cycle := WIN_MILESTONE_CYCLE_START
+	while cycle <= total_wins:
+		cycle += WIN_MILESTONE_CYCLE_STEP
+	return {"wins": cycle, "remaining": cycle - total_wins}
+
+
+func get_earned_titles() -> Array:
+	return earned_titles.duplicate()
 
 
 # M2-2.1: 首次三星里程碑奖励（一次性）——大礼包×3 + 钻石，与放弃安慰奖拉开梯度
@@ -180,6 +243,8 @@ func _load_meta() -> void:
 	total_wins = int(cfg.get_value(META_SECTION, "total_wins", 0))
 	board_level = int(cfg.get_value(META_SECTION, "board_level", BoardGameData.BoardLevel.LV1))
 	first_three_star_claimed = bool(cfg.get_value(META_SECTION, "first_three_star_claimed", false))  # D4
+	claimed_milestones = Array(cfg.get_value(META_SECTION, "claimed_milestones", []))  # M3-3.1
+	earned_titles = Array(cfg.get_value(META_SECTION, "earned_titles", []))  # M3-3.1
 	# 自愈：即便 board_level 丢失/损坏，也不低于当前胜场应有的等级（仍保证不降级）
 	board_level = maxi(board_level, BoardGameData.calc_board_level(total_wins))
 
@@ -191,6 +256,8 @@ func _save_meta() -> void:
 	cfg.set_value(META_SECTION, "total_wins", total_wins)
 	cfg.set_value(META_SECTION, "board_level", board_level)
 	cfg.set_value(META_SECTION, "first_three_star_claimed", first_three_star_claimed)  # D4
+	cfg.set_value(META_SECTION, "claimed_milestones", claimed_milestones)  # M3-3.1
+	cfg.set_value(META_SECTION, "earned_titles", earned_titles)  # M3-3.1
 	var err := cfg.save(SAVE_PATH)
 	if err != OK:
 		push_warning("LevelStateManager._save_meta 失败: %d" % err)

@@ -28,6 +28,9 @@ func _ready() -> void:
 	_t_self_heal_level_lost()
 	_t_delete_keeps_meta()
 	_t_session_meta_coexist()
+	_t_win_milestones()
+	_t_milestone_persist()
+	_t_milestone_cycle()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -159,4 +162,89 @@ func _t_session_meta_coexist() -> void:
 	_check(m2.has_saved(), "session 存档仍存在")
 	m.queue_free()
 	m2.queue_free()
+	_wipe_save()
+
+
+# ---------------- M3-3.1 胜场里程碑 ----------------
+
+func _t_win_milestones() -> void:
+	print("[M3 里程碑 25/50 胜]")
+	_wipe_save()
+	var m := _fresh_manager()
+	var reached: Array = []
+	m.win_milestone_reached.connect(func(wins: int, _reward: Dictionary) -> void:
+		reached.append(wins)
+	)
+	m.total_wins = 24
+	var d_before: int = CurrencyManager.get_diamonds() if CurrencyManager != null else 0
+	m.record_win()  # 第25胜
+	_check(reached == [25], "第25胜触发里程碑")
+	_check(25 in m.claimed_milestones, "25已记录领取")
+	if CurrencyManager != null:
+		_check(CurrencyManager.get_diamonds() - d_before == 30, "💎30入账")
+	m.record_win()  # 26胜：不应重复
+	_check(reached == [25], "26胜不重复触发")
+	m.total_wins = 49
+	m.record_win()  # 第50胜
+	_check(reached == [25, 50], "第50胜触发里程碑")
+	var reward_50: Dictionary = {}
+	for ms in m.WIN_MILESTONES:
+		if int(ms["wins"]) == 50:
+			reward_50 = ms
+	_check(not reward_50.get("items", []).is_empty(), "50胜奖励含物品")
+	m.queue_free()
+	_wipe_save()
+
+
+func _t_milestone_persist() -> void:
+	print("[M3 里程碑持久化与一次性补领]")
+	_wipe_save()
+	var m := _fresh_manager()
+	var reached1: Array = []
+	m.win_milestone_reached.connect(func(wins: int, _reward: Dictionary) -> void:
+		reached1.append(wins)
+	)
+	m.total_wins = 99
+	m.record_win()  # 第100胜：25/50/100 全部达成且未领 → 一次性补领
+	_check(reached1 == [25, 50, 100], "跳到100胜时25/50/100一次性补领（实际%s）" % str(reached1))
+	_check("合合小能手" in m.get_earned_titles(), "称号已获得")
+	m.queue_free()
+	# 新实例载入：不重复发放，记录仍在
+	var m2 := _fresh_manager()
+	var reached2: Array = []
+	m2.win_milestone_reached.connect(func(wins: int, _reward: Dictionary) -> void:
+		reached2.append(wins)
+	)
+	_check(100 in m2.claimed_milestones, "领取记录跨实例持久化")
+	_check("合合小能手" in m2.get_earned_titles(), "称号跨实例持久化")
+	m2.record_win()  # 101胜：全部已领 → 不再触发
+	_check(reached2.is_empty(), "已领里程碑不重复触发")
+	var info: Dictionary = m2.get_next_milestone_info()
+	_check(int(info["wins"]) == 200 and int(info["remaining"]) == 99, "下一里程碑指向200")
+	m2.queue_free()
+	_wipe_save()
+
+
+func _t_milestone_cycle() -> void:
+	print("[M3 300+循环里程碑]")
+	_wipe_save()
+	var m := _fresh_manager()
+	# 预标记固定里程碑为已领，聚焦循环逻辑
+	m.claimed_milestones = [25, 50, 100, 200]
+	m.total_wins = 299
+	var reached: Array = []
+	m.win_milestone_reached.connect(func(wins: int, _reward: Dictionary) -> void:
+		reached.append(wins)
+	)
+	var d_before: int = CurrencyManager.get_diamonds() if CurrencyManager != null else 0
+	m.record_win()  # 第300胜
+	_check(reached == [300], "第300胜触发循环里程碑")
+	if CurrencyManager != null:
+		_check(CurrencyManager.get_diamonds() - d_before == 50, "循环奖励💎50入账")
+	m.total_wins = 399
+	m.record_win()
+	_check(reached == [300, 400], "第400胜继续循环")
+	var info: Dictionary = m.get_next_milestone_info()
+	_check(int(info["wins"]) == 500, "下一循环点=500")
+	m.queue_free()
 	_wipe_save()

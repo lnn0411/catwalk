@@ -3,6 +3,7 @@ extends Node
 
 const BoardGameData := preload("res://scripts/board_game/BoardGameData.gd")
 const BoardItem := preload("res://scripts/board_game/BoardItem.gd")
+const BoardTwists := preload("res://scripts/board_game/BoardTwists.gd")
 
 # ============================================================
 # 猫咪合合乐 · 棋盘核心逻辑（纯逻辑，不含 UI）
@@ -75,6 +76,10 @@ var _main_chain_max_star: int = 0  # 本局主链已达成的最高星级
 # D10: 兴奋值 / 连击 / 毛线格 / 狂欢
 var excitement: int = 0  # 当前兴奋值 0-100
 var excitement_bank: int = 0  # M2: 满管后溢出结转的蓄能池（狂欢释放后注入新一管）
+# M3-3.2: 当日变异（空=无变异；由 UI 层在开局时传入，测试/模拟不传保持基线）
+var active_twist_id: String = ""
+var active_twist: Dictionary = {}
+var mischief_triggers: Array = []  # 本局捣乱触发点（关卡配置+变异叠加后的最终表）
 var _last_merge_time: float = 0.0  # 上次合并时间（用于连击判定）
 var _combo_active: bool = false  # 是否在连击窗口内
 var _combo_count: int = 0  # 当前连击数
@@ -84,12 +89,23 @@ var frenzy_cancel_pending: int = 0  # K7: 待抵消的捣乱次数（引燃后+1
 var highest_star_achieved: int = 0  # 本局已合成的最高星级（初始0=未合成，第一次合并后点亮⭐1）
 
 
-func start_new_game(level: int = BoardGameData.BoardLevel.LV1, cat: String = "你的猫") -> void:
-	"""初始化新一局：随机选链→初始掉落→生成器满"""
+func start_new_game(level: int = BoardGameData.BoardLevel.LV1, cat: String = "你的猫", twist_id: String = "") -> void:
+	"""初始化新一局：随机选链→初始掉落→生成器满。
+	twist_id 非空时叠加当日变异（M3-3.2）；测试/模拟不传保持基线规则。"""
 	randomize()
 	board_level = level
 	cat_name = cat
+	active_twist_id = twist_id
+	active_twist = BoardTwists.get_twist(twist_id)
 	var config := BoardGameData.get_level_config(board_level)
+	# M3-3.2: 变异叠加——捣乱触发表（追加额外触发点，去重排序）
+	mischief_triggers = []
+	for t in config["mischief_triggers"]:
+		mischief_triggers.append(int(t))
+	var extra_click := int(active_twist.get("extra_mischief_click", 0))
+	if extra_click > 0 and extra_click not in mischief_triggers:
+		mischief_triggers.append(extra_click)
+	mischief_triggers.sort()
 	star_rating = 0  # D4
 	# 随机选主链和副链（不同）
 	var chains: Array = BoardGameData.all_chains()
@@ -120,9 +136,10 @@ func start_new_game(level: int = BoardGameData.BoardLevel.LV1, cat: String = "�
 	highest_star_achieved = 0
 	game_state = BoardGameData.GameState.PLAYING
 	_advance_mischief_trigger()
-	# 初始掉落
+	# 初始掉落（M3-3.2: 慷慨日初始主链+2）
 	grid.clear()
-	var main_count := randi_range(int(config["initial_main_min"]), int(config["initial_main_max"]))
+	var main_bonus := int(active_twist.get("initial_main_bonus", 0))
+	var main_count := randi_range(int(config["initial_main_min"]), int(config["initial_main_max"])) + main_bonus
 	var sub_count := randi_range(int(config["initial_sub_min"]), int(config["initial_sub_max"]))
 	_place_initial_items(main_count, sub_count)
 	_place_yarn_tiles()  # D10: 放置毛线格（避开已有物品与生成器）
@@ -186,7 +203,8 @@ func merge_items(pos_a: Vector2i, pos_b: Vector2i) -> bool:
 	# M2: 先自增再发信号（修复 off-by-one，第二次合并显示"连击×2"）；
 	# 连击兴奋值递增 +4/+8/+12 封顶，给连续快合可感知的爽点
 	var now := Time.get_ticks_msec() / 1000.0
-	if _last_merge_time > 0 and (now - _last_merge_time) <= BoardGameData.COMBO_WINDOW_SECONDS:
+	var combo_window: float = float(active_twist.get("combo_window", BoardGameData.COMBO_WINDOW_SECONDS))
+	if _last_merge_time > 0 and (now - _last_merge_time) <= combo_window:
 		_combo_active = true
 		_combo_count += 1
 		var combo_mult: int = mini(_combo_count - 1, BoardGameData.EXCITEMENT_COMBO_CAP_MULT)
@@ -248,7 +266,7 @@ func merge_items(pos_a: Vector2i, pos_b: Vector2i) -> bool:
 	for npos in _get_neighbors(pos_b):
 		if special_tiles.get(npos) == BoardGameData.SpecialTile.YARN:
 			special_tiles.erase(npos)
-			_gain_excitement(BoardGameData.EXCITEMENT_YARN_BONUS)
+			_gain_excitement(int(active_twist.get("yarn_excitement", BoardGameData.EXCITEMENT_YARN_BONUS)))
 			yarn_untangled.emit(npos)
 	# ===== D10 end =====
 
@@ -328,8 +346,10 @@ func can_undo() -> bool:
 
 
 # D4: Calculate star rating based on remaining generator uses when game is won.
+# M3-3.2: 慷慨日三星线收紧（剩余≥5）
 func calc_star_rating() -> int:
-	if generator_remaining >= 4:
+	var star3_threshold := int(active_twist.get("star3_threshold", 4))
+	if generator_remaining >= star3_threshold:
 		return 3
 	elif generator_remaining >= 2:
 		return 2
@@ -467,8 +487,10 @@ func _trigger_mischief() -> void:
 
 
 func _advance_mischief_trigger() -> void:
-	var config := BoardGameData.get_level_config(board_level)
-	var triggers: Array = config["mischief_triggers"]
+	# M3-3.2: 用本局最终触发表（关卡配置+变异叠加）；兜底回退关卡配置
+	var triggers: Array = mischief_triggers
+	if triggers.is_empty():
+		triggers = BoardGameData.get_level_config(board_level)["mischief_triggers"]
 	mischief_pending_trigger = -1
 	for t in triggers:
 		var trigger := int(t)
@@ -514,6 +536,8 @@ func serialize_state() -> Dictionary:
 		"frenzy_triggers_used": frenzy_triggers_used,
 		"frenzy_cancel_pending": frenzy_cancel_pending,
 		"highest_star_achieved": highest_star_achieved,
+		"active_twist_id": active_twist_id,
+		"mischief_triggers": mischief_triggers.duplicate(),
 	}
 
 
@@ -555,6 +579,12 @@ func deserialize_state(data: Dictionary) -> void:
 	frenzy_triggers_used = int(data.get("frenzy_triggers_used", 0))
 	frenzy_cancel_pending = int(data.get("frenzy_cancel_pending", 0))
 	highest_star_achieved = int(data.get("highest_star_achieved", 1))
+	# M3-3.2: 恢复变异——旧档无该字段时保持无变异
+	active_twist_id = String(data.get("active_twist_id", ""))
+	active_twist = BoardTwists.get_twist(active_twist_id)
+	mischief_triggers = []
+	for t in data.get("mischief_triggers", []):
+		mischief_triggers.append(int(t))
 	undo_stack.clear()
 	for raw_action in data.get("undo_stack", []):
 		var action := _deserialize_undo_action(raw_action)
@@ -841,9 +871,9 @@ func _emit_consolation_prize() -> void:
 # ---------------- D10: 兴奋值 / 连击 / 三连合 / 狂欢 / 毛线格 ----------------
 
 func _place_yarn_tiles() -> void:
-	"""按关卡配置放置毛线格（避开生成器与初始掉落物品位置）"""
+	"""按关卡配置放置毛线格（避开生成器与初始掉落物品位置）；毛线日+2"""
 	var config := BoardGameData.get_level_config(board_level)
-	var count: int = int(config.get("yarn_tile_count", 0))
+	var count: int = int(config.get("yarn_tile_count", 0)) + int(active_twist.get("yarn_extra_tiles", 0))
 	if count <= 0:
 		return
 	var candidates: Array = []
