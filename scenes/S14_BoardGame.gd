@@ -633,40 +633,51 @@ func _build_get_ticket_dialog() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_get_ticket_dialog.add_child(dim)
 
-	# 弹窗面板
-	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.offset_left = -GET_TICKET_WIDTH * 0.5
-	panel.offset_right = GET_TICKET_WIDTH * 0.5
-	panel.offset_top = -185.0
-	panel.offset_bottom = 185.0
-	var style := StyleBoxFlat.new()
-	style.bg_color = Palette.PAPER_CREAM
-	style.set_corner_radius_all(24)
-	style.content_margin_left = 36.0
-	style.content_margin_right = 36.0
-	style.content_margin_top = 28.0
-	style.content_margin_bottom = 28.0
-	panel.add_theme_stylebox_override("panel", style)
-	_get_ticket_dialog.add_child(panel)
+	# 居中卡片（比基础 560×280 高些容纳 5 条获取方式）
+	var card := Control.new()
+	_center_control(card, Vector2(560, 370))
+	_get_ticket_dialog.add_child(card)
 
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 12)
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	panel.add_child(vbox)
+	# 底图贴图（加载失败回退 StyleBoxFlat）
+	var popup_tex := ResourceLoader.load("res://assets/art/ui/panels/popup_bg.png")
+	if popup_tex != null:
+		var panel := TextureRect.new()
+		panel.texture = popup_tex
+		panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		panel.stretch_mode = TextureRect.STRETCH_SCALE
+		panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		card.add_child(panel)
+	else:
+		var panel := PanelContainer.new()
+		panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		var style := StyleBoxFlat.new()
+		style.bg_color = Palette.PAPER_CREAM
+		style.set_corner_radius_all(24)
+		panel.add_theme_stylebox_override("panel", style)
+		card.add_child(panel)
+
+	# VBox 内容
+	var box := VBoxContainer.new()
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.add_theme_constant_override("separation", 8)
+	box.add_theme_constant_override("margin_left", 36)
+	box.add_theme_constant_override("margin_right", 36)
+	box.add_theme_constant_override("margin_top", 24)
+	box.add_theme_constant_override("margin_bottom", 24)
+	card.add_child(box)
 
 	# 标题
 	var title := Label.new()
 	title.text = "🎟 门票不足"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_font_size_override("font_size", 27)
 	title.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	vbox.add_child(title)
+	box.add_child(title)
 
 	# 分隔线
 	var sep := HSeparator.new()
 	sep.custom_minimum_size = Vector2(0, 2)
-	vbox.add_child(sep)
+	box.add_child(sep)
 
 	# 获取方式标题
 	var get_title := Label.new()
@@ -674,13 +685,13 @@ func _build_get_ticket_dialog() -> void:
 	get_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	get_title.add_theme_font_size_override("font_size", 18)
 	get_title.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	vbox.add_child(get_title)
+	box.add_child(get_title)
 
 	# row1: 步数 + 互动
 	var row1 := HBoxContainer.new()
 	row1.alignment = BoxContainer.ALIGNMENT_CENTER
 	row1.add_theme_constant_override("separation", 24)
-	vbox.add_child(row1)
+	box.add_child(row1)
 
 	var step_label := Label.new()
 	step_label.text = "🚶 每1500步 → 1张"
@@ -698,7 +709,7 @@ func _build_get_ticket_dialog() -> void:
 	var row2 := HBoxContainer.new()
 	row2.alignment = BoxContainer.ALIGNMENT_CENTER
 	row2.add_theme_constant_override("separation", 24)
-	vbox.add_child(row2)
+	box.add_child(row2)
 
 	var login_label := Label.new()
 	login_label.text = "🎁 每日登录 → 1张"
@@ -718,29 +729,53 @@ func _build_get_ticket_dialog() -> void:
 	coin_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	coin_label.add_theme_font_size_override("font_size", 16)
 	coin_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	vbox.add_child(coin_label)
+	box.add_child(coin_label)
 
 	# 分隔线
 	var sep2 := HSeparator.new()
 	sep2.custom_minimum_size = Vector2(0, 2)
-	vbox.add_child(sep2)
+	box.add_child(sep2)
 
-	# 知道了按钮
-	var ok_btn := Button.new()
-	ok_btn.text = "知道了"
-	ok_btn.custom_minimum_size = Vector2(220, 52)
-	ok_btn.add_theme_font_size_override("font_size", 22)
-	ok_btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	ok_btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
-	ok_btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	ok_btn.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
-	ok_btn.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	ok_btn.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
+	# 知道了按钮（btn_confirm_name.png 贴图 + 叠加文字）
+	var ok_btn := TextureButton.new()
+	ok_btn.custom_minimum_size = Vector2(170, 70)
+	var btn_tex := ResourceLoader.load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
+	if btn_tex != null:
+		ok_btn.texture_normal = btn_tex
+	ok_btn.ignore_texture_size = true
+	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
+	ok_btn.set_anchors_preset(Control.PRESET_CENTER)
+	ok_btn.offset_left = -85.0
+	ok_btn.offset_right = 85.0
+	ok_btn.offset_top = -35.0
+	ok_btn.offset_bottom = 35.0
 	ok_btn.pressed.connect(func():
 		_get_ticket_dialog.visible = false
 		UIManager.pop()
 	)
-	vbox.add_child(ok_btn)
+	box.add_child(ok_btn)
+
+	# 按钮 Label 叠加
+	var btn_label := Label.new()
+	btn_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	btn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	btn_label.text = "知道了"
+	btn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	btn_label.add_theme_font_size_override("font_size", 18)
+	btn_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	ok_btn.add_child(btn_label)
+
+
+static func _center_control(control: Control, control_size: Vector2) -> void:
+	control.anchor_left = 0.5
+	control.anchor_top = 0.5
+	control.anchor_right = 0.5
+	control.anchor_bottom = 0.5
+	control.offset_left = -control_size.x * 0.5
+	control.offset_top = -control_size.y * 0.5
+	control.offset_right = control_size.x * 0.5
+	control.offset_bottom = control_size.y * 0.5
 
 
 func _show_get_ticket_dialog() -> void:
