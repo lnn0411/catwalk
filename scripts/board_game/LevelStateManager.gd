@@ -144,15 +144,29 @@ func record_win() -> int:
 	return leveled_up
 
 
+# M2-2.1: 首次三星里程碑奖励（一次性）——大礼包×3 + 钻石，与放弃安慰奖拉开梯度
+const FIRST_THREE_STAR_ITEM := "猫罐头大礼包"
+const FIRST_THREE_STAR_COUNT := 3
+const FIRST_THREE_STAR_DIAMONDS := 20
+
+
 # D4: Handle first three-star win bonus and persist the one-time claim.
 func on_game_won_with_stars(rating: int) -> Dictionary:
 	"""Handle star rating after win. Returns bonus info if any."""
-	var bonus := {"has_bonus": false, "item_name": "", "count": 0}
+	var bonus := {"has_bonus": false, "item_name": "", "count": 0, "diamonds": 0}
 	if rating >= 3 and not first_three_star_claimed:
 		first_three_star_claimed = true
 		_save_meta()
-		bonus = {"has_bonus": true, "item_name": "小鱼干", "count": 1}
-		first_three_star_bonus_reward.emit("小鱼干", 1)
+		# M2-2.1: 钻石在管理器内直接入账（单一结算点），物品由 UI 层入库
+		if CurrencyManager != null:
+			CurrencyManager.add_diamonds(FIRST_THREE_STAR_DIAMONDS, "board_first_three_star")
+		bonus = {
+			"has_bonus": true,
+			"item_name": FIRST_THREE_STAR_ITEM,
+			"count": FIRST_THREE_STAR_COUNT,
+			"diamonds": FIRST_THREE_STAR_DIAMONDS,
+		}
+		first_three_star_bonus_reward.emit(FIRST_THREE_STAR_ITEM, FIRST_THREE_STAR_COUNT)
 	return bonus
 
 

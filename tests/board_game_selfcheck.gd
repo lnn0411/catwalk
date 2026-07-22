@@ -40,6 +40,11 @@ func _ready() -> void:
 	_t_extra_clicks_main_chain()
 	_t_undo_generator_click_count()
 	_t_reward_tables()
+	_t_combo_progression()
+	_t_frenzy_help()
+	_t_frenzy_guard_refund()
+	_t_excitement_overflow_bank()
+	_t_mischief_forewarning()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -457,6 +462,124 @@ func _t_undo_generator_click_count() -> void:
 	_check(b.generator_click_count == 0, "撤销后计数回退到0")
 	b.click_generator()
 	_check(drops.size() == 2 and drops[0] == drops[1], "重新点击产出与被撤销一致（不可reroll）")
+	b.queue_free()
+
+
+# ---------------- M2 体验批次用例 ----------------
+
+func _t_combo_progression() -> void:
+	print("[M2 连击计数与递增奖励]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.excitement = 0
+	var combo_values: Array = []
+	b.combo_triggered.connect(func(count: int) -> void:
+		combo_values.append(count)
+	)
+	# 三对主链⭐1，落点彼此不相邻（避免三连合干扰）
+	var pairs := [
+		[Vector2i(0, 0), Vector2i(4, 0)],
+		[Vector2i(0, 2), Vector2i(4, 2)],
+		[Vector2i(0, 4), Vector2i(4, 4)],
+	]
+	for pair in pairs:
+		b.grid[pair[0]] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, pair[0])
+		b.grid[pair[1]] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, pair[1])
+	for pair in pairs:
+		b.merge_items(pair[0], pair[1])
+	_check(combo_values == [2, 3], "连击信号为[2,3]（off-by-one已修复）")
+	# 兴奋值 = 8 + (8+4×1) + (8+4×2) = 36
+	_check(b.excitement == 36, "连击兴奋值递增 +4/+8（实际=%d 期望36）" % b.excitement)
+	b.queue_free()
+
+
+func _t_frenzy_help() -> void:
+	print("[M2 狂欢·猫猫帮忙]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.excitement = BoardGameData.EXCITEMENT_MAX
+	b.generator_remaining = 7
+	var spawned_pos: Array = []
+	b.frenzy_items_spawned.connect(func(positions: Array) -> void:
+		spawned_pos.append_array(positions)
+	)
+	_check(b.trigger_frenzy(BoardGameData.FrenzyMode.HELP), "帮忙模式触发成功")
+	_check(spawned_pos.size() == 2, "免费生成2个物品")
+	var all_main_one := true
+	for pos in spawned_pos:
+		var item: BoardItem = b.grid.get(pos)
+		if item == null or item.chain != b.current_main_chain or item.star != BoardGameData.StarLevel.ONE:
+			all_main_one = false
+	_check(all_main_one, "生成物为主链⭐1")
+	_check(b.generator_remaining == 7, "不消耗生成器次数")
+	_check(b.excitement == 0, "兴奋值清零（蓄能池为空）")
+	_check(b.frenzy_triggers_used == 1, "狂欢次数+1")
+	b.queue_free()
+
+
+func _t_frenzy_guard_refund() -> void:
+	print("[M2 狂欢·护卫局末折算]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.excitement = BoardGameData.EXCITEMENT_MAX
+	var refund := [0]
+	b.frenzy_guard_refund.connect(func(count: int) -> void:
+		refund[0] = count
+	)
+	_check(b.trigger_frenzy(BoardGameData.FrenzyMode.GUARD), "护卫模式触发成功")
+	_check(b.frenzy_cancel_pending == 1, "蓄一次抵消")
+	# 强制通关：两个主链⭐4合并
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.FOUR, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.FOUR, p2)
+	_check(b.merge_items(p1, p2), "合并通关")
+	_check(refund[0] == 1, "局末未消耗护卫折算 count=1")
+	_check(b.frenzy_cancel_pending == 0, "护卫清零")
+	b.queue_free()
+
+
+func _t_excitement_overflow_bank() -> void:
+	print("[M2 兴奋值溢出蓄能]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.excitement = 98
+	b.excitement_bank = 0
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(4, 4)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	_check(b.merge_items(p1, p2), "满管边缘合并成功")
+	_check(b.excitement == BoardGameData.EXCITEMENT_MAX, "兴奋值封顶100")
+	# 溢出 8-2=6，结转50% → 蓄能3
+	_check(b.excitement_bank == 3, "溢出50%%入蓄能池（实际=%d 期望3）" % b.excitement_bank)
+	_check(b.trigger_frenzy(BoardGameData.FrenzyMode.GUARD), "触发狂欢")
+	_check(b.excitement == 3, "蓄能池注入新一管")
+	_check(b.excitement_bank == 0, "蓄能池清空")
+	b.queue_free()
+
+
+func _t_mischief_forewarning() -> void:
+	print("[M2 捣乱预警前置]")
+	var b := _fresh()
+	b.grid.clear()
+	b.special_tiles.clear()
+	var warnings: Array = []
+	b.mischief_forewarning.connect(func(clicks_left: int) -> void:
+		warnings.append(clicks_left)
+	)
+	# LV1 捣乱触发点=第10次点击；点9次应收到 [2, 1] 预警
+	for _i in range(9):
+		b.click_generator()
+	_check(warnings == [2, 1], "第8/9次点击发出预警[2,1]（实际=%s）" % str(warnings))
 	b.queue_free()
 
 

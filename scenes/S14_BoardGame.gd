@@ -85,6 +85,9 @@ func _build_board_logic() -> void:
 	board.highest_star_changed.connect(_on_highest_star_changed)
 	board.sub_chain_exit_done.connect(_on_sub_chain_exit_done)  # M1-2: 出口结算发奖
 	board.sub_exit_lifeline.connect(_on_sub_exit_lifeline)  # M1-3: 出口自救提示
+	board.frenzy_guard_refund.connect(_on_frenzy_guard_refund)  # M2-K8: 未用护卫折算
+	board.frenzy_items_spawned.connect(_on_frenzy_items_spawned)  # M2-K8: 猫猫帮忙
+	board.mischief_forewarning.connect(_on_mischief_forewarning)  # M2: 捣乱预警
 
 
 # ---------------- UI 构建 ----------------
@@ -761,16 +764,17 @@ func _on_game_won() -> void:
 		_add_reward_to_inventory("cat_can", "猫罐头")
 		result_text += "\n⭐⭐⭐额外奖励：猫罐头×1"
 	if _has_three_star_bonus:  # D4
-		result_text += "\n首次⭐⭐⭐奖励：小鱼干×1"  # D4
+		result_text += "\n🏆 首次⭐⭐⭐奖励：猫罐头大礼包×3 + 💎20"  # M2-2.1
 	_result_label.text = result_text  # D4
 	_show_result()
 	Juice.pattern_legendary()
 
 
 # D4: Signal handler for first ⭐⭐⭐ bonus from LevelStateManager
+# M2-2.1: 升级为大礼包×3（钻石已由 LevelStateManager 直接入账）
 func _on_three_star_bonus(item_name: String, _count: int) -> void:
 	_has_three_star_bonus = true
-	_add_reward_to_inventory("fish_dried", item_name)
+	_add_reward_to_inventory("cat_can_pack", item_name)
 
 
 func _record_win_and_maybe_upgrade() -> void:
@@ -808,10 +812,12 @@ func _on_sub_chain_completed(_item: BoardItem) -> void:
 
 func _on_sub_chain_exit_done(_pos: Vector2i, first_time: bool) -> void:
 	# M1-2: 出口结算发奖——出口不可撤销，天然防刷
-	_add_reward_to_inventory("fish_dried", "小鱼干")
+	# M2-2.1: 首次出口=猫罐头（路线选择奖励），二次出口=小鱼干（清格补偿）
 	if first_time:
-		Popups.show_toast("送出成功！获得小鱼干×1，生成器+2")
+		_add_reward_to_inventory("cat_can", "猫罐头")
+		Popups.show_toast("送出成功！获得猫罐头×1，生成器+2")
 	else:
+		_add_reward_to_inventory("fish_dried", "小鱼干")
 		Popups.show_toast("送出成功！获得小鱼干×1")
 	_refresh_all()
 
@@ -1096,18 +1102,98 @@ func _on_frenzy_ready() -> void:
 
 
 func _on_frenzy_pressed() -> void:
-	# K7: 点击狂欢即蓄一次「抵消下一次捣乱」，无倒计时，按钮变灰
-	if board.trigger_frenzy():
-		_frenzy_button.visible = false
+	# M2-K8: 狂欢二选一——护卫（抵消下一次捣乱）或 帮忙（立即免费生成2个主链⭐1）
+	_show_frenzy_choice_dialog()
 
 
-func _on_frenzy_activated() -> void:
-	# 狂欢激活：闪烁效果
-	_excitement_bar.value = 0
-	_excitement_label.text = "0/%d" % BoardGameData.EXCITEMENT_MAX
+func _show_frenzy_choice_dialog() -> void:
+	var overlay := ColorRect.new()
+	overlay.name = "FrenzyChoiceOverlay"
+	overlay.color = Color(0, 0, 0, 0.55)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(460, 0)
+	panel.position = Vector2(-230, -140)
+	overlay.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "🎉 狂欢时刻！猫咪们想…"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+
+	var guard_btn := Button.new()
+	guard_btn.text = "🛡 猫猫护卫\n抵消下一次捣乱"
+	guard_btn.custom_minimum_size = Vector2(0, 72)
+	guard_btn.pressed.connect(func() -> void:
+		if board.trigger_frenzy(BoardGameData.FrenzyMode.GUARD):
+			_frenzy_button.visible = false
+			Popups.show_toast("🛡 猫猫护卫已就位！下一次捣乱将被抵消")
+		overlay.queue_free()
+	)
+	vbox.add_child(guard_btn)
+
+	var help_btn := Button.new()
+	help_btn.text = "✨ 猫猫帮忙\n立即免费生成2个主链物品"
+	help_btn.custom_minimum_size = Vector2(0, 72)
+	help_btn.pressed.connect(func() -> void:
+		if board.trigger_frenzy(BoardGameData.FrenzyMode.HELP):
+			_frenzy_button.visible = false
+		else:
+			Popups.show_toast("棋盘没有空格，猫猫帮不上忙…")
+		overlay.queue_free()
+	)
+	vbox.add_child(help_btn)
+
+	var later_btn := Button.new()
+	later_btn.text = "稍后再说"
+	later_btn.flat = true
+	later_btn.pressed.connect(overlay.queue_free)
+	vbox.add_child(later_btn)
+
+
+func _on_frenzy_activated(_mode: int) -> void:
+	# 狂欢激活：闪烁效果（兴奋条数值由 excitement_changed 信号刷新，可能含蓄能池结转）
 	var tween := create_tween()
 	tween.tween_property(_excitement_bar, "modulate", Color(0.5, 1.0, 0.5, 1), 0.15)
 	tween.tween_property(_excitement_bar, "modulate", Color(1, 1, 1, 1), 0.3)
+
+
+func _on_frenzy_items_spawned(positions: Array) -> void:
+	# M2-K8: 猫猫帮忙生成物品——播放生成动画
+	Popups.show_toast("✨ 猫猫们帮忙生成了%d个物品！" % positions.size())
+	for pos in positions:
+		if _cells.has(pos):
+			_cells[pos].play_spawn_anim()
+
+
+func _on_frenzy_guard_refund(count: int) -> void:
+	# M2-K8: 局末未消耗的护卫折算小鱼干，不让玩家的选择变废
+	for _i in range(count):
+		_add_reward_to_inventory("fish_dried", "小鱼干")
+	Popups.show_toast("未用上的护卫化作谢礼：小鱼干×%d" % count)
+
+
+func _on_mischief_forewarning(clicks_left: int) -> void:
+	# M2: 捣乱预警——给玩家反应窗口（快合低星物品或放护卫）
+	if clicks_left >= BoardGameData.MISCHIEF_FOREWARN_CLICKS:
+		Popups.show_toast("😼 猫猫蠢蠢欲动…保护好低星物品！")
+	# 生成器格微震提示
+	if _cells.has(BoardGameData.GENERATOR_POS):
+		var cell: Control = _cells[BoardGameData.GENERATOR_POS]
+		var tween := create_tween()
+		tween.set_loops(2)
+		tween.tween_property(cell, "position:x", 4.0, 0.05).as_relative()
+		tween.tween_property(cell, "position:x", -8.0, 0.1).as_relative()
+		tween.tween_property(cell, "position:x", 4.0, 0.05).as_relative()
 
 
 func _on_mischief_cancelled(pos: Vector2i) -> void:
