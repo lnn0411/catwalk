@@ -53,7 +53,7 @@ func _ready() -> void:
 		flip_btn.texture_normal = btn_tex
 		flip_btn.ignore_texture_size = true
 		flip_btn.stretch_mode = TextureButton.STRETCH_SCALE
-		flip_btn.custom_minimum_size = Vector2(240, 96)
+		flip_btn.custom_minimum_size = Vector2(150, 60)
 	flip_btn.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	# 明信片卡片右下角（卡片 750×500，距右下 10px 内边距）
 	var card_size := Vector2(750, 500)
@@ -73,7 +73,7 @@ func _ready() -> void:
 	flip_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	flip_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	flip_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	flip_label.add_theme_font_size_override("font_size", 28)
+	flip_label.add_theme_font_size_override("font_size", 22)
 	flip_label.add_theme_color_override("font_color", Color("#4F453C"))
 	flip_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	flip_btn.add_child(flip_label)
