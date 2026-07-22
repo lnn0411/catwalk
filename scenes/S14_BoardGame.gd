@@ -424,7 +424,11 @@ func _build_result_overlay() -> void:
 	_result_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	_result_button.pressed.connect(func():
 		_result_overlay.visible = false
-		_start_game()
+		if TicketManager != null and TicketManager.get_tickets() <= 0:
+			if UIManager != null:
+				UIManager.pop()
+		else:
+			_start_game()
 	)
 	vbox.add_child(_result_button)
 
@@ -562,9 +566,11 @@ func _build_debug_ticket_button() -> void:
 func _start_game() -> void:
 	_exit_ad_rescue_mode()
 	_has_three_star_bonus = false  # D4: reset bonus flag each game
+	_result_button.text = "再来一局"  # 重置按钮文案
 	if TicketManager != null:
 		if TicketManager.get_tickets() <= 0:
 			_result_label.text = "门票不足\n请先获取门票"
+			_result_button.text = "去获取门票"
 			_show_result()
 			_refresh_ticket_label()
 			return
