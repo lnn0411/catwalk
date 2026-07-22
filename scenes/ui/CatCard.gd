@@ -55,10 +55,22 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_D and event.ctrl_pressed and OS.is_debug_build():
 		var mock_reward: String = ["postcard", "ingredient", "decoration", "hidden"].pick_random()
 		var mock_id := ""
-		if mock_reward == "postcard":
-			var all := PostcardData.get_all_ids()
-			if not all.is_empty():
-				mock_id = all[0]
+		var all_ids := PostcardData.get_all_ids()
+		if mock_reward == "postcard" and not all_ids.is_empty():
+			# 取一张城市明信片（第一个非 hidden 的）
+			for pid in all_ids:
+				var pd = PostcardData.get_by_id(pid)
+				if pd and pd.location_type != "hidden" and pd.location_type != "seasonal" and pd.location_type != "achievement":
+					mock_id = pid
+					break
+			if mock_id == "":
+				mock_id = all_ids[0]
+		elif mock_reward == "hidden":
+			# 取隐藏明信片
+			for pid in all_ids:
+				if "hidden_" in pid:
+					mock_id = pid
+					break
 		_show_return_animation(mock_reward, mock_id)
 		get_viewport().set_input_as_handled()
 
