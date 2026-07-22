@@ -199,13 +199,14 @@ func _build_target_banner() -> Control:
 	hbox.add_theme_constant_override("separation", 4)
 	banner.add_child(hbox)
 
-	# 创建5个段：从⭐1到⭐5，文字/色块表示
+	# 创建5个段：从⭐1到⭐5，星级贴图表示
 	for i in range(BoardGameData.MAX_STAR_SEGMENTS):
-		var seg := ColorRect.new()
+		var seg := TextureRect.new()
 		seg.name = "Seg_%d" % (i + 1)
-		seg.custom_minimum_size = Vector2(50, 20)
-		seg.size = Vector2(50, 20)
-		seg.color = Color(0.9, 0.9, 0.9)  # 灰色（未点亮）
+		seg.texture = load("res://assets/art/board_game/star_dim.png")  # 未点亮
+		seg.custom_minimum_size = Vector2(20, 20)
+		seg.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		seg.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		hbox.add_child(seg)
 		_target_segments.append(seg)
 
@@ -293,12 +294,24 @@ func _build_grid() -> Control:
 		CELL_SIZE * BoardGameData.GRID_SIZE + CELL_GAP * float(BoardGameData.GRID_SIZE + 1)
 	)
 
+	# 底板装饰贴图（叠在纯色 panel 之上、GridContainer 之下）
+	var bg_tex := TextureRect.new()
+	bg_tex.name = "BoardBg"
+	bg_tex.texture = load("res://assets/art/board_game/board_bg.png")
+	bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bg_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	grid_panel.add_child(bg_tex)
+
 	var grid_container := GridContainer.new()
 	grid_container.name = "BoardGrid"
 	grid_container.columns = BoardGameData.GRID_SIZE
 	grid_container.add_theme_constant_override("h_separation", int(CELL_GAP))
 	grid_container.add_theme_constant_override("v_separation", int(CELL_GAP))
 	grid_panel.add_child(grid_container)
+	# 背景贴图移到最底层，GridContainer 在其上
+	grid_panel.move_child(bg_tex, 0)
 
 	for y in range(BoardGameData.GRID_SIZE):
 		for x in range(BoardGameData.GRID_SIZE):
@@ -1044,8 +1057,8 @@ func _on_mischief_cancelled(pos: Vector2i) -> void:
 
 
 func _on_highest_star_changed(star: int) -> void:
-	# 目标横幅：点亮对应星级的色块（star=1~5）
-	var filled_color := Color(1.0, 0.85, 0.0)  # 金色
-	var empty_color := Color(0.9, 0.9, 0.9)    # 灰色
+	# 目标横幅：点亮对应星级的星星贴图（star=1~5）
+	var lit_tex := load("res://assets/art/board_game/star_lit.png")
+	var dim_tex := load("res://assets/art/board_game/star_dim.png")
 	for i in range(BoardGameData.MAX_STAR_SEGMENTS):
-		_target_segments[i].color = filled_color if (i + 1) <= star else empty_color
+		_target_segments[i].texture = lit_tex if (i + 1) <= star else dim_tex

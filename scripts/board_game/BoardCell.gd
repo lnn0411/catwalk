@@ -29,11 +29,17 @@ var grid_pos: Vector2i = Vector2i.ZERO
 var board: BoardGame = null
 var is_generator: bool = false
 
+const GEN_ACTIVE_TEX := "res://assets/art/board_game/gen_active.png"
+const GEN_DEPLETED_TEX := "res://assets/art/board_game/gen_depleted.png"
+const YARN_OVERLAY_TEX := "res://assets/art/board_game/yarn_overlay.png"
+
 var _bg: Panel
-var _icon_label: Label
+var _icon_tex: TextureRect
+var _icon_fallback: Label   # texture 缺失时回退显示 emoji
 var _star_label: Label
 var _badge_label: Label   # 生成器剩余次数角标
 var _highlight: Panel
+var _yarn_overlay: TextureRect
 var _drag_hidden: bool = false  # 拖拽中隐藏本格物品
 
 
@@ -74,13 +80,21 @@ func _build_visuals() -> void:
 	_highlight.visible = false
 	add_child(_highlight)
 
-	_icon_label = Label.new()
-	_icon_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_icon_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_icon_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_icon_label.add_theme_font_size_override("font_size", 44)
-	_icon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_icon_label)
+	_icon_tex = TextureRect.new()
+	_icon_tex.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_icon_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_icon_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_icon_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(_icon_tex)
+
+	_icon_fallback = Label.new()
+	_icon_fallback.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_icon_fallback.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_icon_fallback.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_icon_fallback.add_theme_font_size_override("font_size", 44)
+	_icon_fallback.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_icon_fallback.visible = false
+	add_child(_icon_fallback)
 
 	_star_label = Label.new()
 	_star_label.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
@@ -102,6 +116,15 @@ func _build_visuals() -> void:
 	_badge_label.visible = false
 	add_child(_badge_label)
 
+	_yarn_overlay = TextureRect.new()
+	_yarn_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_yarn_overlay.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_yarn_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_yarn_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_yarn_overlay.texture = _load_texture(YARN_OVERLAY_TEX)
+	_yarn_overlay.visible = false
+	add_child(_yarn_overlay)
+
 
 func refresh() -> void:
 	"""按棋盘当前状态重绘本格"""
@@ -112,8 +135,9 @@ func refresh() -> void:
 		var depleted := board.generator_remaining <= 0
 		style.bg_color = COLOR_GENERATOR_EMPTY if depleted else COLOR_GENERATOR
 		style.border_color = Color("C4894A") if not depleted else COLOR_GENERATOR_EMPTY
-		_icon_label.text = "🐾"
-		_icon_label.modulate = Color(1, 1, 1, 0.45) if depleted else Color.WHITE
+		_icon_fallback.visible = false
+		_icon_tex.texture = _load_texture(GEN_DEPLETED_TEX if depleted else GEN_ACTIVE_TEX)
+		_icon_tex.modulate = Color.WHITE
 		_star_label.text = "生成器"
 		_badge_label.text = "×%d" % board.generator_remaining
 		_badge_label.visible = true
@@ -122,44 +146,82 @@ func refresh() -> void:
 		style.border_color = COLOR_CELL_BORDER
 		var item: BoardItem = board.get_item(grid_pos)
 		if item != null and not _drag_hidden:
-			_icon_label.text = item.get_icon()
-			_icon_label.modulate = Color.WHITE
+			_render_item(item, Color.WHITE)
 			_star_label.text = "%s %s" % [item.get_display_name(), "⭐".repeat(item.star)]
 		else:
-			_icon_label.text = ""
+			_clear_icon()
 			_star_label.text = ""
 		_badge_label.visible = false
 	_bg.add_theme_stylebox_override("panel", style)
+	_yarn_overlay.visible = _has_yarn()
+
+
+func _render_item(item: BoardItem, mod: Color) -> void:
+	"""渲染物品：优先贴图，缺失则回退 emoji 标签"""
+	var tex := ItemChains.get_item_texture(item.chain, item.star)
+	if tex != null:
+		_icon_tex.texture = tex
+		_icon_tex.modulate = mod
+		_icon_fallback.text = ""
+		_icon_fallback.visible = false
+	else:
+		_icon_tex.texture = null
+		_icon_fallback.text = item.get_icon()
+		_icon_fallback.modulate = mod
+		_icon_fallback.visible = true
+
+
+func _clear_icon() -> void:
+	_icon_tex.texture = null
+	_icon_tex.modulate = Color.WHITE
+	_icon_fallback.text = ""
+	_icon_fallback.modulate = Color.WHITE
+	_icon_fallback.visible = false
+
+
+func _has_yarn() -> bool:
+	if board == null or is_generator:
+		return false
+	return board.special_tiles.get(grid_pos, BoardGameData.SpecialTile.NONE) == BoardGameData.SpecialTile.YARN
+
+
+func _load_texture(path: String) -> Texture2D:
+	if not ResourceLoader.exists(path):
+		return null
+	var res := ResourceLoader.load(path)
+	if res is Texture2D:
+		return res
+	return null
 
 
 func play_merge_anim() -> void:
 	"""合并成功：缩放弹跳 + 星光粒子"""
-	_icon_label.pivot_offset = _icon_label.size / 2.0
-	_icon_label.scale = Vector2(0.3, 0.3)
+	_icon_tex.pivot_offset = _icon_tex.size / 2.0
+	_icon_tex.scale = Vector2(0.3, 0.3)
 	var tween := create_tween()
-	tween.tween_property(_icon_label, "scale", Vector2(1.25, 1.25), 0.15) \
+	tween.tween_property(_icon_tex, "scale", Vector2(1.25, 1.25), 0.15) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_icon_label, "scale", Vector2.ONE, 0.12) \
+	tween.tween_property(_icon_tex, "scale", Vector2.ONE, 0.12) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_spawn_merge_particles()
 
 
 func play_spawn_anim() -> void:
 	"""生成器产出：从生成器方向弹入"""
-	_icon_label.pivot_offset = _icon_label.size / 2.0
-	_icon_label.scale = Vector2(0.1, 0.1)
+	_icon_tex.pivot_offset = _icon_tex.size / 2.0
+	_icon_tex.scale = Vector2(0.1, 0.1)
 	var tween := create_tween()
-	tween.tween_property(_icon_label, "scale", Vector2.ONE, 0.22) \
+	tween.tween_property(_icon_tex, "scale", Vector2.ONE, 0.22) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func play_reject_anim() -> void:
 	"""放置失败：左右抖动回弹"""
-	var origin := _icon_label.position
+	var origin := _icon_tex.position
 	var tween := create_tween()
-	tween.tween_property(_icon_label, "position:x", origin.x - 8.0, 0.05)
-	tween.tween_property(_icon_label, "position:x", origin.x + 8.0, 0.05)
-	tween.tween_property(_icon_label, "position:x", origin.x, 0.05)
+	tween.tween_property(_icon_tex, "position:x", origin.x - 8.0, 0.05)
+	tween.tween_property(_icon_tex, "position:x", origin.x + 8.0, 0.05)
+	tween.tween_property(_icon_tex, "position:x", origin.x, 0.05)
 
 
 func _spawn_merge_particles() -> void:
@@ -199,21 +261,37 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 	var item: BoardItem = board.get_item(grid_pos)
 	if item == null:
 		return null
-	# 拖拽预览：物品图标跟手
-	var preview := Label.new()
-	preview.text = item.get_icon()
-	preview.add_theme_font_size_override("font_size", 52)
-	preview.modulate = Color(1, 1, 1, 0.9)
-	var wrapper := Control.new()
-	wrapper.add_child(preview)
-	preview.position = -preview.get_minimum_size() / 2.0
-	set_drag_preview(wrapper)
+	# 拖拽预览：物品贴图跟手
+	set_drag_preview(_make_drag_preview(item))
 	# 拖拽中原格半透明
 	_drag_hidden = true
-	_icon_label.modulate = Color(1, 1, 1, 0.3)
-	_icon_label.text = item.get_icon()
+	_render_item(item, Color(1, 1, 1, 0.3))
 	drag_started.emit(grid_pos)
 	return {"type": "board_item", "from_pos": grid_pos}
+
+
+func _make_drag_preview(item: BoardItem) -> Control:
+	"""构造跟手拖拽预览：优先 60×60 贴图，缺失回退 emoji 标签"""
+	var wrapper := Control.new()
+	var tex := ItemChains.get_item_texture(item.chain, item.star)
+	if tex != null:
+		var rect := TextureRect.new()
+		rect.texture = tex
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.custom_minimum_size = Vector2(60, 60)
+		rect.size = Vector2(60, 60)
+		rect.modulate = Color(1, 1, 1, 0.9)
+		rect.position = -rect.size / 2.0
+		wrapper.add_child(rect)
+	else:
+		var label := Label.new()
+		label.text = item.get_icon()
+		label.add_theme_font_size_override("font_size", 52)
+		label.modulate = Color(1, 1, 1, 0.9)
+		wrapper.add_child(label)
+		label.position = -label.get_minimum_size() / 2.0
+	return wrapper
 
 
 func _can_drop_data(_at_position: Vector2, data: Variant) -> bool:
@@ -267,7 +345,8 @@ func _notification(what: int) -> void:
 		_highlight.visible = false
 		if _drag_hidden:
 			_drag_hidden = false
-			_icon_label.modulate = Color.WHITE
+			_icon_tex.modulate = Color.WHITE
+			_icon_fallback.modulate = Color.WHITE
 			refresh()
 			if not is_drag_successful():
 				play_reject_anim()
