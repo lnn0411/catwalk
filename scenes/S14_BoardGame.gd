@@ -1132,15 +1132,16 @@ func _on_highest_star_changed(star: int) -> void:
 # ---------------- 棋盘上方走动的小猫 ----------------
 
 func _build_walk_cat() -> void:
-	# 容器：棋盘上方，宽度同棋盘、高度 ~40px；不阻挡点击
+	# 容器：棋盘上方、贴近兴奋值进度条下方；不阻挡点击
 	var grid_w := CELL_SIZE * BoardGameData.GRID_SIZE + CELL_GAP * float(BoardGameData.GRID_SIZE + 1)
-	var grid_top := (DESIGN_SIZE.y - grid_w) * 0.5  # 参考 _show_cat_seat 的 grid_size 计算
+	var grid_top := (DESIGN_SIZE.y - grid_w) * 0.5
 	_walk_cat_container = Control.new()
 	_walk_cat_container.name = "WalkCat"
 	_walk_cat_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_walk_cat_container.custom_minimum_size = Vector2(grid_w, 40.0)
-	_walk_cat_container.size = Vector2(grid_w, 40.0)
-	_walk_cat_container.position = Vector2((DESIGN_SIZE.x - grid_w) * 0.5, grid_top - 48.0)
+	_walk_cat_container.custom_minimum_size = Vector2(grid_w, 150.0)
+	_walk_cat_container.size = Vector2(grid_w, 150.0)
+	# 紧贴兴奋值进度条下方（不遮挡棋盘）
+	_walk_cat_container.position = Vector2((DESIGN_SIZE.x - grid_w) * 0.5, grid_top - 160.0)
 
 	_walk_cat_tex = TextureRect.new()
 	_walk_cat_tex.name = "WalkCatTex"
@@ -1151,7 +1152,7 @@ func _build_walk_cat() -> void:
 
 	_walk_cat_timer = Timer.new()
 	_walk_cat_timer.name = "WalkCatTimer"
-	_walk_cat_timer.wait_time = 0.2  # 5fps 帧切换
+	_walk_cat_timer.wait_time = 0.33  # 3fps 慢走帧切换
 	_walk_cat_timer.one_shot = false
 	_walk_cat_timer.timeout.connect(_on_walk_cat_tick)
 	_walk_cat_container.add_child(_walk_cat_timer)
@@ -1182,12 +1183,12 @@ func _start_walk_cat() -> void:
 	_walk_cat_frame_idx = 0
 	_walk_cat_tex.texture = _walk_cat_frames[0]
 	_walk_cat_tex.flip_h = false
-	# 按帧实际比例等比缩放，高度固定 40px
+	# 按帧实际比例等比缩放，高度固定 150px
 	var f0 := _walk_cat_frames[0]
 	var fh := f0.get_height()
-	var scaled_w := 40.0 * (float(f0.get_width()) / float(fh)) if fh > 0 else 40.0
-	_walk_cat_tex.custom_minimum_size = Vector2(scaled_w, 40.0)
-	_walk_cat_tex.size = Vector2(scaled_w, 40.0)
+	var scaled_w := 150.0 * (float(f0.get_width()) / float(fh)) if fh > 0 else 150.0
+	_walk_cat_tex.custom_minimum_size = Vector2(scaled_w, 150.0)
+	_walk_cat_tex.size = Vector2(scaled_w, 150.0)
 	_walk_cat_tex.position = Vector2.ZERO
 	_walk_cat_active = true
 	_walk_cat_timer.start()
@@ -1201,16 +1202,16 @@ func _start_walk_cat_tween() -> void:
 		_walk_cat_tween.kill()
 	var start_x := 0.0
 	_walk_cat_tex.position.x = start_x
-	# 右走 3s → 转身 → 左走 3s，循环往复
+	# 右走 5s → 转身 → 左走 5s，循环往复
 	_walk_cat_tween = create_tween().set_loops()
 	_walk_cat_tween.tween_callback(func():
 		_walk_cat_dir = 1.0
 		_walk_cat_tex.flip_h = false)
-	_walk_cat_tween.tween_property(_walk_cat_tex, "position:x", start_x + 300.0, 3.0)
+	_walk_cat_tween.tween_property(_walk_cat_tex, "position:x", start_x + 300.0, 5.0)
 	_walk_cat_tween.tween_callback(func():
 		_walk_cat_dir = -1.0
 		_walk_cat_tex.flip_h = true)
-	_walk_cat_tween.tween_property(_walk_cat_tex, "position:x", start_x, 3.0)
+	_walk_cat_tween.tween_property(_walk_cat_tex, "position:x", start_x, 5.0)
 
 
 func _pause_walk_cat() -> void:
