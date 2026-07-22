@@ -19,8 +19,8 @@ const CELL_GAP := 8.0
 const UI_TEXT_COLOR := Color("4F453C")
 const GET_TICKET_WIDTH := 520.0
 
-const TX_BTN_PRIMARY := preload("res://assets/art/ui/incubation/components/btn_confirm_name.png")
-const TX_BTN_SECONDARY := preload("res://assets/art/ui/incubation/components/btn_secondary_blank.png")
+const TX_BTN_PRIMARY := preload("res://assets/art/ui/buttons/btn_primary.png")
+const TX_BTN_SECONDARY := preload("res://assets/art/ui/buttons/btn_secondary.png")
 
 var board: BoardGame
 var _cells: Dictionary = {}  # Vector2i -> BoardCell
