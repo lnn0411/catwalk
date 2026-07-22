@@ -545,7 +545,7 @@ func _show_postcard_reveal(reward_type: String, postcard_id: String = "") -> voi
 	var wsm = get_node_or_null("/root/WeeklySpotlightManager")
 	if wsm != null and wsm.has_method("get_current_spotlight_location"):
 		spotlight_location = String(wsm.get_current_spotlight_location())
-	reveal.reveal(_get_cat_display_name(), reward_type, spotlight_location, postcard_data)
+	reveal.reveal(_get_cat_display_name(), reward_type, spotlight_location, postcard_data, postcard_id)
 
 
 func _show_postcard_detail(postcard_id: String) -> void:

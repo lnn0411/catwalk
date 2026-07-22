@@ -12,6 +12,7 @@ var _body: Label
 var _card: Control
 var _spotlight_badge: ColorRect
 var _spotlight_active := false
+var _art_texture: TextureRect
 
 
 func _ready() -> void:
@@ -22,13 +23,14 @@ func _ready() -> void:
 	_refresh_text()
 
 
-func reveal(cat_name: String, reward_type: String, spotlight_location_type: String = "", postcard_data: Dictionary = {}) -> void:
+func reveal(cat_name: String, reward_type: String, spotlight_location_type: String = "", postcard_data: Dictionary = {}, postcard_id: String = "") -> void:
 	_cat_name = cat_name
 	_reward_type = reward_type
 	if spotlight_location_type != "" or not postcard_data.is_empty():
 		set_spotlight(spotlight_location_type, postcard_data)
 	if is_inside_tree():
 		_refresh_text()
+	_load_postcard_image(postcard_id)
 
 
 func set_spotlight(spotlight_location_type: String, postcard_data: Dictionary = {}) -> void:
@@ -86,12 +88,14 @@ func _build_ui() -> void:
 	_title.add_theme_font_size_override("font_size", 27)
 	inner_vbox.add_child(_title)
 
-	# 图片占位区
-	var art := ColorRect.new()
-	art.custom_minimum_size = Vector2(0, 100)
-	art.color = Color(0.92, 0.88, 0.82, 0.6)
-	art.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	inner_vbox.add_child(art)
+	# 图片缩略图（替代占位色块）
+	_art_texture = TextureRect.new()
+	_art_texture.custom_minimum_size = Vector2(0, 100)
+	_art_texture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_art_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_art_texture.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_art_texture.modulate.a = 0.0
+	inner_vbox.add_child(_art_texture)
 
 	# 描述
 	_body = Label.new()
@@ -153,6 +157,29 @@ func _build_ui() -> void:
 	badge_label.add_theme_font_size_override("font_size", 11)
 	_spotlight_badge.add_child(badge_label)
 	_refresh_spotlight_visual()
+
+
+func _load_postcard_image(postcard_id: String) -> void:
+	if _art_texture == null:
+		return
+	if postcard_id == "":
+		_art_texture.modulate.a = 0.0
+		_art_texture.texture = null
+		return
+	var tex: Texture2D = null
+	var res_path := "res://assets/art/postcards/" + postcard_id + ".png"
+	if ResourceLoader.exists(res_path, "Texture2D"):
+		tex = load(res_path) as Texture2D
+	if tex == null:
+		var img := Image.new()
+		var abs_path := ProjectSettings.globalize_path(res_path)
+		if img.load(abs_path) == OK:
+			tex = ImageTexture.create_from_image(img)
+	if tex != null:
+		_art_texture.texture = tex
+		_art_texture.modulate.a = 1.0
+	else:
+		_art_texture.modulate.a = 0.0
 
 
 func _refresh_text() -> void:
