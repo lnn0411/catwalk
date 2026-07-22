@@ -17,6 +17,10 @@ const DESIGN_SIZE := Vector2(720.0, 1280.0)
 const CELL_SIZE := 120.0
 const CELL_GAP := 8.0
 const UI_TEXT_COLOR := Color("4F453C")
+const GET_TICKET_WIDTH := 520.0
+
+const TX_BTN_PRIMARY := preload("res://assets/art/ui/buttons/btn_primary.png")
+const TX_BTN_SECONDARY := preload("res://assets/art/ui/buttons/btn_secondary.png")
 
 var board: BoardGame
 var _cells: Dictionary = {}  # Vector2i -> BoardCell
@@ -38,6 +42,8 @@ var _ad_rescue_selected: Dictionary = {}  # Vector2i -> true
 var _ad_rescue_highlights: Dictionary = {}  # Vector2i -> Panel
 var _ad_rescue_mode: bool = false
 var _dbg_ticket_btn: Button
+var _get_ticket_dialog: Control           # 门票不足弹窗
+var _get_ticket_result_label: Label       # 弹窗内文字（备用）
 var _has_three_star_bonus: bool = false  # D4
 var _excitement_bar: ProgressBar          # 兴奋值条
 var _excitement_label: Label              # 兴奋值文字（如 "兴奋值 88/100"）
@@ -136,6 +142,7 @@ func _build_ui() -> void:
 	_build_cat_seat()
 	_build_debug_ticket_button()
 	_build_walk_cat()
+	_build_get_ticket_dialog()
 
 
 func _build_top_bar() -> Control:
@@ -163,6 +170,9 @@ func _build_top_bar() -> Control:
 	back.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	back.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	back.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	back.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
+	back.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
+	back.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
 	back.pressed.connect(_on_back_pressed)
 	hbox.add_child(back)
 
@@ -285,6 +295,9 @@ func _build_excitement_bar() -> Control:
 	_frenzy_button.custom_minimum_size = Vector2(80, 28)
 	_frenzy_button.add_theme_font_size_override("font_size", 14)
 	_frenzy_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	_frenzy_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
+	_frenzy_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
+	_frenzy_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
 	_frenzy_button.pressed.connect(_on_frenzy_pressed)
 	container.add_child(_frenzy_button)
 
@@ -295,6 +308,17 @@ func _make_excitement_fill_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(1.0, 0.6, 0.0)  # 橙色兴奋条
 	style.set_corner_radius_all(4)
+	return style
+
+
+# 按钮贴图背景工具方法（StyleBoxTexture 无圆角属性，圆角由贴图本身表现）
+static func _btn_style(texture: Texture2D) -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = texture
+	style.content_margin_left = 12.0
+	style.content_margin_right = 12.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
 	return style
 
 
@@ -372,6 +396,11 @@ func _build_bottom_bar() -> Control:
 	_undo_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	_undo_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	_undo_button.add_theme_color_override("font_disabled_color", UI_TEXT_COLOR)
+	_undo_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
+	_undo_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
+	_undo_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
+	_undo_button.add_theme_stylebox_override("disabled", _btn_style(TX_BTN_SECONDARY))
+	# disabled 态半透明灰（Button 无 disabled_changed 信号，故在 _refresh_all 中同步 modulate）
 	_undo_button.pressed.connect(_on_undo_pressed)
 	bar.add_child(_undo_button)
 
@@ -382,6 +411,9 @@ func _build_bottom_bar() -> Control:
 	_restart_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	_restart_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	_restart_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	_restart_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
+	_restart_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
+	_restart_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
 	_restart_button.pressed.connect(_start_game)
 	bar.add_child(_restart_button)
 
@@ -424,6 +456,9 @@ func _build_result_overlay() -> void:
 	_result_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	_result_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	_result_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	_result_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
+	_result_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
+	_result_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
 	_result_button.pressed.connect(func():
 		_result_overlay.visible = false
 		if TicketManager != null and TicketManager.get_tickets() <= 0:
@@ -480,6 +515,9 @@ func _build_ad_rescue_dialog() -> void:
 	watch_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	watch_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	watch_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	watch_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
+	watch_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
+	watch_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
 	watch_button.pressed.connect(_enter_ad_rescue_mode)
 	buttons.add_child(watch_button)
 
@@ -490,6 +528,9 @@ func _build_ad_rescue_dialog() -> void:
 	give_up_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	give_up_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	give_up_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	give_up_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
+	give_up_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
+	give_up_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
 	give_up_button.pressed.connect(_on_ad_rescue_give_up_pressed)
 	buttons.add_child(give_up_button)
 
@@ -563,6 +604,135 @@ func _build_debug_ticket_button() -> void:
 	add_child(_dbg_ticket_btn)
 
 
+func _build_get_ticket_dialog() -> void:
+	_get_ticket_dialog = Control.new()
+	_get_ticket_dialog.name = "GetTicketDialog"
+	_get_ticket_dialog.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_get_ticket_dialog.mouse_filter = Control.MOUSE_FILTER_STOP
+	_get_ticket_dialog.visible = false
+	add_child(_get_ticket_dialog)
+
+	# 半透明遮罩
+	var dim := ColorRect.new()
+	dim.color = Color(0, 0, 0, 0.5)
+	dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_get_ticket_dialog.add_child(dim)
+
+	# 弹窗面板
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	var style := StyleBoxFlat.new()
+	style.bg_color = Palette.PAPER_CREAM
+	style.set_corner_radius_all(24)
+	style.content_margin_left = 36.0
+	style.content_margin_right = 36.0
+	style.content_margin_top = 28.0
+	style.content_margin_bottom = 28.0
+	panel.add_theme_stylebox_override("panel", style)
+	panel.custom_minimum_size = Vector2(GET_TICKET_WIDTH, 0)
+	_get_ticket_dialog.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 12)
+	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
+	panel.add_child(vbox)
+
+	# 标题
+	var title := Label.new()
+	title.text = "🎟 门票不足"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 26)
+	title.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	vbox.add_child(title)
+
+	# 分隔线
+	var sep := HSeparator.new()
+	sep.custom_minimum_size = Vector2(0, 2)
+	vbox.add_child(sep)
+
+	# 获取方式标题
+	var get_title := Label.new()
+	get_title.text = "🎯 获取门票"
+	get_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	get_title.add_theme_font_size_override("font_size", 18)
+	get_title.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	vbox.add_child(get_title)
+
+	# row1: 步数 + 互动
+	var row1 := HBoxContainer.new()
+	row1.alignment = BoxContainer.ALIGNMENT_CENTER
+	row1.add_theme_constant_override("separation", 24)
+	vbox.add_child(row1)
+
+	var step_label := Label.new()
+	step_label.text = "🚶 每1500步 → 1张"
+	step_label.add_theme_font_size_override("font_size", 16)
+	step_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	row1.add_child(step_label)
+
+	var interact_label := Label.new()
+	interact_label.text = "🐱 互动5次 → 1张"
+	interact_label.add_theme_font_size_override("font_size", 16)
+	interact_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	row1.add_child(interact_label)
+
+	# row2: 登录 + 广告
+	var row2 := HBoxContainer.new()
+	row2.alignment = BoxContainer.ALIGNMENT_CENTER
+	row2.add_theme_constant_override("separation", 24)
+	vbox.add_child(row2)
+
+	var login_label := Label.new()
+	login_label.text = "🎁 每日登录 → 1张"
+	login_label.add_theme_font_size_override("font_size", 16)
+	login_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	row2.add_child(login_label)
+
+	var ad_label := Label.new()
+	ad_label.text = "📺 看广告 → 1张"
+	ad_label.add_theme_font_size_override("font_size", 16)
+	ad_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	row2.add_child(ad_label)
+
+	# 金币兑换
+	var coin_label := Label.new()
+	coin_label.text = "🪙 金币×50换1张（每日限2张）"
+	coin_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	coin_label.add_theme_font_size_override("font_size", 16)
+	coin_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	vbox.add_child(coin_label)
+
+	# 分隔线
+	var sep2 := HSeparator.new()
+	sep2.custom_minimum_size = Vector2(0, 2)
+	vbox.add_child(sep2)
+
+	# 知道了按钮
+	var ok_btn := Button.new()
+	ok_btn.text = "知道了"
+	ok_btn.custom_minimum_size = Vector2(220, 52)
+	ok_btn.add_theme_font_size_override("font_size", 22)
+	ok_btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	ok_btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
+	ok_btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	ok_btn.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
+	ok_btn.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
+	ok_btn.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
+	ok_btn.pressed.connect(func():
+		_get_ticket_dialog.visible = false
+		UIManager.pop()
+	)
+	vbox.add_child(ok_btn)
+
+
+func _show_get_ticket_dialog() -> void:
+	_get_ticket_dialog.visible = true
+	_get_ticket_dialog.modulate = Color(1, 1, 1, 0)
+	var tween := create_tween()
+	tween.tween_property(_get_ticket_dialog, "modulate:a", 1.0, 0.25)
+
+
 # ---------------- 对局流程 ----------------
 
 func _start_game() -> void:
@@ -571,9 +741,7 @@ func _start_game() -> void:
 	_result_button.text = "再来一局"  # 重置按钮文案
 	if TicketManager != null:
 		if TicketManager.get_tickets() <= 0:
-			_result_label.text = "门票不足\n请先获取门票"
-			_result_button.text = "去获取门票"
-			_show_result()
+			_show_get_ticket_dialog()
 			_refresh_ticket_label()
 			return
 		TicketManager.spend_ticket()
@@ -608,6 +776,8 @@ func _refresh_all() -> void:
 	_generator_label.text = "生成器 ×%d" % board.generator_remaining
 	_undo_button.text = "↩ 撤销 (%d)" % board.undo_free_count
 	_undo_button.disabled = not board.can_undo()
+	# disabled 态半透明灰，可用时恢复白色
+	_undo_button.modulate = Color(0.6, 0.6, 0.6, 0.5) if _undo_button.disabled else Color.WHITE
 	_refresh_ticket_label()
 	_excitement_bar.value = float(board.excitement)
 	_excitement_label.text = "%d/%d" % [board.excitement, BoardGameData.EXCITEMENT_MAX]
