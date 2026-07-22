@@ -67,6 +67,8 @@ var _idle_side_frames: Array[Texture2D] = []  # idle 站姿序列帧缓存
 var _frenzy_active_local: bool = false     # 本局是否处于狂欢激活状态（影响走速/色调）
 var _last_frame_interval: float = 0.33     # 记住正常走速，用于从狂欢恢复
 var _frenzy_breathe_tween: Tween           # 狂欢按钮金色呼吸循环（避免重复堆叠）
+var _frenzy_border_tween: Tween            # 狂欢期间棋盘边框持续金色呼吸
+var _frenzy_particle_timer: Timer          # 狂欢期间持续飘落金色粒子
 
 
 func _ready() -> void:
@@ -593,7 +595,7 @@ func _start_game() -> void:
 		seg.texture = load("res://assets/art/board_game/star_dim.png")  # 全部灰色
 	_refresh_all()
 	# 棋盘上方走动的小猫：重新加载序列帧并启动走动
-	_frenzy_active_local = false
+	_clear_frenzy_effects()
 	_load_walk_cat_frames()
 	_load_idle_side_frames()
 	_start_walk_cat()
@@ -811,7 +813,7 @@ func _on_cat_apology(_cat_name: String) -> void:
 
 
 func _on_game_won() -> void:
-	_frenzy_active_local = false
+	_clear_frenzy_effects()
 	_refresh_all()
 	_stop_walk_cat()
 
@@ -901,7 +903,7 @@ func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> void:
 
 
 func _on_game_lost() -> void:
-	_frenzy_active_local = false
+	_clear_frenzy_effects()
 	_refresh_all()
 	_stop_walk_cat()
 	if board.ad_rescue_restore_used or board.swiped_items.is_empty():
@@ -1199,6 +1201,113 @@ func _on_frenzy_activated() -> void:
 	# 金色星光粒子（9颗）
 	_spawn_golden_stars()
 
+	# 持续效果：棋盘边框金色呼吸
+	if _grid_panel != null:
+		if _frenzy_border_tween != null and _frenzy_border_tween.is_valid():
+			_frenzy_border_tween.kill()
+		_frenzy_border_tween = create_tween().set_loops()
+		_frenzy_border_tween.tween_method(func(v: float):
+			if _grid_panel == null: return
+			var style: StyleBoxFlat = _grid_panel.get_theme_stylebox("panel").duplicate()
+			style.border_color = Color(1.0, 0.75 + 0.25 * v, 0.0)
+			style.border_width = int(3 + v * 2)
+			_grid_panel.add_theme_stylebox_override("panel", style)
+		, 0.0, 1.0, 0.4)
+		_frenzy_border_tween.tween_method(func(v: float):
+			if _grid_panel == null: return
+			var style: StyleBoxFlat = _grid_panel.get_theme_stylebox("panel").duplicate()
+			style.border_color = Color(1.0, 0.75 + 0.25 * v, 0.0)
+			style.border_width = int(3 + v * 2)
+			_grid_panel.add_theme_stylebox_override("panel", style)
+		, 1.0, 0.0, 0.4)
+
+	# 持续粒子飘落（每0.6s飘几颗）
+	if _frenzy_particle_timer == null:
+		_frenzy_particle_timer = Timer.new()
+		_frenzy_particle_timer.name = "FrenzyParticleTimer"
+		_frenzy_particle_timer.wait_time = 0.6
+		_frenzy_particle_timer.one_shot = false
+		_frenzy_particle_timer.timeout.connect(_spawn_golden_stars_burst)
+		add_child(_frenzy_particle_timer)
+	_frenzy_particle_timer.start()
+
+	# 猫走范围扩大（更疯狂地来回跑）
+	if _walk_cat_tween != null and _walk_cat_tween.is_valid():
+		_walk_cat_tween.kill()
+	_start_walk_cat_tween_frenzy()
+
+
+func _start_walk_cat_tween_frenzy() -> void:
+	if _walk_cat_tex == null:
+		return
+	var start_x := 0.0
+	_walk_cat_tex.position.x = start_x
+	_walk_cat_tween = create_tween().set_loops()
+	_walk_cat_tween.tween_callback(func():
+		_walk_cat_dir = 1.0
+		_walk_cat_tex.flip_h = false)
+	_walk_cat_tween.tween_property(_walk_cat_tex, "position:x", start_x + 480.0, 3.0)
+	_walk_cat_tween.tween_callback(func():
+		_walk_cat_dir = -1.0
+		_walk_cat_tex.flip_h = true)
+	_walk_cat_tween.tween_property(_walk_cat_tex, "position:x", start_x, 3.0)
+
+
+func _spawn_golden_stars_burst() -> void:
+	if not _frenzy_active_local:
+		return
+	var grid_w := CELL_SIZE * BoardGameData.GRID_SIZE + CELL_GAP * float(BoardGameData.GRID_SIZE + 1)
+	var grid_x := (DESIGN_SIZE.x - grid_w) * 0.5
+	var grid_top := (DESIGN_SIZE.y - grid_w) * 0.5
+	for i in range(3):
+		var star := ColorRect.new()
+		star.color = Color(1.0, 0.85, 0.0)
+		var s := randf_range(3.0, 7.0)
+		star.custom_minimum_size = Vector2(s, s)
+		star.size = Vector2(s, s)
+		star.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(star)
+		star.position = Vector2(
+			grid_x + randf_range(0, grid_w),
+			grid_top - randf_range(10.0, 50.0)
+		)
+		var tween := create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(star, "position", star.position + Vector2(randf_range(-80, 80), randf_range(100, 180)), 1.2)
+		tween.tween_property(star, "modulate:a", 0.0, 1.2)
+		tween.tween_callback(star.queue_free)
+
+
+func _clear_frenzy_effects() -> void:
+	_frenzy_active_local = false
+	# 停止金色边框呼吸
+	if _frenzy_border_tween != null and _frenzy_border_tween.is_valid():
+		_frenzy_border_tween.kill()
+	# 停止粒子timer
+	if _frenzy_particle_timer != null:
+		_frenzy_particle_timer.stop()
+	# 恢复狂欢态扩大的走范围（kill 后由 _start_walk_cat_tween 重建普通范围）
+	if _walk_cat_tween != null and _walk_cat_tween.is_valid():
+		_walk_cat_tween.kill()
+	# 恢复棋盘边框
+	if _grid_panel != null:
+		var reset_style: StyleBoxFlat = StyleBoxFlat.new()
+		reset_style.bg_color = Palette.BG_CEMENT
+		reset_style.border_color = Palette.BORDER
+		reset_style.set_border_width_all(3)
+		reset_style.set_corner_radius_all(20)
+		reset_style.content_margin_left = CELL_GAP
+		reset_style.content_margin_right = CELL_GAP
+		reset_style.content_margin_top = CELL_GAP
+		reset_style.content_margin_bottom = CELL_GAP
+		_grid_panel.add_theme_stylebox_override("panel", reset_style)
+	# 恢复猫颜色
+	if _walk_cat_tex != null:
+		_walk_cat_tex.modulate = Color.WHITE
+	# 清气泡
+	if _walk_cat_hint != null:
+		_walk_cat_hint.visible = false
+
 
 func _spawn_golden_stars() -> void:
 	# 棋盘上方飞出 9 颗金色星光粒子（ColorRect 实现）
@@ -1242,8 +1351,10 @@ func _on_mischief_cancelled(pos: Vector2i) -> void:
 		style.border_color = Color(1.0, 0.85, 0.0)
 		_grid_panel.add_theme_stylebox_override("panel", style)
 		get_tree().create_timer(0.5).timeout.connect(_reset_grid_border)
-	# 0.6s 后恢复走动
-	get_tree().create_timer(0.6).timeout.connect(_resume_walk_cat)
+	# 0.6s 后清理狂欢持续效果并恢复普通走动
+	get_tree().create_timer(0.6).timeout.connect(func():
+		_clear_frenzy_effects()
+		_resume_walk_cat())
 	_refresh_all()
 
 
