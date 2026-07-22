@@ -557,7 +557,7 @@ func _start_game() -> void:
 	_goal_label.text = "目标：合出 %s ⭐5 ｜ 副链：%s ⭐3" % [main_name, sub_name]
 	if _target_banner_label != null:
 		_target_banner_label.text = "目标：%s ⭐5" % main_name
-	_show_cat_seat()
+	# _show_cat_seat()  # 猫座遮挡棋盘，临时移除
 	# D10: 重置兴奋值/目标横幅/狂欢UI
 	_excitement_bar.value = 0
 	_excitement_label.text = "0/%d" % BoardGameData.EXCITEMENT_MAX
