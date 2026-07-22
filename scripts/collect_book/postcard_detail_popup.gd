@@ -178,7 +178,9 @@ func _draw_front(c: Control, font: Font, rect: Rect2) -> void:
 			print("[PostcardDetail] ImageTexture created, size: ", tex.get_size())
 	
 	if tex:
-		print("[PostcardDetail] drawing texture")
+		print("[PostcardDetail] drawing texture, tex_size=", tex.get_size(), " card_size=", CARD_SIZE, " rect=", rect, " face_size=", _card_face.size)
+		# 先用红色验证绘制位置
+		c.draw_rect(rect, Color.RED, true)
 		# 有贴图：直接绘制图片 + 叠加信息层
 		c.draw_texture_rect(tex, rect, false)
 		# 半透明渐变底条（底部信息区可读性）
