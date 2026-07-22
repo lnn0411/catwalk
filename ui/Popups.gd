@@ -213,7 +213,7 @@ class InputOverlay:
 		confirm_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		confirm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		confirm_label.add_theme_font_size_override("font_size", 18)
-		confirm_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+		confirm_label.add_theme_color_override("font_color", Color("#4F453C"))
 		popup.add_child(confirm_label)
 
 	func _on_submit() -> void:
@@ -369,7 +369,7 @@ class DialogOverlay:
 		confirm_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 		confirm_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		confirm_label.add_theme_font_size_override("font_size", 18)
-		confirm_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
+		confirm_label.add_theme_color_override("font_color", Color("#4F453C"))
 		popup.add_child(confirm_label)
 
 	func _close() -> void:
