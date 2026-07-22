@@ -32,6 +32,8 @@ func _ready() -> void:
 	_t_undo_paid_gate()
 	_t_undo_excitement_rollback()
 	_t_undo_triple_merge()
+	_t_triple_merge_win()
+	_t_triple_merge_sub_exit_signal()
 	_t_sub_exit_second_time()
 	_t_deadlock_lifeline()
 	_t_sequence_no_rewind()
@@ -307,6 +309,51 @@ func _t_undo_triple_merge() -> void:
 	_check(b.undo(), "撤销成功")
 	var after := b.serialize_state()
 	_check(after.grid == before.grid, "撤销后棋盘完全还原（邻居归位、返还⭐1收回）")
+	b.queue_free()
+
+
+func _t_triple_merge_win() -> void:
+	print("[M1修复 三连合直达主链⭐5判胜]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	var won := [false]
+	b.game_won.connect(func() -> void:
+		won[0] = true
+	)
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	var p3 := Vector2i(2, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.THREE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.THREE, p2)
+	b.grid[p3] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.FOUR, p3)
+	_check(b.merge_items(p1, p2), "⭐3+⭐3合并成功")
+	_check(b.grid.has(p2) and b.grid[p2].star == BoardGameData.StarLevel.FIVE, "三连合产物为⭐5")
+	_check(won[0], "三连合直达⭐5触发胜利信号")
+	_check(b.game_state == BoardGameData.GameState.WON, "状态为WON")
+	b.queue_free()
+
+
+func _t_triple_merge_sub_exit_signal() -> void:
+	print("[M1修复 三连合产出副链⭐3发出口提示]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	var completed := [false]
+	b.sub_chain_completed.connect(func(_item: BoardItem) -> void:
+		completed[0] = true
+	)
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	var p3 := Vector2i(2, 0)
+	b.grid[p1] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.ONE, p2)
+	b.grid[p3] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.TWO, p3)
+	_check(b.merge_items(p1, p2), "副链⭐1+⭐1合并成功")
+	_check(b.grid.has(p2) and b.grid[p2].star == BoardGameData.StarLevel.THREE, "三连合产物为副链⭐3")
+	_check(completed[0], "三连合产出副链⭐3发出提示信号")
 	b.queue_free()
 
 

@@ -226,6 +226,13 @@ func merge_items(pos_a: Vector2i, pos_b: Vector2i) -> bool:
 		if triple_item.star > highest_star_achieved:
 			highest_star_achieved = triple_item.star
 			highest_star_changed.emit(highest_star_achieved)
+		# M1修复: 三连合产物同样要走产物信号——副链⭐3出口提示 / 主链星级反应
+		# （通关判定统一在下方用 grid[pos_b] 的最终产物检查）
+		if triple_item.chain == current_sub_chain and triple_item.star == BoardGameData.StarLevel.THREE:
+			sub_chain_completed.emit(triple_item)
+		if triple_item.chain == current_main_chain and triple_item.star > _main_chain_max_star:
+			_main_chain_max_star = triple_item.star
+			main_chain_star_changed.emit(triple_item.star)
 
 	# 普通合并最高星级检查
 	if new_item.star > highest_star_achieved:
@@ -246,7 +253,10 @@ func merge_items(pos_a: Vector2i, pos_b: Vector2i) -> bool:
 	# ===== D10 end =====
 
 	# 检查通关：主链⭐5出现
-	if new_item.chain == current_main_chain and new_item.star == BoardGameData.StarLevel.FIVE:
+	# M1修复: 用 pos_b 的最终产物判定——三连合可能把 new_item 再升一级，
+	# 旧实现只看 new_item，三连合直接合出的主链⭐5 不判胜（玩家达成目标却被判负）
+	var final_item: BoardItem = grid[pos_b]
+	if final_item.chain == current_main_chain and final_item.star == BoardGameData.StarLevel.FIVE:
 		game_state = BoardGameData.GameState.WON
 		star_rating = calc_star_rating()  # D4
 		game_won_with_stars.emit(star_rating)  # D4
@@ -676,19 +686,20 @@ func _apply_undo(action: Dictionary) -> void:
 		"merge":
 			# 移除合并产物，还原两个原物品
 			grid.erase(action.from_b)
-			var item_a: BoardItem = action.item_a.duplicate_item()
-			item_a.grid_pos = action.from_a
-			var item_b: BoardItem = action.item_b.duplicate_item()
-			item_b.grid_pos = action.from_b
-			grid[action.from_a] = item_a
-			grid[action.from_b] = item_b
-			# M1-2: 撤销三连合——收回返还的⭐1，还原被吞的邻居物品
+			# M1-2: 撤销三连合——先收回返还的⭐1（其落点可能与 from_a 重合，
+			# 必须在还原原物品之前 erase），再还原被吞的邻居物品
 			if action.has("refund_pos"):
 				grid.erase(action["refund_pos"])
 			if action.has("triple_removed_pos"):
 				var tri_item: BoardItem = action["triple_removed_item"].duplicate_item()
 				tri_item.grid_pos = action["triple_removed_pos"]
 				grid[action["triple_removed_pos"]] = tri_item
+			var item_a: BoardItem = action.item_a.duplicate_item()
+			item_a.grid_pos = action.from_a
+			var item_b: BoardItem = action.item_b.duplicate_item()
+			item_b.grid_pos = action.from_b
+			grid[action.from_a] = item_a
+			grid[action.from_b] = item_b
 			# M1-2: 回退兴奋值到合并前，并重置连击（宁可少给不可多给）
 			if action.has("excitement_before"):
 				excitement = clampi(int(action["excitement_before"]), 0, BoardGameData.EXCITEMENT_MAX)
