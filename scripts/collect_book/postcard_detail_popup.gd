@@ -162,20 +162,15 @@ func _draw_front(c: Control, font: Font, rect: Rect2) -> void:
 	
 	# 尝试加载明信片贴图
 	var tex_path := "res://assets/art/postcards/%s.png" % _data.id
-	print("[PostcardDetail] loading: ", tex_path)
 	var tex: Texture2D = null
-	if ResourceLoader.exists(tex_path, "Texture2D"):
-		tex = load(tex_path) as Texture2D
-		print("[PostcardDetail] ResourceLoader result: ", tex != null)
-	if tex == null:
-		var img := Image.new()
-		var abs_path := ProjectSettings.globalize_path(tex_path)
-		print("[PostcardDetail] abs_path: ", abs_path)
-		var err := img.load(abs_path)
-		print("[PostcardDetail] Image.load err: ", err)
-		if err == OK:
-			tex = ImageTexture.create_from_image(img)
-			print("[PostcardDetail] ImageTexture created, size: ", tex.get_size())
+	# 强制走 Image.load 绝对路径，跳过 .import/.ctex 缓存（防止缓存损坏导致白图）
+	var img := Image.new()
+	var abs_path := ProjectSettings.globalize_path(tex_path)
+	var err := img.load(abs_path)
+	print("[PostcardDetail] Image.load path=", abs_path, " err=", err)
+	if err == OK:
+		tex = ImageTexture.create_from_image(img)
+		print("[PostcardDetail] Image loaded, size: ", tex.get_size())
 	
 	if tex:
 		print("[PostcardDetail] drawing texture, tex_size=", tex.get_size(), " card_size=", CARD_SIZE, " rect=", rect, " face_size=", _card_face.size)
