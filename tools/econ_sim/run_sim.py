@@ -160,14 +160,31 @@ def _run_assertions(results: list[tuple[str, int, SimEngine]], params: dict) -> 
             ticket_values.extend(per_day)
         ticket_mean = _mean(ticket_values)
         key = "A7_tickets_full_attendance" if "ad_on" in profile_name else "A7_tickets_no_ad_medium"
-        ticket_range = thresholds[key]
+        # M4 alignment: the old static range only fit the low-activity profile.
+        # Expectation derives from TicketManager params per activity tier:
+        #   steps tickets = min(daily_limit, daily_steps // steps_per_ticket)
+        #   + login 2/day + new-player extra (+1/day for the first 7 days, amortized)
+        board = params["board_game"]
+        activity = profile_name.split("_", 1)[0]
+        profile_steps = {"low": 1500, "medium": 5000, "high": 8000}[activity]
+        steps_tickets = min(
+            int(board["ticket_daily_limit_by_steps"]),
+            profile_steps // int(board["ticket_per_steps_raw"]),
+        )
+        newbie_extra = (
+            int(board["ticket_new_player_days"])
+            * (int(board["ticket_login_new_player"]) - int(board["ticket_login_daily"]))
+            / float(days)
+        )
+        expected = steps_tickets + int(board["ticket_login_daily"]) + newbie_extra
+        tolerance = 0.35
         rows.append(
             {
                 "profile": profile_name,
                 "days": days,
                 "assertion": key,
-                "result": _pass(float(ticket_range["min"]) <= ticket_mean <= float(ticket_range["max"])),
-                "observed": "%.2f/day" % ticket_mean,
+                "result": _pass(abs(ticket_mean - expected) <= tolerance),
+                "observed": "%.2f/day (expect %.2f±%.2f)" % (ticket_mean, expected, tolerance),
             }
         )
 

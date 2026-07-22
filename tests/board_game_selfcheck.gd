@@ -50,6 +50,10 @@ func _ready() -> void:
 	_t_twist_mischief()
 	_t_twist_baseline()
 	_t_twist_serialize()
+	_t_order_win()
+	_t_order_click_limit()
+	_t_order_serialize()
+	_t_telemetry_roundtrip()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -664,6 +668,94 @@ func _t_twist_serialize() -> void:
 	_check(restored.mischief_triggers == b.mischief_triggers, "触发表恢复")
 	restored.queue_free()
 	b.queue_free()
+
+
+# ---------------- M3-3.3 猫咪委托用例 ----------------
+
+const BoardOrdersS := preload("res://scripts/board_game/BoardOrders.gd")
+const BoardTelemetryS := preload("res://scripts/board_game/BoardTelemetry.gd")
+
+
+func _t_order_win() -> void:
+	print("[M3.3 委托局达成判胜]")
+	var order: Dictionary = BoardOrdersS.get_order_by_id("order_dual_delivery")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "", order)
+	_check(not b.active_order.is_empty(), "委托模式已激活")
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	var won := [false]
+	b.game_won.connect(func() -> void:
+		won[0] = true
+	)
+	# 先备好 主链⭐4×1 与 副链⭐3×1（不满足，还差一个副链⭐3）
+	b.grid[Vector2i(0, 0)] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.FOUR, Vector2i(0, 0))
+	b.grid[Vector2i(4, 0)] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, Vector2i(4, 0))
+	# 合并出第二个副链⭐3（放远避免三连合）
+	var p1 := Vector2i(0, 4)
+	var p2 := Vector2i(2, 4)
+	b.grid[p1] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.TWO, p1)
+	b.grid[p2] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.TWO, p2)
+	_check(not b.is_order_fulfilled(), "缺一件时未判胜")
+	_check(b.merge_items(p1, p2), "合出第二个副链⭐3")
+	_check(won[0] and b.game_state == BoardGameData.GameState.WON, "凑齐订单即判胜")
+	b.queue_free()
+
+
+func _t_order_click_limit() -> void:
+	print("[M3.3 限时委托超限判负]")
+	var order: Dictionary = BoardOrdersS.get_order_by_id("order_speed_rush")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "", order)
+	b.grid.clear()
+	b.special_tiles.clear()
+	var lost := [false]
+	b.game_lost.connect(func() -> void:
+		lost[0] = true
+	)
+	b.generator_click_count = 15
+	b.generator_remaining = 5
+	b.mischief_pending_trigger = -1  # 隔离捣乱干扰
+	_check(b.click_generator(), "第16次点击成功")
+	_check(lost[0] and b.game_state == BoardGameData.GameState.LOST, "超出生成上限未交付判负")
+	b.queue_free()
+
+
+func _t_order_serialize() -> void:
+	print("[M3.3 委托与埋点计数存档往返]")
+	var order: Dictionary = BoardOrdersS.get_order_by_id("order_feast")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "", order)
+	b.excitement = BoardGameData.EXCITEMENT_MAX
+	b.trigger_frenzy(BoardGameData.FrenzyMode.GUARD)
+	b.undo_paid_count = 2
+	var saved := b.serialize_state()
+	var restored := BoardGame.new()
+	add_child(restored)
+	restored.deserialize_state(saved)
+	_check(String(restored.active_order.get("id", "")) == "order_feast", "委托id恢复")
+	_check(restored.active_order.get("requirements", []).size() == 2, "委托需求恢复")
+	_check(restored.frenzy_modes_used == [BoardGameData.FrenzyMode.GUARD], "狂欢选择记录恢复")
+	_check(restored.undo_paid_count == 2, "付费撤销计数恢复")
+	restored.queue_free()
+	b.queue_free()
+
+
+func _t_telemetry_roundtrip() -> void:
+	print("[M4 埋点读写往返]")
+	BoardTelemetryS.clear()
+	BoardTelemetryS.log_game({"ts": 1, "level": 1, "result": "win", "stars": 3})
+	BoardTelemetryS.log_game({"ts": 2, "level": 3, "result": "lose", "stars": 0})
+	var records: Array = BoardTelemetryS.read_all()
+	_check(records.size() == 2, "写入2条读出2条")
+	_check(int(records[0].get("ts", 0)) == 1 and String(records[1].get("result", "")) == "lose", "字段完整往返")
+	_check(BoardTelemetryS.count() == 2, "count 一致")
+	BoardTelemetryS.clear()
+	_check(BoardTelemetryS.count() == 0, "clear 清空")
 
 
 func _t_reward_tables() -> void:

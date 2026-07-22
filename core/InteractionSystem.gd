@@ -216,6 +216,14 @@ func get_affection(cat_id: String) -> int:
 	return _affection.get(cat_id, 0)
 
 
+# M3-3.3: 系统性好感加成入口（不走互动冷却，不触发互动计数）——
+# 用于棋盘委托完成等玩法奖励通道
+func add_affection_bonus(cat_id: String, amount: int) -> void:
+	if cat_id == "" or amount <= 0:
+		return
+	_affection[cat_id] = _affection.get(cat_id, 0) + amount
+
+
 # 兼容旧 HUD 按钮冷却判定（按猫判定）
 func can_interact(cat_id: String, type: String) -> bool:
 	return not is_interaction_blocked(type, cat_id)
