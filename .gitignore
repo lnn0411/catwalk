@@ -31,3 +31,7 @@ android/build/libs/
 # APK files
 *.apk
 *.aab
+
+# Python
+__pycache__/
+*.pyc

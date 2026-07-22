@@ -64,6 +64,11 @@ class SimState:
         self.total_tickets_earned = 0
         self.total_tickets_spent = 0
         self.total_b6_gold = 0
+        # M4 alignment: board wins accumulate for level tiers + win milestones
+        self.board_total_wins = 0
+        self.board_milestones_claimed = set()
+        # B6 alignment: decor kept while under cap; only overflow converts to gold
+        self.board_decor_counts = {}
         self.first_expansion_day = None
         self.legendary_pity_triggers = 0
         self.dead_items = 0
@@ -520,21 +525,58 @@ class SimEngine:
 
     def _board_game(self, state: SimState, rng: random.Random) -> None:
         board = self.params["board_game"]
-        clear_rate = float(board["clear_rate"])
-        # R1-2 K1: 2 tickets per game; leftover odd ticket carries to the next day.
-        tickets_per_game = 2
+        # M4 alignment: the shipped game (S14/TicketManager) charges 1 ticket per game,
+        # not the 2 the old GDD assumed; configurable for future tuning.
+        tickets_per_game = int(board.get("ticket_cost_per_game", 1))
         games = state.board_tickets // tickets_per_game
         state.board_tickets -= games * tickets_per_game
         state.total_tickets_spent += games * tickets_per_game
         state.flow("tickets_out_board", games * tickets_per_game)
         for _ in range(games):
+            level = self._board_level(state)
+            clear_rate = float(
+                board.get("clear_rate_by_level", {}).get(str(level), board["clear_rate"])
+            )
             if rng.random() <= clear_rate:
-                self._board_reward(state, rng)
+                state.board_total_wins += 1
+                self._board_win_milestones(state)
+                self._board_reward(state, rng, level)
             else:
                 state.flow("board_consolation", 1)
 
-    def _board_reward(self, state: SimState, rng: random.Random) -> None:
-        rewards = self.params["board_game"]["reward_probabilities"]
+    def _board_level(self, state: SimState) -> int:
+        tiers = self.params["board_game"].get("level_up_wins", {"lv2": 5, "lv3": 15})
+        if state.board_total_wins >= int(tiers["lv3"]):
+            return 3
+        if state.board_total_wins >= int(tiers["lv2"]):
+            return 2
+        return 1
+
+    def _board_win_milestones(self, state: SimState) -> None:
+        """M3-3.1 alignment: fixed milestones + 300/100-step diamond cycle."""
+        board = self.params["board_game"]
+        for milestone in board.get("win_milestones", []):
+            wins = int(milestone["wins"])
+            if state.board_total_wins >= wins and wins not in state.board_milestones_claimed:
+                state.board_milestones_claimed.add(wins)
+                diamonds = int(milestone.get("diamonds", 0))
+                if diamonds > 0:
+                    state.diamonds += diamonds
+                    state.flow("diamonds_in_board_milestone", diamonds)
+        cycle = board.get("win_milestone_cycle", {})
+        if cycle:
+            point = int(cycle["start"])
+            while point <= state.board_total_wins:
+                if point not in state.board_milestones_claimed:
+                    state.board_milestones_claimed.add(point)
+                    diamonds = int(cycle["diamonds"])
+                    state.diamonds += diamonds
+                    state.flow("diamonds_in_board_milestone", diamonds)
+                point += int(cycle["step"])
+
+    def _board_reward(self, state: SimState, rng: random.Random, level: int = 1) -> None:
+        by_level = self.params["board_game"].get("reward_probabilities_by_level", {})
+        rewards = by_level.get(str(level), self.params["board_game"]["reward_probabilities"])
         draw = rng.random()
         total = 0.0
         reward = None
@@ -546,10 +588,20 @@ class SimEngine:
         reward = reward or list(rewards.keys())[-1]
         state.flow("board_reward_" + reward, 1)
         if reward in ("cat_tree_x1", "cherry_tree_x1"):
-            gold = int(self.params["board_game"]["b6_conversion"]["convert_to_gold"])
-            state.gold += gold
-            state.total_b6_gold += gold
-            state.flow("gold_in_b6_conversion", gold)
+            # B6 alignment with client (LevelStateManager.process_board_decor):
+            # decor is kept while under its cap; only overflow converts to gold.
+            b6 = self.params["board_game"]["b6_conversion"]
+            decor_key = "cat_tree" if reward == "cat_tree_x1" else "cherry_tree"
+            cap = int(b6["%s_max" % decor_key])
+            held = int(state.board_decor_counts.get(decor_key, 0))
+            if held < cap:
+                state.board_decor_counts[decor_key] = held + 1
+                state.flow("board_decor_kept_" + decor_key, 1)
+            else:
+                gold = int(b6["convert_to_gold"])
+                state.gold += gold
+                state.total_b6_gold += gold
+                state.flow("gold_in_b6_conversion", gold)
         elif reward == "cat_can_pack_x3":
             self._apply_affection(state, int(self.params["interaction"]["board_snack_can_affection"]) * 3)
         else:

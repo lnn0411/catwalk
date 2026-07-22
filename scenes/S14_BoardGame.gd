@@ -5,6 +5,9 @@ const BoardGame := preload("res://scripts/board_game/BoardGame.gd")
 const BoardGameData := preload("res://scripts/board_game/BoardGameData.gd")
 const BoardItem := preload("res://scripts/board_game/BoardItem.gd")
 const BoardRewardSystem := preload("res://scripts/board_game/RewardSystem.gd")
+const BoardTwists := preload("res://scripts/board_game/BoardTwists.gd")
+const BoardOrders := preload("res://scripts/board_game/BoardOrders.gd")
+const BoardTelemetry := preload("res://scripts/board_game/BoardTelemetry.gd")
 const ItemChains := preload("res://scripts/board_game/ItemChains.gd")
 
 # ============================================================
@@ -55,6 +58,8 @@ var _cat_react_panel: PanelContainer  # 猫入座容器
 var _cat_react_tex: TextureRect      # 猫贴图
 var _cat_react_label: Label          # 反应文字气泡
 var _cat_breed: String = "orange"    # 携带猫品种
+var _order_mode_pref: int = -1       # M3-3.3: 周末委托选择（-1未问 0普通 1委托）
+var _telemetry_logged: bool = false  # M4-4.2: 本局是否已写埋点（防救局后重复）
 
 # 棋盘上方走动的小猫（复用花园侧走序列帧）
 var _walk_cat_container: Control            # 容器节点
@@ -83,6 +88,9 @@ func _ready() -> void:
 	if LevelStateManager != null and LevelStateManager.has_signal("first_three_star_bonus_reward"):  # D4
 		if not LevelStateManager.first_three_star_bonus_reward.is_connected(_on_three_star_bonus):  # D4
 			LevelStateManager.first_three_star_bonus_reward.connect(_on_three_star_bonus)  # D4
+	if LevelStateManager != null and LevelStateManager.has_signal("win_milestone_reached"):  # M3-3.1
+		if not LevelStateManager.win_milestone_reached.is_connected(_on_win_milestone):
+			LevelStateManager.win_milestone_reached.connect(_on_win_milestone)
 	_build_ui()
 	_start_game()
 
@@ -109,6 +117,12 @@ func _build_board_logic() -> void:
 	board.frenzy_activated.connect(_on_frenzy_activated)
 	board.mischief_cancelled.connect(_on_mischief_cancelled)  # K7: 狂欢抵消捣乱
 	board.highest_star_changed.connect(_on_highest_star_changed)
+	board.sub_chain_exit_done.connect(_on_sub_chain_exit_done)  # M1-2: 出口结算发奖
+	board.sub_exit_lifeline.connect(_on_sub_exit_lifeline)  # M1-3: 出口自救提示
+	board.frenzy_guard_refund.connect(_on_frenzy_guard_refund)  # M2-K8: 未用护卫折算
+	board.frenzy_items_spawned.connect(_on_frenzy_items_spawned)  # M2-K8: 猫猫帮忙
+	board.mischief_forewarning.connect(_on_mischief_forewarning)  # M2: 捣乱预警
+	board.order_progress_changed.connect(_on_order_progress_changed)  # M3-3.3
 
 
 # ---------------- UI 构建 ----------------
@@ -741,7 +755,12 @@ func _show_get_ticket_dialog() -> void:
 func _start_game() -> void:
 	_exit_ad_rescue_mode()
 	_has_three_star_bonus = false  # D4: reset bonus flag each game
+	_telemetry_logged = false  # M4-4.2
 	_result_button.text = "再来一局"  # 重置按钮文案
+	# M3-3.3: 周末委托询问（进场后只问一次，之后沿用选择）
+	if BoardOrders.is_available_today() and _order_mode_pref == -1:
+		_show_order_prompt()
+		return
 	if TicketManager != null:
 		if TicketManager.get_tickets() <= 0:
 			_show_get_ticket_dialog()
@@ -750,13 +769,25 @@ func _start_game() -> void:
 		TicketManager.spend_ticket()
 	var board_level := _get_board_level()
 	var cat_name := _get_companion_cat_name()
-	board.start_new_game(board_level, cat_name)
+	# M3-3.2: 挂载当日变异（入口明示，规则透明）
+	var twist_id := BoardTwists.get_today_twist_id()
+	# M3-3.3: 委托模式
+	var order: Dictionary = BoardOrders.get_this_week_order() if _order_mode_pref == 1 else {}
+	board.start_new_game(board_level, cat_name, twist_id, order)
+	var twist_banner := BoardTwists.get_twist_banner(twist_id)
+	if not twist_banner.is_empty():
+		Popups.show_toast(twist_banner)
 	_result_overlay.visible = false
 	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
 	var sub_name: String = ItemChains.get_chain_display_name(board.current_sub_chain)
-	_goal_label.text = "目标：合出 %s ⭐5 ｜ 副链：%s ⭐3" % [main_name, sub_name]
-	if _target_banner_label != null:
-		_target_banner_label.text = "目标：%s ⭐5" % main_name
+	if not board.active_order.is_empty():
+		_refresh_order_goal_label()
+		if _target_banner_label != null:
+			_target_banner_label.text = "🐾 %s" % String(board.active_order.get("name", "猫咪委托"))
+	else:
+		_goal_label.text = "目标：合出 %s ⭐5 ｜ 副链：%s ⭐3" % [main_name, sub_name]
+		if _target_banner_label != null:
+			_target_banner_label.text = "目标：%s ⭐5" % main_name
 	# _show_cat_seat()  # 猫座遮挡棋盘，临时移除
 	# D10: 重置兴奋值/目标横幅/狂欢UI
 	_excitement_bar.value = 0
@@ -777,7 +808,11 @@ func _refresh_all() -> void:
 		_cells[pos].refresh()
 	_state_label.text = "🐾 ×%d" % board.generator_remaining
 	_generator_label.text = "生成器 ×%d" % board.generator_remaining
-	_undo_button.text = "↩ 撤销 (%d)" % board.undo_free_count
+	# M1-1: 免费额度内显示剩余次数，用尽后显示钻石价格
+	if board.undo_free_count > 0:
+		_undo_button.text = "↩ 撤销 (%d)" % board.undo_free_count
+	else:
+		_undo_button.text = "↩ 撤销 %d💎" % BoardGame.UNDO_DIAMOND_COST
 	_undo_button.disabled = not board.can_undo()
 	# disabled 态半透明灰，可用时恢复白色
 	_undo_button.modulate = Color(0.6, 0.6, 0.6, 0.5) if _undo_button.disabled else Color.WHITE
@@ -841,6 +876,18 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 	if board.is_generator_pos(pos):
 		if board.click_generator():
 			Juice.tap()
+		return
+	# M1-2: 点击副链⭐3 → 确认走出口（送出换奖励；首次额外返还2次生成器）
+	var item: BoardItem = board.get_item(pos)
+	if item != null and item.chain == board.current_sub_chain and item.star == BoardGameData.StarLevel.THREE:
+		var extra := "\n首次送出可返还 2 次生成器！" if not board.sub_chain_exit_used else ""
+		Popups.show_confirm(
+			"副链出口",
+			"把「%s」送给猫咪们？%s" % [item.get_display_name(), extra],
+			func() -> void:
+				if board.sub_chain_exit(pos):
+					Juice.reward()
+		)
 
 
 func _on_drop_requested(from_pos: Vector2i, to_pos: Vector2i) -> void:
@@ -876,9 +923,28 @@ func _on_generator_used(_count: int) -> void:
 
 
 func _on_undo_pressed() -> void:
-	# 免费次数用完后应扣钻石；当前版本仅提示（钻石扣费接 CurrencyManager 时补）
-	if board.undo():
+	# M1-1: 免费额度内直接撤销；用尽后确认扣钻石再撤销
+	var cost: Dictionary = board.get_undo_cost()
+	if int(cost.get("diamond_cost", 0)) <= 0:
+		if board.undo():
+			Juice.tap()
+		return
+	Popups.show_confirm(
+		"撤销",
+		"免费撤销次数已用完\n消耗 %d💎 撤销上一步？" % BoardGame.UNDO_DIAMOND_COST,
+		Callable(self, "_do_paid_undo")
+	)
+
+
+func _do_paid_undo() -> void:
+	if CurrencyManager == null or not CurrencyManager.spend_diamonds(BoardGame.UNDO_DIAMOND_COST):
+		Popups.show_toast("钻石不足")
+		return
+	if board.undo(true):
 		Juice.tap()
+	else:
+		# 撤销失败（如对局已结束）：退还钻石
+		CurrencyManager.add_diamonds(BoardGame.UNDO_DIAMOND_COST, "undo_refund")
 
 
 func _on_undo_performed(_action: Dictionary) -> void:
@@ -991,36 +1057,153 @@ func _on_game_won() -> void:
 	_stop_walk_cat()
 
 	var stars := board.star_rating if board != null else 0  # D4
-	var star_str := ""  # D4
-	for _i in range(stars):  # D4
-		star_str += "⭐"  # D4
+	_log_game_telemetry("win")  # M4-4.2
 
 	# 记录累计胜场；若触发升档则弹出说明卡（等级仅升不降，持久化）
 	_record_win_and_maybe_upgrade()
 
-	var reward: Dictionary = BoardRewardSystem.roll_reward()
+	# M3-3.2: 捣蛋日通关奖励二选一（补偿多一次捣乱）
+	if bool(board.active_twist.get("reward_double_roll", false)):
+		_show_reward_choice_dialog(stars)
+		return
+
+	# M1-5: 奖励按棋盘等级分表 roll，兑现「奖励更丰厚」
+	var reward: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
+	_finish_win_flow(stars, reward)
+
+
+func _show_reward_choice_dialog(stars: int) -> void:
+	# M3-3.2: 捣蛋日——roll 两次奖励让玩家二选一
+	var reward_a: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
+	var reward_b: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
+	var overlay := ColorRect.new()
+	overlay.name = "RewardChoiceOverlay"
+	overlay.color = Color(0, 0, 0, 0.55)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(460, 0)
+	panel.position = Vector2(-230, -120)
+	overlay.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "😼 捣蛋日福利：奖励二选一！"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+
+	for reward in [reward_a, reward_b]:
+		var btn := Button.new()
+		var display: String = String(reward.get("name", "小鱼干"))
+		if String(reward.get("id", "")) == "cat_can_pack":
+			display = "猫罐头×3"
+		btn.text = display
+		btn.custom_minimum_size = Vector2(0, 64)
+		var chosen := reward
+		btn.pressed.connect(func() -> void:
+			overlay.queue_free()
+			_finish_win_flow(stars, chosen)
+		)
+		vbox.add_child(btn)
+
+
+func _finish_win_flow(stars: int, reward: Dictionary) -> void:
+	var star_str := ""  # D4
+	for _i in range(stars):  # D4
+		star_str += "⭐"  # D4
 	var reward_id: String = String(reward.get("id", ""))
 	var reward_name: String = String(reward.get("name", "小鱼干"))
 
-	# 奖励入库
-	_add_reward_to_inventory(reward_id, reward_name)
+	# 奖励入库（B6: 装饰达上限时返回折算说明后缀）
+	var b6_suffix := _add_reward_to_inventory(reward_id, reward_name)
 
-	var display_text := reward_name
+	var display_text := reward_name + b6_suffix
 	if reward_id == "cat_can_pack":
 		display_text = "猫罐头×3"
 
 	var result_text := "🎉 通关！\n%s\n获得「%s」" % [star_str, display_text]  # D4
+	# M3-3.3: 委托完成——携带猫好感加成
+	if not board.active_order.is_empty():
+		var cat_id := _get_companion_cat_id()
+		if InteractionSystem != null and not cat_id.is_empty():
+			InteractionSystem.add_affection_bonus(cat_id, BoardOrders.ORDER_AFFECTION_BONUS)
+		result_text = "🎉 委托完成！\n%s\n获得「%s」\n💕 %s 好感+%d" % [star_str, display_text, _get_companion_cat_name(), BoardOrders.ORDER_AFFECTION_BONUS]
+	# M1-5: LV3 三星通关每局额外+猫罐头×1（兑现 reward_desc）
+	if stars >= 3 and board.board_level == BoardGameData.BoardLevel.LV3:
+		_add_reward_to_inventory("cat_can", "猫罐头")
+		result_text += "\n⭐⭐⭐额外奖励：猫罐头×1"
 	if _has_three_star_bonus:  # D4
-		result_text += "\n首次⭐⭐⭐奖励：小鱼干×1"  # D4
+		result_text += "\n🏆 首次⭐⭐⭐奖励：猫罐头大礼包×3 + 💎20"  # M2-2.1
+	# M3-3.1: 里程碑进度提示
+	if LevelStateManager != null and LevelStateManager.has_method("get_next_milestone_info"):
+		var info: Dictionary = LevelStateManager.call("get_next_milestone_info")
+		result_text += "\n🐾 累计%d胜 · 距下一里程碑还差%d胜" % [_get_total_board_wins(), int(info.get("remaining", 0))]
 	_result_label.text = result_text  # D4
 	_show_result()
 	Juice.pattern_legendary()
 
 
+# M4-4.2: 对局埋点——每局终局写一条记录到本地缓冲（防救局后重复）
+func _log_game_telemetry(result: String) -> void:
+	if _telemetry_logged or board == null:
+		return
+	_telemetry_logged = true
+	BoardTelemetry.log_game({
+		"ts": int(Time.get_unix_time_from_system()),
+		"level": board.board_level,
+		"twist": board.active_twist_id,
+		"order": String(board.active_order.get("id", "")),
+		"result": result,  # win / lose / give_up
+		"stars": board.star_rating,
+		"clicks": board.generator_click_count,
+		"undo_free_used": BoardGameData.UNDO_FREE_COUNT - board.undo_free_count,
+		"undo_paid_used": board.undo_paid_count,
+		"frenzy_modes": board.frenzy_modes_used.duplicate(),
+		"exit_used": board.sub_chain_exit_used,
+		"mischief_count": board.mischief_triggered_this_game.size(),
+		"rescue_used": board.ad_rescue_restore_used,
+		"highest_star": board.highest_star_achieved,
+	})
+
+
+# M3-3.1: 里程碑达成——物品入库 + 弹窗（钻石已由 LevelStateManager 入账）
+func _on_win_milestone(wins: int, reward: Dictionary) -> void:
+	var parts: Array = []
+	var diamonds := int(reward.get("diamonds", 0))
+	if diamonds > 0:
+		parts.append("💎%d" % diamonds)
+	for item in reward.get("items", []):
+		var item_id := String(item.get("id", ""))
+		var item_name := String(item.get("name", ""))
+		var count := int(item.get("count", 1))
+		if InventoryManager != null:
+			match item_id:
+				"decor_yarn_throne":
+					InventoryManager.add_item("decor", count)
+				"hidden_limited":
+					InventoryManager.add_item("hidden_item", count)
+				_:  # cat_can_pack 及其它零食类
+					InventoryManager.add_item("snack", count)
+		parts.append("%s×%d" % [item_name, count])
+	var title := String(reward.get("title", ""))
+	if not title.is_empty():
+		parts.append("称号「%s」" % title)
+	if Popups != null:
+		Popups.show_confirm("🏅 %d胜里程碑达成！" % wins, "猫咪们为你庆祝！\n获得：%s" % " + ".join(parts), Callable())
+
+
 # D4: Signal handler for first ⭐⭐⭐ bonus from LevelStateManager
+# M2-2.1: 升级为大礼包×3（钻石已由 LevelStateManager 直接入账）
 func _on_three_star_bonus(item_name: String, _count: int) -> void:
 	_has_three_star_bonus = true
-	_add_reward_to_inventory("fish_dried", item_name)
+	_add_reward_to_inventory("cat_can_pack", item_name)
 
 
 func _record_win_and_maybe_upgrade() -> void:
@@ -1049,15 +1232,41 @@ func _show_level_up_popup(new_level: int) -> void:
 
 
 func _on_sub_chain_completed(_item: BoardItem) -> void:
-	# 副链⭐3出口奖励：奖励小鱼干×1
-	_add_reward_to_inventory("fish_dried", "小鱼干")
-	Popups.show_toast("副链出口！获得小鱼干×1")
+	# M1-2: 合成时仅提示可走出口，奖励改为出口结算时发放（防「撤销-重合」刷取）
+	var hint := "副链⭐3！点击它送出可换奖励"
+	if not board.sub_chain_exit_used:
+		hint += "，首次返还生成器×2"
+	Popups.show_toast(hint)
 
 
-# 奖励类型→InventoryManager 映射
-func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> void:
+func _on_sub_chain_exit_done(_pos: Vector2i, first_time: bool) -> void:
+	# M1-2: 出口结算发奖——出口不可撤销，天然防刷
+	# M2-2.1: 首次出口=猫罐头（路线选择奖励），二次出口=小鱼干（清格补偿）
+	if first_time:
+		_add_reward_to_inventory("cat_can", "猫罐头")
+		Popups.show_toast("送出成功！获得猫罐头×1，生成器+2")
+	else:
+		_add_reward_to_inventory("fish_dried", "小鱼干")
+		Popups.show_toast("送出成功！获得小鱼干×1")
+	_refresh_all()
+
+
+func _on_sub_exit_lifeline(pos: Vector2i) -> void:
+	# M1-3: 死局豁免提示——高亮副链⭐3，引导玩家走出口自救
+	Popups.show_toast("没有可合并的了！送出副链⭐3 可换生成器×2")
+	if _cells.has(pos):
+		var cell: Control = _cells[pos]
+		var tween := create_tween()
+		tween.set_loops(3)
+		tween.tween_property(cell, "modulate", Color(1.3, 1.2, 0.8), 0.25)
+		tween.tween_property(cell, "modulate", Color.WHITE, 0.25)
+
+
+# 奖励类型→InventoryManager 映射。
+# 返回展示后缀：B6 装饰折算时为「（已满，折算💰N）」，其余为空串
+func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> String:
 	if InventoryManager == null:
-		return
+		return ""
 	match reward_id:
 		"fish_dried":  # 小鱼干 → snack
 			InventoryManager.add_item("snack", 1)
@@ -1069,10 +1278,20 @@ func _add_reward_to_inventory(reward_id: String, _reward_name: String) -> void:
 			InventoryManager.add_item("decoration_shard", 1)
 		"cat_wand":  # 逗猫棒 → decoration_shard（占位）
 			InventoryManager.add_item("decoration_shard", 1)
-		"cat_tree":  # 猫爬架 → decor（占位）
-			InventoryManager.add_item("decor", 1)
-		"cherry_tree":  # 樱花树 → decor（占位）
-			InventoryManager.add_item("decor", 1)
+		"cat_tree", "cherry_tree":  # B6: 装饰有持有上限，超出折算金币
+			return _process_b6_decor(reward_id)
+	return ""
+
+
+# B6: 棋盘装饰经 LevelStateManager 上限判定；未满入库，已满折算金币
+func _process_b6_decor(decor_id: String) -> String:
+	if LevelStateManager != null and LevelStateManager.has_method("process_board_decor"):
+		var result: Dictionary = LevelStateManager.call("process_board_decor", decor_id)
+		if bool(result.get("converted", false)):
+			return "（已满，折算💰%d）" % int(result.get("gold", 0))
+	if InventoryManager != null:
+		InventoryManager.add_item("decor", 1)
+	return ""
 
 
 func _on_game_lost() -> void:
@@ -1096,6 +1315,7 @@ func _show_ad_rescue_dialog() -> void:
 func _show_failure_result() -> void:
 	_exit_ad_rescue_mode()
 	_ad_rescue_overlay.visible = false
+	_log_game_telemetry("give_up" if board.is_give_up else "lose")  # M4-4.2
 	var cat: String = board.cat_name if not board.cat_name.is_empty() else "猫咪"
 	if board.is_give_up:
 		_result_label.text = "😿 你放弃了这局…\n%s蹭过来蹭蹭你，好像在说'下次一定行喵'" % cat
@@ -1337,16 +1557,74 @@ func _on_frenzy_ready() -> void:
 
 
 func _on_frenzy_pressed() -> void:
-	# K7: 点击狂欢即蓄一次「抵消下一次捣乱」，无倒计时，按钮变灰
-	if board.trigger_frenzy():
-		if _frenzy_breathe_tween != null and _frenzy_breathe_tween.is_valid():
-			_frenzy_breathe_tween.kill()
-		_frenzy_button.modulate = Color.WHITE
-		_frenzy_button.scale = Vector2.ONE
-		_frenzy_button.visible = false
+	# M2-K8: 狂欢二选一——护卫（抵消下一次捣乱）或 帮忙（立即免费生成2个主链⭐1）
+	_show_frenzy_choice_dialog()
 
 
-func _on_frenzy_activated() -> void:
+func _reset_frenzy_button_visuals() -> void:
+	# 停呼吸动画并复位按钮（狂欢消耗后隐藏）
+	if _frenzy_breathe_tween != null and _frenzy_breathe_tween.is_valid():
+		_frenzy_breathe_tween.kill()
+	_frenzy_button.modulate = Color.WHITE
+	_frenzy_button.scale = Vector2.ONE
+	_frenzy_button.visible = false
+
+
+func _show_frenzy_choice_dialog() -> void:
+	var overlay := ColorRect.new()
+	overlay.name = "FrenzyChoiceOverlay"
+	overlay.color = Color(0, 0, 0, 0.55)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(460, 0)
+	panel.position = Vector2(-230, -140)
+	overlay.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "🎉 狂欢时刻！猫咪们想…"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+
+	var guard_btn := Button.new()
+	guard_btn.text = "🛡 猫猫护卫\n抵消下一次捣乱"
+	guard_btn.custom_minimum_size = Vector2(0, 72)
+	guard_btn.pressed.connect(func() -> void:
+		if board.trigger_frenzy(BoardGameData.FrenzyMode.GUARD):
+			_reset_frenzy_button_visuals()
+			Popups.show_toast("🛡 猫猫护卫已就位！下一次捣乱将被抵消")
+		overlay.queue_free()
+	)
+	vbox.add_child(guard_btn)
+
+	var help_btn := Button.new()
+	help_btn.text = "✨ 猫猫帮忙\n立即免费生成2个主链物品"
+	help_btn.custom_minimum_size = Vector2(0, 72)
+	help_btn.pressed.connect(func() -> void:
+		if board.trigger_frenzy(BoardGameData.FrenzyMode.HELP):
+			_reset_frenzy_button_visuals()
+		else:
+			Popups.show_toast("棋盘没有空格，猫猫帮不上忙…")
+		overlay.queue_free()
+	)
+	vbox.add_child(help_btn)
+
+	var later_btn := Button.new()
+	later_btn.text = "稍后再说"
+	later_btn.flat = true
+	later_btn.pressed.connect(overlay.queue_free)
+	vbox.add_child(later_btn)
+
+
+func _on_frenzy_activated(_mode: int) -> void:
 	# 狂欢激活：猫加速金身 + 兴奋条爆闪 + 金色星光
 	# 记录正常走速（仅在非狂欢态时保存，避免二次激活把快速值当正常值）
 	if not _frenzy_active_local and _walk_cat_timer != null:
@@ -1504,6 +1782,110 @@ func _spawn_golden_stars() -> void:
 		tween.tween_property(star, "position", star.position + Vector2(randf_range(-60, 60), -randf_range(40, 80)), 0.6)
 		tween.tween_property(star, "modulate:a", 0.0, 0.6)
 		tween.tween_callback(star.queue_free)
+
+
+func _on_frenzy_items_spawned(positions: Array) -> void:
+	# M2-K8: 猫猫帮忙生成物品——播放生成动画
+	Popups.show_toast("✨ 猫猫们帮忙生成了%d个物品！" % positions.size())
+	for pos in positions:
+		if _cells.has(pos):
+			_cells[pos].play_spawn_anim()
+
+
+func _on_frenzy_guard_refund(count: int) -> void:
+	# M2-K8: 局末未消耗的护卫折算小鱼干，不让玩家的选择变废
+	for _i in range(count):
+		_add_reward_to_inventory("fish_dried", "小鱼干")
+	Popups.show_toast("未用上的护卫化作谢礼：小鱼干×%d" % count)
+
+
+# ---------------- M3-3.3 猫咪委托 ----------------
+
+func _show_order_prompt() -> void:
+	var order: Dictionary = BoardOrders.get_this_week_order()
+	var overlay := ColorRect.new()
+	overlay.name = "OrderPromptOverlay"
+	overlay.color = Color(0, 0, 0, 0.55)
+	overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(480, 0)
+	panel.position = Vector2(-240, -140)
+	overlay.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "🐾 周末猫咪委托「%s」" % String(order.get("name", ""))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(title)
+
+	var desc := Label.new()
+	desc.text = "%s\n完成额外获得携带猫好感+%d" % [String(order.get("desc", "")), BoardOrders.ORDER_AFFECTION_BONUS]
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(desc)
+
+	var accept_btn := Button.new()
+	accept_btn.text = "接受委托"
+	accept_btn.custom_minimum_size = Vector2(0, 60)
+	accept_btn.pressed.connect(func() -> void:
+		_order_mode_pref = 1
+		overlay.queue_free()
+		_start_game()
+	)
+	vbox.add_child(accept_btn)
+
+	var normal_btn := Button.new()
+	normal_btn.text = "普通对局"
+	normal_btn.custom_minimum_size = Vector2(0, 48)
+	normal_btn.pressed.connect(func() -> void:
+		_order_mode_pref = 0
+		overlay.queue_free()
+		_start_game()
+	)
+	vbox.add_child(normal_btn)
+
+
+func _refresh_order_goal_label() -> void:
+	if board.active_order.is_empty():
+		return
+	var req_text: String = BoardOrders.describe_requirements(board.active_order, board.current_main_chain, board.current_sub_chain)
+	var progress: Array = board.get_order_progress()
+	var parts: Array = []
+	for entry in progress:
+		parts.append("%d/%d" % [int(entry["have"]), int(entry["count"])])
+	_goal_label.text = "委托：%s ｜ 进度 %s" % [req_text, " · ".join(parts)]
+
+
+func _on_order_progress_changed(_progress: Array) -> void:
+	_refresh_order_goal_label()
+
+
+func _get_companion_cat_id() -> String:
+	if HatchEngine == null:
+		return ""
+	return String(HatchEngine.get("current_companion_cat_id"))
+
+
+func _on_mischief_forewarning(clicks_left: int) -> void:
+	# M2: 捣乱预警——给玩家反应窗口（快合低星物品或放护卫）
+	if clicks_left >= BoardGameData.MISCHIEF_FOREWARN_CLICKS:
+		Popups.show_toast("😼 猫猫蠢蠢欲动…保护好低星物品！")
+	# 生成器格微震提示
+	if _cells.has(BoardGameData.GENERATOR_POS):
+		var cell: Control = _cells[BoardGameData.GENERATOR_POS]
+		var tween := create_tween()
+		tween.set_loops(2)
+		tween.tween_property(cell, "position:x", 4.0, 0.05).as_relative()
+		tween.tween_property(cell, "position:x", -8.0, 0.1).as_relative()
+		tween.tween_property(cell, "position:x", 4.0, 0.05).as_relative()
 
 
 func _on_mischief_cancelled(pos: Vector2i) -> void:

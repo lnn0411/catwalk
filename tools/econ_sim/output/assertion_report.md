@@ -2,32 +2,32 @@
 
 | Profile | Days | Assertion | Result | Observed |
 |---|---:|---|---|---|
-| low_ad_off_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 0.42 cycles/month p95 |
-| low_ad_off_nocard | 30 | A2_gold_non_negative | PASS | 50 |
+| low_ad_off_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 0.41 cycles/month p95 |
+| low_ad_off_nocard | 30 | A2_gold_non_negative | PASS | 200 |
 | low_ad_off_nocard | 30 | A2_first_expansion_day_range | PASS | not reached |
 | low_ad_off_nocard | 30 | A3_ad_energy_ratio_max | PASS | 0.000 |
 | low_ad_off_nocard | 30 | A4_orange_max_level_days | FAIL | not reached |
 | low_ad_off_nocard | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | low_ad_off_nocard | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | low_ad_off_nocard | 30 | A6_overflow_cutoff_low_observe | PASS | 0.0 mean cutoff |
-| low_ad_off_nocard | 30 | A7_tickets_no_ad_medium | PASS | 3.23/day |
-| low_ad_off_nocard | 30 | A8_B6_gold_injection_correct | PASS | 1264.9 mean gold |
+| low_ad_off_nocard | 30 | A7_tickets_no_ad_medium | PASS | 3.23/day (expect 3.23±0.35) |
+| low_ad_off_nocard | 30 | A8_B6_gold_injection_correct | PASS | 1897.0 mean gold |
 | low_ad_off_nocard | 30 | A8_dead_items_90d | PASS | 0 |
-| low_ad_off_nocard | 30 | A9_currency_divergence_check | PASS | end 1813.1 / monthly 3579.1 |
-| low_ad_off_nocard | 30 | A10_adoption_safety_valve | PASS | 999 adoptions observed |
+| low_ad_off_nocard | 30 | A9_currency_divergence_check | PASS | end 2383.0 / monthly 4247.0 |
+| low_ad_off_nocard | 30 | A10_adoption_safety_valve | PASS | 50 adoptions observed |
 | low_ad_off_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.37 cycles/month p95 |
-| low_ad_off_nocard | 90 | A2_gold_non_negative | PASS | 20 |
+| low_ad_off_nocard | 90 | A2_gold_non_negative | PASS | 200 |
 | low_ad_off_nocard | 90 | A2_first_expansion_day_range | PASS | not reached |
 | low_ad_off_nocard | 90 | A3_ad_energy_ratio_max | PASS | 0.000 |
 | low_ad_off_nocard | 90 | A4_orange_max_level_days | FAIL | not reached |
 | low_ad_off_nocard | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | low_ad_off_nocard | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | low_ad_off_nocard | 90 | A6_overflow_cutoff_low_observe | PASS | 0.0 mean cutoff |
-| low_ad_off_nocard | 90 | A7_tickets_no_ad_medium | PASS | 3.08/day |
-| low_ad_off_nocard | 90 | A8_B6_gold_injection_correct | PASS | 3710.2 mean gold |
+| low_ad_off_nocard | 90 | A7_tickets_no_ad_medium | PASS | 3.08/day (expect 3.08±0.35) |
+| low_ad_off_nocard | 90 | A8_B6_gold_injection_correct | PASS | 6145.0 mean gold |
 | low_ad_off_nocard | 90 | A8_dead_items_90d | PASS | 0 |
-| low_ad_off_nocard | 90 | A9_currency_divergence_check | PASS | end 3070.4 / monthly 3578.6 |
-| low_ad_off_nocard | 90 | A10_adoption_safety_valve | PASS | 1000 adoptions observed |
+| low_ad_off_nocard | 90 | A9_currency_divergence_check | PASS | end 5399.0 / monthly 4387.7 |
+| low_ad_off_nocard | 90 | A10_adoption_safety_valve | PASS | 50 adoptions observed |
 | low_ad_off_card | 30 | A1_love_petal_monthly_cycles | PASS | 1.57 cycles/month p95 |
 | low_ad_off_card | 30 | A2_gold_non_negative | PASS | 350 |
 | low_ad_off_card | 30 | A2_first_expansion_day_range | PASS | not reached |
@@ -36,12 +36,12 @@
 | low_ad_off_card | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | low_ad_off_card | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | low_ad_off_card | 30 | A6_overflow_cutoff_low_observe | PASS | 0.0 mean cutoff |
-| low_ad_off_card | 30 | A7_tickets_no_ad_medium | PASS | 3.23/day |
-| low_ad_off_card | 30 | A8_B6_gold_injection_correct | PASS | 1270.2 mean gold |
+| low_ad_off_card | 30 | A7_tickets_no_ad_medium | PASS | 3.23/day (expect 3.23±0.35) |
+| low_ad_off_card | 30 | A8_B6_gold_injection_correct | PASS | 1870.0 mean gold |
 | low_ad_off_card | 30 | A8_dead_items_90d | PASS | 0 |
-| low_ad_off_card | 30 | A9_currency_divergence_check | PASS | end 4737.2 / monthly 6567.6 |
-| low_ad_off_card | 30 | A10_adoption_safety_valve | PASS | 1000 adoptions observed |
-| low_ad_off_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.52 cycles/month p95 |
+| low_ad_off_card | 30 | A9_currency_divergence_check | PASS | end 5034.0 / monthly 7114.0 |
+| low_ad_off_card | 30 | A10_adoption_safety_valve | PASS | 50 adoptions observed |
+| low_ad_off_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.51 cycles/month p95 |
 | low_ad_off_card | 90 | A2_gold_non_negative | PASS | 350 |
 | low_ad_off_card | 90 | A2_first_expansion_day_range | PASS | not reached |
 | low_ad_off_card | 90 | A3_ad_energy_ratio_max | PASS | 0.000 |
@@ -49,268 +49,268 @@
 | low_ad_off_card | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | low_ad_off_card | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | low_ad_off_card | 90 | A6_overflow_cutoff_low_observe | PASS | 0.0 mean cutoff |
-| low_ad_off_card | 90 | A7_tickets_no_ad_medium | PASS | 3.08/day |
-| low_ad_off_card | 90 | A8_B6_gold_injection_correct | PASS | 3712.3 mean gold |
+| low_ad_off_card | 90 | A7_tickets_no_ad_medium | PASS | 3.08/day (expect 3.08±0.35) |
+| low_ad_off_card | 90 | A8_B6_gold_injection_correct | PASS | 6116.0 mean gold |
 | low_ad_off_card | 90 | A8_dead_items_90d | PASS | 0 |
-| low_ad_off_card | 90 | A9_currency_divergence_check | PASS | end 12004.4 / monthly 6578.3 |
-| low_ad_off_card | 90 | A10_adoption_safety_valve | PASS | 1000 adoptions observed |
-| low_ad_on_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 0.90 cycles/month p95 |
-| low_ad_on_nocard | 30 | A2_gold_non_negative | PASS | 20 |
+| low_ad_off_card | 90 | A9_currency_divergence_check | PASS | end 14124.0 / monthly 7368.0 |
+| low_ad_off_card | 90 | A10_adoption_safety_valve | PASS | 50 adoptions observed |
+| low_ad_on_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 0.89 cycles/month p95 |
+| low_ad_on_nocard | 30 | A2_gold_non_negative | PASS | 200 |
 | low_ad_on_nocard | 30 | A2_first_expansion_day_range | PASS | not reached |
 | low_ad_on_nocard | 30 | A3_ad_energy_ratio_max | FAIL | 0.908 |
 | low_ad_on_nocard | 30 | A4_orange_max_level_days | FAIL | not reached |
 | low_ad_on_nocard | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | low_ad_on_nocard | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | low_ad_on_nocard | 30 | A6_overflow_cutoff_low_observe | PASS | 0.0 mean cutoff |
-| low_ad_on_nocard | 30 | A7_tickets_full_attendance | FAIL | 3.23/day |
-| low_ad_on_nocard | 30 | A8_B6_gold_injection_correct | PASS | 1794.8 mean gold |
+| low_ad_on_nocard | 30 | A7_tickets_full_attendance | PASS | 3.23/day (expect 3.23±0.35) |
+| low_ad_on_nocard | 30 | A8_B6_gold_injection_correct | PASS | 2869.0 mean gold |
 | low_ad_on_nocard | 30 | A8_dead_items_90d | PASS | 0 |
-| low_ad_on_nocard | 30 | A9_currency_divergence_check | PASS | end 2060.2 / monthly 4126.2 |
+| low_ad_on_nocard | 30 | A9_currency_divergence_check | PASS | end 3143.0 / monthly 5211.0 |
 | low_ad_on_nocard | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| low_ad_on_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.54 cycles/month p95 |
+| low_ad_on_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.57 cycles/month p95 |
 | low_ad_on_nocard | 90 | A2_gold_non_negative | PASS | 20 |
-| low_ad_on_nocard | 90 | A2_first_expansion_day_range | FAIL | 78.1 |
+| low_ad_on_nocard | 90 | A2_first_expansion_day_range | FAIL | 52.9 |
 | low_ad_on_nocard | 90 | A3_ad_energy_ratio_max | FAIL | 0.915 |
 | low_ad_on_nocard | 90 | A4_orange_max_level_days | FAIL | not reached |
 | low_ad_on_nocard | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | low_ad_on_nocard | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | low_ad_on_nocard | 90 | A6_overflow_cutoff_low_observe | PASS | 0.0 mean cutoff |
-| low_ad_on_nocard | 90 | A7_tickets_full_attendance | FAIL | 3.08/day |
-| low_ad_on_nocard | 90 | A8_B6_gold_injection_correct | PASS | 5299.5 mean gold |
+| low_ad_on_nocard | 90 | A7_tickets_full_attendance | PASS | 3.08/day (expect 3.08±0.35) |
+| low_ad_on_nocard | 90 | A8_B6_gold_injection_correct | PASS | 8777.0 mean gold |
 | low_ad_on_nocard | 90 | A8_dead_items_90d | PASS | 0 |
-| low_ad_on_nocard | 90 | A9_currency_divergence_check | PASS | end 2595.6 / monthly 4118.9 |
-| low_ad_on_nocard | 90 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
+| low_ad_on_nocard | 90 | A9_currency_divergence_check | PASS | end 3230.0 / monthly 5339.7 |
+| low_ad_on_nocard | 90 | A10_adoption_safety_valve | PASS | 129 adoptions observed |
 | low_ad_on_card | 30 | A1_love_petal_monthly_cycles | PASS | 2.05 cycles/month p95 |
 | low_ad_on_card | 30 | A2_gold_non_negative | PASS | 20 |
-| low_ad_on_card | 30 | A2_first_expansion_day_range | PASS | 27.2 |
+| low_ad_on_card | 30 | A2_first_expansion_day_range | PASS | 24.3 |
 | low_ad_on_card | 30 | A3_ad_energy_ratio_max | FAIL | 0.908 |
 | low_ad_on_card | 30 | A4_orange_max_level_days | FAIL | not reached |
 | low_ad_on_card | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | low_ad_on_card | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | low_ad_on_card | 30 | A6_overflow_cutoff_low_observe | PASS | 0.0 mean cutoff |
-| low_ad_on_card | 30 | A7_tickets_full_attendance | FAIL | 3.23/day |
-| low_ad_on_card | 30 | A8_B6_gold_injection_correct | PASS | 1796.1 mean gold |
+| low_ad_on_card | 30 | A7_tickets_full_attendance | PASS | 3.23/day (expect 3.23±0.35) |
+| low_ad_on_card | 30 | A8_B6_gold_injection_correct | PASS | 2881.0 mean gold |
 | low_ad_on_card | 30 | A8_dead_items_90d | PASS | 0 |
-| low_ad_on_card | 30 | A9_currency_divergence_check | PASS | end 2353.7 / monthly 7123.7 |
+| low_ad_on_card | 30 | A9_currency_divergence_check | PASS | end 1215.0 / monthly 8195.0 |
 | low_ad_on_card | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| low_ad_on_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.69 cycles/month p95 |
+| low_ad_on_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.75 cycles/month p95 |
 | low_ad_on_card | 90 | A2_gold_non_negative | PASS | 20 |
-| low_ad_on_card | 90 | A2_first_expansion_day_range | PASS | 30.2 |
+| low_ad_on_card | 90 | A2_first_expansion_day_range | PASS | 24.5 |
 | low_ad_on_card | 90 | A3_ad_energy_ratio_max | FAIL | 0.915 |
 | low_ad_on_card | 90 | A4_orange_max_level_days | FAIL | not reached |
 | low_ad_on_card | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | low_ad_on_card | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | low_ad_on_card | 90 | A6_overflow_cutoff_low_observe | PASS | 0.0 mean cutoff |
-| low_ad_on_card | 90 | A7_tickets_full_attendance | FAIL | 3.08/day |
-| low_ad_on_card | 90 | A8_B6_gold_injection_correct | PASS | 5301.3 mean gold |
+| low_ad_on_card | 90 | A7_tickets_full_attendance | PASS | 3.08/day (expect 3.08±0.35) |
+| low_ad_on_card | 90 | A8_B6_gold_injection_correct | PASS | 8801.0 mean gold |
 | low_ad_on_card | 90 | A8_dead_items_90d | PASS | 0 |
-| low_ad_on_card | 90 | A9_currency_divergence_check | PASS | end 8329.1 / monthly 7122.3 |
-| low_ad_on_card | 90 | A10_adoption_safety_valve | PASS | 285 adoptions observed |
+| low_ad_on_card | 90 | A9_currency_divergence_check | PASS | end 7492.0 / monthly 8290.0 |
+| low_ad_on_card | 90 | A10_adoption_safety_valve | PASS | 194 adoptions observed |
 | medium_ad_off_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 0.41 cycles/month p95 |
-| medium_ad_off_nocard | 30 | A2_gold_non_negative | PASS | 250 |
-| medium_ad_off_nocard | 30 | A2_first_expansion_day_range | PASS | not reached |
+| medium_ad_off_nocard | 30 | A2_gold_non_negative | PASS | 0 |
+| medium_ad_off_nocard | 30 | A2_first_expansion_day_range | PASS | 28.0 |
 | medium_ad_off_nocard | 30 | A3_ad_energy_ratio_max | PASS | 0.000 |
 | medium_ad_off_nocard | 30 | A4_orange_max_level_days | FAIL | not reached |
 | medium_ad_off_nocard | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | medium_ad_off_nocard | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | medium_ad_off_nocard | 30 | A6_medium_overflow_cutoff | PASS | 0.0 mean cutoff |
-| medium_ad_off_nocard | 30 | A7_tickets_no_ad_medium | FAIL | 5.23/day |
-| medium_ad_off_nocard | 30 | A8_B6_gold_injection_correct | PASS | 1615.7 mean gold |
+| medium_ad_off_nocard | 30 | A7_tickets_no_ad_medium | PASS | 5.23/day (expect 5.23±0.35) |
+| medium_ad_off_nocard | 30 | A8_B6_gold_injection_correct | PASS | 2444.0 mean gold |
 | medium_ad_off_nocard | 30 | A8_dead_items_90d | PASS | 0 |
-| medium_ad_off_nocard | 30 | A9_currency_divergence_check | PASS | end 3092.5 / monthly 4587.2 |
+| medium_ad_off_nocard | 30 | A9_currency_divergence_check | PASS | end 3826.0 / monthly 5419.0 |
 | medium_ad_off_nocard | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| medium_ad_off_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.45 cycles/month p95 |
+| medium_ad_off_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.48 cycles/month p95 |
 | medium_ad_off_nocard | 90 | A2_gold_non_negative | PASS | 0 |
-| medium_ad_off_nocard | 90 | A2_first_expansion_day_range | FAIL | 58.4 |
+| medium_ad_off_nocard | 90 | A2_first_expansion_day_range | PASS | 39.5 |
 | medium_ad_off_nocard | 90 | A3_ad_energy_ratio_max | PASS | 0.000 |
 | medium_ad_off_nocard | 90 | A4_orange_max_level_days | FAIL | not reached |
 | medium_ad_off_nocard | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | medium_ad_off_nocard | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | medium_ad_off_nocard | 90 | A6_medium_overflow_cutoff | PASS | 0.0 mean cutoff |
-| medium_ad_off_nocard | 90 | A7_tickets_no_ad_medium | FAIL | 5.08/day |
-| medium_ad_off_nocard | 90 | A8_B6_gold_injection_correct | PASS | 4786.2 mean gold |
+| medium_ad_off_nocard | 90 | A7_tickets_no_ad_medium | PASS | 5.08/day (expect 5.08±0.35) |
+| medium_ad_off_nocard | 90 | A8_B6_gold_injection_correct | PASS | 7766.0 mean gold |
 | medium_ad_off_nocard | 90 | A8_dead_items_90d | PASS | 0 |
-| medium_ad_off_nocard | 90 | A9_currency_divergence_check | PASS | end 1926.2 / monthly 4610.2 |
-| medium_ad_off_nocard | 90 | A10_adoption_safety_valve | PASS | 3329 adoptions observed |
-| medium_ad_off_card | 30 | A1_love_petal_monthly_cycles | PASS | 1.56 cycles/month p95 |
+| medium_ad_off_nocard | 90 | A9_currency_divergence_check | PASS | end 4841.0 / monthly 5601.3 |
+| medium_ad_off_nocard | 90 | A10_adoption_safety_valve | PASS | 295 adoptions observed |
+| medium_ad_off_card | 30 | A1_love_petal_monthly_cycles | PASS | 1.65 cycles/month p95 |
 | medium_ad_off_card | 30 | A2_gold_non_negative | PASS | 0 |
-| medium_ad_off_card | 30 | A2_first_expansion_day_range | PASS | 23.0 |
+| medium_ad_off_card | 30 | A2_first_expansion_day_range | PASS | 20.1 |
 | medium_ad_off_card | 30 | A3_ad_energy_ratio_max | PASS | 0.000 |
 | medium_ad_off_card | 30 | A4_orange_max_level_days | FAIL | not reached |
 | medium_ad_off_card | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | medium_ad_off_card | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | medium_ad_off_card | 30 | A6_medium_overflow_cutoff | PASS | 0.0 mean cutoff |
-| medium_ad_off_card | 30 | A7_tickets_no_ad_medium | FAIL | 5.23/day |
-| medium_ad_off_card | 30 | A8_B6_gold_injection_correct | PASS | 1615.1 mean gold |
+| medium_ad_off_card | 30 | A7_tickets_no_ad_medium | PASS | 5.23/day (expect 5.23±0.35) |
+| medium_ad_off_card | 30 | A8_B6_gold_injection_correct | PASS | 2410.0 mean gold |
 | medium_ad_off_card | 30 | A8_dead_items_90d | PASS | 0 |
-| medium_ad_off_card | 30 | A9_currency_divergence_check | PASS | end 1152.1 / monthly 7589.7 |
-| medium_ad_off_card | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| medium_ad_off_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.61 cycles/month p95 |
+| medium_ad_off_card | 30 | A9_currency_divergence_check | PASS | end 1949.0 / monthly 8425.0 |
+| medium_ad_off_card | 30 | A10_adoption_safety_valve | PASS | 70 adoptions observed |
+| medium_ad_off_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.64 cycles/month p95 |
 | medium_ad_off_card | 90 | A2_gold_non_negative | PASS | 0 |
-| medium_ad_off_card | 90 | A2_first_expansion_day_range | PASS | 23.1 |
+| medium_ad_off_card | 90 | A2_first_expansion_day_range | PASS | 20.1 |
 | medium_ad_off_card | 90 | A3_ad_energy_ratio_max | PASS | 0.000 |
 | medium_ad_off_card | 90 | A4_orange_max_level_days | FAIL | not reached |
 | medium_ad_off_card | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | medium_ad_off_card | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | medium_ad_off_card | 90 | A6_medium_overflow_cutoff | PASS | 0.0 mean cutoff |
-| medium_ad_off_card | 90 | A7_tickets_no_ad_medium | FAIL | 5.08/day |
-| medium_ad_off_card | 90 | A8_B6_gold_injection_correct | PASS | 4765.4 mean gold |
+| medium_ad_off_card | 90 | A7_tickets_no_ad_medium | PASS | 5.08/day (expect 5.08±0.35) |
+| medium_ad_off_card | 90 | A8_B6_gold_injection_correct | PASS | 7720.0 mean gold |
 | medium_ad_off_card | 90 | A8_dead_items_90d | PASS | 0 |
-| medium_ad_off_card | 90 | A9_currency_divergence_check | PASS | end 6059.2 / monthly 7608.8 |
-| medium_ad_off_card | 90 | A10_adoption_safety_valve | PASS | 3902 adoptions observed |
+| medium_ad_off_card | 90 | A9_currency_divergence_check | PASS | end 6596.0 / monthly 8655.7 |
+| medium_ad_off_card | 90 | A10_adoption_safety_valve | PASS | 332 adoptions observed |
 | medium_ad_on_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 0.93 cycles/month p95 |
 | medium_ad_on_nocard | 30 | A2_gold_non_negative | PASS | 0 |
-| medium_ad_on_nocard | 30 | A2_first_expansion_day_range | PASS | 27.8 |
+| medium_ad_on_nocard | 30 | A2_first_expansion_day_range | PASS | 27.7 |
 | medium_ad_on_nocard | 30 | A3_ad_energy_ratio_max | FAIL | 0.651 |
 | medium_ad_on_nocard | 30 | A4_orange_max_level_days | FAIL | not reached |
 | medium_ad_on_nocard | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | medium_ad_on_nocard | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
-| medium_ad_on_nocard | 30 | A6_medium_overflow_cutoff | FAIL | 9049.9 mean cutoff |
-| medium_ad_on_nocard | 30 | A7_tickets_full_attendance | PASS | 5.23/day |
-| medium_ad_on_nocard | 30 | A8_B6_gold_injection_correct | PASS | 2162.4 mean gold |
+| medium_ad_on_nocard | 30 | A6_medium_overflow_cutoff | FAIL | 9046.0 mean cutoff |
+| medium_ad_on_nocard | 30 | A7_tickets_full_attendance | PASS | 5.23/day (expect 5.23±0.35) |
+| medium_ad_on_nocard | 30 | A8_B6_gold_injection_correct | PASS | 3420.0 mean gold |
 | medium_ad_on_nocard | 30 | A8_dead_items_90d | PASS | 0 |
-| medium_ad_on_nocard | 30 | A9_currency_divergence_check | PASS | end 3593.1 / monthly 5117.5 |
-| medium_ad_on_nocard | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| medium_ad_on_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.64 cycles/month p95 |
+| medium_ad_on_nocard | 30 | A9_currency_divergence_check | PASS | end 2971.0 / monthly 6363.0 |
+| medium_ad_on_nocard | 30 | A10_adoption_safety_valve | PASS | 13 adoptions observed |
+| medium_ad_on_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.66 cycles/month p95 |
 | medium_ad_on_nocard | 90 | A2_gold_non_negative | PASS | 0 |
-| medium_ad_on_nocard | 90 | A2_first_expansion_day_range | FAIL | 45.9 |
+| medium_ad_on_nocard | 90 | A2_first_expansion_day_range | PASS | 31.4 |
 | medium_ad_on_nocard | 90 | A3_ad_energy_ratio_max | FAIL | 0.655 |
 | medium_ad_on_nocard | 90 | A4_orange_max_level_days | FAIL | not reached |
 | medium_ad_on_nocard | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | medium_ad_on_nocard | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
-| medium_ad_on_nocard | 90 | A6_medium_overflow_cutoff | FAIL | 9673.5 mean cutoff |
-| medium_ad_on_nocard | 90 | A7_tickets_full_attendance | PASS | 5.08/day |
-| medium_ad_on_nocard | 90 | A8_B6_gold_injection_correct | PASS | 6337.0 mean gold |
+| medium_ad_on_nocard | 90 | A6_medium_overflow_cutoff | FAIL | 9727.0 mean cutoff |
+| medium_ad_on_nocard | 90 | A7_tickets_full_attendance | PASS | 5.08/day (expect 5.08±0.35) |
+| medium_ad_on_nocard | 90 | A8_B6_gold_injection_correct | PASS | 10544.0 mean gold |
 | medium_ad_on_nocard | 90 | A8_dead_items_90d | PASS | 0 |
-| medium_ad_on_nocard | 90 | A9_currency_divergence_check | PASS | end 3397.1 / monthly 5115.7 |
-| medium_ad_on_nocard | 90 | A10_adoption_safety_valve | PASS | 3450 adoptions observed |
-| medium_ad_on_card | 30 | A1_love_petal_monthly_cycles | PASS | 2.08 cycles/month p95 |
+| medium_ad_on_nocard | 90 | A9_currency_divergence_check | PASS | end 7530.0 / monthly 6502.7 |
+| medium_ad_on_nocard | 90 | A10_adoption_safety_valve | PASS | 304 adoptions observed |
+| medium_ad_on_card | 30 | A1_love_petal_monthly_cycles | PASS | 2.18 cycles/month p95 |
 | medium_ad_on_card | 30 | A2_gold_non_negative | PASS | 0 |
-| medium_ad_on_card | 30 | A2_first_expansion_day_range | PASS | 21.1 |
+| medium_ad_on_card | 30 | A2_first_expansion_day_range | FAIL | 17.4 |
 | medium_ad_on_card | 30 | A3_ad_energy_ratio_max | FAIL | 0.651 |
 | medium_ad_on_card | 30 | A4_orange_max_level_days | FAIL | not reached |
 | medium_ad_on_card | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | medium_ad_on_card | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
-| medium_ad_on_card | 30 | A6_medium_overflow_cutoff | FAIL | 8972.8 mean cutoff |
-| medium_ad_on_card | 30 | A7_tickets_full_attendance | PASS | 5.23/day |
-| medium_ad_on_card | 30 | A8_B6_gold_injection_correct | PASS | 2159.9 mean gold |
+| medium_ad_on_card | 30 | A6_medium_overflow_cutoff | FAIL | 8900.0 mean cutoff |
+| medium_ad_on_card | 30 | A7_tickets_full_attendance | PASS | 5.23/day (expect 5.23±0.35) |
+| medium_ad_on_card | 30 | A8_B6_gold_injection_correct | PASS | 3421.0 mean gold |
 | medium_ad_on_card | 30 | A8_dead_items_90d | PASS | 0 |
-| medium_ad_on_card | 30 | A9_currency_divergence_check | PASS | end 1624.3 / monthly 8124.4 |
-| medium_ad_on_card | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| medium_ad_on_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.83 cycles/month p95 |
+| medium_ad_on_card | 30 | A9_currency_divergence_check | PASS | end 2862.0 / monthly 9362.0 |
+| medium_ad_on_card | 30 | A10_adoption_safety_valve | PASS | 185 adoptions observed |
+| medium_ad_on_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.84 cycles/month p95 |
 | medium_ad_on_card | 90 | A2_gold_non_negative | PASS | 0 |
-| medium_ad_on_card | 90 | A2_first_expansion_day_range | PASS | 21.1 |
+| medium_ad_on_card | 90 | A2_first_expansion_day_range | FAIL | 17.4 |
 | medium_ad_on_card | 90 | A3_ad_energy_ratio_max | FAIL | 0.655 |
 | medium_ad_on_card | 90 | A4_orange_max_level_days | FAIL | not reached |
 | medium_ad_on_card | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | medium_ad_on_card | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
-| medium_ad_on_card | 90 | A6_medium_overflow_cutoff | FAIL | 9663.9 mean cutoff |
-| medium_ad_on_card | 90 | A7_tickets_full_attendance | PASS | 5.08/day |
-| medium_ad_on_card | 90 | A8_B6_gold_injection_correct | PASS | 6353.0 mean gold |
+| medium_ad_on_card | 90 | A6_medium_overflow_cutoff | FAIL | 9556.0 mean cutoff |
+| medium_ad_on_card | 90 | A7_tickets_full_attendance | PASS | 5.08/day (expect 5.08±0.35) |
+| medium_ad_on_card | 90 | A8_B6_gold_injection_correct | PASS | 10532.0 mean gold |
 | medium_ad_on_card | 90 | A8_dead_items_90d | PASS | 0 |
-| medium_ad_on_card | 90 | A9_currency_divergence_check | PASS | end 6730.1 / monthly 8126.6 |
-| medium_ad_on_card | 90 | A10_adoption_safety_valve | PASS | 5662 adoptions observed |
-| high_ad_off_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 0.41 cycles/month p95 |
+| medium_ad_on_card | 90 | A9_currency_divergence_check | PASS | end 10915.0 / monthly 9505.0 |
+| medium_ad_on_card | 90 | A10_adoption_safety_valve | PASS | 400 adoptions observed |
+| high_ad_off_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 0.40 cycles/month p95 |
 | high_ad_off_nocard | 30 | A2_gold_non_negative | PASS | 10 |
-| high_ad_off_nocard | 30 | A2_first_expansion_day_range | PASS | 28.0 |
+| high_ad_off_nocard | 30 | A2_first_expansion_day_range | PASS | 28.5 |
 | high_ad_off_nocard | 30 | A3_ad_energy_ratio_max | PASS | 0.000 |
 | high_ad_off_nocard | 30 | A4_orange_max_level_days | FAIL | not reached |
 | high_ad_off_nocard | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | high_ad_off_nocard | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | high_ad_off_nocard | 30 | A6_high_overflow_cutoff | PASS | 0.0 mean cutoff |
-| high_ad_off_nocard | 30 | A7_tickets_no_ad_medium | FAIL | 5.23/day |
-| high_ad_off_nocard | 30 | A8_B6_gold_injection_correct | PASS | 1607.9 mean gold |
+| high_ad_off_nocard | 30 | A7_tickets_no_ad_medium | PASS | 5.23/day (expect 5.23±0.35) |
+| high_ad_off_nocard | 30 | A8_B6_gold_injection_correct | PASS | 2500.0 mean gold |
 | high_ad_off_nocard | 30 | A8_dead_items_90d | PASS | 0 |
-| high_ad_off_nocard | 30 | A9_currency_divergence_check | PASS | end 3603.0 / monthly 4907.9 |
+| high_ad_off_nocard | 30 | A9_currency_divergence_check | PASS | end 3913.0 / monthly 5800.0 |
 | high_ad_off_nocard | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| high_ad_off_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.47 cycles/month p95 |
+| high_ad_off_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.46 cycles/month p95 |
 | high_ad_off_nocard | 90 | A2_gold_non_negative | PASS | 10 |
-| high_ad_off_nocard | 90 | A2_first_expansion_day_range | FAIL | 44.9 |
+| high_ad_off_nocard | 90 | A2_first_expansion_day_range | PASS | 34.3 |
 | high_ad_off_nocard | 90 | A3_ad_energy_ratio_max | PASS | 0.000 |
-| high_ad_off_nocard | 90 | A4_orange_max_level_days | FAIL | 81.3 |
+| high_ad_off_nocard | 90 | A4_orange_max_level_days | FAIL | not reached |
 | high_ad_off_nocard | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | high_ad_off_nocard | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | high_ad_off_nocard | 90 | A6_high_overflow_cutoff | PASS | 0.0 mean cutoff |
-| high_ad_off_nocard | 90 | A7_tickets_no_ad_medium | FAIL | 5.08/day |
-| high_ad_off_nocard | 90 | A8_B6_gold_injection_correct | PASS | 4745.0 mean gold |
+| high_ad_off_nocard | 90 | A7_tickets_no_ad_medium | PASS | 5.08/day (expect 5.08±0.35) |
+| high_ad_off_nocard | 90 | A8_B6_gold_injection_correct | PASS | 7865.0 mean gold |
 | high_ad_off_nocard | 90 | A8_dead_items_90d | PASS | 0 |
-| high_ad_off_nocard | 90 | A9_currency_divergence_check | PASS | end 3342.6 / monthly 4931.7 |
-| high_ad_off_nocard | 90 | A10_adoption_safety_valve | PASS | 3108 adoptions observed |
-| high_ad_off_card | 30 | A1_love_petal_monthly_cycles | PASS | 1.56 cycles/month p95 |
+| high_ad_off_nocard | 90 | A9_currency_divergence_check | PASS | end 6437.0 / monthly 5971.7 |
+| high_ad_off_nocard | 90 | A10_adoption_safety_valve | PASS | 223 adoptions observed |
+| high_ad_off_card | 30 | A1_love_petal_monthly_cycles | PASS | 1.63 cycles/month p95 |
 | high_ad_off_card | 30 | A2_gold_non_negative | PASS | 10 |
-| high_ad_off_card | 30 | A2_first_expansion_day_range | PASS | 20.7 |
+| high_ad_off_card | 30 | A2_first_expansion_day_range | FAIL | 18.4 |
 | high_ad_off_card | 30 | A3_ad_energy_ratio_max | PASS | 0.000 |
 | high_ad_off_card | 30 | A4_orange_max_level_days | FAIL | not reached |
 | high_ad_off_card | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | high_ad_off_card | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | high_ad_off_card | 30 | A6_high_overflow_cutoff | PASS | 0.0 mean cutoff |
-| high_ad_off_card | 30 | A7_tickets_no_ad_medium | FAIL | 5.23/day |
-| high_ad_off_card | 30 | A8_B6_gold_injection_correct | PASS | 1607.4 mean gold |
+| high_ad_off_card | 30 | A7_tickets_no_ad_medium | PASS | 5.23/day (expect 5.23±0.35) |
+| high_ad_off_card | 30 | A8_B6_gold_injection_correct | PASS | 2508.0 mean gold |
 | high_ad_off_card | 30 | A8_dead_items_90d | PASS | 0 |
-| high_ad_off_card | 30 | A9_currency_divergence_check | PASS | end 1617.4 / monthly 7907.4 |
-| high_ad_off_card | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| high_ad_off_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.60 cycles/month p95 |
+| high_ad_off_card | 30 | A9_currency_divergence_check | PASS | end 2518.0 / monthly 8808.0 |
+| high_ad_off_card | 30 | A10_adoption_safety_valve | PASS | 41 adoptions observed |
+| high_ad_off_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.63 cycles/month p95 |
 | high_ad_off_card | 90 | A2_gold_non_negative | PASS | 10 |
-| high_ad_off_card | 90 | A2_first_expansion_day_range | PASS | 20.7 |
+| high_ad_off_card | 90 | A2_first_expansion_day_range | FAIL | 18.4 |
 | high_ad_off_card | 90 | A3_ad_energy_ratio_max | PASS | 0.000 |
-| high_ad_off_card | 90 | A4_orange_max_level_days | FAIL | 87.3 |
+| high_ad_off_card | 90 | A4_orange_max_level_days | FAIL | 86.0 |
 | high_ad_off_card | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | high_ad_off_card | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
 | high_ad_off_card | 90 | A6_high_overflow_cutoff | PASS | 0.0 mean cutoff |
-| high_ad_off_card | 90 | A7_tickets_no_ad_medium | FAIL | 5.08/day |
-| high_ad_off_card | 90 | A8_B6_gold_injection_correct | PASS | 4731.5 mean gold |
+| high_ad_off_card | 90 | A7_tickets_no_ad_medium | PASS | 5.08/day (expect 5.08±0.35) |
+| high_ad_off_card | 90 | A8_B6_gold_injection_correct | PASS | 7828.0 mean gold |
 | high_ad_off_card | 90 | A8_dead_items_90d | PASS | 0 |
-| high_ad_off_card | 90 | A9_currency_divergence_check | PASS | end 6961.5 / monthly 7927.2 |
-| high_ad_off_card | 90 | A10_adoption_safety_valve | PASS | 3747 adoptions observed |
-| high_ad_on_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 0.98 cycles/month p95 |
+| high_ad_off_card | 90 | A9_currency_divergence_check | PASS | end 9188.0 / monthly 8959.3 |
+| high_ad_off_card | 90 | A10_adoption_safety_valve | PASS | 302 adoptions observed |
+| high_ad_on_nocard | 30 | A1_love_petal_monthly_cycles | PASS | 1.03 cycles/month p95 |
 | high_ad_on_nocard | 30 | A2_gold_non_negative | PASS | 10 |
-| high_ad_on_nocard | 30 | A2_first_expansion_day_range | PASS | 28.3 |
+| high_ad_on_nocard | 30 | A2_first_expansion_day_range | PASS | 26.6 |
 | high_ad_on_nocard | 30 | A3_ad_energy_ratio_max | PASS | 0.491 |
 | high_ad_on_nocard | 30 | A4_orange_max_level_days | FAIL | not reached |
 | high_ad_on_nocard | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | high_ad_on_nocard | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
-| high_ad_on_nocard | 30 | A6_high_overflow_cutoff | PASS | 115772.8 mean cutoff |
-| high_ad_on_nocard | 30 | A7_tickets_full_attendance | PASS | 5.23/day |
-| high_ad_on_nocard | 30 | A8_B6_gold_injection_correct | PASS | 2131.1 mean gold |
+| high_ad_on_nocard | 30 | A6_high_overflow_cutoff | PASS | 116520.0 mean cutoff |
+| high_ad_on_nocard | 30 | A7_tickets_full_attendance | PASS | 5.23/day (expect 5.23±0.35) |
+| high_ad_on_nocard | 30 | A8_B6_gold_injection_correct | PASS | 3460.0 mean gold |
 | high_ad_on_nocard | 30 | A8_dead_items_90d | PASS | 0 |
-| high_ad_on_nocard | 30 | A9_currency_divergence_check | PASS | end 3913.2 / monthly 5431.1 |
-| high_ad_on_nocard | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| high_ad_on_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.72 cycles/month p95 |
+| high_ad_on_nocard | 30 | A9_currency_divergence_check | PASS | end 784.0 / monthly 6760.0 |
+| high_ad_on_nocard | 30 | A10_adoption_safety_valve | PASS | 36 adoptions observed |
+| high_ad_on_nocard | 90 | A1_love_petal_monthly_cycles | PASS | 0.74 cycles/month p95 |
 | high_ad_on_nocard | 90 | A2_gold_non_negative | PASS | 10 |
-| high_ad_on_nocard | 90 | A2_first_expansion_day_range | PASS | 37.3 |
+| high_ad_on_nocard | 90 | A2_first_expansion_day_range | PASS | 26.9 |
 | high_ad_on_nocard | 90 | A3_ad_energy_ratio_max | PASS | 0.493 |
-| high_ad_on_nocard | 90 | A4_orange_max_level_days | FAIL | 84.6 |
+| high_ad_on_nocard | 90 | A4_orange_max_level_days | FAIL | not reached |
 | high_ad_on_nocard | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | high_ad_on_nocard | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
-| high_ad_on_nocard | 90 | A6_high_overflow_cutoff | PASS | 309611.2 mean cutoff |
-| high_ad_on_nocard | 90 | A7_tickets_full_attendance | PASS | 5.08/day |
-| high_ad_on_nocard | 90 | A8_B6_gold_injection_correct | PASS | 6320.5 mean gold |
+| high_ad_on_nocard | 90 | A6_high_overflow_cutoff | PASS | 310375.0 mean cutoff |
+| high_ad_on_nocard | 90 | A7_tickets_full_attendance | PASS | 5.08/day (expect 5.08±0.35) |
+| high_ad_on_nocard | 90 | A8_B6_gold_injection_correct | PASS | 10563.0 mean gold |
 | high_ad_on_nocard | 90 | A8_dead_items_90d | PASS | 0 |
-| high_ad_on_nocard | 90 | A9_currency_divergence_check | PASS | end 4904.3 / monthly 5456.8 |
-| high_ad_on_nocard | 90 | A10_adoption_safety_valve | PASS | 3447 adoptions observed |
-| high_ad_on_card | 30 | A1_love_petal_monthly_cycles | PASS | 2.13 cycles/month p95 |
+| high_ad_on_nocard | 90 | A9_currency_divergence_check | PASS | end 8339.0 / monthly 6871.0 |
+| high_ad_on_nocard | 90 | A10_adoption_safety_valve | PASS | 318 adoptions observed |
+| high_ad_on_card | 30 | A1_love_petal_monthly_cycles | PASS | 2.24 cycles/month p95 |
 | high_ad_on_card | 30 | A2_gold_non_negative | PASS | 10 |
-| high_ad_on_card | 30 | A2_first_expansion_day_range | FAIL | 18.9 |
+| high_ad_on_card | 30 | A2_first_expansion_day_range | FAIL | 15.5 |
 | high_ad_on_card | 30 | A3_ad_energy_ratio_max | PASS | 0.491 |
 | high_ad_on_card | 30 | A4_orange_max_level_days | FAIL | not reached |
 | high_ad_on_card | 30 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | high_ad_on_card | 30 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
-| high_ad_on_card | 30 | A6_high_overflow_cutoff | PASS | 116750.0 mean cutoff |
-| high_ad_on_card | 30 | A7_tickets_full_attendance | PASS | 5.23/day |
-| high_ad_on_card | 30 | A8_B6_gold_injection_correct | PASS | 2152.0 mean gold |
+| high_ad_on_card | 30 | A6_high_overflow_cutoff | PASS | 117590.0 mean cutoff |
+| high_ad_on_card | 30 | A7_tickets_full_attendance | PASS | 5.23/day (expect 5.23±0.35) |
+| high_ad_on_card | 30 | A8_B6_gold_injection_correct | PASS | 3427.0 mean gold |
 | high_ad_on_card | 30 | A8_dead_items_90d | PASS | 0 |
-| high_ad_on_card | 30 | A9_currency_divergence_check | PASS | end 2162.0 / monthly 8452.0 |
-| high_ad_on_card | 30 | A10_adoption_safety_valve | PASS | 0 adoptions observed |
-| high_ad_on_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.89 cycles/month p95 |
+| high_ad_on_card | 30 | A9_currency_divergence_check | PASS | end 3437.0 / monthly 9727.0 |
+| high_ad_on_card | 30 | A10_adoption_safety_valve | PASS | 188 adoptions observed |
+| high_ad_on_card | 90 | A1_love_petal_monthly_cycles | PASS | 1.91 cycles/month p95 |
 | high_ad_on_card | 90 | A2_gold_non_negative | PASS | 10 |
-| high_ad_on_card | 90 | A2_first_expansion_day_range | FAIL | 18.9 |
+| high_ad_on_card | 90 | A2_first_expansion_day_range | FAIL | 15.5 |
 | high_ad_on_card | 90 | A3_ad_energy_ratio_max | PASS | 0.493 |
-| high_ad_on_card | 90 | A4_orange_max_level_days | FAIL | 83.4 |
+| high_ad_on_card | 90 | A4_orange_max_level_days | FAIL | 86.2 |
 | high_ad_on_card | 90 | A5a_legendary_acquisition_rate | PASS | 0.000 |
 | high_ad_on_card | 90 | A5b_legendary_pity_trigger_ratio | N/A (insufficient hatches) | insufficient hatches (min 120) |
-| high_ad_on_card | 90 | A6_high_overflow_cutoff | PASS | 310627.0 mean cutoff |
-| high_ad_on_card | 90 | A7_tickets_full_attendance | PASS | 5.08/day |
-| high_ad_on_card | 90 | A8_B6_gold_injection_correct | PASS | 6359.3 mean gold |
+| high_ad_on_card | 90 | A6_high_overflow_cutoff | PASS | 311335.0 mean cutoff |
+| high_ad_on_card | 90 | A7_tickets_full_attendance | PASS | 5.08/day (expect 5.08±0.35) |
+| high_ad_on_card | 90 | A8_B6_gold_injection_correct | PASS | 10572.0 mean gold |
 | high_ad_on_card | 90 | A8_dead_items_90d | PASS | 0 |
-| high_ad_on_card | 90 | A9_currency_divergence_check | PASS | end 8179.4 / monthly 8469.8 |
-| high_ad_on_card | 90 | A10_adoption_safety_valve | PASS | 5530 adoptions observed |
+| high_ad_on_card | 90 | A9_currency_divergence_check | PASS | end 11736.0 / monthly 9874.0 |
+| high_ad_on_card | 90 | A10_adoption_safety_valve | PASS | 396 adoptions observed |

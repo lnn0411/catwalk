@@ -29,6 +29,31 @@ func _ready() -> void:
 	_t_serialize_restore()
 	_t_undo_merge()
 	_t_sub_chain_exit()
+	_t_undo_paid_gate()
+	_t_undo_excitement_rollback()
+	_t_undo_triple_merge()
+	_t_triple_merge_win()
+	_t_triple_merge_sub_exit_signal()
+	_t_sub_exit_second_time()
+	_t_deadlock_lifeline()
+	_t_sequence_no_rewind()
+	_t_extra_clicks_main_chain()
+	_t_undo_generator_click_count()
+	_t_reward_tables()
+	_t_combo_progression()
+	_t_frenzy_help()
+	_t_frenzy_guard_refund()
+	_t_excitement_overflow_bank()
+	_t_mischief_forewarning()
+	_t_twist_generous()
+	_t_twist_yarn()
+	_t_twist_mischief()
+	_t_twist_baseline()
+	_t_twist_serialize()
+	_t_order_win()
+	_t_order_click_limit()
+	_t_order_serialize()
+	_t_telemetry_roundtrip()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -172,6 +197,9 @@ func _t_no_deadlock_when_mergeable() -> void:
 	print("[死局负向检测]")
 	var b := _fresh()
 	b.grid.clear()
+	# 毛线格随机落点可能与本用例的固定测试格重合（真实对局物品不会在毛线格上），
+	# 清掉以保证用例确定性
+	b.special_tiles.clear()
 	b.generator_remaining = 0
 	var p1 := Vector2i(0, 0)
 	var p2 := Vector2i(1, 0)
@@ -239,3 +267,512 @@ func _t_sub_chain_exit() -> void:
 	_check(b.generator_remaining == 5, "次数+2")
 	_check(b.sub_chain_exit_used, "副链出口标记已使用")
 	b.queue_free()
+
+
+# ---------------- M1 热修用例 ----------------
+
+func _t_undo_paid_gate() -> void:
+	print("[M1-1 撤销付费拦截]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.undo_free_count = 0
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	_check(b.merge_items(p1, p2), "合并成功")
+	_check(not b.undo(), "免费额度耗尽后未付费撤销被拒")
+	_check(b.grid.has(p2) and b.grid[p2].star == BoardGameData.StarLevel.TWO, "拒绝后棋盘不变")
+	_check(b.undo(true), "付费撤销成功")
+	_check(b.get_undo_cost()["diamond_cost"] == BoardGame.UNDO_DIAMOND_COST, "付费期成本=10钻")
+	b.queue_free()
+
+
+func _t_undo_excitement_rollback() -> void:
+	print("[M1-2 撤销回退兴奋值]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.excitement = 0
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	_check(b.merge_items(p1, p2), "合并成功")
+	_check(b.excitement > 0, "合并增加兴奋值")
+	_check(b.undo(), "撤销成功")
+	_check(b.excitement == 0, "兴奋值回退到合并前")
+	_check(b._combo_count == 0, "连击计数重置")
+	b.queue_free()
+
+
+func _t_undo_triple_merge() -> void:
+	print("[M1-2 三连合撤销完整性]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	var p3 := Vector2i(2, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	b.grid[p3] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.TWO, p3)
+	var before := b.serialize_state()
+	_check(b.merge_items(p1, p2), "合并触发三连合")
+	_check(b.grid.has(p2) and b.grid[p2].star == BoardGameData.StarLevel.THREE, "三连合产物⭐3")
+	_check(not b.grid.has(p3), "邻居⭐2被吞")
+	_check(b.undo(), "撤销成功")
+	var after := b.serialize_state()
+	_check(after.grid == before.grid, "撤销后棋盘完全还原（邻居归位、返还⭐1收回）")
+	b.queue_free()
+
+
+func _t_triple_merge_win() -> void:
+	print("[M1修复 三连合直达主链⭐5判胜]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	var won := [false]
+	b.game_won.connect(func() -> void:
+		won[0] = true
+	)
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	var p3 := Vector2i(2, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.THREE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.THREE, p2)
+	b.grid[p3] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.FOUR, p3)
+	_check(b.merge_items(p1, p2), "⭐3+⭐3合并成功")
+	_check(b.grid.has(p2) and b.grid[p2].star == BoardGameData.StarLevel.FIVE, "三连合产物为⭐5")
+	_check(won[0], "三连合直达⭐5触发胜利信号")
+	_check(b.game_state == BoardGameData.GameState.WON, "状态为WON")
+	b.queue_free()
+
+
+func _t_triple_merge_sub_exit_signal() -> void:
+	print("[M1修复 三连合产出副链⭐3发出口提示]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	var completed := [false]
+	b.sub_chain_completed.connect(func(_item: BoardItem) -> void:
+		completed[0] = true
+	)
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	var p3 := Vector2i(2, 0)
+	b.grid[p1] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.ONE, p2)
+	b.grid[p3] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.TWO, p3)
+	_check(b.merge_items(p1, p2), "副链⭐1+⭐1合并成功")
+	_check(b.grid.has(p2) and b.grid[p2].star == BoardGameData.StarLevel.THREE, "三连合产物为副链⭐3")
+	_check(completed[0], "三连合产出副链⭐3发出提示信号")
+	b.queue_free()
+
+
+func _t_sub_exit_second_time() -> void:
+	print("[M1-2 副链出口二次结算]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_remaining = 3
+	var results: Array = []
+	b.sub_chain_exit_done.connect(func(_pos: Vector2i, first_time: bool) -> void:
+		results.append(first_time)
+	)
+	var p := Vector2i(0, 0)
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	_check(b.sub_chain_exit(p), "首次出口成功")
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	_check(b.sub_chain_exit(p), "二次出口成功")
+	_check(b.generator_remaining == 5, "仅首次返还+2")
+	_check(results == [true, false], "出口信号 first_time 标记正确")
+	b.queue_free()
+
+
+func _t_deadlock_lifeline() -> void:
+	print("[M1-3 死局出口豁免]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_remaining = 0
+	var lifeline := [false]
+	b.sub_exit_lifeline.connect(func(_pos: Vector2i) -> void:
+		lifeline[0] = true
+	)
+	var p := Vector2i(0, 0)
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	b._check_deadlock()
+	_check(b.game_state == BoardGameData.GameState.PLAYING, "有副链⭐3+出口未用不判负")
+	_check(lifeline[0], "发出自救提示信号")
+	_check(b.sub_chain_exit(p), "走出口自救成功")
+	_check(b.generator_remaining == 2, "出口返还+2次生成器")
+	# 出口已用后再陷入同样局面 → 正常判负
+	b.grid.clear()
+	b.generator_remaining = 0
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	b._check_deadlock()
+	_check(b.game_state == BoardGameData.GameState.LOST, "出口已用后同局面正常判负")
+	b.queue_free()
+
+
+func _t_sequence_no_rewind() -> void:
+	print("[M1-4 出口返还不倒带序列]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_remaining = BoardGameData.GENERATOR_TOTAL
+	var drops: Array = []
+	b.generator_clicked.connect(func(_pos: Vector2i, item: BoardItem) -> void:
+		drops.append(item.chain)
+	)
+	for i in range(4):
+		b.click_generator()
+	# 第4次点击后走出口返还+2（remaining 16→18），旧实现会使索引倒带
+	var p := Vector2i(4, 4)
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	_check(b.sub_chain_exit(p), "出口返还成功")
+	b.click_generator()  # 第5次点击：索引4，必须仍是副链
+	_check(drops.size() == 5 and drops[4] == b.current_sub_chain, "返还后第5次点击仍为副链（序列不倒带）")
+	b.queue_free()
+
+
+func _t_extra_clicks_main_chain() -> void:
+	print("[M1-4 超出序列恒出主链]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_click_count = BoardGameData.DROP_SEQUENCE.size()  # 已走完20次
+	b.generator_remaining = 2  # 出口返还的额外次数
+	var drops: Array = []
+	b.generator_clicked.connect(func(_pos: Vector2i, item: BoardItem) -> void:
+		drops.append(item.chain)
+	)
+	b.click_generator()
+	b.click_generator()
+	_check(drops.size() == 2, "额外2次点击成功")
+	_check(drops[0] == b.current_main_chain and drops[1] == b.current_main_chain, "超出序列的点击恒出主链")
+	b.queue_free()
+
+
+func _t_undo_generator_click_count() -> void:
+	print("[M1-4 撤销生成器回退计数]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_remaining = BoardGameData.GENERATOR_TOTAL
+	b.undo_stack.clear()
+	var drops: Array = []
+	b.generator_clicked.connect(func(_pos: Vector2i, item: BoardItem) -> void:
+		drops.append(item.chain)
+	)
+	b.click_generator()
+	_check(b.generator_click_count == 1, "点击后计数=1")
+	_check(b.undo(), "撤销生成器点击成功")
+	_check(b.generator_click_count == 0, "撤销后计数回退到0")
+	b.click_generator()
+	_check(drops.size() == 2 and drops[0] == drops[1], "重新点击产出与被撤销一致（不可reroll）")
+	b.queue_free()
+
+
+# ---------------- M2 体验批次用例 ----------------
+
+func _t_combo_progression() -> void:
+	print("[M2 连击计数与递增奖励]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.excitement = 0
+	var combo_values: Array = []
+	b.combo_triggered.connect(func(count: int) -> void:
+		combo_values.append(count)
+	)
+	# 三对主链⭐1，落点彼此不相邻（避免三连合干扰）
+	var pairs := [
+		[Vector2i(0, 0), Vector2i(4, 0)],
+		[Vector2i(0, 2), Vector2i(4, 2)],
+		[Vector2i(0, 4), Vector2i(4, 4)],
+	]
+	for pair in pairs:
+		b.grid[pair[0]] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, pair[0])
+		b.grid[pair[1]] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, pair[1])
+	for pair in pairs:
+		b.merge_items(pair[0], pair[1])
+	_check(combo_values == [2, 3], "连击信号为[2,3]（off-by-one已修复）")
+	# 兴奋值 = 8 + (8+4×1) + (8+4×2) = 36
+	_check(b.excitement == 36, "连击兴奋值递增 +4/+8（实际=%d 期望36）" % b.excitement)
+	b.queue_free()
+
+
+func _t_frenzy_help() -> void:
+	print("[M2 狂欢·猫猫帮忙]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.excitement = BoardGameData.EXCITEMENT_MAX
+	b.generator_remaining = 7
+	var spawned_pos: Array = []
+	b.frenzy_items_spawned.connect(func(positions: Array) -> void:
+		spawned_pos.append_array(positions)
+	)
+	_check(b.trigger_frenzy(BoardGameData.FrenzyMode.HELP), "帮忙模式触发成功")
+	_check(spawned_pos.size() == 2, "免费生成2个物品")
+	var all_main_one := true
+	for pos in spawned_pos:
+		var item: BoardItem = b.grid.get(pos)
+		if item == null or item.chain != b.current_main_chain or item.star != BoardGameData.StarLevel.ONE:
+			all_main_one = false
+	_check(all_main_one, "生成物为主链⭐1")
+	_check(b.generator_remaining == 7, "不消耗生成器次数")
+	_check(b.excitement == 0, "兴奋值清零（蓄能池为空）")
+	_check(b.frenzy_triggers_used == 1, "狂欢次数+1")
+	b.queue_free()
+
+
+func _t_frenzy_guard_refund() -> void:
+	print("[M2 狂欢·护卫局末折算]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.excitement = BoardGameData.EXCITEMENT_MAX
+	var refund := [0]
+	b.frenzy_guard_refund.connect(func(count: int) -> void:
+		refund[0] = count
+	)
+	_check(b.trigger_frenzy(BoardGameData.FrenzyMode.GUARD), "护卫模式触发成功")
+	_check(b.frenzy_cancel_pending == 1, "蓄一次抵消")
+	# 强制通关：两个主链⭐4合并
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.FOUR, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.FOUR, p2)
+	_check(b.merge_items(p1, p2), "合并通关")
+	_check(refund[0] == 1, "局末未消耗护卫折算 count=1")
+	_check(b.frenzy_cancel_pending == 0, "护卫清零")
+	b.queue_free()
+
+
+func _t_excitement_overflow_bank() -> void:
+	print("[M2 兴奋值溢出蓄能]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.excitement = 98
+	b.excitement_bank = 0
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(4, 4)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	_check(b.merge_items(p1, p2), "满管边缘合并成功")
+	_check(b.excitement == BoardGameData.EXCITEMENT_MAX, "兴奋值封顶100")
+	# 溢出 8-2=6，结转50% → 蓄能3
+	_check(b.excitement_bank == 3, "溢出50%%入蓄能池（实际=%d 期望3）" % b.excitement_bank)
+	_check(b.trigger_frenzy(BoardGameData.FrenzyMode.GUARD), "触发狂欢")
+	_check(b.excitement == 3, "蓄能池注入新一管")
+	_check(b.excitement_bank == 0, "蓄能池清空")
+	b.queue_free()
+
+
+func _t_mischief_forewarning() -> void:
+	print("[M2 捣乱预警前置]")
+	var b := _fresh()
+	b.grid.clear()
+	b.special_tiles.clear()
+	var warnings: Array = []
+	b.mischief_forewarning.connect(func(clicks_left: int) -> void:
+		warnings.append(clicks_left)
+	)
+	# LV1 捣乱触发点=第10次点击；点9次应收到 [2, 1] 预警
+	for _i in range(9):
+		b.click_generator()
+	_check(warnings == [2, 1], "第8/9次点击发出预警[2,1]（实际=%s）" % str(warnings))
+	b.queue_free()
+
+
+# ---------------- M3-3.2 每日变异用例 ----------------
+
+func _t_twist_generous() -> void:
+	print("[M3 慷慨日]")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "generous_day")
+	var main_count := 0
+	for pos in b.grid:
+		if (b.grid[pos] as BoardItem).chain == b.current_main_chain:
+			main_count += 1
+	_check(main_count >= 7 and main_count <= 8, "初始主链+2（LV1: 7-8个，实际%d）" % main_count)
+	b.generator_remaining = 4
+	_check(b.calc_star_rating() == 2, "三星线收紧：剩余4只有二星")
+	b.generator_remaining = 5
+	_check(b.calc_star_rating() == 3, "剩余5达三星")
+	b.queue_free()
+
+
+func _t_twist_yarn() -> void:
+	print("[M3 毛线日]")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "yarn_day")
+	_check(b.special_tiles.size() == 4, "毛线格+2（LV1: 2+2=4，实际%d）" % b.special_tiles.size())
+	# 解格兴奋值 20→30：在毛线格旁合并验证
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.special_tiles[Vector2i(1, 1)] = BoardGameData.SpecialTile.YARN
+	b.excitement = 0
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(0, 1)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	_check(b.merge_items(p1, p2), "毛线格旁合并成功")
+	# 合并8 + 解格30 = 38
+	_check(b.excitement == 38, "解格兴奋值30（合并8+解格30=38，实际%d）" % b.excitement)
+	b.queue_free()
+
+
+func _t_twist_mischief() -> void:
+	print("[M3 捣蛋日]")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "mischief_day")
+	_check(b.mischief_triggers == [10, 16], "捣乱触发表追加16（实际%s）" % str(b.mischief_triggers))
+	_check(bool(b.active_twist.get("reward_double_roll", false)), "奖励二选一标记生效")
+	b.queue_free()
+
+
+func _t_twist_baseline() -> void:
+	print("[M3 无变异基线]")
+	var b := _fresh()
+	_check(b.active_twist_id == "" and b.active_twist.is_empty(), "默认无变异")
+	_check(b.mischief_triggers == [10], "LV1基线触发表=[10]")
+	b.generator_remaining = 4
+	_check(b.calc_star_rating() == 3, "基线三星线=剩余≥4")
+	_check(b.special_tiles.size() == 2, "基线毛线格=2")
+	b.queue_free()
+
+
+func _t_twist_serialize() -> void:
+	print("[M3 变异存档往返]")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "generous_day")
+	var saved := b.serialize_state()
+	var restored := BoardGame.new()
+	add_child(restored)
+	restored.deserialize_state(saved)
+	_check(restored.active_twist_id == "generous_day", "变异id恢复")
+	_check(int(restored.active_twist.get("star3_threshold", 0)) == 5, "变异配置重解析")
+	_check(restored.mischief_triggers == b.mischief_triggers, "触发表恢复")
+	restored.queue_free()
+	b.queue_free()
+
+
+# ---------------- M3-3.3 猫咪委托用例 ----------------
+
+const BoardOrdersS := preload("res://scripts/board_game/BoardOrders.gd")
+const BoardTelemetryS := preload("res://scripts/board_game/BoardTelemetry.gd")
+
+
+func _t_order_win() -> void:
+	print("[M3.3 委托局达成判胜]")
+	var order: Dictionary = BoardOrdersS.get_order_by_id("order_dual_delivery")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "", order)
+	_check(not b.active_order.is_empty(), "委托模式已激活")
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	var won := [false]
+	b.game_won.connect(func() -> void:
+		won[0] = true
+	)
+	# 先备好 主链⭐4×1 与 副链⭐3×1（不满足，还差一个副链⭐3）
+	b.grid[Vector2i(0, 0)] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.FOUR, Vector2i(0, 0))
+	b.grid[Vector2i(4, 0)] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, Vector2i(4, 0))
+	# 合并出第二个副链⭐3（放远避免三连合）
+	var p1 := Vector2i(0, 4)
+	var p2 := Vector2i(2, 4)
+	b.grid[p1] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.TWO, p1)
+	b.grid[p2] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.TWO, p2)
+	_check(not b.is_order_fulfilled(), "缺一件时未判胜")
+	_check(b.merge_items(p1, p2), "合出第二个副链⭐3")
+	_check(won[0] and b.game_state == BoardGameData.GameState.WON, "凑齐订单即判胜")
+	b.queue_free()
+
+
+func _t_order_click_limit() -> void:
+	print("[M3.3 限时委托超限判负]")
+	var order: Dictionary = BoardOrdersS.get_order_by_id("order_speed_rush")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "", order)
+	b.grid.clear()
+	b.special_tiles.clear()
+	var lost := [false]
+	b.game_lost.connect(func() -> void:
+		lost[0] = true
+	)
+	b.generator_click_count = 15
+	b.generator_remaining = 5
+	b.mischief_pending_trigger = -1  # 隔离捣乱干扰
+	_check(b.click_generator(), "第16次点击成功")
+	_check(lost[0] and b.game_state == BoardGameData.GameState.LOST, "超出生成上限未交付判负")
+	b.queue_free()
+
+
+func _t_order_serialize() -> void:
+	print("[M3.3 委托与埋点计数存档往返]")
+	var order: Dictionary = BoardOrdersS.get_order_by_id("order_feast")
+	var b := BoardGame.new()
+	add_child(b)
+	b.start_new_game(BoardGameData.BoardLevel.LV1, "bot", "", order)
+	b.excitement = BoardGameData.EXCITEMENT_MAX
+	b.trigger_frenzy(BoardGameData.FrenzyMode.GUARD)
+	b.undo_paid_count = 2
+	var saved := b.serialize_state()
+	var restored := BoardGame.new()
+	add_child(restored)
+	restored.deserialize_state(saved)
+	_check(String(restored.active_order.get("id", "")) == "order_feast", "委托id恢复")
+	_check(restored.active_order.get("requirements", []).size() == 2, "委托需求恢复")
+	_check(restored.frenzy_modes_used == [BoardGameData.FrenzyMode.GUARD], "狂欢选择记录恢复")
+	_check(restored.undo_paid_count == 2, "付费撤销计数恢复")
+	restored.queue_free()
+	b.queue_free()
+
+
+func _t_telemetry_roundtrip() -> void:
+	print("[M4 埋点读写往返]")
+	BoardTelemetryS.clear()
+	BoardTelemetryS.log_game({"ts": 1, "level": 1, "result": "win", "stars": 3})
+	BoardTelemetryS.log_game({"ts": 2, "level": 3, "result": "lose", "stars": 0})
+	var records: Array = BoardTelemetryS.read_all()
+	_check(records.size() == 2, "写入2条读出2条")
+	_check(int(records[0].get("ts", 0)) == 1 and String(records[1].get("result", "")) == "lose", "字段完整往返")
+	_check(BoardTelemetryS.count() == 2, "count 一致")
+	BoardTelemetryS.clear()
+	_check(BoardTelemetryS.count() == 0, "clear 清空")
+
+
+func _t_reward_tables() -> void:
+	print("[M1-5 奖励分表]")
+	var RewardS := preload("res://scripts/board_game/RewardSystem.gd")
+	for level in [BoardGameData.BoardLevel.LV1, BoardGameData.BoardLevel.LV2, BoardGameData.BoardLevel.LV3]:
+		var table: Dictionary = RewardS.REWARDS_BY_LEVEL[level]
+		var total := 0
+		for k in table:
+			total += int(table[k]["weight"])
+		_check(total == 100, "LV%d 权重总和=100" % level)
+	var lv1_decor: int = RewardS.REWARDS_BY_LEVEL[BoardGameData.BoardLevel.LV1]["cat_tree"]["weight"] + RewardS.REWARDS_BY_LEVEL[BoardGameData.BoardLevel.LV1]["cherry_tree"]["weight"]
+	var lv3_decor: int = RewardS.REWARDS_BY_LEVEL[BoardGameData.BoardLevel.LV3]["cat_tree"]["weight"] + RewardS.REWARDS_BY_LEVEL[BoardGameData.BoardLevel.LV3]["cherry_tree"]["weight"]
+	_check(lv3_decor > lv1_decor, "LV3 装饰权重高于 LV1")
+	for i in range(50):
+		var reward: Dictionary = RewardS.roll_reward(BoardGameData.BoardLevel.LV3)
+		if not reward.has("id") or not reward.has("name"):
+			_check(false, "roll_reward 返回结构完整")
+			return
+	_check(true, "roll_reward×50 返回结构完整")

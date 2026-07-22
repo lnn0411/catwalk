@@ -73,6 +73,21 @@ const COMBO_WINDOW_SECONDS := 3.0
 # 每局最大狂欢次数
 const FRENZY_MAX_TRIGGERS := 2
 
+# M2-K8: 狂欢二选一模式
+enum FrenzyMode { GUARD = 0, HELP = 1 }  # 护卫=抵消下一次捣乱；帮忙=立即免费生成2个主链⭐1
+
+# M2-K8: 「猫猫帮忙」免费生成的主链⭐1数量（不消耗生成器次数）
+const FRENZY_HELP_SPAWN_COUNT := 2
+
+# M2: 兴奋值满管后溢出部分的结转比例（50%存入蓄能池，狂欢释放后返还）
+const EXCITEMENT_OVERFLOW_CARRY := 0.5
+
+# M2: 连击兴奋值 = COMBO_BONUS × min(连击数-1, 上限倍数)，即 +4/+8/+12 封顶
+const EXCITEMENT_COMBO_CAP_MULT := 3
+
+# M2: 捣乱预警提前量（触发点前 N 次点击开始预警）
+const MISCHIEF_FOREWARN_CLICKS := 2
+
 # 狂欢持续时间（秒）（K7 狂欢改为「抵消捣乱」，不再有倒计时）
 # const FRENZY_DURATION_SECONDS := 10.0
 
@@ -128,7 +143,7 @@ static func get_level_config(level: int) -> Dictionary:
 				"initial_main_min": 4, "initial_main_max": 5,
 				"initial_sub_min": 2, "initial_sub_max": 3,
 				"mischief_triggers": [7, 14],
-				"reward_desc": "装饰+2pp",
+				"reward_desc": "奖励更丰厚：装饰与礼包概率提升",
 				"yarn_tile_count": 3,
 				"excitement_initial": 0,
 			}
@@ -137,7 +152,7 @@ static func get_level_config(level: int) -> Dictionary:
 				"initial_main_min": 4, "initial_main_max": 5,
 				"initial_sub_min": 2, "initial_sub_max": 3,
 				"mischief_triggers": [6, 12, 18],
-				"reward_desc": "装饰+礼包+4pp；⭐⭐⭐额外+猫罐头×1",
+				"reward_desc": "奖励最丰厚；⭐⭐⭐通关额外+猫罐头×1",
 				"yarn_tile_count": 4,
 				"excitement_initial": 0,
 			}
