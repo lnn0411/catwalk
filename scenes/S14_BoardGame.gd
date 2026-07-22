@@ -622,6 +622,10 @@ func _build_get_ticket_dialog() -> void:
 	# 弹窗面板
 	var panel := PanelContainer.new()
 	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.offset_left = -GET_TICKET_WIDTH * 0.5
+	panel.offset_right = GET_TICKET_WIDTH * 0.5
+	panel.offset_top = -185.0
+	panel.offset_bottom = 185.0
 	var style := StyleBoxFlat.new()
 	style.bg_color = Palette.PAPER_CREAM
 	style.set_corner_radius_all(24)
@@ -630,7 +634,6 @@ func _build_get_ticket_dialog() -> void:
 	style.content_margin_top = 28.0
 	style.content_margin_bottom = 28.0
 	panel.add_theme_stylebox_override("panel", style)
-	panel.custom_minimum_size = Vector2(GET_TICKET_WIDTH, 0)
 	_get_ticket_dialog.add_child(panel)
 
 	var vbox := VBoxContainer.new()
