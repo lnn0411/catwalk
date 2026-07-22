@@ -83,6 +83,8 @@ func _build_board_logic() -> void:
 	board.frenzy_activated.connect(_on_frenzy_activated)
 	board.mischief_cancelled.connect(_on_mischief_cancelled)  # K7: 狂欢抵消捣乱
 	board.highest_star_changed.connect(_on_highest_star_changed)
+	board.sub_chain_exit_done.connect(_on_sub_chain_exit_done)  # M1-2: 出口结算发奖
+	board.sub_exit_lifeline.connect(_on_sub_exit_lifeline)  # M1-3: 出口自救提示
 
 
 # ---------------- UI 构建 ----------------
@@ -572,7 +574,11 @@ func _refresh_all() -> void:
 		_cells[pos].refresh()
 	_state_label.text = "🐾 ×%d" % board.generator_remaining
 	_generator_label.text = "生成器 ×%d" % board.generator_remaining
-	_undo_button.text = "↩ 撤销 (%d)" % board.undo_free_count
+	# M1-1: 免费额度内显示剩余次数，用尽后显示钻石价格
+	if board.undo_free_count > 0:
+		_undo_button.text = "↩ 撤销 (%d)" % board.undo_free_count
+	else:
+		_undo_button.text = "↩ 撤销 %d💎" % BoardGame.UNDO_DIAMOND_COST
 	_undo_button.disabled = not board.can_undo()
 	_refresh_ticket_label()
 	_excitement_bar.value = float(board.excitement)
@@ -634,6 +640,18 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 	if board.is_generator_pos(pos):
 		if board.click_generator():
 			Juice.tap()
+		return
+	# M1-2: 点击副链⭐3 → 确认走出口（送出换奖励；首次额外返还2次生成器）
+	var item: BoardItem = board.get_item(pos)
+	if item != null and item.chain == board.current_sub_chain and item.star == BoardGameData.StarLevel.THREE:
+		var extra := "\n首次送出可返还 2 次生成器！" if not board.sub_chain_exit_used else ""
+		Popups.show_confirm(
+			"副链出口",
+			"把「%s」送给猫咪们？%s" % [item.get_display_name(), extra],
+			func() -> void:
+				if board.sub_chain_exit(pos):
+					Juice.reward()
+		)
 
 
 func _on_drop_requested(from_pos: Vector2i, to_pos: Vector2i) -> void:
@@ -669,9 +687,28 @@ func _on_generator_used(_count: int) -> void:
 
 
 func _on_undo_pressed() -> void:
-	# 免费次数用完后应扣钻石；当前版本仅提示（钻石扣费接 CurrencyManager 时补）
-	if board.undo():
+	# M1-1: 免费额度内直接撤销；用尽后确认扣钻石再撤销
+	var cost: Dictionary = board.get_undo_cost()
+	if int(cost.get("diamond_cost", 0)) <= 0:
+		if board.undo():
+			Juice.tap()
+		return
+	Popups.show_confirm(
+		"撤销",
+		"免费撤销次数已用完\n消耗 %d💎 撤销上一步？" % BoardGame.UNDO_DIAMOND_COST,
+		Callable(self, "_do_paid_undo")
+	)
+
+
+func _do_paid_undo() -> void:
+	if CurrencyManager == null or not CurrencyManager.spend_diamonds(BoardGame.UNDO_DIAMOND_COST):
+		Popups.show_toast("钻石不足")
+		return
+	if board.undo(true):
 		Juice.tap()
+	else:
+		# 撤销失败（如对局已结束）：退还钻石
+		CurrencyManager.add_diamonds(BoardGame.UNDO_DIAMOND_COST, "undo_refund")
 
 
 func _on_undo_performed(_action: Dictionary) -> void:
@@ -706,7 +743,8 @@ func _on_game_won() -> void:
 	# 记录累计胜场；若触发升档则弹出说明卡（等级仅升不降，持久化）
 	_record_win_and_maybe_upgrade()
 
-	var reward: Dictionary = BoardRewardSystem.roll_reward()
+	# M1-5: 奖励按棋盘等级分表 roll，兑现「奖励更丰厚」
+	var reward: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
 	var reward_id: String = String(reward.get("id", ""))
 	var reward_name: String = String(reward.get("name", "小鱼干"))
 
@@ -718,6 +756,10 @@ func _on_game_won() -> void:
 		display_text = "猫罐头×3"
 
 	var result_text := "🎉 通关！\n%s\n获得「%s」" % [star_str, display_text]  # D4
+	# M1-5: LV3 三星通关每局额外+猫罐头×1（兑现 reward_desc）
+	if stars >= 3 and board.board_level == BoardGameData.BoardLevel.LV3:
+		_add_reward_to_inventory("cat_can", "猫罐头")
+		result_text += "\n⭐⭐⭐额外奖励：猫罐头×1"
 	if _has_three_star_bonus:  # D4
 		result_text += "\n首次⭐⭐⭐奖励：小鱼干×1"  # D4
 	_result_label.text = result_text  # D4
@@ -757,9 +799,32 @@ func _show_level_up_popup(new_level: int) -> void:
 
 
 func _on_sub_chain_completed(_item: BoardItem) -> void:
-	# 副链⭐3出口奖励：奖励小鱼干×1
+	# M1-2: 合成时仅提示可走出口，奖励改为出口结算时发放（防「撤销-重合」刷取）
+	var hint := "副链⭐3！点击它送出可换奖励"
+	if not board.sub_chain_exit_used:
+		hint += "，首次返还生成器×2"
+	Popups.show_toast(hint)
+
+
+func _on_sub_chain_exit_done(_pos: Vector2i, first_time: bool) -> void:
+	# M1-2: 出口结算发奖——出口不可撤销，天然防刷
 	_add_reward_to_inventory("fish_dried", "小鱼干")
-	Popups.show_toast("副链出口！获得小鱼干×1")
+	if first_time:
+		Popups.show_toast("送出成功！获得小鱼干×1，生成器+2")
+	else:
+		Popups.show_toast("送出成功！获得小鱼干×1")
+	_refresh_all()
+
+
+func _on_sub_exit_lifeline(pos: Vector2i) -> void:
+	# M1-3: 死局豁免提示——高亮副链⭐3，引导玩家走出口自救
+	Popups.show_toast("没有可合并的了！送出副链⭐3 可换生成器×2")
+	if _cells.has(pos):
+		var cell: Control = _cells[pos]
+		var tween := create_tween()
+		tween.set_loops(3)
+		tween.tween_property(cell, "modulate", Color(1.3, 1.2, 0.8), 0.25)
+		tween.tween_property(cell, "modulate", Color.WHITE, 0.25)
 
 
 # 奖励类型→InventoryManager 映射

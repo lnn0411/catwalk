@@ -128,7 +128,7 @@ static func get_level_config(level: int) -> Dictionary:
 				"initial_main_min": 4, "initial_main_max": 5,
 				"initial_sub_min": 2, "initial_sub_max": 3,
 				"mischief_triggers": [7, 14],
-				"reward_desc": "装饰+2pp",
+				"reward_desc": "奖励更丰厚：装饰与礼包概率提升",
 				"yarn_tile_count": 3,
 				"excitement_initial": 0,
 			}
@@ -137,7 +137,7 @@ static func get_level_config(level: int) -> Dictionary:
 				"initial_main_min": 4, "initial_main_max": 5,
 				"initial_sub_min": 2, "initial_sub_max": 3,
 				"mischief_triggers": [6, 12, 18],
-				"reward_desc": "装饰+礼包+4pp；⭐⭐⭐额外+猫罐头×1",
+				"reward_desc": "奖励最丰厚；⭐⭐⭐通关额外+猫罐头×1",
 				"yarn_tile_count": 4,
 				"excitement_initial": 0,
 			}

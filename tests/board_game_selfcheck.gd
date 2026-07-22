@@ -29,6 +29,15 @@ func _ready() -> void:
 	_t_serialize_restore()
 	_t_undo_merge()
 	_t_sub_chain_exit()
+	_t_undo_paid_gate()
+	_t_undo_excitement_rollback()
+	_t_undo_triple_merge()
+	_t_sub_exit_second_time()
+	_t_deadlock_lifeline()
+	_t_sequence_no_rewind()
+	_t_extra_clicks_main_chain()
+	_t_undo_generator_click_count()
+	_t_reward_tables()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -239,3 +248,183 @@ func _t_sub_chain_exit() -> void:
 	_check(b.generator_remaining == 5, "次数+2")
 	_check(b.sub_chain_exit_used, "副链出口标记已使用")
 	b.queue_free()
+
+
+# ---------------- M1 热修用例 ----------------
+
+func _t_undo_paid_gate() -> void:
+	print("[M1-1 撤销付费拦截]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.undo_free_count = 0
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	_check(b.merge_items(p1, p2), "合并成功")
+	_check(not b.undo(), "免费额度耗尽后未付费撤销被拒")
+	_check(b.grid.has(p2) and b.grid[p2].star == BoardGameData.StarLevel.TWO, "拒绝后棋盘不变")
+	_check(b.undo(true), "付费撤销成功")
+	_check(b.get_undo_cost()["diamond_cost"] == BoardGame.UNDO_DIAMOND_COST, "付费期成本=10钻")
+	b.queue_free()
+
+
+func _t_undo_excitement_rollback() -> void:
+	print("[M1-2 撤销回退兴奋值]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.excitement = 0
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	_check(b.merge_items(p1, p2), "合并成功")
+	_check(b.excitement > 0, "合并增加兴奋值")
+	_check(b.undo(), "撤销成功")
+	_check(b.excitement == 0, "兴奋值回退到合并前")
+	_check(b._combo_count == 0, "连击计数重置")
+	b.queue_free()
+
+
+func _t_undo_triple_merge() -> void:
+	print("[M1-2 三连合撤销完整性]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	var p3 := Vector2i(2, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p2)
+	b.grid[p3] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.TWO, p3)
+	var before := b.serialize_state()
+	_check(b.merge_items(p1, p2), "合并触发三连合")
+	_check(b.grid.has(p2) and b.grid[p2].star == BoardGameData.StarLevel.THREE, "三连合产物⭐3")
+	_check(not b.grid.has(p3), "邻居⭐2被吞")
+	_check(b.undo(), "撤销成功")
+	var after := b.serialize_state()
+	_check(after.grid == before.grid, "撤销后棋盘完全还原（邻居归位、返还⭐1收回）")
+	b.queue_free()
+
+
+func _t_sub_exit_second_time() -> void:
+	print("[M1-2 副链出口二次结算]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_remaining = 3
+	var results: Array = []
+	b.sub_chain_exit_done.connect(func(_pos: Vector2i, first_time: bool) -> void:
+		results.append(first_time)
+	)
+	var p := Vector2i(0, 0)
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	_check(b.sub_chain_exit(p), "首次出口成功")
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	_check(b.sub_chain_exit(p), "二次出口成功")
+	_check(b.generator_remaining == 5, "仅首次返还+2")
+	_check(results == [true, false], "出口信号 first_time 标记正确")
+	b.queue_free()
+
+
+func _t_deadlock_lifeline() -> void:
+	print("[M1-3 死局出口豁免]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_remaining = 0
+	var lifeline := [false]
+	b.sub_exit_lifeline.connect(func(_pos: Vector2i) -> void:
+		lifeline[0] = true
+	)
+	var p := Vector2i(0, 0)
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	b._check_deadlock()
+	_check(b.game_state == BoardGameData.GameState.PLAYING, "有副链⭐3+出口未用不判负")
+	_check(lifeline[0], "发出自救提示信号")
+	_check(b.sub_chain_exit(p), "走出口自救成功")
+	_check(b.generator_remaining == 2, "出口返还+2次生成器")
+	# 出口已用后再陷入同样局面 → 正常判负
+	b.grid.clear()
+	b.generator_remaining = 0
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	b._check_deadlock()
+	_check(b.game_state == BoardGameData.GameState.LOST, "出口已用后同局面正常判负")
+	b.queue_free()
+
+
+func _t_sequence_no_rewind() -> void:
+	print("[M1-4 出口返还不倒带序列]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_remaining = BoardGameData.GENERATOR_TOTAL
+	var drops: Array = []
+	b.generator_clicked.connect(func(_pos: Vector2i, item: BoardItem) -> void:
+		drops.append(item.chain)
+	)
+	for i in range(4):
+		b.click_generator()
+	# 第4次点击后走出口返还+2（remaining 16→18），旧实现会使索引倒带
+	var p := Vector2i(4, 4)
+	b.grid[p] = BoardItem.create(b.current_sub_chain, BoardGameData.StarLevel.THREE, p)
+	_check(b.sub_chain_exit(p), "出口返还成功")
+	b.click_generator()  # 第5次点击：索引4，必须仍是副链
+	_check(drops.size() == 5 and drops[4] == b.current_sub_chain, "返还后第5次点击仍为副链（序列不倒带）")
+	b.queue_free()
+
+
+func _t_extra_clicks_main_chain() -> void:
+	print("[M1-4 超出序列恒出主链]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_click_count = BoardGameData.DROP_SEQUENCE.size()  # 已走完20次
+	b.generator_remaining = 2  # 出口返还的额外次数
+	var drops: Array = []
+	b.generator_clicked.connect(func(_pos: Vector2i, item: BoardItem) -> void:
+		drops.append(item.chain)
+	)
+	b.click_generator()
+	b.click_generator()
+	_check(drops.size() == 2, "额外2次点击成功")
+	_check(drops[0] == b.current_main_chain and drops[1] == b.current_main_chain, "超出序列的点击恒出主链")
+	b.queue_free()
+
+
+func _t_undo_generator_click_count() -> void:
+	print("[M1-4 撤销生成器回退计数]")
+	var b := _fresh()
+	b.grid.clear()
+	b.generator_remaining = BoardGameData.GENERATOR_TOTAL
+	b.undo_stack.clear()
+	var drops: Array = []
+	b.generator_clicked.connect(func(_pos: Vector2i, item: BoardItem) -> void:
+		drops.append(item.chain)
+	)
+	b.click_generator()
+	_check(b.generator_click_count == 1, "点击后计数=1")
+	_check(b.undo(), "撤销生成器点击成功")
+	_check(b.generator_click_count == 0, "撤销后计数回退到0")
+	b.click_generator()
+	_check(drops.size() == 2 and drops[0] == drops[1], "重新点击产出与被撤销一致（不可reroll）")
+	b.queue_free()
+
+
+func _t_reward_tables() -> void:
+	print("[M1-5 奖励分表]")
+	var RewardS := preload("res://scripts/board_game/RewardSystem.gd")
+	for level in [BoardGameData.BoardLevel.LV1, BoardGameData.BoardLevel.LV2, BoardGameData.BoardLevel.LV3]:
+		var table: Dictionary = RewardS.REWARDS_BY_LEVEL[level]
+		var total := 0
+		for k in table:
+			total += int(table[k]["weight"])
+		_check(total == 100, "LV%d 权重总和=100" % level)
+	var lv1_decor: int = RewardS.REWARDS_BY_LEVEL[BoardGameData.BoardLevel.LV1]["cat_tree"]["weight"] + RewardS.REWARDS_BY_LEVEL[BoardGameData.BoardLevel.LV1]["cherry_tree"]["weight"]
+	var lv3_decor: int = RewardS.REWARDS_BY_LEVEL[BoardGameData.BoardLevel.LV3]["cat_tree"]["weight"] + RewardS.REWARDS_BY_LEVEL[BoardGameData.BoardLevel.LV3]["cherry_tree"]["weight"]
+	_check(lv3_decor > lv1_decor, "LV3 装饰权重高于 LV1")
+	for i in range(50):
+		var reward: Dictionary = RewardS.roll_reward(BoardGameData.BoardLevel.LV3)
+		if not reward.has("id") or not reward.has("name"):
+			_check(false, "roll_reward 返回结构完整")
+			return
+	_check(true, "roll_reward×50 返回结构完整")
