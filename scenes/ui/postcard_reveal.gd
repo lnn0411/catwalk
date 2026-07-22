@@ -161,24 +161,36 @@ func _build_ui() -> void:
 
 func _load_postcard_image(postcard_id: String) -> void:
 	if _art_texture == null:
+		print("[PostcardReveal] _art_texture is null!")
 		return
+	print("[PostcardReveal] loading: ", postcard_id)
 	if postcard_id == "":
+		print("[PostcardReveal] postcard_id is empty, hiding texture")
 		_art_texture.modulate.a = 0.0
 		_art_texture.texture = null
 		return
 	var tex: Texture2D = null
 	var res_path := "res://assets/art/postcards/" + postcard_id + ".png"
+	print("[PostcardReveal] res_path: ", res_path)
+	print("[PostcardReveal] ResourceLoader.exists: ", ResourceLoader.exists(res_path))
 	if ResourceLoader.exists(res_path, "Texture2D"):
 		tex = load(res_path) as Texture2D
+		print("[PostcardReveal] loaded via ResourceLoader: ", tex != null)
 	if tex == null:
 		var img := Image.new()
 		var abs_path := ProjectSettings.globalize_path(res_path)
-		if img.load(abs_path) == OK:
+		print("[PostcardReveal] abs_path: ", abs_path)
+		var err := img.load(abs_path)
+		print("[PostcardReveal] Image.load err: ", err)
+		if err == OK:
 			tex = ImageTexture.create_from_image(img)
+			print("[PostcardReveal] ImageTexture created: ", tex != null)
 	if tex != null:
+		print("[PostcardReveal] SUCCESS: texture set, making visible")
 		_art_texture.texture = tex
 		_art_texture.modulate.a = 1.0
 	else:
+		print("[PostcardReveal] FAILED: no texture loaded")
 		_art_texture.modulate.a = 0.0
 
 
