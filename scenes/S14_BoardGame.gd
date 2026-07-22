@@ -59,6 +59,7 @@ var _walk_cat_frame_idx: int = 0           # 当前帧索引
 var _walk_cat_dir: float = 1.0             # 移动方向(1=右, -1=左)
 var _walk_cat_active: bool = false         # 是否在走动
 var _walk_cat_tween: Tween                 # 左右走 Tween
+var _walk_cat_hint: Label                  # 猫头顶文字标签
 var _banner_hint_token: int = 0            # 目标横幅临时提示的最新令牌
 
 
@@ -700,8 +701,14 @@ func _on_mischief_warning(pos: Vector2i) -> void:
 		tween.set_loops(2)
 		tween.tween_property(cell, "modulate", Color(1.0, 0.3, 0.3, 0.7), 0.2)
 		tween.tween_property(cell, "modulate", Color.WHITE, 0.2)
-	# 捣乱预警：小猫愣住（暂停走动）+ 横幅提示
+	# 捣乱预警：小猫愣住（暂停走动）+ 吓一跳的小动画 + 横幅提示
 	_pause_walk_cat()
+	if _walk_cat_tex != null:
+		# scale 瞬间弹到 1.15 再弹回 1.0（0.15s 内完成），以自身中心为轴
+		_walk_cat_tex.pivot_offset = _walk_cat_tex.size * 0.5
+		var scare := create_tween()
+		scare.tween_property(_walk_cat_tex, "scale", Vector2(1.15, 1.15), 0.075)
+		scare.tween_property(_walk_cat_tex, "scale", Vector2.ONE, 0.075)
 	_show_banner_hint("⚠️ 不妙！猫咪要搞事情...", 1.5)
 
 
@@ -709,6 +716,14 @@ func _on_mischief_triggered(pos: Vector2i, item: BoardItem) -> void:
 	# 物品被拍飞：先抓取纹理做飞出动画，再刷新棋盘
 	_play_mischief_fly_out(pos, item)
 	_show_banner_hint("啪！猫咪把东西拍飞了！", 2.0)
+	# 小猫得意的轻微上下弹跳（类似偷笑）
+	if _walk_cat_tex != null:
+		var base_y := _walk_cat_tex.position.y
+		var giggle := create_tween()
+		giggle.tween_property(_walk_cat_tex, "position:y", base_y - 8.0, 0.1)
+		giggle.tween_property(_walk_cat_tex, "position:y", base_y, 0.1)
+		giggle.tween_property(_walk_cat_tex, "position:y", base_y - 8.0, 0.1)
+		giggle.tween_property(_walk_cat_tex, "position:y", base_y, 0.1)
 	_refresh_all()
 	# 捣乱执行完毕，小猫恢复走动
 	_resume_walk_cat()
@@ -1111,9 +1126,18 @@ func _on_mischief_cancelled(pos: Vector2i) -> void:
 	# 狂欢抵消捣乱：小猫暂停 + 绿光反馈，反馈结束后恢复走动
 	_pause_walk_cat()
 	if _walk_cat_tex != null:
+		# 绿光 3 次快速闪烁：透明度 0.3→1.0→0.3→1.0→0.3→1.0，约 300ms
+		var green := Color(0.6, 1.0, 0.6, 1.0)
+		var green_dim := Color(0.6, 1.0, 0.6, 0.3)
+		_walk_cat_tex.modulate = green_dim
+		var flash := 0.06
 		var cat_tween := create_tween()
-		cat_tween.tween_property(_walk_cat_tex, "modulate", Color(0.6, 1.0, 0.6, 1.0), 0.15)
-		cat_tween.tween_property(_walk_cat_tex, "modulate", Color.WHITE, 0.25)
+		cat_tween.tween_property(_walk_cat_tex, "modulate", green, flash)
+		cat_tween.tween_property(_walk_cat_tex, "modulate", green_dim, flash)
+		cat_tween.tween_property(_walk_cat_tex, "modulate", green, flash)
+		cat_tween.tween_property(_walk_cat_tex, "modulate", green_dim, flash)
+		cat_tween.tween_property(_walk_cat_tex, "modulate", green, flash)
+		cat_tween.tween_property(_walk_cat_tex, "modulate", Color.WHITE, 0.1)
 		cat_tween.finished.connect(_resume_walk_cat)
 	else:
 		_resume_walk_cat()
@@ -1138,10 +1162,10 @@ func _build_walk_cat() -> void:
 	_walk_cat_container = Control.new()
 	_walk_cat_container.name = "WalkCat"
 	_walk_cat_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_walk_cat_container.custom_minimum_size = Vector2(grid_w, 150.0)
-	_walk_cat_container.size = Vector2(grid_w, 150.0)
+	_walk_cat_container.custom_minimum_size = Vector2(grid_w, 120.0)
+	_walk_cat_container.size = Vector2(grid_w, 120.0)
 	# 紧贴兴奋值进度条下方（不遮挡棋盘）
-	_walk_cat_container.position = Vector2((DESIGN_SIZE.x - grid_w) * 0.5, grid_top - 160.0)
+	_walk_cat_container.position = Vector2((DESIGN_SIZE.x - grid_w) * 0.5, grid_top - 135.0)
 
 	_walk_cat_tex = TextureRect.new()
 	_walk_cat_tex.name = "WalkCatTex"
@@ -1149,6 +1173,29 @@ func _build_walk_cat() -> void:
 	_walk_cat_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_walk_cat_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_walk_cat_container.add_child(_walk_cat_tex)
+
+	# 猫头顶文字标签：显示在猫的正上方（容器上沿区域）
+	_walk_cat_hint = Label.new()
+	_walk_cat_hint.name = "WalkCatHint"
+	_walk_cat_hint.text = ""
+	_walk_cat_hint.add_theme_font_size_override("font_size", 16)
+	_walk_cat_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_walk_cat_hint.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	_walk_cat_hint.add_theme_color_override("font_color", Color("4F453C"))
+	_walk_cat_hint.add_theme_constant_override("shadow_outline_size", 2)
+	_walk_cat_hint.add_theme_color_override("font_shadow_color", Color(1, 1, 1, 0.8))
+	# 覆盖容器顶部区域，横向铺满、位于猫上方
+	_walk_cat_hint.anchor_left = 0.0
+	_walk_cat_hint.anchor_right = 1.0
+	_walk_cat_hint.anchor_top = 0.0
+	_walk_cat_hint.anchor_bottom = 0.0
+	_walk_cat_hint.offset_left = 0.0
+	_walk_cat_hint.offset_right = 0.0
+	_walk_cat_hint.offset_top = -8.0
+	_walk_cat_hint.offset_bottom = 26.0
+	_walk_cat_hint.visible = false
+	_walk_cat_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_walk_cat_container.add_child(_walk_cat_hint)
 
 	_walk_cat_timer = Timer.new()
 	_walk_cat_timer.name = "WalkCatTimer"
@@ -1183,12 +1230,12 @@ func _start_walk_cat() -> void:
 	_walk_cat_frame_idx = 0
 	_walk_cat_tex.texture = _walk_cat_frames[0]
 	_walk_cat_tex.flip_h = false
-	# 按帧实际比例等比缩放，高度固定 150px
+	# 按帧实际比例等比缩放，高度固定 120px
 	var f0 := _walk_cat_frames[0]
 	var fh := f0.get_height()
-	var scaled_w := 150.0 * (float(f0.get_width()) / float(fh)) if fh > 0 else 150.0
-	_walk_cat_tex.custom_minimum_size = Vector2(scaled_w, 150.0)
-	_walk_cat_tex.size = Vector2(scaled_w, 150.0)
+	var scaled_w := 120.0 * (float(f0.get_width()) / float(fh)) if fh > 0 else 120.0
+	_walk_cat_tex.custom_minimum_size = Vector2(scaled_w, 120.0)
+	_walk_cat_tex.size = Vector2(scaled_w, 120.0)
 	_walk_cat_tex.position = Vector2.ZERO
 	_walk_cat_active = true
 	_walk_cat_timer.start()
@@ -1234,6 +1281,8 @@ func _resume_walk_cat() -> void:
 
 func _stop_walk_cat() -> void:
 	_walk_cat_active = false
+	if _walk_cat_hint != null:
+		_walk_cat_hint.visible = false
 	if _walk_cat_timer != null:
 		_walk_cat_timer.stop()
 	if _walk_cat_tween != null and _walk_cat_tween.is_valid():
@@ -1256,12 +1305,19 @@ func _show_banner_hint(text: String, duration: float) -> void:
 	_banner_hint_token += 1
 	var my_token := _banner_hint_token
 	_target_banner_label.text = text
+	# 额外在猫头顶显示同样的文字气泡
+	if _walk_cat_hint != null:
+		_walk_cat_hint.text = text
+		_walk_cat_hint.visible = true
 	get_tree().create_timer(duration).timeout.connect(func():
 		if my_token == _banner_hint_token:
 			_restore_banner_label())
 
 
 func _restore_banner_label() -> void:
+	# 隐藏猫头顶文字气泡
+	if _walk_cat_hint != null:
+		_walk_cat_hint.visible = false
 	if _target_banner_label == null or board == null:
 		return
 	var main_name: String = ItemChains.get_chain_display_name(board.current_main_chain)
