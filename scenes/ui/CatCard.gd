@@ -531,6 +531,9 @@ func _show_postcard_reveal(reward_type: String, postcard_id: String = "") -> voi
 	var reveal = packed.instantiate()
 	reveal.closed.connect(func() -> void:
 		reveal.queue_free()
+		# 收下后弹出明信片大图
+		if postcard_id != "":
+			_show_postcard_detail(postcard_id)
 	)
 	_add_overlay(reveal)
 	var postcard_data := {}
@@ -542,7 +545,17 @@ func _show_postcard_reveal(reward_type: String, postcard_id: String = "") -> voi
 	var wsm = get_node_or_null("/root/WeeklySpotlightManager")
 	if wsm != null and wsm.has_method("get_current_spotlight_location"):
 		spotlight_location = String(wsm.get_current_spotlight_location())
-	reveal.reveal(_get_cat_display_name(), reward_type, spotlight_location, postcard_data, postcard_id)
+	reveal.reveal(_get_cat_display_name(), reward_type, spotlight_location, postcard_data)
+
+
+func _show_postcard_detail(postcard_id: String) -> void:
+	var popup = preload("res://scripts/collect_book/postcard_detail_popup.gd").new()
+	popup.setup(postcard_id, true)
+	popup.closed.connect(func() -> void:
+		if is_instance_valid(popup):
+			popup.queue_free()
+	)
+	_add_overlay(popup)
 
 
 func _add_overlay(node: Control) -> void:
