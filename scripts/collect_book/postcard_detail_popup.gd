@@ -173,11 +173,19 @@ func _draw_front(c: Control, font: Font, rect: Rect2) -> void:
 		print("[PostcardDetail] Image loaded, size: ", tex.get_size())
 	
 	if tex:
-		print("[PostcardDetail] drawing texture, tex_size=", tex.get_size(), " card_size=", CARD_SIZE, " rect=", rect, " face_size=", _card_face.size)
-		# 先用红色验证绘制位置
-		c.draw_rect(rect, Color.RED, true)
-		# 有贴图：直接绘制图片 + 叠加信息层
-		c.draw_texture_rect(tex, rect, false)
+		print("[PostcardDetail] drawing texture, tex_size=", tex.get_size(), " face_size=", _card_face.size)
+		# 清除旧 TextureRect（翻转到背面时不会残留）
+		for child in c.get_children():
+			if child is TextureRect:
+				child.queue_free()
+		# 用 TextureRect 替代 draw_texture_rect（与缩略图方式一致）
+		var tex_rect := TextureRect.new()
+		tex_rect.texture = tex
+		tex_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tex_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tex_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		tex_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		c.add_child(tex_rect)
 		# 半透明渐变底条（底部信息区可读性）
 		var bar := Rect2(0, rect.size.y - 50, rect.size.x, 50)
 		c.draw_rect(bar, Color(0, 0, 0, 0.45), true)
