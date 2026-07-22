@@ -136,13 +136,11 @@ func _show_summary_card(steps: int, companion_name: String, breed: String) -> bo
 	var canvas := CanvasLayer.new()
 	canvas.layer = 100
 	canvas.add_child(card)
-	# 窗口根加入
-	var root := Engine.get_main_loop()
-	if root and root.has_method("get_root"):
-		var scene_root := root.get_root()
-		if scene_root:
-			scene_root.add_child(canvas)
-			return true
+	# 直接找到场景根节点加入
+	var tree := get_tree()
+	if tree and tree.root:
+		tree.root.add_child(canvas)
+		return true
 	return false
 
 
