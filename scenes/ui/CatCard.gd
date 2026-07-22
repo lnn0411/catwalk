@@ -513,7 +513,6 @@ func _collect_explore_return() -> void:
 		return
 	var reward_type: String = entry.get("reward_type", "")
 	var postcard_id_val: String = String(entry.get("postcard_id", ""))
-	print("[CatCard] collect: reward_type=", reward_type, " postcard_id='", postcard_id_val, "'")
 	if EventBus:
 		EventBus.emit_explore_returned(cat_id, reward_type)
 	_show_return_animation(reward_type, postcard_id_val)
@@ -534,7 +533,6 @@ func _show_return_animation(reward_type: String, postcard_id: String = "") -> vo
 
 
 func _show_postcard_reveal(reward_type: String, postcard_id: String = "") -> void:
-	print("[CatCard] _show_postcard_reveal reward_type=", reward_type, " postcard_id='", postcard_id, "'")
 	var packed := load("res://scenes/ui/postcard_reveal.tscn")
 	var reveal = packed.instantiate()
 	reveal.closed.connect(func() -> void:

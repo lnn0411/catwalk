@@ -167,14 +167,11 @@ func _draw_front(c: Control, font: Font, rect: Rect2) -> void:
 	var img := Image.new()
 	var abs_path := ProjectSettings.globalize_path(tex_path)
 	var err := img.load(abs_path)
-	print("[PostcardDetail] Image.load path=", abs_path, " err=", err)
 	if err == OK:
 		tex = ImageTexture.create_from_image(img)
-		print("[PostcardDetail] Image loaded, size: ", tex.get_size())
 	
 	if tex:
-		print("[PostcardDetail] drawing texture, tex_size=", tex.get_size(), " face_size=", _card_face.size)
-		# 清除旧 TextureRect（翻转到背面时不会残留）
+		# 用 TextureRect 替代 draw_texture_rect（与缩略图方式一致）
 		for child in c.get_children():
 			if child is TextureRect:
 				child.queue_free()
