@@ -64,7 +64,9 @@ var _gt_interact_label: Label             # 互动进度行
 var _gt_login_label: Label                # 登录状态行
 var _gt_ad_btn: Button                    # 看广告按钮
 var _gt_coin_btn: Button                  # 金币兑换按钮
-var _gt_start_btn: Button                 # 门票≥1时的开始游戏按钮
+var _gt_ok_btn: TextureButton             # 确认按钮（有票→开始游戏，无票→知道了）
+var _gt_ok_label: Label                   # 确认按钮文字
+var _gt_ok_is_start: bool = false         # 确认按钮当前模式
 var _get_ticket_result_label: Label       # 弹窗内文字（备用）
 var _has_three_star_bonus: bool = false  # D4
 var _excitement_bar: ProgressBar          # 兴奋值条
@@ -703,7 +705,7 @@ func _build_get_ticket_dialog() -> void:
 
 	# 居中卡片（行动面板：3 状态行 + 2 按钮 + 直达入口）
 	var card := Control.new()
-	_center_control(card, Vector2(480, 400))
+	_center_control(card, Vector2(480, 320))
 	_get_ticket_dialog.add_child(card)
 
 	# 底图贴图（加载失败回退 StyleBoxFlat）
@@ -784,53 +786,33 @@ func _build_get_ticket_dialog() -> void:
 	_gt_coin_btn.pressed.connect(_on_gt_coin_pressed)
 	action_row.add_child(_gt_coin_btn)
 
-	# 兑换成功后直达入口（门票≥1时显示）
-	_gt_start_btn = Button.new()
-	_gt_start_btn.text = "🎮 开始游戏"
-	_gt_start_btn.custom_minimum_size = Vector2(240, 64)
-	_gt_start_btn.add_theme_font_size_override("font_size", 20)
-	_apply_btn_art(_gt_start_btn, true)
-	_gt_start_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER  # 不横向铺满
-	_gt_start_btn.visible = false
-	_gt_start_btn.pressed.connect(func() -> void:
-		_get_ticket_dialog.visible = false
-		_start_game()
-	)
-	box.add_child(_gt_start_btn)
-
-	# 分隔线
-	var sep2 := HSeparator.new()
-	sep2.custom_minimum_size = Vector2(0, 2)
-	box.add_child(sep2)
-
-	# 知道了按钮（btn_confirm_name.png 贴图 + 叠加文字）
+	# 确认按钮（有票→开始游戏，无票→知道了）
 	var btn_row := HBoxContainer.new()
 	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(btn_row)
 
-	var ok_btn := TextureButton.new()
-	ok_btn.custom_minimum_size = Vector2(170, 70)
+	_gt_ok_btn = TextureButton.new()
+	_gt_ok_btn.custom_minimum_size = Vector2(170, 70)
 	var btn_tex := ResourceLoader.load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
 	if btn_tex != null:
-		ok_btn.texture_normal = btn_tex
-	ok_btn.ignore_texture_size = true
-	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
-	ok_btn.pressed.connect(func():
-		_get_ticket_dialog.visible = false
-		UIManager.pop()
-	)
-	btn_row.add_child(ok_btn)
+		_gt_ok_btn.texture_normal = btn_tex
+	_gt_ok_btn.ignore_texture_size = true
+	_gt_ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
+	_gt_ok_btn.pressed.connect(_on_gt_ok_pressed)
+	btn_row.add_child(_gt_ok_btn)
 
 	# 按钮 Label 叠加
-	var btn_label := Label.new()
-	btn_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	btn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	btn_label.text = "知道了"
-	btn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	btn_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	btn_label.add_theme_font_size_override("font_size", 18)
-	btn_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	ok_btn.add_child(btn_label)
+	_gt_ok_label = Label.new()
+	_gt_ok_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_gt_ok_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gt_ok_label.text = "知道了"
+	_gt_ok_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gt_ok_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_gt_ok_label.add_theme_font_size_override("font_size", 18)
+	_gt_ok_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	_gt_ok_btn.add_child(_gt_ok_label)
+
+	_gt_ok_is_start = false
 
 
 static func _center_control(control: Control, control_size: Vector2) -> void:
@@ -886,9 +868,19 @@ func _refresh_get_ticket_dialog() -> void:
 	_gt_coin_btn.disabled = coin_left <= 0 or gold < TicketManager.COIN_COST_PER_TICKET
 	if gold < TicketManager.COIN_COST_PER_TICKET and coin_left > 0:
 		_gt_coin_btn.text += " 金币不足"
-	# 门票≥1 → 显示开始按钮
-	_gt_start_btn.visible = TicketManager.get_tickets() > 0
+	# 门票≥1 → 按钮变为"开始游戏"
+	var has_tickets: bool = TicketManager.get_tickets() > 0
+	_gt_ok_is_start = has_tickets
+	_gt_ok_label.text = "🎮 开始游戏" if has_tickets else "知道了"
 	_refresh_ticket_label()
+
+
+func _on_gt_ok_pressed() -> void:
+	_get_ticket_dialog.visible = false
+	if _gt_ok_is_start:
+		_start_game()
+	else:
+		UIManager.pop()
 
 
 func _on_gt_coin_pressed() -> void:
