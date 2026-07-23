@@ -1,5 +1,10 @@
 # 能量/孵化系统 · 设计修订与迭代方案 v2.2
 
+> ⚠️ **排程已并入总案**：本文档的批次（B1~B6/C1~C2）现由
+> `specs/launch_overhaul_master_plan.md`（上线测试整备总案）统一排程为 P1~P5，
+> 并叠加了 16 项全局裁决（annoyed 阈值、广告位#4 改绑、状态矩阵等）。
+> 数值与规格明细仍以本文档为准；冲突处以总案裁决表为准。
+>
 > 基于 2026-07-22 能量/孵化系统设计与数值审计产出
 > 涉及模块：`core/StepEngine.gd`、`core/EnergyEngine.gd`、`core/HatchEngine.gd`、
 > `core/BreedUnlockEngine.gd`、`core/LevelSystem.gd`、`core/PackageSystem.gd`、
