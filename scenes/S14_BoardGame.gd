@@ -1720,6 +1720,9 @@ func _on_combo_triggered(count: int) -> void:
 
 func _on_frenzy_ready() -> void:
 	# 兴奋值满，显示狂欢按钮 + 弹入脉冲 + 金色呼吸循环
+	# 本局狂欢次数用尽则不再展示（trigger_frenzy 会拒绝，避免可点无反馈）
+	if board.frenzy_triggers_used >= BoardGameData.FRENZY_MAX_TRIGGERS:
+		return
 	# frenzy_ready 会在兴奋值满时反复触发，已展示则跳过避免动画堆叠
 	if _frenzy_button.visible:
 		return
@@ -1971,7 +1974,9 @@ func _spawn_golden_stars() -> void:
 
 
 func _on_frenzy_items_spawned(positions: Array) -> void:
-	# M2-K8: 猫猫帮忙生成物品——播放生成动画
+	# M2-K8: 猫猫帮忙生成物品——先重绘格子再播生成动画
+	# （物品只进逻辑棋盘，不 refresh 则界面看不到，与 _on_generator_produced 同序）
+	_refresh_all()
 	Popups.show_toast("✨ 猫猫们帮忙生成了%d个物品！" % positions.size())
 	for pos in positions:
 		if _cells.has(pos):
