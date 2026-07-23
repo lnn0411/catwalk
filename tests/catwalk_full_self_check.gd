@@ -583,11 +583,11 @@ func _section_core_loop() -> void:
 		_xx("CORE_LOOP", "EnergyEngine unavailable")
 	else:
 		_check("CORE_LOOP", energy.calc_energy(0, false) == 0, "calc_energy 0 steps = 0")
-		_check("CORE_LOOP", energy.calc_energy(1000, false) == 300, "calc_energy 1000 old-player steps = 300")
-		_check("CORE_LOOP", energy.calc_energy(1000, true) == 800, "calc_energy 1000 new-player steps = 800")
-		_check("CORE_LOOP", energy.calc_energy(3000, false) == 2300, "calc_energy 3000 old-player steps = 2300")
-		_check("CORE_LOOP", energy.calc_energy(5000, false) == 4700, "calc_energy 5000 old-player steps = 4700")
-		_check("CORE_LOOP", energy.calc_energy(6000, false) == 6200, "calc_energy 6000 old-player steps = 6200")
+		_check("CORE_LOOP", energy.calc_energy(1000, false) == 1100, "calc_energy 1000 old-player steps = 1100")
+		_check("CORE_LOOP", energy.calc_energy(1000, true) == 1320, "calc_energy 1000 new-player steps = 1320")
+		_check("CORE_LOOP", energy.calc_energy(3000, false) == 3150, "calc_energy 3000 old-player steps = 3150")
+		_check("CORE_LOOP", energy.calc_energy(5000, false) == 4950, "calc_energy 5000 old-player steps = 4950")
+		_check("CORE_LOOP", energy.calc_energy(6000, false) == 5750, "calc_energy 6000 old-player steps = 5750")
 
 		var before_data: Dictionary = energy.get_save_data() if energy.has_method("get_save_data") else {}
 		energy.apply_save({
@@ -599,11 +599,12 @@ func _section_core_loop() -> void:
 			"last_energy_date": _today_key(),
 		})
 		var produced = energy.process_steps(1000)
-		_check("CORE_LOOP", produced == 300.0, "process_steps produced expected energy")
-		_check("CORE_LOOP", energy.energy_pool == 300.0, "process_steps increases energy_pool")
+		# P1 费率翻转：1000 步 ×1.1 = 1100（非新手）
+		_check("CORE_LOOP", produced == 1100.0, "process_steps produced expected energy")
+		_check("CORE_LOOP", energy.energy_pool == 1100.0, "process_steps increases energy_pool")
 		var spent = energy.spend_pool(125.0)
 		_check("CORE_LOOP", spent == 125.0, "spend_pool returns spent amount")
-		_check("CORE_LOOP", energy.energy_pool == 175.0, "spend_pool decreases energy_pool")
+		_check("CORE_LOOP", energy.energy_pool == 975.0, "spend_pool decreases energy_pool")
 		if before_data.size() > 0:
 			energy.apply_save(before_data)
 

@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://I-uVqpCCsgY"
-path="res://.godot/imported/hidden_orange_01.png-ae13707dcf12e7a4.ctex"
+uid="uid://bblknc4fp3t2m"
+path="res://.godot/imported/hidden_orange_01.png-76c37aab5056aea0e74fc18b32fdb907.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/postcards/hidden_orange_01.png"
-dest_files=["res://.godot/imported/hidden_orange_01.png-ae13707dcf12e7a4.ctex"]
+dest_files=["res://.godot/imported/hidden_orange_01.png-76c37aab5056aea0e74fc18b32fdb907.ctex"]
 
 [params]
 

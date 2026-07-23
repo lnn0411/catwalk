@@ -76,8 +76,23 @@ class SimState:
         self.pokedex = set()
         self.first_exploration_done = False
         self._adoptions_this_week = 0
-        # R1-1: workshop gift-box queue (accumulated "ready but un-opened" boxes)
-        self.workshop_ready_queue = 0
+        # P1/A4 落地口径: 花瓣周限 500 对全部送养生效, 超限转保底金币
+        self.adoption_petals_this_week = 0
+        # 孵化稀有度保底: 连续 miss 计数(与客户端 HatchEngine 同构)
+        self.hatch_epic_miss = 0
+        self.hatch_leg_miss = 0
+        self.total_legendaries = 0
+        # P1/A13: 第一次孵化(=客户端第二颗蛋)发生日
+        self.first_hatch_day = None
+        # C1 工坊步数礼盒模型 (P1 sim 先行口径)
+        self.workshop_counter = 0
+        self.workshop_unopened = 0
+        self.owned_accessories = set()
+        self.workshop_epic_miss = 0
+        self.workshop_leg_miss = 0
+        # N12 羁绊点 (满级携带经验 1000:1)
+        self.bond_points = 0
+        self.bond_gained_today = 0
         # R1-3: achievements are granted once, on the day the milestone is reached
         self.claimed_achievements = set()
         # R1-4: capacity is gated by real gold payment, not pokedex size
@@ -97,8 +112,7 @@ class SimState:
     def _init_slots(self) -> None:
         for index in range(int(self.params["hatching"]["slots"])):
             self.hatching_slots.append({"index": index, "unlocked": index == 0, "progress": 0, "egg": None})
-        for index in range(int(self.params["workshop"]["max_slots"])):
-            self.workshop_slots.append({"index": index, "progress": 0, "box": None})
+        # C1: 工坊改独立步数计数器, 不再有能量槽位
 
     def _add_cat(
         self,
@@ -256,8 +270,10 @@ class SimEngine:
     def tick(self, state: SimState, day: int, step_count: int, rng: random.Random) -> None:
         state.current_day = day
         state.daily_flow[day] = {}
+        state.bond_gained_today = 0
         if day % int(self.params["cat_inventory"]["adoption_reset_day"] or 7) == 1:
             state._adoptions_this_week = 0
+            state.adoption_petals_this_week = 0
 
         step_energy = calc_energy(
             step_count,
@@ -272,13 +288,15 @@ class SimEngine:
         self._checkin(state, rng)
         self._monthly_card(state)
         self._daily_newbie_goals(state)
+        self._step_chests(state, step_count)
         self._board_ticket_grants(state, step_count)
         self._interaction_grants(state)
-        self._ads(state)
+        self._ads(state, step_energy)
         self._energy_routing(state, step_energy)
         self._hatching(state, rng)
+        self._apply_pool_cap(state)
         self._adoption(state)
-        self._workshop(state, rng)
+        self._workshop(state, rng, step_count)
         self._gold_ticket_purchase(state)
         self._board_game(state, rng)
         self._shop(state)
@@ -359,12 +377,29 @@ class SimEngine:
             state.flow("gold_out_ticket_purchase", cost)
             state.flow("tickets_in_gold", 1)
 
-    def _ads(self, state: SimState) -> None:
+    def _step_chests(self, state: SimState, step_count: int) -> None:
+        """P1 今日步数宝箱: 3000/6000/10000 各一箱, 内容暂为小额金币 [待sim校准]."""
+        chests = self.params["steps"].get("step_chests", {})
+        thresholds = list(chests.get("thresholds", []))
+        gold_values = list(chests.get("gold", []))
+        for i, threshold in enumerate(thresholds):
+            if step_count >= int(threshold):
+                gold = int(gold_values[i]) if i < len(gold_values) else 0
+                state.gold += gold
+                state.flow("gold_in_step_chest", gold)
+                state.flow("step_chests_opened", 1)
+
+    def _ads(self, state: SimState, step_energy: int) -> None:
         if not self.profile["ads_enabled"]:
             state.flow("ad_views", 0)
             return
+        # P1 广告步行放大器: 单次 = min(cap, coefficient × 当日步数能量)
         slot_1 = self.params["ads"]["slot_1"]
-        ad_energy = int(slot_1["reward_amount"]) * int(slot_1["daily_limit"])
+        per_view = min(
+            int(slot_1["cap_per_view"]),
+            int(float(slot_1["coefficient"]) * step_energy),
+        )
+        ad_energy = per_view * int(slot_1["daily_limit"])
         state.energy_pool += ad_energy
         state.total_ad_energy += ad_energy
         state.flow("energy_in_ads", ad_energy)
@@ -383,7 +418,11 @@ class SimEngine:
         state.flow("tickets_in_ads", tickets)
 
     def _energy_routing(self, state: SimState, step_energy: int) -> None:
+        # P1 保真修正: 客户端能量是边产边灌蛋的连续流, 日粒度下若「先封顶后孵化」
+        # 会制造真实中不存在的截断假象. 封顶移至孵化消耗之后(_apply_pool_cap).
         state.energy_pool += step_energy
+
+    def _apply_pool_cap(self, state: SimState) -> None:
         cap = int(self.params["steps"]["max_energy_pool"])
         if state.energy_pool > cap:
             overflow = state.energy_pool - cap
@@ -391,38 +430,80 @@ class SimEngine:
             state.total_overflow_cutoff += overflow
             state.flow("energy_overflow_cutoff", overflow)
 
+    def _egg_cost(self, state: SimState) -> int:
+        """P1 孵化成本成长曲线. sim 第 k 次孵化 = 客户端第 k+1 颗蛋(#1 为教学蛋)."""
+        curve = self.params["hatching"].get("egg_cost_curve")
+        if not curve:
+            return int(self.params["hatching"]["energy_per_egg"])
+        egg_number = state.total_hatches + 2
+        early = curve.get("early", {})
+        if str(egg_number) in early:
+            return int(early[str(egg_number)])
+        base = int(curve.get("base", 4250))
+        late_from = int(curve.get("late_from_egg", 20))
+        if egg_number < late_from:
+            return base
+        step_every = int(curve.get("late_step_every", 10))
+        step_amount = int(curve.get("late_step_amount", 250))
+        cost = base + step_amount * (1 + (egg_number - late_from) // step_every)
+        return min(cost, int(curve.get("late_cap", 6000)))
+
     def _hatching(self, state: SimState, rng: random.Random) -> None:
-        energy_per_egg = int(self.params["hatching"]["energy_per_egg"])
         for slot in state.hatching_slots:
             if not slot["unlocked"]:
                 continue
-            if state.energy_pool < energy_per_egg:
+            cost = self._egg_cost(state)
+            if state.energy_pool < cost:
                 continue
             if len(state.cats) >= state.inventory_capacity:
-                break
-            state.energy_pool -= energy_per_egg
-            state.flow("energy_out_hatching", energy_per_egg)
+                # B3 包满引导弹窗行为模型: 玩家送养一只以继续孵化.
+                # A4 落地口径(实测修正裁决): 不再单设次数兜底 — 周限内正常发花瓣、
+                # 超限/未养成转保底金币 50, 数学上无套利(养成成本>50金), 消耗端不掐死.
+                if not (
+                    self.profile.get("adoption_enabled", True)
+                    and self._guided_adopt_one(state)
+                ):
+                    break
+            state.energy_pool -= cost
+            state.flow("energy_out_hatching", cost)
             state.total_hatches += 1
+            if state.first_hatch_day is None:
+                state.first_hatch_day = state.current_day
             rarity = self._roll_rarity(state, rng)
             breed = self._roll_breed(state, rng)
             state._add_cat(breed, rarity)
 
     def _roll_rarity(self, state: SimState, rng: random.Random) -> str:
+        """P1 sim 保真修正: 保底从「逢 N 必出」改为客户端同构的「连续 miss 计数」
+        (HatchEngine.EPIC_PITY/LEGENDARY_PITY 语义). 旧模型使 A5b 恒为 1.0."""
         pity = self.params["hatching"]["pity"]
-        next_hatch = state.total_hatches + 1
-        if next_hatch % int(pity["legendary_every_n"]) == 0:
+        forced = None
+        if state.hatch_leg_miss >= int(pity["legendary_every_n"]):
+            forced = "legendary"
             state.legendary_pity_triggers += 1
-            return "legendary"
-        if next_hatch % int(pity["epic_every_n"]) == 0:
-            return "epic"
-        weights = self.params["hatching"]["rarity_weights"]
-        draw = rng.random()
-        total = 0.0
-        for rarity, weight in weights.items():
-            total += float(weight)
-            if draw <= total:
-                return rarity
-        return list(weights.keys())[-1]
+        elif state.hatch_epic_miss >= int(pity["epic_every_n"]):
+            forced = "epic"
+        if forced is None:
+            weights = self.params["hatching"]["rarity_weights"]
+            draw = rng.random()
+            total = 0.0
+            forced = list(weights.keys())[-1]
+            for rarity, weight in weights.items():
+                total += float(weight)
+                if draw <= total:
+                    forced = rarity
+                    break
+        if forced == "legendary":
+            state.total_legendaries += 1
+            state.hatch_leg_miss = 0
+            state.hatch_epic_miss = 0
+        elif forced == "epic":
+            state.hatch_epic_miss = 0
+            state.hatch_leg_miss += 1
+        else:
+            state.hatch_epic_miss += 1
+            state.hatch_leg_miss += 1
+        return forced
 
     def _roll_breed(self, state: SimState, rng: random.Random) -> str:
         breeds = [cat["breed"] for cat in state.cats]
@@ -441,8 +522,44 @@ class SimEngine:
                 return breed
         return list(pool.keys())[-1]
 
+    def _guided_adopt_one(self, state: SimState) -> bool:
+        """包满弹窗引导的单只送养(携带猫豁免). 返回是否送出."""
+        priority = [c for c in get_rancher_priority_cats(state) if not c.get("is_active")]
+        if not priority:
+            return False
+        self._settle_adoption(state, priority[0])
+        return True
+
+    def _settle_adoption(self, state: SimState, cat: dict) -> None:
+        state.cats.remove(cat)
+        state.total_adoptions += 1
+        state._adoptions_this_week += 1
+        state.flow("cats_out_adoption", 1)
+        # GDD §2.3: Lv1 或好感<100 断路, 不返花瓣 → 保底金币(修正旧 sim 误计为花瓣)
+        if int(cat["level"]) <= 1 or int(cat["affection"]) < 100:
+            fallback = int(self.params["cat_inventory"]["adoption_lv1_fallback_gold"])
+            state.gold += fallback
+            state.flow("gold_in_adoption_fallback", fallback)
+            return
+        revenue = self._adoption_revenue(cat)
+        weekly_cap = int(self.params["cat_inventory"]["adoption_weekly_limit"])
+        # A4 落地口径: 花瓣周限 500 对所有送养生效; 超限部分转保底金币(不再零回报)
+        room = max(0, weekly_cap - state.adoption_petals_this_week)
+        granted = min(revenue, room)
+        if granted < revenue:
+            fallback = int(self.params["cat_inventory"]["adoption_under_threshold_fallback_gold"])
+            state.gold += fallback
+            state.flow("gold_in_adoption_fallback", fallback)
+        revenue = granted
+        state.adoption_petals_this_week += revenue
+        if revenue > 0:
+            state.love_petals += revenue
+            state.flow("love_petals_in_adoption", revenue)
+
     def _adoption(self, state: SimState) -> None:
         # R2: adopt when the bag is full OR a nurtured cat has reached the gate.
+        if not self.profile.get("adoption_enabled", True):
+            return
         guard = 0
         while len(state.cats) > state.inventory_capacity or self._nurtured_cats_ready(state):
             guard += 1
@@ -452,19 +569,13 @@ class SimEngine:
             if ready:
                 candidate = ready[0]  # groomed cats first
             else:
-                priority = get_rancher_priority_cats(state)
+                priority = [c for c in get_rancher_priority_cats(state) if not c.get("is_active")]
                 if not priority:
                     break
                 candidate = priority[0]  # fallback: over-capacity trim
             if candidate not in state.cats:
                 break
-            revenue = self._adoption_revenue(candidate)
-            state.cats.remove(candidate)
-            state.love_petals += revenue
-            state.total_adoptions += 1
-            state._adoptions_this_week += 1
-            state.flow("love_petals_in_adoption", revenue)
-            state.flow("cats_out_adoption", 1)
+            self._settle_adoption(state, candidate)
 
     def _adoption_revenue(self, cat: dict) -> int:
         formula = self.params["cat_inventory"]["adoption_revenue_formula"]
@@ -487,41 +598,72 @@ class SimEngine:
             return int(self.params["cat_inventory"]["adoption_under_threshold_fallback_gold"])
         return revenue
 
-    def _workshop(self, state: SimState, rng: random.Random) -> None:
-        """R1-1: workshop is an independent energy channel, not gated by cat capacity.
+    def _workshop_roll_rarity(self, state: SimState, rng: random.Random) -> str:
+        """礼盒稀有度: 权重 roll + miss 连续计数双保底(与客户端 C1 规格同构)."""
+        pity = self.params["workshop"]["pity"]
+        if state.workshop_leg_miss >= int(pity["legendary_miss_max"]):
+            rarity = "legendary"
+        elif state.workshop_epic_miss >= int(pity["epic_miss_max"]):
+            rarity = "epic"
+        else:
+            weights = self.params["workshop"]["rarity_weights"]
+            draw = rng.random()
+            total = 0.0
+            rarity = list(weights.keys())[-1]
+            for name, weight in weights.items():
+                total += float(weight)
+                if draw <= total:
+                    rarity = name
+                    break
+        if rarity == "legendary":
+            state.workshop_leg_miss = 0
+            state.workshop_epic_miss = 0
+        elif rarity == "epic":
+            state.workshop_epic_miss = 0
+            state.workshop_leg_miss += 1
+        else:
+            state.workshop_epic_miss += 1
+            state.workshop_leg_miss += 1
+        return rarity
 
-        Hatching runs first (eggs get energy priority); the workshop then burns the
-        remaining pool. Each idle slot packs a gift box (energy_per_box) into an
-        unbounded ready-queue. Ready boxes are then unboxed (unbox_energy_cost),
-        completing same-day and producing the box reward. Energy pool truncation is
-        unchanged — this simply keeps the pool from sitting full and overflowing.
+    def _workshop(self, state: SimState, rng: random.Random, step_count: int) -> None:
+        """C1 独立步数礼盒模型(P1 sim 先行口径, 客户端 P2 实装).
+
+        原始步数计数器 → 每 box_steps 一盒, 日上限/未开上限; 当日全部拆开.
+        配饰重复折爱心花瓣(A14 零送养画像的花瓣来源之一); 花卉可重复持有.
+        不再消耗能量池 — A6 回归即验证水槽移除后的截断水位.
         """
-        energy_per_box = int(self.params["workshop"]["energy_per_box"])
-        unbox_cost = int(self.params["workshop"]["unbox_energy_cost"])
-
-        # Packing: every slot packs a box while energy remains; queue backs up freely.
-        for _slot in state.workshop_slots:
-            if state.energy_pool < energy_per_box:
-                break
-            state.energy_pool -= energy_per_box
-            state.workshop_ready_queue += 1
-            state.flow("energy_out_workshop", energy_per_box)
-
-        # Unboxing: each slot processes one ready box this day if energy allows.
-        for _slot in state.workshop_slots:
-            if state.workshop_ready_queue <= 0:
-                break
-            if state.energy_pool < unbox_cost:
-                break
-            state.energy_pool -= unbox_cost
-            state.workshop_ready_queue -= 1
-            state.flow("energy_out_workshop_unbox", unbox_cost)
-            category = rng.choice(self.params["workshop"]["box_categories"])
-            state.flow("workshop_box_" + category, 1)
-            if category == "flower_seed":
-                petals = int(self.params["events"]["event_petals_per_10_interactions"])
-                state.love_petals += petals
-                state.flow("love_petals_in_workshop", petals)
+        cfg = self.params["workshop"]
+        box_steps = int(cfg["box_steps"])
+        state.workshop_counter += step_count
+        boxes_today = 0
+        while (
+            state.workshop_counter >= box_steps
+            and boxes_today < int(cfg["daily_box_cap"])
+            and state.workshop_unopened < int(cfg["unopened_cap"])
+        ):
+            state.workshop_counter -= box_steps
+            state.workshop_unopened += 1
+            boxes_today += 1
+        while state.workshop_unopened > 0:
+            state.workshop_unopened -= 1
+            state.flow("workshop_box_opened", 1)
+            rarity = self._workshop_roll_rarity(state, rng)
+            pool = cfg["gift_pool"]
+            acc_count = int(pool["accessories"].get(rarity, 0))
+            flower_count = int(pool["flowers"].get(rarity, 0))
+            index = rng.randrange(acc_count + flower_count)
+            if index < acc_count:
+                item = "acc_%s_%d" % (rarity, index)
+                if item in state.owned_accessories:
+                    petals = int(cfg["dupe_accessory_petals"][rarity])
+                    state.love_petals += petals
+                    state.flow("love_petals_in_workshop_dupe", petals)
+                else:
+                    state.owned_accessories.add(item)
+                    state.flow("workshop_gift_accessory", 1)
+            else:
+                state.flow("workshop_gift_flower", 1)
 
     def _board_game(self, state: SimState, rng: random.Random) -> None:
         board = self.params["board_game"]
@@ -615,6 +757,7 @@ class SimEngine:
             if str(cat["rarity"]).lower() == "common"
             and int(cat["level"]) >= 2
             and int(cat["affection"]) >= 100
+            and not cat.get("is_active")  # 携带猫不送养(状态矩阵 A3)
         ]
 
     def _nurture_pool(self, state: SimState) -> list:
@@ -716,17 +859,39 @@ class SimEngine:
             return
         thresholds = self.params["carry_cat"]["level_thresholds"]
         max_level = int(self.params["carry_cat"]["max_level"])
-        # R2: rotate the daily carry XP to the least-progressed cat in the nurture pool.
-        pool = self._nurture_pool(state)
-        active = min(pool, key=lambda c: int(c["xp"]))
+        max_xp = int(self.params["carry_cat"]["total_xp_to_max"])
+        # P1/B2 sim 保真修正: 固定主力随行猫(对齐客户端 current_companion_cat_id 语义),
+        # 不再轮换 — 旧轮换模型导致 A4 以 not-reached 假失败.
+        active = next((c for c in state.cats if c.get("is_active")), state.cats[0])
+        # P1 经验软拐点: 日步数 ≤4000 全额, 超出 50%; 品种系数在拐点后乘.
+        knee = self.params["carry_cat"].get("xp_soft_knee", {})
+        full_steps = int(knee.get("full_amount_steps", 4000))
+        over_ratio = float(knee.get("over_ratio", 0.5))
+        steps = int(self.profile["daily_steps"])
+        effective = min(steps, full_steps) + max(0, steps - full_steps) * over_ratio
         coefficient = float(self.params["carry_cat"]["xp_coefficient_by_breed"].get(active["breed"], 1.0))
-        xp_gain = int(int(self.profile["daily_steps"]) * coefficient)
-        active["xp"] += xp_gain
-        state.flow("cat_xp_gain", xp_gain)
+        xp_gain = int(effective * coefficient)
+        space = max(0, max_xp - int(active["xp"]))
+        applied = min(xp_gain, space)
+        active["xp"] += applied
+        state.flow("cat_xp_gain", applied)
         while active["level"] < max_level and active["xp"] >= int(thresholds[active["level"]]):
             active["level"] += 1
         if active["breed"] == "orange" and active["level"] >= max_level and state.orange_max_level_day is None:
             state.orange_max_level_day = state.current_day
+        # N12: 满级溢出经验 1000:1 转羁绊点, 日上限 +5, 总量封顶
+        overflow = xp_gain - applied
+        if overflow > 0:
+            bond_cfg = self.params["carry_cat"].get("bond", {})
+            per_point = int(bond_cfg.get("exp_per_point", 1000))
+            daily_cap = int(bond_cfg.get("daily_cap", 5))
+            total_cap = int(bond_cfg.get("total_cap", 300))
+            gain = min(overflow // per_point, daily_cap - state.bond_gained_today,
+                       total_cap - state.bond_points)
+            if gain > 0:
+                state.bond_points += gain
+                state.bond_gained_today += gain
+                state.flow("bond_points_gain", gain)
 
     def _events(self, state: SimState, step_count: int) -> None:
         frequency = int(self.params["events"]["event_frequency_per_month"])

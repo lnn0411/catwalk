@@ -13,7 +13,7 @@ const DAILY_COIN_TICKET_MAX := 2
 const COIN_COST_PER_TICKET := 50
 const LOGIN_TICKET_NORMAL := 2
 const LOGIN_TICKET_NEW_PLAYER := 3
-const NEW_PLAYER_DAYS := 7
+const NEW_PLAYER_DAYS := 10  # B5 新手缓坡：登录 3 票延至 D10（能量加成 D7 止、新手目标 D14 止）
 
 var tickets: int = 0
 var daily_step_progress: int = 0

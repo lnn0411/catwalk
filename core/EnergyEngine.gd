@@ -19,18 +19,23 @@ func _ready() -> void:
 		last_energy_date = _today_key()
 	_emit_energy_changed()
 
+# P1 费率翻转（launch_overhaul_master_plan P1 / energy_hatch_redesign_plan §2.1）：
+# T1 0–1500 ×1.1 | T2 –4000 ×1.0 | T3 –6000 ×0.8 | T4 6000+ ×0.4。
+# 新手保护期改为首 7 天全段 ×1.2（替代旧 T1 专属 0.8）。
 func calc_energy(steps: int, is_new_player: bool) -> int:
-	var t1 := 0.3
+	var s: float = float(max(steps, 0))
+	var total: float = 0.0
+	if s <= 1500.0:
+		total = s * 1.1
+	elif s <= 4000.0:
+		total = 1500.0 * 1.1 + (s - 1500.0) * 1.0
+	elif s <= 6000.0:
+		total = 1500.0 * 1.1 + 2500.0 * 1.0 + (s - 4000.0) * 0.8
+	else:
+		total = 1500.0 * 1.1 + 2500.0 * 1.0 + 2000.0 * 0.8 + (s - 6000.0) * 0.4
 	if is_new_player:
-		t1 = 0.8
-
-	if steps <= 1000:
-		return int(float(steps) * t1)
-	if steps <= 3000:
-		return int(1000.0 * t1 + float(steps - 1000) * 1.0)
-	if steps <= 5000:
-		return int(1000.0 * t1 + 2000.0 * 1.0 + float(steps - 3000) * 1.2)
-	return int(1000.0 * t1 + 2000.0 * 1.0 + 2000.0 * 1.2 + float(steps - 5000) * 1.5)
+		total *= 1.2
+	return int(total)
 
 func process_steps(delta_steps: int) -> float:
 	_check_daily_reset()

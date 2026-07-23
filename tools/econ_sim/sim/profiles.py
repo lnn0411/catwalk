@@ -30,12 +30,14 @@ def _attendance_value(params: dict, activity: str) -> float:
     return float(attendance[key])
 
 
-def _profile(activity: str, ads_enabled: bool, has_monthly_card: bool, params: dict) -> dict:
+def _profile(activity: str, ads_enabled: bool, has_monthly_card: bool, params: dict,
+             adoption_enabled: bool = True) -> dict:
     return {
         "daily_steps": _step_value(params, activity),
         "activity": activity,
         "ads_enabled": bool(ads_enabled),
         "has_monthly_card": bool(has_monthly_card),
+        "adoption_enabled": bool(adoption_enabled),
         "checkin_attendance_rate": _attendance_value(params, activity),
         "default_behavior": {
             "hatching_priority": "incubate_first",
@@ -56,6 +58,9 @@ for _activity in ("low", "medium", "high"):
             PROFILES["%s_%s_%s" % (_activity, _ads_label, _card_label)] = _profile(
                 _activity, _ads_enabled, _has_card, _PARAMS
             )
+
+# 第 13 画像（总案 B2）：零送养中活跃——监控不送养玩家的花瓣供给（A14）
+PROFILES["medium_no_adopt"] = _profile("medium", False, False, _PARAMS, adoption_enabled=False)
 
 ALL_PROFILE_NAMES = list(PROFILES.keys())
 

@@ -12,6 +12,9 @@ const SLOT_UNLOCK_HATCH_COUNTS := [0, 1, 3, 10]
 var slots: Array = []
 var cats: Array = []
 var hatched_count: int = 0
+# P1 孵化成本成长曲线：累计已落蛋数（含教学蛋），决定下一颗蛋的成本档位。
+# 旧档缺省时以 hatched_count + 当前在孵/待收槽数兜底回填。
+var eggs_assigned_total: int = 0
 # 手动工坊模式覆盖（第6只猫起长按切换孵化/工坊态）
 var manual_workshop_override: bool = false
 # 稀有度保底（两层独立计数）：epic 连续40次未出必出，legendary 连续120次未出必出
@@ -19,6 +22,13 @@ const EPIC_PITY := 40
 const LEGENDARY_PITY := 120
 var epic_pity_count: int = 0
 var legendary_pity_count: int = 0
+# N12 羁绊转化（v3.3 已签署）：Lv10 后携带经验 1000:1 转羁绊点，日上限+5，
+# 总量封顶（星级阈值[待定]，演出接 v1.1）。日计数随本地日期重置。
+const BOND_EXP_PER_POINT := 1000
+const BOND_DAILY_CAP := 5
+const BOND_TOTAL_CAP := 300
+var bond_gained_today: int = 0
+var bond_date: String = ""
 var rng := RandomNumberGenerator.new()
 var _fill_timer: Timer  # 填蛋定时兜底（步数静止时池能量也能流进蛋）
 var _assign_timer: Timer  # 0.5s 自动落蛋延迟（检测到空槽后延迟装填）
@@ -39,10 +49,13 @@ func set_companion_cat_id(cat_id: String) -> void:
 	if SaveManager:
 		SaveManager.save_all()
 
-# 看广告加速（GDD v2.14 §3.7/§12.2）：每次补 3000 能量（≈30分钟步行），每日 3 次。
-# v1.0 纯客户端计数器，跨天按本地日期重置。
+# 看广告加速 → P1 改「今日步行加成」（广告步行放大器，总案 §2.4）：
+# 单次 = min(3000, 0.3 × 当日步数能量)，每日 3 次；<1000 步 UI 置灰。
+# 广告从"替代走路"变为"放大走路"，占比结构性 ≤47.4%（A3）。
 const AD_SPEEDUP_ENERGY := 3000.0
+const AD_SPEEDUP_COEFFICIENT := 0.3
 const AD_SPEEDUP_DAILY_LIMIT := 3
+const AD_MIN_STEPS_FOR_BUTTON := 1000
 var ad_speedup_count: int = 0      # 今日已用次数
 var ad_speedup_date: String = ""   # 上次使用日期（跨天重置）
 
@@ -163,6 +176,11 @@ func ad_speedup_remaining() -> int:
 	_check_ad_daily_reset()
 	return max(AD_SPEEDUP_DAILY_LIMIT - ad_speedup_count, 0)
 
+# 当前单次广告加成值（随当日已产步数能量实时变化，供按钮显值与结算共用）。
+func get_ad_speedup_energy() -> float:
+	var today_energy: float = EnergyEngine.today_energy if EnergyEngine else 0.0
+	return minf(AD_SPEEDUP_ENERGY, AD_SPEEDUP_COEFFICIENT * today_energy)
+
 func can_ad_speedup() -> bool:
 	return ad_speedup_remaining() > 0
 
@@ -194,15 +212,26 @@ func apply_save(data: Dictionary) -> void:
 		elif cat_data is Dictionary:
 			cats.append(CatData.deserialize(cat_data))
 	hatched_count = max(int(data.get("hatched_count", cats.size())), cats.size())
+	eggs_assigned_total = int(data.get("eggs_assigned_total", -1))
 	epic_pity_count = max(int(data.get("epic_pity_count", 0)), 0)
 	legendary_pity_count = max(int(data.get("legendary_pity_count", 0)), 0)
 	ad_speedup_count = max(int(data.get("ad_speedup_count", 0)), 0)
 	ad_speedup_date = String(data.get("ad_speedup_date", ""))
+	bond_gained_today = max(int(data.get("bond_gained_today", 0)), 0)
+	bond_date = String(data.get("bond_date", ""))
 	has_tutorial_first_egg = bool(data.get("has_tutorial_first_egg", false))
 	current_companion_cat_id = String(data.get("current_companion_cat_id", ""))
 	garden_expand_purchased = bool(data.get("garden_expand_purchased", false))
 	manual_workshop_override = bool(data.get("manual_workshop_override", false))
 	_ensure_slots()
+	if eggs_assigned_total < 0:
+		# 旧档兜底：已孵数 + 当前占用中的蛋槽数
+		var occupied: int = 0
+		for slot in slots:
+			var status := String(Dictionary(slot).get("status", ""))
+			if status == "incubating" or status == "ready":
+				occupied += 1
+		eggs_assigned_total = hatched_count + occupied
 	_update_unlocks()
 	_assign_next_empty_slots()
 	_emit_all_progress()
@@ -263,6 +292,9 @@ func get_save_data() -> Dictionary:
 		"slots": slots.duplicate(true),
 		"cats": cats.duplicate(true),
 		"hatched_count": hatched_count,
+		"eggs_assigned_total": eggs_assigned_total,
+		"bond_gained_today": bond_gained_today,
+		"bond_date": bond_date,
 		"epic_pity_count": epic_pity_count,
 		"legendary_pity_count": legendary_pity_count,
 		"ad_speedup_count": ad_speedup_count,
@@ -303,7 +335,8 @@ func _recalc_companion_exp() -> void:
 	elif companion != null and "species" in companion:
 		species = String(companion.species)
 	var multiplier: float = LevelSystem.get_breed_multiplier(species)
-	var new_exp: int = LevelSystem.calc_exp(today_steps, multiplier)
+	# P1 软拐点：切换携带猫时按当日累计步数的拐点曲线继承（封顶满级）
+	var new_exp: int = mini(LevelSystem.calc_daily_exp(today_steps, multiplier), LevelSystem.MAX_EXP)
 	var old_exp: int = 0
 	if typeof(companion) == TYPE_DICTIONARY:
 		old_exp = int(companion.get("exp", 0))
@@ -320,6 +353,27 @@ func _recalc_companion_exp() -> void:
 			companion.level = new_level
 		if new_level > old_level and EventBus:
 			EventBus.emit_level_up(current_companion_cat_id, old_level, new_level)
+
+# N12：满级溢出经验转羁绊点入账（companion 为 CatData 或 Dictionary）。
+func _grant_bond_points(companion, overflow_exp: int) -> void:
+	var today: String = _ad_today_key()
+	if bond_date != today:
+		bond_date = today
+		bond_gained_today = 0
+	var current: int = 0
+	if companion is CatData:
+		current = companion.bond_points
+	elif companion is Dictionary:
+		current = int(companion.get("bond_points", 0))
+	var by_exp: int = int(floor(float(overflow_exp) / float(BOND_EXP_PER_POINT)))
+	var gain: int = mini(by_exp, mini(BOND_DAILY_CAP - bond_gained_today, BOND_TOTAL_CAP - current))
+	if gain <= 0:
+		return
+	bond_gained_today += gain
+	if companion is CatData:
+		companion.bond_points = current + gain
+	elif companion is Dictionary:
+		companion["bond_points"] = current + gain
 
 func _on_steps_updated(delta: int, _total: int) -> void:
 	if EnergyEngine == null:
@@ -349,9 +403,19 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 				old_exp = int(companion.get("exp", 0))
 				old_level = int(companion.get("level", 1))
 
-			var exp_gain: int = LevelSystem.calc_exp(delta, LevelSystem.get_breed_multiplier(species)) if LevelSystem else 0
+			# P1 软拐点必须按「当日累计的边际值」结算，不能对 delta 直接套拐点
+			var exp_gain: int = 0
+			if LevelSystem and StepEngine:
+				var today_total: int = StepEngine.get_today_steps()
+				var prev_total: int = max(today_total - delta, 0)
+				var mult: float = LevelSystem.get_breed_multiplier(species)
+				exp_gain = LevelSystem.calc_daily_exp(today_total, mult) - LevelSystem.calc_daily_exp(prev_total, mult)
 			if can_apply_exp and exp_gain > 0:
 				var new_exp: int = min(old_exp + exp_gain, LevelSystem.MAX_EXP)
+				# N12：满级后的溢出经验 1000:1 转羁绊点
+				var overflow_exp: int = max(old_exp + exp_gain - LevelSystem.MAX_EXP, 0)
+				if overflow_exp > 0:
+					_grant_bond_points(companion, overflow_exp)
 				var new_level: int = LevelSystem.get_level(new_exp)
 				if new_exp != old_exp or new_level != old_level:
 					companion_exp_changed = true
@@ -584,9 +648,11 @@ func _do_assign_empty_slots() -> void:
 		var slot: Dictionary = slots[i]
 		if bool(slot.get("unlocked", false)) and String(slot.get("status", "")) == "empty":
 			var species: String = _roll_next_species()
+			# P1 成本曲线：按累计落蛋序号取档（教学蛋为 #1，此处从 #2 起）
+			eggs_assigned_total += 1
 			slot["status"] = "incubating"
 			slot["energy"] = 0.0
-			slot["max_energy"] = float(CatData.get_hatch_cost(species))
+			slot["max_energy"] = float(CatData.get_hatch_cost_for_egg(eggs_assigned_total))
 			slot["species"] = species
 			slots[i] = slot
 			hatch_started.emit(i)
@@ -617,5 +683,6 @@ func _assign_tutorial_first_egg() -> void:
 	slot["species"] = CatData.BREED_ORANGE
 	slots[0] = slot
 	has_tutorial_first_egg = true
+	eggs_assigned_total = max(eggs_assigned_total, 1)  # 教学蛋 = 第 1 颗
 	hatch_started.emit(0)
 	_emit_slot_progress(0)

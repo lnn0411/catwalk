@@ -84,12 +84,20 @@ func _refresh_slots() -> void:
 
 
 func _refresh_ad_button() -> void:
+	# P1 广告步行放大器：按钮实时显值（总案 §2.6-A 规格：取点击时刻的当日累计值）
 	var remaining: int = HatchEngine.ad_speedup_remaining() if HatchEngine else 0
+	var today_steps: int = StepEngine.get_today_steps() if StepEngine else 0
+	var reward: int = int(HatchEngine.get_ad_speedup_energy()) if HatchEngine else 0
+	var low_steps: bool = today_steps < HatchEngine.AD_MIN_STEPS_FOR_BUTTON
 	var label := _ad_btn.get_node_or_null("AdLabel") as Label
 	if label:
-		label.text = "补充能量 +3,000  今日还可%d次" % remaining
-		label.add_theme_color_override("font_color", Color(1,1,1,0.5) if remaining <= 0 else Color(1,1,1,1))
-	_ad_btn.disabled = false
+		if low_steps:
+			label.text = "今日步行加成  走一走，加成更多"
+		else:
+			label.text = "今日步行加成 +%d⚡  今日还可%d次" % [reward, remaining]
+		var dimmed: bool = low_steps or remaining <= 0
+		label.add_theme_color_override("font_color", Color(1,1,1,0.5) if dimmed else Color(1,1,1,1))
+	_ad_btn.disabled = low_steps or remaining <= 0
 
 
 # ── 交互 ──
@@ -150,11 +158,13 @@ func _speed_up() -> void:
 	if not HatchEngine.can_ad_speedup():
 		if Popups: Popups.show_toast("今日加速次数已用完")
 		return
+	var reward: float = HatchEngine.get_ad_speedup_energy()
+	if reward <= 0.0:
+		if Popups: Popups.show_toast("走一走，加成更多")
+		return
 	HatchEngine.consume_ad_speedup()
-	var used: float = HatchEngine.feed_current_egg(HatchEngine.AD_SPEEDUP_ENERGY)
-	var leftover: float = HatchEngine.AD_SPEEDUP_ENERGY - used
-	if leftover > 0.0 and EnergyEngine:
-		EnergyEngine.add_pool_with_overflow(leftover)
+	# P1：奖励封顶到当前蛋需求，余量不再回池（v2.2 §2.3，防池满囤积）
+	HatchEngine.feed_current_egg(reward)
 	if SaveManager:
 		SaveManager.save_all()
 	_refresh_all()
@@ -172,7 +182,7 @@ func _on_hatch_complete(cat_data) -> void:
 
 
 func _on_energy_changed(_current: float, _pool_max: float) -> void:
-	pass
+	_refresh_ad_button()  # 显值随当日能量实时变化
 
 
 func _on_workshop_mode_toggled(_is_workshop: bool) -> void:

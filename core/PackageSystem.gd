@@ -5,8 +5,9 @@ signal expansion_available(unlock_count: int, cost_gold: int, capacity: int)
 
 const _INITIAL_CAPACITY := 24
 const _HARD_CAP := 36
+# P1/B4：首档 5000→7000（sim 收敛值：中活跃自然分布 D19~40，月卡提前~2天属付费权益）
 const _TIERS := [
-	{"capacity": 28, "unlock_count": 4,  "cost_gold": 5000},
+	{"capacity": 28, "unlock_count": 4,  "cost_gold": 7000},
 	{"capacity": 32, "unlock_count": 8, "cost_gold": 10000},
 	{"capacity": 36, "unlock_count": 12, "cost_gold": 0},
 ]

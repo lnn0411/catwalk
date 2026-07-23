@@ -1,8 +1,16 @@
 extends Node
 
 signal steps_updated(delta: int, total: int)
+signal step_chest_opened(index: int, gold: int)
 
 const PLUGIN_NAME := "StepCounter"
+
+# 今日步数宝箱（P1：仅数据结构+结算，演出与广告位#4翻倍在 P2 合流卡接入；
+# milestone 序号即 D12 三段式日循环的挂接位）。内容 [待sim校准]。
+const CHEST_THRESHOLDS: Array[int] = [3000, 6000, 10000]
+const CHEST_GOLD: Array[int] = [10, 20, 30]
+var chest_claimed_today: Array = [false, false, false]
+var chest_date: String = ""
 
 var today_steps: int = 0
 var total_steps: int = 0
@@ -48,6 +56,10 @@ func apply_save(data: Dictionary) -> void:
 	total_steps = max(int(data.get("total_steps", 0)), 0)
 	last_plugin_steps = max(int(data.get("last_plugin_steps", 0)), 0)
 	last_step_date = String(data.get("last_step_date", _today_key()))
+	chest_claimed_today = Array(data.get("chest_claimed_today", [false, false, false]))
+	while chest_claimed_today.size() < CHEST_THRESHOLDS.size():
+		chest_claimed_today.append(false)
+	chest_date = String(data.get("chest_date", ""))
 	_fresh_sensor_init = (total_steps == 0 and last_plugin_steps == 0)
 	_fresh_hc_init = _fresh_sensor_init
 	_check_daily_reset()
@@ -67,6 +79,8 @@ func get_save_data() -> Dictionary:
 		"total_steps": total_steps,
 		"last_plugin_steps": last_plugin_steps,
 		"last_step_date": last_step_date,
+		"chest_claimed_today": chest_claimed_today.duplicate(),
+		"chest_date": chest_date,
 	}
 
 func _load_plugin() -> void:
@@ -170,7 +184,21 @@ func _check_daily_reset() -> void:
 		last_step_date = today
 
 func _emit_steps_updated(delta: int) -> void:
+	_check_step_chests()
 	steps_updated.emit(delta, total_steps)
+
+func _check_step_chests() -> void:
+	var today: String = _today_key()
+	if chest_date != today:
+		chest_date = today
+		chest_claimed_today = [false, false, false]
+	for i in range(CHEST_THRESHOLDS.size()):
+		if not bool(chest_claimed_today[i]) and today_steps >= int(CHEST_THRESHOLDS[i]):
+			chest_claimed_today[i] = true
+			var gold: int = int(CHEST_GOLD[i])
+			if CurrencyManager:
+				CurrencyManager.add_gold(gold, "step_chest")
+			step_chest_opened.emit(i, gold)
 
 func _today_key() -> String:
 	var date: Dictionary = Time.get_date_dict_from_system()

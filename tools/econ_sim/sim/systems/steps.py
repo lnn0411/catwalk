@@ -35,7 +35,8 @@ def calc_energy(steps: int, is_new_player: bool, params: dict | None = None) -> 
     steps_cfg = params["steps"]
     thresholds = list(steps_cfg["tier_thresholds"])
     coefficients = list(steps_cfg["tier_coefficients"])
-    new_t1 = steps_cfg["new_player_t1_coefficient"]
+    # P1: 新手加成从「T1 专属系数」改为「首 7 天全段 ×1.2」（B5 缓坡的能量项）
+    new_player_multiplier = float(steps_cfg.get("new_player_global_coefficient", 1.0))
 
     remaining = max(0, int(steps))
     previous = 0
@@ -52,13 +53,12 @@ def calc_energy(steps: int, is_new_player: bool, params: dict | None = None) -> 
             width = max(0, upper - previous)
             segment = min(remaining, width)
 
-        coefficient = coefficients[index]
-        if index == 0 and is_new_player:
-            coefficient = new_t1
-
-        total += segment * coefficient
+        total += segment * coefficients[index]
         remaining -= segment
         if upper is not None:
             previous = upper
+
+    if is_new_player:
+        total *= new_player_multiplier
 
     return int(total)
