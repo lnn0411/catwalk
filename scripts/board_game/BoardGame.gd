@@ -476,6 +476,25 @@ func ad_rescue(extra_uses: int = 5) -> bool:
 	return ad_rescue_restore()
 
 
+func remove_items_for_rescue(positions: Array) -> int:
+	"""救局腾位：移除指定位置的低星物品（⭐1/⭐2）。返回实际移除数。
+	不入撤销快照（救局操作不可撤销）；移除后重查死局并刷新委托进度——
+	UI 层禁止直接改 grid，一律走本方法。"""
+	var removed := 0
+	for pos in positions:
+		var item: BoardItem = grid.get(pos)
+		if item == null or item.star > BoardGameData.StarLevel.TWO:
+			continue
+		grid.erase(pos)
+		removed += 1
+	if removed > 0:
+		board_updated.emit(grid.duplicate(true))
+		if not active_order.is_empty():
+			order_progress_changed.emit(get_order_progress())
+		_check_deadlock()
+	return removed
+
+
 func sub_chain_exit(pos: Vector2i) -> bool:
 	"""副链出口：移除指定位置的副链⭐3；每局首次额外返还2次生成器。"""
 	if not grid.has(pos):
