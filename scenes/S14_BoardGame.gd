@@ -22,8 +22,21 @@ const CELL_GAP := 8.0
 const UI_TEXT_COLOR := Color("4F453C")
 const GET_TICKET_WIDTH := 520.0
 
-const TX_BTN_PRIMARY := preload("res://assets/art/ui/buttons/btn_primary.png")
-const TX_BTN_SECONDARY := preload("res://assets/art/ui/buttons/btn_secondary.png")
+# 三态按钮贴图（@1x 运行时资源，@2x 原稿在 assets/art/src/board_ui_2x/）
+const TX_BTN_PRIMARY_N := preload("res://assets/art/ui/buttons/btn_primary_n.png")
+const TX_BTN_PRIMARY_P := preload("res://assets/art/ui/buttons/btn_primary_p.png")
+const TX_BTN_PRIMARY_D := preload("res://assets/art/ui/buttons/btn_primary_d.png")
+const TX_BTN_SECONDARY_N := preload("res://assets/art/ui/buttons/btn_secondary_n.png")
+const TX_BTN_SECONDARY_P := preload("res://assets/art/ui/buttons/btn_secondary_p.png")
+const TX_BTN_SECONDARY_D := preload("res://assets/art/ui/buttons/btn_secondary_d.png")
+const TX_POPUP_BG_9P := preload("res://assets/art/ui/panels/popup_bg_9p.png")
+# 兼容别名：旧逐态调用的 normal/hover 走常态贴图
+const TX_BTN_PRIMARY := TX_BTN_PRIMARY_N
+const TX_BTN_SECONDARY := TX_BTN_SECONDARY_N
+# 九宫格参数（@1x：按钮 240×64 边距 32/20，弹窗 400×300 四边 40）
+const BTN_9P_MARGIN_H := 32.0
+const BTN_9P_MARGIN_V := 20.0
+const POPUP_9P_MARGIN := 40.0
 
 var board: BoardGame
 var _cells: Dictionary = {}  # Vector2i -> BoardCell
@@ -195,7 +208,7 @@ func _build_top_bar() -> Control:
 	back.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	back.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
 	back.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	back.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
+	back.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY_P))
 	back.pressed.connect(_on_back_pressed)
 	hbox.add_child(back)
 
@@ -315,12 +328,12 @@ func _build_excitement_bar() -> Control:
 	_frenzy_button.name = "FrenzyButton"
 	_frenzy_button.text = "🎉狂欢!"
 	_frenzy_button.visible = false
-	_frenzy_button.custom_minimum_size = Vector2(80, 28)
+	_frenzy_button.custom_minimum_size = Vector2(108, 44)  # 九宫格最小安全尺寸（角不挤压）
 	_frenzy_button.add_theme_font_size_override("font_size", 14)
 	_frenzy_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	_frenzy_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
 	_frenzy_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	_frenzy_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
+	_frenzy_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY_P))
 	_frenzy_button.pressed.connect(_on_frenzy_pressed)
 	container.add_child(_frenzy_button)
 
@@ -338,6 +351,11 @@ func _make_excitement_fill_style() -> StyleBoxFlat:
 static func _btn_style(texture: Texture2D) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
 	style.texture = texture
+	# 九宫格切图：四角固定、中段拉伸（配合三态贴图 240×64）
+	style.texture_margin_left = BTN_9P_MARGIN_H
+	style.texture_margin_right = BTN_9P_MARGIN_H
+	style.texture_margin_top = BTN_9P_MARGIN_V
+	style.texture_margin_bottom = BTN_9P_MARGIN_V
 	style.content_margin_left = 12.0
 	style.content_margin_right = 12.0
 	style.content_margin_top = 8.0
@@ -345,36 +363,40 @@ static func _btn_style(texture: Texture2D) -> StyleBoxTexture:
 	return style
 
 
-# 统一按钮美术：四态贴图 + 文字配色一次成型（新增按钮一律走这里，禁止裸 Button）
-static func _apply_btn_art(btn: Button, texture: Texture2D) -> void:
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		btn.add_theme_stylebox_override(state, _btn_style(texture))
+# 统一按钮美术：三态贴图（常态/按下/禁用，hover复用常态）+ 文字配色一次成型。
+# 新增按钮一律走这里，禁止裸 Button。
+# 注意：按钮逻辑尺寸须 ≥ 96×44，否则九宫格四角会被挤压变形
+static func _apply_btn_art(btn: Button, primary: bool = true) -> void:
+	var tex_n: Texture2D = TX_BTN_PRIMARY_N if primary else TX_BTN_SECONDARY_N
+	var tex_p: Texture2D = TX_BTN_PRIMARY_P if primary else TX_BTN_SECONDARY_P
+	var tex_d: Texture2D = TX_BTN_PRIMARY_D if primary else TX_BTN_SECONDARY_D
+	btn.add_theme_stylebox_override("normal", _btn_style(tex_n))
+	btn.add_theme_stylebox_override("hover", _btn_style(tex_n))
+	btn.add_theme_stylebox_override("pressed", _btn_style(tex_p))
+	btn.add_theme_stylebox_override("disabled", _btn_style(tex_d))
 	btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	btn.add_theme_color_override("font_disabled_color", Color(UI_TEXT_COLOR, 0.4))
 
 
-# 统一弹窗底：popup_bg 贴图，缺失回退奶油底圆角
+static func _popup_panel_style() -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = TX_POPUP_BG_9P
+	style.texture_margin_left = POPUP_9P_MARGIN
+	style.texture_margin_right = POPUP_9P_MARGIN
+	style.texture_margin_top = POPUP_9P_MARGIN
+	style.texture_margin_bottom = POPUP_9P_MARGIN
+	style.content_margin_left = 36.0
+	style.content_margin_right = 36.0
+	style.content_margin_top = 32.0
+	style.content_margin_bottom = 28.0
+	return style
+
+
+# 统一弹窗底：九宫格 popup_bg_9p（四角猫爪暗纹固定，中段自由拉伸）
 static func _apply_dialog_panel_art(panel: PanelContainer) -> void:
-	var tex := ResourceLoader.load("res://assets/art/ui/panels/popup_bg.png")
-	if tex is Texture2D:
-		var style := StyleBoxTexture.new()
-		style.texture = tex
-		style.content_margin_left = 36.0
-		style.content_margin_right = 36.0
-		style.content_margin_top = 32.0
-		style.content_margin_bottom = 28.0
-		panel.add_theme_stylebox_override("panel", style)
-	else:
-		var flat := StyleBoxFlat.new()
-		flat.bg_color = Palette.PAPER_CREAM
-		flat.set_corner_radius_all(24)
-		flat.content_margin_left = 36.0
-		flat.content_margin_right = 36.0
-		flat.content_margin_top = 32.0
-		flat.content_margin_bottom = 28.0
-		panel.add_theme_stylebox_override("panel", flat)
+	panel.add_theme_stylebox_override("panel", _popup_panel_style())
 
 
 func _build_grid() -> Control:
@@ -453,8 +475,8 @@ func _build_bottom_bar() -> Control:
 	_undo_button.add_theme_color_override("font_disabled_color", UI_TEXT_COLOR)
 	_undo_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
 	_undo_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	_undo_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
-	_undo_button.add_theme_stylebox_override("disabled", _btn_style(TX_BTN_SECONDARY))
+	_undo_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY_P))
+	_undo_button.add_theme_stylebox_override("disabled", _btn_style(TX_BTN_SECONDARY_D))
 	# disabled 态半透明灰（Button 无 disabled_changed 信号，故在 _refresh_all 中同步 modulate）
 	_undo_button.pressed.connect(_on_undo_pressed)
 	bar.add_child(_undo_button)
@@ -468,7 +490,7 @@ func _build_bottom_bar() -> Control:
 	_restart_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	_restart_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
 	_restart_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	_restart_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
+	_restart_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY_P))
 	_restart_button.pressed.connect(_start_game)
 	bar.add_child(_restart_button)
 
@@ -513,7 +535,7 @@ func _build_result_overlay() -> void:
 	_result_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	_result_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
 	_result_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	_result_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
+	_result_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY_P))
 	_result_button.pressed.connect(func():
 		_result_overlay.visible = false
 		if TicketManager != null and TicketManager.get_tickets() <= 0:
@@ -572,7 +594,7 @@ func _build_ad_rescue_dialog() -> void:
 	watch_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	watch_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
 	watch_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	watch_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
+	watch_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY_P))
 	watch_button.pressed.connect(_enter_ad_rescue_mode)
 	buttons.add_child(watch_button)
 
@@ -585,7 +607,7 @@ func _build_ad_rescue_dialog() -> void:
 	give_up_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	give_up_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
 	give_up_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	give_up_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
+	give_up_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY_P))
 	give_up_button.pressed.connect(_on_ad_rescue_give_up_pressed)
 	buttons.add_child(give_up_button)
 
@@ -680,22 +702,11 @@ func _build_get_ticket_dialog() -> void:
 	_get_ticket_dialog.add_child(card)
 
 	# 底图贴图（加载失败回退 StyleBoxFlat）
-	var popup_tex := ResourceLoader.load("res://assets/art/ui/panels/popup_bg.png")
-	if popup_tex != null:
-		var panel := TextureRect.new()
-		panel.texture = popup_tex
-		panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		panel.stretch_mode = TextureRect.STRETCH_SCALE
-		panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		card.add_child(panel)
-	else:
-		var panel := PanelContainer.new()
-		panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		var style := StyleBoxFlat.new()
-		style.bg_color = Palette.PAPER_CREAM
-		style.set_corner_radius_all(24)
-		panel.add_theme_stylebox_override("panel", style)
-		card.add_child(panel)
+	# 九宫格弹窗底（旧整图拉伸在 560×500 下会糊，换 popup_bg_9p）
+	var panel := Panel.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", _popup_panel_style())
+	card.add_child(panel)
 
 	# VBox 内容
 	var box := VBoxContainer.new()
@@ -757,14 +768,14 @@ func _build_get_ticket_dialog() -> void:
 	_gt_ad_btn = Button.new()
 	_gt_ad_btn.custom_minimum_size = Vector2(220, 60)
 	_gt_ad_btn.add_theme_font_size_override("font_size", 17)
-	_apply_btn_art(_gt_ad_btn, TX_BTN_PRIMARY)
+	_apply_btn_art(_gt_ad_btn, true)
 	_gt_ad_btn.pressed.connect(_on_gt_ad_pressed)
 	action_row.add_child(_gt_ad_btn)
 
 	_gt_coin_btn = Button.new()
 	_gt_coin_btn.custom_minimum_size = Vector2(220, 60)
 	_gt_coin_btn.add_theme_font_size_override("font_size", 17)
-	_apply_btn_art(_gt_coin_btn, TX_BTN_PRIMARY)
+	_apply_btn_art(_gt_coin_btn, true)
 	_gt_coin_btn.pressed.connect(_on_gt_coin_pressed)
 	action_row.add_child(_gt_coin_btn)
 
@@ -773,7 +784,7 @@ func _build_get_ticket_dialog() -> void:
 	_gt_start_btn.text = "🎮 开始游戏"
 	_gt_start_btn.custom_minimum_size = Vector2(240, 64)
 	_gt_start_btn.add_theme_font_size_override("font_size", 20)
-	_apply_btn_art(_gt_start_btn, TX_BTN_PRIMARY)
+	_apply_btn_art(_gt_start_btn, true)
 	_gt_start_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER  # 不横向铺满
 	_gt_start_btn.visible = false
 	_gt_start_btn.pressed.connect(func() -> void:
@@ -1266,7 +1277,7 @@ func _show_reward_choice_dialog(stars: int) -> void:
 		btn.text = display
 		btn.custom_minimum_size = Vector2(0, 64)
 		btn.add_theme_font_size_override("font_size", 20)
-		_apply_btn_art(btn, TX_BTN_PRIMARY)
+		_apply_btn_art(btn, true)
 		var chosen: Dictionary = reward
 		btn.pressed.connect(func() -> void:
 			overlay.queue_free()
@@ -1760,7 +1771,7 @@ func _show_frenzy_choice_dialog() -> void:
 	guard_btn.text = "🛡 猫猫护卫\n抵消下一次捣乱"
 	guard_btn.custom_minimum_size = Vector2(0, 72)
 	guard_btn.add_theme_font_size_override("font_size", 18)
-	_apply_btn_art(guard_btn, TX_BTN_PRIMARY)
+	_apply_btn_art(guard_btn, true)
 	guard_btn.pressed.connect(func() -> void:
 		if board.trigger_frenzy(BoardGameData.FrenzyMode.GUARD):
 			_reset_frenzy_button_visuals()
@@ -1773,7 +1784,7 @@ func _show_frenzy_choice_dialog() -> void:
 	help_btn.text = "✨ 猫猫帮忙\n立即免费生成2个主链物品"
 	help_btn.custom_minimum_size = Vector2(0, 72)
 	help_btn.add_theme_font_size_override("font_size", 18)
-	_apply_btn_art(help_btn, TX_BTN_PRIMARY)
+	_apply_btn_art(help_btn, true)
 	help_btn.pressed.connect(func() -> void:
 		if board.trigger_frenzy(BoardGameData.FrenzyMode.HELP):
 			_reset_frenzy_button_visuals()
@@ -1787,7 +1798,7 @@ func _show_frenzy_choice_dialog() -> void:
 	later_btn.text = "稍后再说"
 	later_btn.custom_minimum_size = Vector2(0, 56)
 	later_btn.add_theme_font_size_override("font_size", 17)
-	_apply_btn_art(later_btn, TX_BTN_SECONDARY)
+	_apply_btn_art(later_btn, false)
 	later_btn.pressed.connect(overlay.queue_free)
 	vbox.add_child(later_btn)
 
@@ -2005,7 +2016,7 @@ func _show_order_prompt() -> void:
 	accept_btn.text = "接受委托"
 	accept_btn.custom_minimum_size = Vector2(0, 60)
 	accept_btn.add_theme_font_size_override("font_size", 20)
-	_apply_btn_art(accept_btn, TX_BTN_PRIMARY)
+	_apply_btn_art(accept_btn, true)
 	accept_btn.pressed.connect(func() -> void:
 		_order_mode_pref = 1
 		overlay.queue_free()
@@ -2017,7 +2028,7 @@ func _show_order_prompt() -> void:
 	normal_btn.text = "普通对局"
 	normal_btn.custom_minimum_size = Vector2(0, 48)
 	normal_btn.add_theme_font_size_override("font_size", 17)
-	_apply_btn_art(normal_btn, TX_BTN_SECONDARY)
+	_apply_btn_art(normal_btn, false)
 	normal_btn.pressed.connect(func() -> void:
 		_order_mode_pref = 0
 		overlay.queue_free()
