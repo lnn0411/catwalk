@@ -519,7 +519,6 @@ func _build_result_overlay() -> void:
 
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(500, 0)
-	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	_apply_dialog_panel_art(panel)
 	_result_overlay.add_child(panel)
 
@@ -552,6 +551,9 @@ func _build_result_overlay() -> void:
 			_start_game()
 	)
 	vbox.add_child(_result_button)
+
+	# 子节点全部添加后再居中——此时面板已有完整高度
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 
 
 func _build_ad_rescue_dialog() -> void:
