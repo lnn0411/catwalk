@@ -12,13 +12,15 @@ const BOX_STEPS := 3000
 const DAILY_BOX_CAP := 3
 const UNOPENED_CAP := 5
 const SAVE_PATH := "user://workshop.cfg"
-# 配饰重复折爱心花瓣（花卉可重复持有，不折算）
+# 配饰重复折爱心花瓣；花卉可重复持有但每种上限 5（C3 折算总表），超限折 10 花瓣
 const DUPE_PETALS := {
 	"common": 10,
 	"rare": 25,
 	"epic": 60,
 	"legendary": 150,
 }
+const FLOWER_HOLD_CAP := 5
+const FLOWER_OVERFLOW_PETALS := 10
 
 var box_step_counter: int = 0
 var unopened_boxes: int = 0
@@ -65,26 +67,33 @@ func open_box() -> Dictionary:
 	if gift_id == "":
 		gift_id = "deco_scarf"
 
-	var dupe_petals: int = 0
-	var gift: Dictionary = WorkshopData.get_gift_data(gift_id) if WorkshopData else {}
-	var category := String(gift.get("category", ""))
-	var is_dupe_accessory: bool = (
-		category == "deco"
-		and GiftInventory != null
-		and GiftInventory.get_count(gift_id) > 0
-	)
-	if is_dupe_accessory:
-		dupe_petals = int(DUPE_PETALS.get(String(gift.get("rarity", "common")), 10))
-		if CurrencyManager:
-			CurrencyManager.add_love_petals(dupe_petals, "workshop_dupe")
-	elif GiftInventory:
-		GiftInventory.add_gift(gift_id)
+	var dupe_petals: int = _grant_gift(gift_id)
 
 	_mint_boxes()  # 腾出未开位后补铸攒下的步数
 	box_opened.emit(gift_id, dupe_petals)
 	if SaveManager:
 		SaveManager.save_all()
 	return {"success": true, "gift_id": gift_id, "dupe_petals": dupe_petals}
+
+
+# 礼物入库/折算（C3 折算总表）：配饰重复→按稀有度折花瓣；
+# 花卉每种持有上限 5，超限→10 花瓣。返回折算花瓣数（0=正常入库）。
+func _grant_gift(gift_id: String) -> int:
+	var gift: Dictionary = WorkshopData.get_gift_data(gift_id) if WorkshopData else {}
+	var category := String(gift.get("category", ""))
+	var held: int = GiftInventory.get_count(gift_id) if GiftInventory else 0
+	var petals: int = 0
+	if category == "deco" and held > 0:
+		petals = int(DUPE_PETALS.get(String(gift.get("rarity", "common")), 10))
+	elif category == "flower" and held >= FLOWER_HOLD_CAP:
+		petals = FLOWER_OVERFLOW_PETALS
+	if petals > 0:
+		if CurrencyManager:
+			CurrencyManager.add_love_petals(petals, "workshop_dupe")
+		return petals
+	if GiftInventory:
+		GiftInventory.add_gift(gift_id)
+	return 0
 
 
 func get_unopened_count() -> int:

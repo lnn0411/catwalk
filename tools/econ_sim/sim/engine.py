@@ -535,26 +535,27 @@ class SimEngine:
         state.total_adoptions += 1
         state._adoptions_this_week += 1
         state.flow("cats_out_adoption", 1)
-        # GDD §2.3: Lv1 或好感<100 断路, 不返花瓣 → 保底金币(修正旧 sim 误计为花瓣)
-        if int(cat["level"]) <= 1 or int(cat["affection"]) < 100:
-            fallback = int(self.params["cat_inventory"]["adoption_lv1_fallback_gold"])
-            state.gold += fallback
-            state.flow("gold_in_adoption_fallback", fallback)
+        # P4 对齐客户端权威(RelinquishSystem): 每次送养固定 +50 金(GOLD_REWARD),
+        # A4 的"零回报"由此消除; 花瓣按公式发放、周限 500 截断(超限部分不发).
+        base_gold = int(self.params["cat_inventory"]["adoption_lv1_fallback_gold"])
+        state.gold += base_gold
+        state.flow("gold_in_adoption", base_gold)
+        if int(cat["level"]) <= 1:
             return
-        revenue = self._adoption_revenue(cat)
+        revenue = self._adoption_revenue_petals(cat)
         weekly_cap = int(self.params["cat_inventory"]["adoption_weekly_limit"])
-        # A4 落地口径: 花瓣周限 500 对所有送养生效; 超限部分转保底金币(不再零回报)
         room = max(0, weekly_cap - state.adoption_petals_this_week)
         granted = min(revenue, room)
-        if granted < revenue:
-            fallback = int(self.params["cat_inventory"]["adoption_under_threshold_fallback_gold"])
-            state.gold += fallback
-            state.flow("gold_in_adoption_fallback", fallback)
-        revenue = granted
-        state.adoption_petals_this_week += revenue
-        if revenue > 0:
-            state.love_petals += revenue
-            state.flow("love_petals_in_adoption", revenue)
+        state.adoption_petals_this_week += granted
+        if granted > 0:
+            state.love_petals += granted
+            state.flow("love_petals_in_adoption", granted)
+
+    def _adoption_revenue_petals(self, cat: dict) -> int:
+        """花瓣公式(好感<100 时 affection_factor=0 → 自然为 0, 与客户端一致)."""
+        if int(cat["affection"]) < 100:
+            return 0
+        return self._adoption_revenue(cat)
 
     def _adoption(self, state: SimState) -> None:
         # R2: adopt when the bag is full OR a nurtured cat has reached the gate.

@@ -68,6 +68,13 @@ func relinquish_cat(cat_data: Dictionary, relinquish_event_id: String) -> Dictio
 	if HatchEngine == null or HatchEngine.get_cats().size() <= 1:
 		return {"love_petals": 0, "gold_coins": 0, "blocked": true, "reason": "不可送走最后一只猫"}
 
+	# A3 状态矩阵：携带中/外出中不可送养
+	var guard_cat_id := String(cat_data.get("id", ""))
+	if CatStateGuard and guard_cat_id != "":
+		var verdict: Dictionary = CatStateGuard.can(CatStateGuard.Action.RELINQUISH, guard_cat_id)
+		if not bool(verdict.get("allowed", true)):
+			return {"love_petals": 0, "gold_coins": 0, "blocked": true, "reason": String(verdict.get("reason", ""))}
+
 	var level := int(cat_data.get("level", 1))
 	if level < 2:
 		relinquished_event_ids.append(relinquish_event_id)

@@ -92,10 +92,22 @@ static func on_hatch() -> void:
 	_hatched_count += 1
 	_save()
 
+# A3 状态矩阵硬校验（UI 侧 CatStateGuard 预检负责文案，此处兜底防绕过）
+static func _guard_allows_dispatch(cat_id: String) -> bool:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return true
+	var guard = tree.root.get_node_or_null("/root/CatStateGuard")
+	if guard == null:
+		return true
+	return guard.is_allowed(guard.Action.DISPATCH, cat_id)
+
 static func dispatch(cat_id: String, duration_hours: int) -> bool:
 	if not VALID_DURATIONS.has(duration_hours):
 		return false
 	if is_exploring(cat_id):
+		return false
+	if not _guard_allows_dispatch(cat_id):
 		return false
 	if _active_count() >= _available_slot_count():
 		return false
@@ -150,6 +162,8 @@ static func dispatch_with_location(cat_id: String, duration_hours: int, chosen_l
 	if not VALID_DURATIONS.has(duration_hours):
 		return false
 	if is_exploring(cat_id):
+		return false
+	if not _guard_allows_dispatch(cat_id):
 		return false
 	if _active_count() >= _available_slot_count():
 		return false

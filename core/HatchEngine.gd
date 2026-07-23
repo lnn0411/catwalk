@@ -41,6 +41,9 @@ var garden_expand_purchased: bool = false
 
 # GDD §2.6: 设置携带猫，继承当日步数经验
 func set_companion_cat_id(cat_id: String) -> void:
+	# A3 状态矩阵：外出探索中的猫不可设为携带（叙事底线：不能同时陪走+进城）
+	if CatStateGuard and cat_id != "" and not CatStateGuard.is_allowed(CatStateGuard.Action.SET_COMPANION, cat_id):
+		return
 	current_companion_cat_id = cat_id
 	_recalc_companion_exp()
 	if SaveManager:

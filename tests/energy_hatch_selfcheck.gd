@@ -29,8 +29,74 @@ func _ready() -> void:
 	_t_workshop_migration()
 	_t_bag_full_lock()
 	_t_pool_full_once_per_day()
+	_t_state_guard_matrix()
+	_t_flower_hold_cap()
+	_t_snack_channel()
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
 	get_tree().quit(0 if _fail == 0 else 1)
+
+
+# A3 状态矩阵（P4）：携带×派遣/送养互斥、外出×携带互斥
+func _t_state_guard_matrix() -> void:
+	print("-- A3 状态矩阵 --")
+	if CatStateGuard == null or HatchEngine == null:
+		_check("CatStateGuard 可用", false)
+		return
+	var saved_companion: String = HatchEngine.current_companion_cat_id
+	HatchEngine.current_companion_cat_id = "guard_test_cat"
+	_check("携带中不可派遣", not CatStateGuard.is_allowed(CatStateGuard.Action.DISPATCH, "guard_test_cat"))
+	_check("携带中不可送养", not CatStateGuard.is_allowed(CatStateGuard.Action.RELINQUISH, "guard_test_cat"))
+	_check("非携带猫可派遣", CatStateGuard.is_allowed(CatStateGuard.Action.DISPATCH, "other_cat"))
+	HatchEngine.current_companion_cat_id = saved_companion
+	# 外出中不可设为携带（借 ExploreEngine 静态表构造外出态）
+	var ExploreS := preload("res://core/ExploreEngine.gd")
+	ExploreS._explorers["guard_explore_cat"] = {"departure_time": 0.0, "return_time": 9e18, "duration_hours": 1, "is_exploring": true}
+	_check("外出中不可设携带", not CatStateGuard.is_allowed(CatStateGuard.Action.SET_COMPANION, "guard_explore_cat"))
+	var before: String = HatchEngine.current_companion_cat_id
+	HatchEngine.set_companion_cat_id("guard_explore_cat")
+	_check("set_companion 被守卫拦截", HatchEngine.current_companion_cat_id == before)
+	_check("外出中不可喂零食", not CatStateGuard.is_allowed(CatStateGuard.Action.FEED_SNACK, "guard_explore_cat"))
+	ExploreS._explorers.erase("guard_explore_cat")
+
+
+# C3 花卉持有上限：每种 5，超限折 10 花瓣
+func _t_flower_hold_cap() -> void:
+	print("-- C3 花卉持有上限 --")
+	if GiftInventory == null:
+		_check("GiftInventory 可用", false)
+		return
+	var WorkshopS2 := preload("res://core/WorkshopManager.gd")
+	var wm = WorkshopS2.new()
+	while GiftInventory.get_count("flower_daisy") < WorkshopS2.FLOWER_HOLD_CAP:
+		GiftInventory.add_gift("flower_daisy")
+	var petals: int = wm._grant_gift("flower_daisy")
+	_check("满 5 株后折 10 花瓣", petals == WorkshopS2.FLOWER_OVERFLOW_PETALS, "got %d" % petals)
+	_check("持有数不再增长", GiftInventory.get_count("flower_daisy") == WorkshopS2.FLOWER_HOLD_CAP)
+	var dupe: int = wm._grant_gift("deco_scarf")
+	_check("配饰重复仍按稀有度折算", dupe == 10, "got %d" % dupe)
+	wm.free()
+
+
+# C2 零食统一通道：日 ≤3/猫、annoyed 期间可喂（不计打扰）
+func _t_snack_channel() -> void:
+	print("-- C2 零食通道 --")
+	if InteractionSystem == null:
+		_check("InteractionSystem 可用", false)
+		return
+	var cat := "snack_test_cat"
+	for i in range(3):
+		var r: Dictionary = InteractionSystem.feed_snack(cat, "fish_treat")
+		_check("第 %d 次投喂成功" % (i + 1), bool(r.get("success", false)))
+	var r4: Dictionary = InteractionSystem.feed_snack(cat, "cat_can")
+	_check("第 4 次被日限拦截", not bool(r4.get("success", true)))
+	# annoyed 期间零食仍可喂（道歉零食）
+	var annoyed_cat := "snack_annoyed_cat"
+	for i in range(6):
+		EmotionStateMachine.register_interaction(annoyed_cat)
+	_check("前置：猫已 annoyed", EmotionStateMachine.is_annoyed(annoyed_cat))
+	var ra: Dictionary = InteractionSystem.feed_snack(annoyed_cat, "cat_can")
+	_check("annoyed 期间零食可喂", bool(ra.get("success", false)))
+	EmotionStateMachine.reset_cat(annoyed_cat)
 
 
 # W-1: 每 3000 原始步产一盒，独立计数不经能量池
