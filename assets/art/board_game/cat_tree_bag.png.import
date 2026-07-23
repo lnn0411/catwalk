@@ -1,0 +1,18 @@
+[remap]
+
+importer="texture"
+type="CompressedTexture2D"
+uid="uid://b9fc0a6965de"
+path="res://.godot/imported/board_game/cat_tree_bag.png-4e5c7ad78bdfa2471ad8fabffddf3b9a.ctex"
+metadata={
+"vram_texture": false
+}
+
+[deps]
+
+source_file="res://assets/art/board_game/cat_tree_bag.png"
+dest_files=["res://.godot/imported/board_game/cat_tree_bag.png-4e5c7ad78bdfa2471ad8fabffddf3b9a.ctex"]
+
+[params]
+
+compress/mode=0
