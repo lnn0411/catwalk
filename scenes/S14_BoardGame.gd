@@ -991,6 +991,9 @@ func _refresh_all() -> void:
 	_excitement_label.text = "%d/%d" % [board.excitement, BoardGameData.EXCITEMENT_MAX]
 	# 更新目标横幅
 	_on_highest_star_changed(board.highest_star_achieved)
+	# 委托局进度并入全局刷新——撤销/救局/帮忙生成等所有路径不再滞留旧值
+	if not board.active_order.is_empty():
+		_refresh_order_goal_label()
 
 
 func _refresh_ticket_label() -> void:
@@ -1057,6 +1060,12 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 	var item: BoardItem = board.get_item(pos)
 	if item != null and item.chain == board.current_sub_chain and item.star == BoardGameData.StarLevel.THREE:
 		var extra := "\n首次送出可返还 2 次生成器！" if not board.sub_chain_exit_used else ""
+		# 委托局：该物品可能是订单素材，送出前明确提醒
+		if not board.active_order.is_empty():
+			for req in board.get_order_progress():
+				if String(req["role"]) == "sub" and int(req["star"]) == BoardGameData.StarLevel.THREE:
+					extra += "\n⚠️ 注意：它是本局委托需要的素材！"
+					break
 		Popups.show_confirm(
 			"副链出口",
 			"把「%s」送给猫咪们？%s" % [item.get_display_name(), extra],
@@ -1229,6 +1238,7 @@ func _on_cat_apology(_cat_name: String) -> void:
 
 func _on_game_won() -> void:
 	_clear_frenzy_effects()
+	_frenzy_button.visible = false  # 终局隐藏，防结算层下残留可点
 	_refresh_all()
 	_stop_walk_cat()
 
@@ -1475,6 +1485,7 @@ func _process_b6_decor(decor_id: String) -> String:
 
 func _on_game_lost() -> void:
 	_clear_frenzy_effects()
+	_frenzy_button.visible = false  # 终局隐藏，防结算层下残留可点
 	_refresh_all()
 	_stop_walk_cat()
 	if board.ad_rescue_restore_used or board.swiped_items.is_empty():
@@ -1544,11 +1555,12 @@ func _remove_selected_items() -> void:
 			tween.tween_property(cell, "modulate:a", 0.0, 0.18)
 	await tween.finished
 	for pos in selected_positions:
-		board.grid.erase(pos)
 		if _cells.has(pos):
 			var cell: Control = _cells[pos]
 			cell.scale = Vector2.ONE
 			cell.modulate = Color.WHITE
+	# 走引擎方法移除（含死局重查与委托进度刷新），禁止 UI 直改 grid
+	board.remove_items_for_rescue(selected_positions)
 	board.ad_rescue()
 	_exit_ad_rescue_mode()
 	_refresh_all()

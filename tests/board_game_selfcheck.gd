@@ -55,6 +55,7 @@ func _ready() -> void:
 	_t_order_serialize()
 	_t_telemetry_roundtrip()
 	_t_ticket_purchase_limits()
+	_t_rescue_remove_items()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -781,6 +782,30 @@ func _t_ticket_purchase_limits() -> void:
 	TicketManager.daily_ad_tickets = save_ad
 	CurrencyManager.gold_coins = save_gold
 	TicketManager.tickets_changed.emit(TicketManager.tickets)
+
+
+func _t_rescue_remove_items() -> void:
+	print("[救局腾位 引擎方法]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.generator_remaining = 0
+	var lost := [false]
+	b.game_lost.connect(func() -> void:
+		lost[0] = true
+	)
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	var p3 := Vector2i(2, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.TWO, p2)
+	b.grid[p3] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.THREE, p3)
+	var removed := b.remove_items_for_rescue([p1, p2, p3])
+	_check(removed == 2, "只移除⭐1/⭐2（⭐3保护），实际移除%d" % removed)
+	_check(not b.grid.has(p1) and not b.grid.has(p2) and b.grid.has(p3), "棋盘状态正确")
+	_check(lost[0] and b.game_state == BoardGameData.GameState.LOST, "移除后无解触发死局重查")
+	b.queue_free()
 
 
 func _t_telemetry_roundtrip() -> void:
