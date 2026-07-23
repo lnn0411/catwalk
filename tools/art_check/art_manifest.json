@@ -1,0 +1,240 @@
+{
+  "_comment": "美术资产入库预检清单 — specs/art_requirements_launch.md v2.0 的机器可读版。w/h=像素；full_bleed=允许不留安全边距（九宫格/边框类）；target=入库路径(res://)。",
+  "defaults": {
+    "min_margin_ratio": 0.03,
+    "alpha_threshold": 8
+  },
+  "classes": {
+    "A1_gift_icons": {
+      "target": "assets/art/workshop/icons/",
+      "w": 256,
+      "h": 256,
+      "full_bleed": false,
+      "files": [
+        "deco_scarf_icon.png",
+        "deco_ribbon_icon.png",
+        "deco_bowtie_icon.png",
+        "deco_straw_icon.png",
+        "deco_glasses_icon.png",
+        "deco_bell_icon.png",
+        "deco_hat_icon.png",
+        "deco_tie_icon.png",
+        "deco_santa_icon.png",
+        "deco_cape_icon.png",
+        "deco_tiara_icon.png",
+        "deco_wings_icon.png",
+        "deco_flowercrown_icon.png",
+        "deco_boots_icon.png",
+        "deco_crown_icon.png",
+        "deco_moon_icon.png"
+      ]
+    },
+    "A2_wear_overlays": {
+      "target": "assets/art/workshop/wear/",
+      "w": 400,
+      "h": 400,
+      "full_bleed": false,
+      "files": [
+        "deco_scarf_wear.png",
+        "deco_ribbon_wear.png",
+        "deco_bowtie_wear.png",
+        "deco_straw_wear.png",
+        "deco_glasses_wear.png",
+        "deco_bell_wear.png",
+        "deco_hat_wear.png",
+        "deco_tie_wear.png",
+        "deco_santa_wear.png",
+        "deco_cape_wear.png",
+        "deco_tiara_wear.png",
+        "deco_wings_wear.png",
+        "deco_flowercrown_wear.png",
+        "deco_boots_wear.png",
+        "deco_crown_wear.png",
+        "deco_moon_wear.png"
+      ]
+    },
+    "A3_flower_icons": {
+      "target": "assets/art/workshop/icons/",
+      "w": 256,
+      "h": 256,
+      "full_bleed": false,
+      "files": [
+        "flower_daisy_icon.png",
+        "flower_sunflower_icon.png",
+        "flower_lavender_icon.png",
+        "flower_tulip_icon.png",
+        "flower_rose_icon.png",
+        "flower_lotus_icon.png",
+        "flower_cherry_icon.png",
+        "flower_ether_icon.png"
+      ]
+    },
+    "A3_flower_sprites": {
+      "target": "assets/art/workshop/garden/",
+      "w": 128,
+      "h": 128,
+      "full_bleed": false,
+      "files": [
+        "flower_daisy.png",
+        "flower_sunflower.png",
+        "flower_lavender.png",
+        "flower_tulip.png",
+        "flower_rose.png",
+        "flower_lotus.png",
+        "flower_ether.png"
+      ]
+    },
+    "A3_flower_sprites_2cell": {
+      "target": "assets/art/workshop/garden/",
+      "w": 128,
+      "h": 256,
+      "full_bleed": false,
+      "files": [
+        "flower_cherry.png"
+      ]
+    },
+    "A4_gift_box": {
+      "target": "assets/art/workshop/box/",
+      "w": 512,
+      "h": 512,
+      "full_bleed": false,
+      "files": [
+        "gift_box_closed.png",
+        "gift_box_open.png",
+        "gift_box_open_frame_00.png",
+        "gift_box_open_frame_01.png",
+        "gift_box_open_frame_02.png",
+        "gift_box_open_frame_03.png",
+        "gift_box_open_frame_04.png",
+        "gift_box_open_frame_05.png",
+        "gift_box_open_frame_06.png",
+        "gift_box_open_frame_07.png"
+      ]
+    },
+    "A4_fab": {
+      "target": "assets/art/workshop/box/",
+      "w": 96,
+      "h": 96,
+      "full_bleed": false,
+      "files": [
+        "fab_workshop_idle.png",
+        "fab_workshop_active.png"
+      ]
+    },
+    "A5_hud_energy": {
+      "target": "assets/art/delivery/hatch/components/",
+      "w": 96,
+      "h": 96,
+      "full_bleed": false,
+      "files": [
+        "hud_energy_normal.png",
+        "hud_energy_warm.png",
+        "hud_energy_full.png",
+        "egg_lock_overlay.png"
+      ]
+    },
+    "A5_surprise_card": {
+      "target": "assets/art/ui/",
+      "w": 620,
+      "h": 720,
+      "full_bleed": true,
+      "files": [
+        "surprise_card_panel.png"
+      ]
+    },
+    "A5_daily_chest": {
+      "target": "assets/art/ui/",
+      "w": 120,
+      "h": 120,
+      "full_bleed": false,
+      "files": [
+        "chest_daily_closed.png",
+        "chest_daily_open.png"
+      ]
+    },
+    "B_stamp_frame": {
+      "target": "assets/art/postcards/",
+      "w": 264,
+      "h": 192,
+      "full_bleed": true,
+      "files": [
+        "stamp_frame.png"
+      ]
+    },
+    "B_icons_96": {
+      "target": "assets/art/ui/",
+      "w": 96,
+      "h": 96,
+      "full_bleed": false,
+      "files": [
+        "stamp_icon.png",
+        "icon_love_petal.png",
+        "icon_spring_petal.png"
+      ]
+    },
+    "B_icons_64": {
+      "target": "assets/art/ui/",
+      "w": 64,
+      "h": 64,
+      "full_bleed": false,
+      "files": [
+        "icon_affection.png",
+        "icon_bond.png"
+      ]
+    },
+    "B_icons_32": {
+      "target": "assets/art/ui/",
+      "w": 32,
+      "h": 32,
+      "full_bleed": false,
+      "files": [
+        "icon_bond_star.png"
+      ]
+    },
+    "B_pity_bar": {
+      "target": "assets/art/delivery/hatch/components/",
+      "w": 334,
+      "h": 28,
+      "full_bleed": true,
+      "files": [
+        "pity_bar_bg.png",
+        "pity_bar_fill.png"
+      ]
+    },
+    "B_silhouettes": {
+      "target": "assets/art/delivery/hatch/components/",
+      "w": 256,
+      "h": 256,
+      "full_bleed": false,
+      "files": [
+        "silhouette_british.png",
+        "silhouette_siamese.png"
+      ]
+    },
+    "B_postcard_placeholders": {
+      "target": "assets/art/postcards/",
+      "w": 224,
+      "h": 150,
+      "full_bleed": false,
+      "files": [
+        "placeholder_postcard_orange.png",
+        "placeholder_postcard_british.png",
+        "placeholder_postcard_siamese.png"
+      ]
+    },
+    "C1_patterned_egg": {
+      "target": "assets/art/delivery/hatch/eggs/",
+      "w": 256,
+      "h": 256,
+      "full_bleed": false,
+      "files": [
+        "egg_patterned_stage_01.png",
+        "egg_patterned_stage_02.png",
+        "egg_patterned_stage_03.png",
+        "egg_patterned_stage_04.png",
+        "egg_patterned_ready.png"
+      ]
+    }
+  },
+  "_total_files": 86
+}
