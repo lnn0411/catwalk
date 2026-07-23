@@ -73,6 +73,7 @@ func _notify_pool_full() -> void:
 	if pool_full_toast_date == today:
 		return
 	pool_full_toast_date = today
+	preload("res://core/CoreTelemetry.gd").log_event("pool_full")
 	pool_became_full.emit()
 
 # 把一笔能量加进主池（GDD v3.1 R8：备用槽已移除，溢出直接截断）。

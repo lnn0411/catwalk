@@ -70,6 +70,8 @@ func open_box() -> Dictionary:
 	var dupe_petals: int = _grant_gift(gift_id)
 
 	_mint_boxes()  # 腾出未开位后补铸攒下的步数
+	preload("res://core/CoreTelemetry.gd").log_event("box_open",
+		{"gift_id": gift_id, "dupe_petals": dupe_petals})
 	box_opened.emit(gift_id, dupe_petals)
 	if SaveManager:
 		SaveManager.save_all()

@@ -5,6 +5,7 @@ signal hatch_progress(slot: int, progress: float)
 signal hatch_complete(cat_data)
 
 const CatData := preload("res://core/CatData.gd")
+const CoreTelemetryS := preload("res://core/CoreTelemetry.gd")
 const SLOT_COUNT := 4
 const SLOT_UNLOCK_HATCH_COUNTS := [0, 1, 3, 10]
 
@@ -187,6 +188,7 @@ func can_ad_speedup() -> bool:
 func consume_ad_speedup() -> void:
 	_check_ad_daily_reset()
 	ad_speedup_count += 1
+	CoreTelemetryS.log_event("ad_speedup", {"reward": int(get_ad_speedup_energy())})
 
 # 玩家点击 ready 蛋时调用：完成孵化、生成猫、发出 hatch_complete（触发演出）。
 # 返回孵出的 CatData；非 ready 槽返回 null。
@@ -514,6 +516,7 @@ func _complete_hatch(slot_id: int):
 	cats.append(cat)
 	if BreedUnlockEngine:
 		BreedUnlockEngine.record_hatch(species)
+	CoreTelemetryS.log_event("hatch", {"species": species, "rarity": rarity, "egg_no": hatched_count})
 
 	slot["status"] = "empty"
 	slot["energy"] = 0.0

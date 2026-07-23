@@ -198,6 +198,7 @@ func _check_step_chests() -> void:
 			var gold: int = int(CHEST_GOLD[i])
 			if CurrencyManager:
 				CurrencyManager.add_gold(gold, "step_chest")
+			preload("res://core/CoreTelemetry.gd").log_event("step_chest", {"index": i, "gold": gold})
 			step_chest_opened.emit(i, gold)
 
 func _today_key() -> String:

@@ -93,6 +93,8 @@ func relinquish_cat(cat_data: Dictionary, relinquish_event_id: String) -> Dictio
 			EventBus.emit_love_petals_changed(awarded_petals, this_week_petals_gained)
 
 	relinquished_event_ids.append(relinquish_event_id)
+	preload("res://core/CoreTelemetry.gd").log_event("adopt",
+		{"petals": awarded_petals, "gold": GOLD_REWARD, "level": level})
 	return {"love_petals": awarded_petals, "gold_coins": GOLD_REWARD, "blocked": false, "reason": ""}
 
 

@@ -66,6 +66,7 @@
       "orange_required_for_british": 3,
       "british_required_for_siamese": 3
     },
+    "_breed_pool_weights_note": "P5 废弃: 客户端为均匀随机+5次未出保底排除(BreedUnlockEngine), sim 已同构实现; 下表仅存档备查",
     "breed_pool_weights": {
       "orange_only": {
         "orange": 1.0,
@@ -695,10 +696,10 @@
     },
     "A5a_legendary_acquisition_rate": "observe_only",
     "A5b_legendary_pity_trigger_ratio": {
-      "target": 0.3,
-      "tolerance_pp": 0.1,
+      "target": 0.22,
+      "tolerance_pp": 0.08,
       "min_hatches": 120,
-      "_note": "P1 修订: 合并统计保底传说/全部传说; miss模型理论值 0.99^120≈0.30"
+      "_note": "P5 校准: 合并统计保底传说/全部传说。无截尾理论值 0.99^120≈0.301, 但 30/90 天有限窗口存在截尾偏置(末段未完成的保底窗口只产自然传说), 合并观测中心实测 ≈0.20~0.21(两轮 0.212/0.198), 靶心按有限窗口统计量校准为 0.22±0.08"
     },
     "A6_medium_overflow_cutoff": "daily_zero",
     "A6_high_overflow_cutoff": {

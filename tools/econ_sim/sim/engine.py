@@ -82,6 +82,9 @@ class SimState:
         self.hatch_epic_miss = 0
         self.hatch_leg_miss = 0
         self.total_legendaries = 0
+        # 品种解锁: 累计孵化计数 + 5 次未出保底(与客户端 BreedUnlockEngine 同构)
+        self.breed_hatch_counts = {}
+        self.breed_pity = {}
         # P1/A13: 第一次孵化(=客户端第二颗蛋)发生日
         self.first_hatch_day = None
         # C1 工坊步数礼盒模型 (P1 sim 先行口径)
@@ -506,21 +509,28 @@ class SimEngine:
         return forced
 
     def _roll_breed(self, state: SimState, rng: random.Random) -> str:
-        breeds = [cat["breed"] for cat in state.cats]
+        """P5 漂移对齐(以客户端 BreedUnlockEngine 为权威):
+        解锁计数用累计孵化数(送养不减); 抽取为已解锁品种均匀随机 +
+        连续 5 次未出的品种保底排除. 旧 breed_pool_weights 加权表废弃."""
         chain = self.params["hatching"]["breed_unlock_chain"]
-        if breeds.count("british") >= int(chain["british_required_for_siamese"]):
-            pool = self.params["hatching"]["breed_pool_weights"]["siamese_unlocked"]
-        elif breeds.count("orange") >= int(chain["orange_required_for_british"]):
-            pool = self.params["hatching"]["breed_pool_weights"]["british_unlocked"]
-        else:
-            pool = self.params["hatching"]["breed_pool_weights"]["orange_only"]
-        draw = rng.random()
-        total = 0.0
-        for breed, weight in pool.items():
-            total += float(weight)
-            if draw <= total:
-                return breed
-        return list(pool.keys())[-1]
+        counts = state.breed_hatch_counts
+        unlocked = ["orange"]
+        if counts.get("orange", 0) >= int(chain["orange_required_for_british"]):
+            unlocked.append("british")
+        if counts.get("british", 0) >= int(chain["british_required_for_siamese"]):
+            unlocked.append("siamese")
+        choices = list(unlocked)
+        pity_breed = next((b for b in choices if state.breed_pity.get(b, 0) >= 5), "")
+        if pity_breed and len(choices) > 1:
+            choices.remove(pity_breed)
+        breed = choices[rng.randrange(len(choices))]
+        counts[breed] = counts.get(breed, 0) + 1
+        for known in unlocked:
+            if pity_breed and known == pity_breed:
+                state.breed_pity[known] = 0
+            elif known == breed and pity_breed != breed:
+                state.breed_pity[known] = state.breed_pity.get(known, 0) + 1
+        return breed
 
     def _guided_adopt_one(self, state: SimState) -> bool:
         """包满弹窗引导的单只送养(携带猫豁免). 返回是否送出."""
