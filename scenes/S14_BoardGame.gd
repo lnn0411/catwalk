@@ -1847,14 +1847,14 @@ func _on_frenzy_activated(_mode: int) -> void:
 			if _grid_panel == null: return
 			var style: StyleBoxFlat = _grid_panel.get_theme_stylebox("panel").duplicate()
 			style.border_color = Color(1.0, 0.75 + 0.25 * v, 0.0)
-			style.border_width = int(3 + v * 2)
+			style.set_border_width_all(int(3 + v * 2))
 			_grid_panel.add_theme_stylebox_override("panel", style)
 		, 0.0, 1.0, 0.4)
 		_frenzy_border_tween.tween_method(func(v: float):
 			if _grid_panel == null: return
 			var style: StyleBoxFlat = _grid_panel.get_theme_stylebox("panel").duplicate()
 			style.border_color = Color(1.0, 0.75 + 0.25 * v, 0.0)
-			style.border_width = int(3 + v * 2)
+			style.set_border_width_all(int(3 + v * 2))
 			_grid_panel.add_theme_stylebox_override("panel", style)
 		, 1.0, 0.0, 0.4)
 
