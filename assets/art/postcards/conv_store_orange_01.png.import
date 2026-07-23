@@ -2,8 +2,8 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d6fc023a721e445f"
-path="res://.godot/imported/conv_store_orange_01.png-351834513e34e7eb.ctex"
+uid="uid://dnvmbbv5x703r"
+path="res://.godot/imported/conv_store_orange_01.png-bfda50a3b5f71e568e0e2cadc5967592.ctex"
 metadata={
 "vram_texture": false
 }
@@ -11,7 +11,7 @@ metadata={
 [deps]
 
 source_file="res://assets/art/postcards/conv_store_orange_01.png"
-dest_files=["res://.godot/imported/conv_store_orange_01.png-351834513e34e7eb.ctex"]
+dest_files=["res://.godot/imported/conv_store_orange_01.png-bfda50a3b5f71e568e0e2cadc5967592.ctex"]
 
 [params]
 
