@@ -520,14 +520,7 @@ func _build_result_overlay() -> void:
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(500, 0)
 	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Palette.PAPER_CREAM
-	style.set_corner_radius_all(24)
-	style.content_margin_left = 48.0
-	style.content_margin_right = 48.0
-	style.content_margin_top = 36.0
-	style.content_margin_bottom = 36.0
-	panel.add_theme_stylebox_override("panel", style)
+	_apply_dialog_panel_art(panel)
 	_result_overlay.add_child(panel)
 
 	var vbox := VBoxContainer.new()
