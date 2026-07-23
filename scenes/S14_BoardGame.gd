@@ -206,9 +206,7 @@ func _build_top_bar() -> Control:
 	back.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	back.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	back.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	back.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
-	back.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	back.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY_P))
+	_apply_btn_art(back, false)
 	back.pressed.connect(_on_back_pressed)
 	hbox.add_child(back)
 
@@ -331,9 +329,7 @@ func _build_excitement_bar() -> Control:
 	_frenzy_button.custom_minimum_size = Vector2(108, 44)  # 九宫格最小安全尺寸（角不挤压）
 	_frenzy_button.add_theme_font_size_override("font_size", 14)
 	_frenzy_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	_frenzy_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
-	_frenzy_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	_frenzy_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY_P))
+	_apply_btn_art(_frenzy_button, true)
 	_frenzy_button.pressed.connect(_on_frenzy_pressed)
 	container.add_child(_frenzy_button)
 
@@ -363,17 +359,39 @@ static func _btn_style(texture: Texture2D) -> StyleBoxTexture:
 	return style
 
 
-# 统一按钮美术：三态贴图（常态/按下/禁用，hover复用常态）+ 文字配色一次成型。
+# 扁平三态按钮样式（与全局 StyleBoxFlat 纸质风一致；参照基准件"知道了"：
+# 扁平填充 + 细琥珀描边，零高光）。v1 贴图立体风与游戏风格冲突暂弃用，
+# 贴图版通道保留在 _btn_style/TX_BTN_*，美术 v1.1 交付后可切回。
+static func _flat_btn_style(bg: Color, border: Color, pressed: bool = false) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.border_color = border
+	s.set_border_width_all(2)
+	s.set_corner_radius_all(16)
+	s.content_margin_left = 12.0
+	s.content_margin_right = 12.0
+	# 按下态内容下沉 2px，模拟按压
+	s.content_margin_top = 10.0 if pressed else 8.0
+	s.content_margin_bottom = 6.0 if pressed else 8.0
+	return s
+
+
+# 统一按钮美术：三态（常态/按下/禁用，hover复用常态）+ 文字配色一次成型。
 # 新增按钮一律走这里，禁止裸 Button。
-# 注意：按钮逻辑尺寸须 ≥ 96×44，否则九宫格四角会被挤压变形
 static func _apply_btn_art(btn: Button, primary: bool = true) -> void:
-	var tex_n: Texture2D = TX_BTN_PRIMARY_N if primary else TX_BTN_SECONDARY_N
-	var tex_p: Texture2D = TX_BTN_PRIMARY_P if primary else TX_BTN_SECONDARY_P
-	var tex_d: Texture2D = TX_BTN_PRIMARY_D if primary else TX_BTN_SECONDARY_D
-	btn.add_theme_stylebox_override("normal", _btn_style(tex_n))
-	btn.add_theme_stylebox_override("hover", _btn_style(tex_n))
-	btn.add_theme_stylebox_override("pressed", _btn_style(tex_p))
-	btn.add_theme_stylebox_override("disabled", _btn_style(tex_d))
+	var style_n: StyleBoxFlat
+	var style_p: StyleBoxFlat
+	if primary:
+		style_n = _flat_btn_style(Palette.AMBER, Palette.AMBER_PRESS)
+		style_p = _flat_btn_style(Palette.AMBER_PRESS, Palette.AMBER_PRESS, true)
+	else:
+		style_n = _flat_btn_style(Palette.PAPER_CREAM, Palette.AMBER_PRESS)
+		style_p = _flat_btn_style(Palette.BG_CEMENT, Palette.AMBER_PRESS, true)
+	var style_d := _flat_btn_style(Palette.BG_CEMENT, Palette.BORDER)
+	btn.add_theme_stylebox_override("normal", style_n)
+	btn.add_theme_stylebox_override("hover", style_n)
+	btn.add_theme_stylebox_override("pressed", style_p)
+	btn.add_theme_stylebox_override("disabled", style_d)
 	btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
@@ -473,10 +491,7 @@ func _build_bottom_bar() -> Control:
 	_undo_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	_undo_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	_undo_button.add_theme_color_override("font_disabled_color", UI_TEXT_COLOR)
-	_undo_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
-	_undo_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	_undo_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY_P))
-	_undo_button.add_theme_stylebox_override("disabled", _btn_style(TX_BTN_SECONDARY_D))
+	_apply_btn_art(_undo_button, false)
 	# disabled 态半透明灰（Button 无 disabled_changed 信号，故在 _refresh_all 中同步 modulate）
 	_undo_button.pressed.connect(_on_undo_pressed)
 	bar.add_child(_undo_button)
@@ -488,9 +503,7 @@ func _build_bottom_bar() -> Control:
 	_restart_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	_restart_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	_restart_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	_restart_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
-	_restart_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	_restart_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY_P))
+	_apply_btn_art(_restart_button, false)
 	_restart_button.pressed.connect(_start_game)
 	bar.add_child(_restart_button)
 
@@ -533,9 +546,7 @@ func _build_result_overlay() -> void:
 	_result_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	_result_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	_result_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	_result_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
-	_result_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	_result_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY_P))
+	_apply_btn_art(_result_button, true)
 	_result_button.pressed.connect(func():
 		_result_overlay.visible = false
 		if TicketManager != null and TicketManager.get_tickets() <= 0:
@@ -592,9 +603,7 @@ func _build_ad_rescue_dialog() -> void:
 	watch_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	watch_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	watch_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	watch_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
-	watch_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	watch_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY_P))
+	_apply_btn_art(watch_button, true)
 	watch_button.pressed.connect(_enter_ad_rescue_mode)
 	buttons.add_child(watch_button)
 
@@ -605,9 +614,7 @@ func _build_ad_rescue_dialog() -> void:
 	give_up_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	give_up_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	give_up_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	give_up_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
-	give_up_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	give_up_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY_P))
+	_apply_btn_art(give_up_button, false)
 	give_up_button.pressed.connect(_on_ad_rescue_give_up_pressed)
 	buttons.add_child(give_up_button)
 
