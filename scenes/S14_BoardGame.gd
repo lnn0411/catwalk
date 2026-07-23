@@ -1245,20 +1245,20 @@ func _on_game_won() -> void:
 	var stars := board.star_rating if board != null else 0  # D4
 	_log_game_telemetry("win")  # M4-4.2
 
-	# 记录累计胜场；若触发升档则弹出说明卡（等级仅升不降，持久化）
-	_record_win_and_maybe_upgrade()
+	# 记录累计胜场；升档信息合并进胜利弹窗（防 Popups CanvasLayer 遮挡）
+	var level_up_text := _record_win_and_maybe_upgrade()
 
 	# M3-3.2: 捣蛋日通关奖励二选一（补偿多一次捣乱）
 	if bool(board.active_twist.get("reward_double_roll", false)):
-		_show_reward_choice_dialog(stars)
+		_show_reward_choice_dialog(stars, level_up_text)
 		return
 
 	# M1-5: 奖励按棋盘等级分表 roll，兑现「奖励更丰厚」
 	var reward: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
-	_finish_win_flow(stars, reward)
+	_finish_win_flow(stars, reward, level_up_text)
 
 
-func _show_reward_choice_dialog(stars: int) -> void:
+func _show_reward_choice_dialog(stars: int, level_up_text: String = "") -> void:
 	# M3-3.2: 捣蛋日——roll 两次奖励让玩家二选一
 	var reward_a: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
 	var reward_b: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
@@ -1298,12 +1298,12 @@ func _show_reward_choice_dialog(stars: int) -> void:
 		var chosen: Dictionary = reward
 		btn.pressed.connect(func() -> void:
 			overlay.queue_free()
-			_finish_win_flow(stars, chosen)
+			_finish_win_flow(stars, chosen, level_up_text)
 		)
 		vbox.add_child(btn)
 
 
-func _finish_win_flow(stars: int, reward: Dictionary) -> void:
+func _finish_win_flow(stars: int, reward: Dictionary, level_up_suffix: String = "") -> void:
 	var star_str := ""  # D4
 	for _i in range(stars):  # D4
 		star_str += "⭐"  # D4
@@ -1335,6 +1335,8 @@ func _finish_win_flow(stars: int, reward: Dictionary) -> void:
 		var info: Dictionary = LevelStateManager.call("get_next_milestone_info")
 		result_text += "\n🐾 累计%d胜 · 距下一里程碑还差%d胜" % [_get_total_board_wins(), int(info.get("remaining", 0))]
 	_result_label.text = result_text  # D4
+	if not level_up_suffix.is_empty():
+		_result_label.text += "\n" + level_up_suffix
 	_show_result()
 	Juice.pattern_legendary()
 
@@ -1395,29 +1397,25 @@ func _on_three_star_bonus(item_name: String, _count: int) -> void:
 	_add_reward_to_inventory("cat_can_pack", item_name)
 
 
-func _record_win_and_maybe_upgrade() -> void:
+func _record_win_and_maybe_upgrade() -> String:
 	if LevelStateManager == null or not LevelStateManager.has_method("record_win"):
-		return
+		return ""
 	var new_level := int(LevelStateManager.call("record_win"))
-	if new_level > BoardGameData.BoardLevel.LV1:
-		_show_level_up_popup(new_level)
-
-
-func _show_level_up_popup(new_level: int) -> void:
-	# 升档说明卡（§19.9 D8）：纯参数提升，无惩罚无降级
-	var content := ""
+	if new_level <= BoardGameData.BoardLevel.LV1:
+		return ""
+	# 升档信息合并进胜利弹窗，不弹独立 Popups 防止遮挡
+	var level_text := ""
 	match new_level:
 		BoardGameData.BoardLevel.LV2:
-			content = "进入成长期 🐾\n捣乱增加但奖励更丰厚"
+			level_text = "\n🏅 棋盘进入成长期 🐾 捣乱增加但奖励更丰厚"
 		BoardGameData.BoardLevel.LV3:
-			content = "进入挑战期 ⭐\n难度最高但收益最大"
+			level_text = "\n🏅 棋盘进入挑战期 ⭐ 难度最高但收益最大"
 		_:
-			content = "棋盘参数已提升"
+			level_text = "\n🏅 棋盘参数已提升"
 	var reward_desc := String(BoardGameData.get_level_config(new_level).get("reward_desc", ""))
 	if not reward_desc.is_empty():
-		content += "\n奖励：%s" % reward_desc
-	if Popups != null:
-		Popups.show_confirm("🎉 棋盘升级！", content, Callable())
+		level_text += "\n奖励：%s" % reward_desc
+	return level_text
 
 
 func _on_sub_chain_completed(_item: BoardItem) -> void:
