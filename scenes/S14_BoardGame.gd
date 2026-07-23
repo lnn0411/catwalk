@@ -703,7 +703,7 @@ func _build_get_ticket_dialog() -> void:
 
 	# 居中卡片（行动面板：3 状态行 + 2 按钮 + 直达入口）
 	var card := Control.new()
-	_center_control(card, Vector2(560, 500))
+	_center_control(card, Vector2(480, 400))
 	_get_ticket_dialog.add_child(card)
 
 	# 底图贴图（加载失败回退 StyleBoxFlat）
@@ -771,14 +771,14 @@ func _build_get_ticket_dialog() -> void:
 	box.add_child(action_row)
 
 	_gt_ad_btn = Button.new()
-	_gt_ad_btn.custom_minimum_size = Vector2(220, 60)
+	_gt_ad_btn.custom_minimum_size = Vector2(190, 50)
 	_gt_ad_btn.add_theme_font_size_override("font_size", 17)
 	_apply_btn_art(_gt_ad_btn, true)
 	_gt_ad_btn.pressed.connect(_on_gt_ad_pressed)
 	action_row.add_child(_gt_ad_btn)
 
 	_gt_coin_btn = Button.new()
-	_gt_coin_btn.custom_minimum_size = Vector2(220, 60)
+	_gt_coin_btn.custom_minimum_size = Vector2(190, 50)
 	_gt_coin_btn.add_theme_font_size_override("font_size", 17)
 	_apply_btn_art(_gt_coin_btn, true)
 	_gt_coin_btn.pressed.connect(_on_gt_coin_pressed)
