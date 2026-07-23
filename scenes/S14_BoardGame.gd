@@ -518,7 +518,8 @@ func _build_result_overlay() -> void:
 	add_child(_result_overlay)
 
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.custom_minimum_size = Vector2(500, 0)
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Palette.PAPER_CREAM
 	style.set_corner_radius_all(24)
@@ -535,6 +536,8 @@ func _build_result_overlay() -> void:
 
 	_result_label = Label.new()
 	_result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_result_label.custom_minimum_size = Vector2(404, 0)
 	_result_label.add_theme_font_size_override("font_size", 30)
 	_result_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	vbox.add_child(_result_label)
