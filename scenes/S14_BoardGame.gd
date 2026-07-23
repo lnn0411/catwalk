@@ -705,7 +705,7 @@ func _build_get_ticket_dialog() -> void:
 
 	# 居中卡片（行动面板：3 状态行 + 2 按钮 + 直达入口）
 	var card := Control.new()
-	_center_control(card, Vector2(480, 320))
+	_center_control(card, Vector2(480, 360))
 	_get_ticket_dialog.add_child(card)
 
 	# 底图贴图（加载失败回退 StyleBoxFlat）
@@ -720,10 +720,6 @@ func _build_get_ticket_dialog() -> void:
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_theme_constant_override("separation", 8)
-	box.add_theme_constant_override("margin_left", 36)
-	box.add_theme_constant_override("margin_right", 36)
-	box.add_theme_constant_override("margin_top", 32)
-	box.add_theme_constant_override("margin_bottom", 24)
 	card.add_child(box)
 
 	# 标题
