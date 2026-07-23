@@ -52,6 +52,53 @@ static func show_toast(message: String) -> void:
 static func show_info(message: String) -> void:
 	show_confirm("提示", message, Callable())
 
+# 多选项引导弹窗（B3 包满弹窗等）：actions = [{label, action: Callable}, ...]。
+# 任一按钮点击后关闭弹窗再执行 action；action 为空 Callable 即「稍后」。
+static func show_actions(title: String, content: String, actions: Array) -> void:
+	var root := _get_root()
+	if root == null:
+		return
+	for child in root.get_children():
+		if child is CanvasLayer:
+			for sub in child.get_children():
+				if sub is ActionsOverlay:
+					child.queue_free()
+					break
+	var overlay := ActionsOverlay.new()
+	overlay.title = title
+	overlay.content = content
+	overlay.actions = actions
+	var canvas := CanvasLayer.new()
+	canvas.layer = 100
+	canvas.add_child(overlay)
+	root.add_child(canvas)
+
+# 奖励合流（总案 §2.3）：同帧多个离散奖励合并为一条「步数惊喜」提示，
+# 全局同屏奖励弹窗 ≤1。各奖励源调用本方法而不是各自 show_toast。
+static var _pending_reward_lines: Array[String] = []
+static var _reward_flush_scheduled: bool = false
+
+static func queue_reward_line(line: String) -> void:
+	if line == "":
+		return
+	_pending_reward_lines.append(line)
+	if _reward_flush_scheduled:
+		return
+	_reward_flush_scheduled = true
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null:
+		_flush_reward_lines()
+		return
+	tree.process_frame.connect(_flush_reward_lines, CONNECT_ONE_SHOT)
+
+static func _flush_reward_lines() -> void:
+	_reward_flush_scheduled = false
+	if _pending_reward_lines.is_empty():
+		return
+	var merged := " ＋ ".join(_pending_reward_lines)
+	_pending_reward_lines.clear()
+	show_toast("🎉 " + merged)
+
 static func show_input(title: String, placeholder: String, on_submit: Callable) -> void:
 	var root := _get_root()
 	if root == null:
@@ -70,6 +117,96 @@ static func _get_root() -> Node:
 	if tree == null:
 		return null
 	return tree.root
+
+# ------------------------------------------------------------
+# 多选项引导弹窗（复用 popup_bg / btn_confirm_name 贴图规范）
+# ------------------------------------------------------------
+class ActionsOverlay:
+	extends Control
+
+	var title := ""
+	var content := ""
+	var actions: Array = []
+
+	func _ready() -> void:
+		set_anchors_preset(Control.PRESET_FULL_RECT)
+		mouse_filter = Control.MOUSE_FILTER_STOP
+
+		var dim := ColorRect.new()
+		dim.color = Color(0.0, 0.0, 0.0, 0.45)
+		dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(dim)
+
+		var panel_h: float = 220.0 + 76.0 * float(actions.size())
+		var panel := TextureRect.new()
+		panel.texture = load("res://assets/art/ui/panels/popup_bg.png")
+		panel.stretch_mode = TextureRect.STRETCH_SCALE
+		panel.custom_minimum_size = Vector2(DIALOG_SIZE.x, panel_h)
+		panel.anchor_left = 0.5
+		panel.anchor_right = 0.5
+		panel.anchor_top = 0.5
+		panel.anchor_bottom = 0.5
+		panel.offset_left = -DIALOG_SIZE.x * 0.5
+		panel.offset_right = DIALOG_SIZE.x * 0.5
+		panel.offset_top = -panel_h * 0.5
+		panel.offset_bottom = panel_h * 0.5
+		add_child(panel)
+
+		var vbox := VBoxContainer.new()
+		vbox.set_anchors_preset(Control.PRESET_FULL_RECT)
+		vbox.offset_left = 36.0
+		vbox.offset_right = -36.0
+		vbox.offset_top = 30.0
+		vbox.offset_bottom = -30.0
+		vbox.add_theme_constant_override("separation", 14)
+		panel.add_child(vbox)
+
+		var title_label := Label.new()
+		title_label.text = title
+		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title_label.add_theme_font_size_override("font_size", 24)
+		title_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+		vbox.add_child(title_label)
+
+		var content_label := Label.new()
+		content_label.text = content
+		content_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		content_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		content_label.add_theme_font_size_override("font_size", 16)
+		content_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+		vbox.add_child(content_label)
+
+		for entry in actions:
+			var action: Dictionary = Dictionary(entry)
+			var btn := TextureButton.new()
+			btn.texture_normal = load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
+			btn.ignore_texture_size = true
+			btn.stretch_mode = TextureButton.STRETCH_SCALE
+			btn.custom_minimum_size = Vector2(280.0, 62.0)
+			btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+			var btn_label := Label.new()
+			btn_label.text = String(action.get("label", ""))
+			btn_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+			btn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			btn_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+			btn_label.add_theme_font_size_override("font_size", 18)
+			btn_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
+			btn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			btn.add_child(btn_label)
+			var callback: Callable = action.get("action", Callable())
+			btn.pressed.connect(func() -> void:
+				_close()
+				if callback.is_valid():
+					callback.call()
+			)
+			vbox.add_child(btn)
+
+	func _close() -> void:
+		var canvas := get_parent()
+		if canvas is CanvasLayer:
+			canvas.queue_free()
+		else:
+			queue_free()
 
 # ------------------------------------------------------------
 # 输入弹窗（贴图版）

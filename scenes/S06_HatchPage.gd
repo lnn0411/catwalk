@@ -5,7 +5,6 @@ extends "res://ui/UIPage.gd"
 # ============================================================
 
 const CatData := preload("res://core/CatData.gd")
-const WORKSHOP_SCENE := "res://scenes/WorkshopPage.gd"
 
 @onready var _back_btn: TextureButton = %BackBtn
 @onready var _ad_btn: TextureButton = %AdBtn
@@ -17,7 +16,9 @@ func _ready() -> void:
 	super._ready()
 	_back_btn.pressed.connect(_on_back_pressed)
 	_ad_btn.pressed.connect(_speed_up)
-	_workshop_link.gui_input.connect(_on_workshop_clicked)
+	# C1：工坊入口移至花园常驻 FAB，蛋 Tab 内链接隐藏
+	if _workshop_link:
+		_workshop_link.visible = false
 	for i in range(_slots_parent.size()):
 		var slot_node = _slots_parent[i]
 		# 实例化 HatchSlot 到占位节点
@@ -27,8 +28,6 @@ func _ready() -> void:
 			slot.slot_index = i
 			if not slot.slot_pressed.is_connected(_on_slot_pressed):
 				slot.slot_pressed.connect(_on_slot_pressed)
-			if not slot.slot_long_pressed.is_connected(_on_slot_long_pressed):
-				slot.slot_long_pressed.connect(_on_slot_long_pressed)
 			slot_node.add_child(slot)
 	_connect_data()
 	_refresh_all()
@@ -49,8 +48,6 @@ func _exit_tree() -> void:
 			HatchEngine.hatch_progress.disconnect(_on_hatch_progress)
 		if HatchEngine.hatch_complete.is_connected(_on_hatch_complete):
 			HatchEngine.hatch_complete.disconnect(_on_hatch_complete)
-		if HatchEngine.workshop_mode_toggled.is_connected(_on_workshop_mode_toggled):
-			HatchEngine.workshop_mode_toggled.disconnect(_on_workshop_mode_toggled)
 	if EnergyEngine and EnergyEngine.energy_changed.is_connected(_on_energy_changed):
 		EnergyEngine.energy_changed.disconnect(_on_energy_changed)
 
@@ -61,8 +58,6 @@ func _connect_data() -> void:
 			HatchEngine.hatch_progress.connect(_on_hatch_progress)
 		if not HatchEngine.hatch_complete.is_connected(_on_hatch_complete):
 			HatchEngine.hatch_complete.connect(_on_hatch_complete)
-		if not HatchEngine.workshop_mode_toggled.is_connected(_on_workshop_mode_toggled):
-			HatchEngine.workshop_mode_toggled.connect(_on_workshop_mode_toggled)
 	if EnergyEngine and not EnergyEngine.energy_changed.is_connected(_on_energy_changed):
 		EnergyEngine.energy_changed.connect(_on_energy_changed)
 
@@ -106,11 +101,20 @@ func _on_back_pressed() -> void:
 	UIManager.replace("res://scenes/S04_GardenMain.tscn")
 
 
-func _on_workshop_clicked(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed:
-		UIManager.push(WORKSHOP_SCENE)
-	elif event is InputEventScreenTouch and event.pressed:
-		UIManager.push(WORKSHOP_SCENE)
+# B3 包满弹窗「去扩容」直购（PackageSystem.try_purchase_next_tier）
+func _try_expand() -> void:
+	var result: Dictionary = PackageSystem.try_purchase_next_tier() if PackageSystem else {}
+	if bool(result.get("success", false)):
+		if Popups: Popups.show_toast("扩容成功！花园可以住 %d 只猫咪了" % int(result.get("capacity", 0)))
+		_refresh_slots()
+		return
+	match String(result.get("reason", "")):
+		"poor":
+			if Popups: Popups.show_toast("金币不足，扩容需要 %d 金币" % int(result.get("cost", 0)))
+		"locked":
+			if Popups: Popups.show_toast("图鉴集满 %d 格后可扩容" % int(result.get("need_pokedex", 0)))
+		_:
+			if Popups: Popups.show_toast("已经是最大容量啦")
 
 
 func _on_slot_pressed(index: int) -> void:
@@ -122,9 +126,16 @@ func _on_slot_pressed(index: int) -> void:
 	var slot_node = _slots_parent[index].get_child(0) if _slots_parent[index].get_child_count() > 0 else null
 	if slot_node and slot_node.has_method("_effective_status") and slot_node._effective_status(Dictionary(slots[index])) != "ready":
 		return
-	# 背包满时阻止收取并提示
-	if HatchEngine and HatchEngine._get_max_capacity() and HatchEngine.get_cats().size() >= HatchEngine._get_max_capacity():
-		if Popups: Popups.show_toast("🏠 猫咪住满了，先去送养或扩容吧")
+	# B3 包满引导弹窗（响应主动点击，三 CTA；蛋保持 ready 不卡死）
+	if HatchEngine and HatchEngine.is_bag_full():
+		if Popups:
+			Popups.show_actions("花园住满啦～",
+				"送养一只猫咪到云领养中心，\n或扩容猫包，就能迎接新朋友",
+				[
+					{"label": "去送养", "action": func() -> void: UIManager.push("res://scenes/S10_Album.tscn")},
+					{"label": "去扩容", "action": _try_expand},
+					{"label": "稍后", "action": Callable()},
+				])
 		return
 	var j := get_node_or_null("/root/Juice")
 	if j: j.hit()
@@ -132,21 +143,6 @@ func _on_slot_pressed(index: int) -> void:
 	if SaveManager:
 		SaveManager.save_all()
 	_refresh_slots()
-
-
-func _on_slot_long_pressed(slot_index: int) -> void:
-	if HatchEngine == null:
-		return
-	if not HatchEngine.is_manual_switch_enabled():
-		if Popups:
-			Popups.show_toast("孵化第6只猫后解锁模式切换")
-		return
-	var current_is_workshop := HatchEngine.is_workshop_mode()
-	HatchEngine.toggle_workshop_override()
-	if Popups:
-		var msg := "已切换到%s模式" % ["孵化" if current_is_workshop else "工坊"]
-		Popups.show_toast(msg)
-	_refresh_all()
 
 
 func _speed_up() -> void:
@@ -183,7 +179,3 @@ func _on_hatch_complete(cat_data) -> void:
 
 func _on_energy_changed(_current: float, _pool_max: float) -> void:
 	_refresh_ad_button()  # 显值随当日能量实时变化
-
-
-func _on_workshop_mode_toggled(_is_workshop: bool) -> void:
-	_refresh_all()

@@ -275,15 +275,19 @@ func _t4_10_workshop() -> void:
 	_check("T4-10", wd != null and wm != null, "WorkshopData/Manager 已注册")
 	if wd == null or wm == null:
 		return
-	_check("T4-10", int(WorkshopManager.MAX_SLOTS) == 3 and float(WorkshopManager.ENERGY_PER_SLOT) == 3000.0, "3槽 × 3000能量")
-	# 礼物目录非空 + roll 命中目录
+	# C1 步数礼盒模型（P2）
+	_check("T4-10", int(WorkshopManager.BOX_STEPS) == 3000 and int(WorkshopManager.DAILY_BOX_CAP) == 3 and int(WorkshopManager.UNOPENED_CAP) == 5, "3000步/盒 · 日≤3 · 未开≤5")
+	# 礼物目录 = 配饰16 + 花卉8（W-3：无家具无玩具）
 	var ids: Array = WorkshopData.get_all_gift_ids()
-	_check("T4-10", ids.size() > 0, "礼物目录 %d 项" % ids.size())
+	_check("T4-10", ids.size() == 24, "礼物目录 %d 项（应 24）" % ids.size())
+	_check("T4-10", WorkshopData.get_gift_ids_by_category("deco").size() == 16, "配饰 16 项")
+	_check("T4-10", WorkshopData.get_gift_ids_by_category("flower").size() == 8, "花卉 8 项")
+	_check("T4-10", WorkshopData.get_gift_ids_by_category("toy").is_empty(), "玩具类已移除")
 	var g: String = WorkshopData.roll_gift()
 	_check("T4-10", WorkshopData.has_gift(g), "roll_gift → %s（命中目录）" % g)
 	WorkshopData.reset_pity()  # 清掉自检产生的保底计数
-	_check("T4-10", typeof(WorkshopManager.get_slots()) == TYPE_ARRAY, "get_slots 返回数组")
-	_check("T4-10", typeof(WorkshopManager.is_workshop_active()) == TYPE_BOOL, "is_workshop_active 返回 bool")
+	_check("T4-10", typeof(WorkshopManager.get_progress()) == TYPE_DICTIONARY, "get_progress 返回字典")
+	_check("T4-10", int(WorkshopManager.get_unopened_count()) >= 0, "get_unopened_count 非负")
 	_check_load("T4-10", "res://scenes/WorkshopPage.gd")
 
 

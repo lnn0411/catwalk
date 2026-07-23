@@ -435,10 +435,12 @@ func _check_workshop_data() -> void:
 
 
 func _check_workshop_manager() -> void:
+	# C1 步数礼盒模型（P2）：旧能量槽 API 已移除
 	var n := _check_singleton("CORE_SYSTEMS", "WorkshopManager")
-	_check_methods("CORE_SYSTEMS", n, ["get_slots", "open_box", "is_workshop_active", "allocate_energy", "get_save_data", "apply_save"], "WorkshopManager")
-	_check("CORE_SYSTEMS", _const_value("res://core/WorkshopManager.gd", "MAX_SLOTS", 0) == 3, "WorkshopManager.MAX_SLOTS = 3")
-	_check("CORE_SYSTEMS", _const_value("res://core/WorkshopManager.gd", "ENERGY_PER_SLOT", 0.0) == 3000.0, "WorkshopManager.ENERGY_PER_SLOT = 3000")
+	_check_methods("CORE_SYSTEMS", n, ["open_box", "get_unopened_count", "get_progress", "get_save_data", "apply_save"], "WorkshopManager")
+	_check("CORE_SYSTEMS", _const_value("res://core/WorkshopManager.gd", "BOX_STEPS", 0) == 3000, "WorkshopManager.BOX_STEPS = 3000")
+	_check("CORE_SYSTEMS", _const_value("res://core/WorkshopManager.gd", "DAILY_BOX_CAP", 0) == 3, "WorkshopManager.DAILY_BOX_CAP = 3")
+	_check("CORE_SYSTEMS", _const_value("res://core/WorkshopManager.gd", "UNOPENED_CAP", 0) == 5, "WorkshopManager.UNOPENED_CAP = 5")
 
 
 # 4. SCENE_VALIDATION -------------------------------------------------------

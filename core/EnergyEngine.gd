@@ -1,6 +1,9 @@
 extends Node
 
 signal energy_changed(current: float, pool_max: float)
+# B3 溢出收口：池满截断时发出（每自然日仅第一次），UI 弹温和 Toast；
+# 同日再满只由 HUD 常显满态，不再打扰。
+signal pool_became_full()
 
 const MAX_ENERGY_POOL := 15000.0
 const NEW_PLAYER_DAYS := 7
@@ -11,6 +14,7 @@ var today_energy: float = 0.0
 var today_steps_processed: int = 0
 var created_at: float = 0.0
 var last_energy_date: String = ""
+var pool_full_toast_date: String = ""
 
 func _ready() -> void:
 	if created_at <= 0.0:
@@ -57,10 +61,19 @@ func process_steps(delta_steps: int) -> float:
 	var to_pool: float = min(remaining, pool_space)
 	energy_pool += to_pool
 	remaining -= to_pool
+	if remaining > 0.0:
+		_notify_pool_full()
 
 	total_energy_produced += produced
 	_emit_energy_changed()
 	return produced
+
+func _notify_pool_full() -> void:
+	var today: String = _today_key()
+	if pool_full_toast_date == today:
+		return
+	pool_full_toast_date = today
+	pool_became_full.emit()
 
 # 把一笔能量加进主池（GDD v3.1 R8：备用槽已移除，溢出直接截断）。
 # 用于退回未用完的能量（如加速补能后当前蛋已满的剩余），不计入 total_energy_produced。
@@ -72,6 +85,8 @@ func add_pool_with_overflow(amount: float) -> void:
 	var to_pool: float = min(remaining, pool_space)
 	energy_pool += to_pool
 	remaining -= to_pool
+	if remaining > 0.0:
+		_notify_pool_full()
 	_emit_energy_changed()
 
 func newbie_protection_remaining_days() -> int:
@@ -92,6 +107,7 @@ func apply_save(data: Dictionary) -> void:
 	today_steps_processed = max(int(data.get("today_steps_processed", 0)), 0)
 	created_at = float(data.get("created_at", Time.get_unix_time_from_system()))
 	last_energy_date = String(data.get("last_energy_date", _today_key()))
+	pool_full_toast_date = String(data.get("pool_full_toast_date", ""))
 	_check_daily_reset()
 	_emit_energy_changed()
 
@@ -103,6 +119,7 @@ func get_save_data() -> Dictionary:
 		"today_steps_processed": today_steps_processed,
 		"created_at": created_at,
 		"last_energy_date": last_energy_date,
+		"pool_full_toast_date": pool_full_toast_date,
 	}
 
 func get_pool_fill_ratio() -> float:

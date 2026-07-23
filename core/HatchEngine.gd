@@ -3,7 +3,6 @@ extends Node
 signal hatch_started(slot: int)
 signal hatch_progress(slot: int, progress: float)
 signal hatch_complete(cat_data)
-signal workshop_mode_toggled(is_workshop: bool)
 
 const CatData := preload("res://core/CatData.gd")
 const SLOT_COUNT := 4
@@ -15,8 +14,6 @@ var hatched_count: int = 0
 # P1 孵化成本成长曲线：累计已落蛋数（含教学蛋），决定下一颗蛋的成本档位。
 # 旧档缺省时以 hatched_count + 当前在孵/待收槽数兜底回填。
 var eggs_assigned_total: int = 0
-# 手动工坊模式覆盖（第6只猫起长按切换孵化/工坊态）
-var manual_workshop_override: bool = false
 # 稀有度保底（两层独立计数）：epic 连续40次未出必出，legendary 连续120次未出必出
 const EPIC_PITY := 40
 const LEGENDARY_PITY := 120
@@ -222,7 +219,7 @@ func apply_save(data: Dictionary) -> void:
 	has_tutorial_first_egg = bool(data.get("has_tutorial_first_egg", false))
 	current_companion_cat_id = String(data.get("current_companion_cat_id", ""))
 	garden_expand_purchased = bool(data.get("garden_expand_purchased", false))
-	manual_workshop_override = bool(data.get("manual_workshop_override", false))
+	# 旧档 manual_workshop_override 字段读入即弃（C1 工坊态已移除）
 	_ensure_slots()
 	if eggs_assigned_total < 0:
 		# 旧档兜底：已孵数 + 当前占用中的蛋槽数
@@ -302,7 +299,6 @@ func get_save_data() -> Dictionary:
 		"has_tutorial_first_egg": has_tutorial_first_egg,
 		"current_companion_cat_id": current_companion_cat_id,
 		"garden_expand_purchased": garden_expand_purchased,
-		"manual_workshop_override": manual_workshop_override,
 	}
 
 func get_unlocked_species() -> Array:
@@ -435,19 +431,10 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 func _fill_slots_from_pool() -> void:
 	if EnergyEngine == null:
 		return
-	# 工坊态（背包已满且无蛋在孵）：能量转入 WorkshopManager 礼盒队列（GDD v3.1 R8）。
-	if is_workshop_mode():
-		if WorkshopManager:
-			var available: float = EnergyEngine.energy_pool if EnergyEngine else 0.0
-			if available > 0.0:
-				var take: float = EnergyEngine.spend_pool(available)
-				WorkshopManager.allocate_energy(take)
-		return
 	# 渐进灌注（设计决策 2026-06-12）：池里有多少灌多少，蛋随走路实时增长，
 	# GDD §8.2 蛋壳 4 阶段渐进视觉得以生效。
-	# GDD v3.1 R8：备用槽已移除。能量路由为：孵化中的蛋 > 工坊礼盒 > 主能量池 > 截断。
-	# 有蛋在孵时主池常态趋近 0（能量都在蛋里干活）；
-	# 蛋全 ready/无蛋可孵时能量积在池里 → 池满截断（工坊礼盒队列承接缓冲）。
+	# C1（P2）：能量路由只剩一条——灌蛋 > 主池 > 截断。工坊改独立步数驱动，
+	# 不再承接能量；池满截断由 EnergyEngine 温和提示（当日仅一次）。
 	while true:
 		var slot_id: int = _get_active_filling_slot()
 		if slot_id == -1:
@@ -607,36 +594,10 @@ func _emit_all_progress() -> void:
 func _on_hatch_complete(_cat_data) -> void:
 	if PackageSystem:
 		PackageSystem.check_expansion(get_unique_species_count())
-	# 第6只孵化解锁长按切换：广播当前工坊态，供 UI 显示切换控件
-	if hatched_count == 6:
-		workshop_mode_toggled.emit(is_workshop_mode())
 
-# ── GDD v2.17 工坊态/孵化态双轨切换 ──
-
-func is_workshop_mode() -> bool:
-	# 手动强制工坊态优先（第6只起玩家长按切换）
-	if manual_workshop_override:
-		return true
-	# 工坊态条件：猫包已满（cats.size() >= backpack_max_capacity）且无 incubating 槽
-	return cats.size() >= _get_max_capacity() and _get_active_filling_slot() == -1
-
-# ── 手动工坊模式切换（第6只猫起长按切换）──
-
-func is_manual_switch_enabled() -> bool:
-	# 第6只猫解锁长按切换
-	return hatched_count >= 6
-
-func toggle_workshop_override() -> void:
-	manual_workshop_override = not manual_workshop_override
-	workshop_mode_toggled.emit(manual_workshop_override)
-
-func set_workshop_override(v: bool) -> void:
-	if manual_workshop_override != v:
-		manual_workshop_override = v
-		workshop_mode_toggled.emit(v)
-
-func get_workshop_override() -> bool:
-	return manual_workshop_override
+# 包满判定（B3 包满引导弹窗与池满提示分支共用）
+func is_bag_full() -> bool:
+	return cats.size() >= _get_max_capacity()
 
 # ── GDD v2.17 0.5s 自动落蛋 + 新手首蛋 ──
 

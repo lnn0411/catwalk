@@ -49,6 +49,26 @@ func check_expansion(unlock_count: int) -> void:
 		print("[PackageSystem] Cannot afford expansion: need ", cost, " gold")
 		expansion_available.emit(unlock_count, cost, tier["capacity"])
 
+# B3 包满弹窗「去扩容」直购入口：尝试购买下一档扩容。
+# 返回 {success, reason, cost, capacity}；reason ∈ maxed/locked/poor。
+func try_purchase_next_tier() -> Dictionary:
+	if backpack_max_capacity >= _HARD_CAP:
+		return {"success": false, "reason": "maxed", "cost": 0, "capacity": backpack_max_capacity}
+	var unlock_count: int = HatchEngine.get_unique_species_count() if HatchEngine else 0
+	for tier in _TIERS:
+		if int(tier["capacity"]) <= backpack_max_capacity:
+			continue
+		if unlock_count < int(tier["unlock_count"]):
+			return {"success": false, "reason": "locked", "cost": int(tier["cost_gold"]),
+				"capacity": int(tier["capacity"]), "need_pokedex": int(tier["unlock_count"])}
+		var cost := int(tier["cost_gold"])
+		if cost <= 0 or (CurrencyManager and CurrencyManager.spend_gold(cost)):
+			backpack_max_capacity = int(tier["capacity"])
+			backpack_capacity_expanded.emit(backpack_max_capacity)
+			return {"success": true, "reason": "", "cost": cost, "capacity": backpack_max_capacity}
+		return {"success": false, "reason": "poor", "cost": cost, "capacity": int(tier["capacity"])}
+	return {"success": false, "reason": "maxed", "cost": 0, "capacity": backpack_max_capacity}
+
 func set_capacity(cap: int) -> void:
 	cap = clamp(cap, backpack_max_capacity, _HARD_CAP)
 	if cap > backpack_max_capacity:

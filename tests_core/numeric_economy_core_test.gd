@@ -406,25 +406,17 @@ func _ach_check(id: String, target: int, reward_key: String, reward_val: int) ->
 	var rw: Dictionary = a.get("reward", {})
 	check_eq("成就 %s 奖励 %s" % [id, reward_key], int(rw.get(reward_key, -999)), reward_val)
 
-# ============================ 十四、工坊态判定 ============================
+# ============================ 十四、包满锁蛋（C1 工坊态已移除） ============================
 
 func _t_workshop_mode() -> void:
+	# C1/P2：工坊态双轨已移除（H-8）；包满语义 = is_bag_full，ready 蛋保持待收（H-1）
 	var he = HatchS.new()
 	he._ensure_slots()
-	he.backpack_max_capacity = 24
 	he.cats = _dummy_cats(24)
-	# 无 incubating 槽 → 满包应进工坊态
-	for i in range(he.slots.size()):
-		he.slots[i]["status"] = "empty" if i == 0 else "locked"
-	check("C-025 满包+无在孵→工坊态true", he.is_workshop_mode())
-	# 有 incubating 槽 → 非工坊态（B方案：在孵的蛋灌完前不进工坊）
-	he.slots[0]["unlocked"] = true
-	he.slots[0]["status"] = "incubating"
-	check("C-027 有在孵蛋→工坊态false", not he.is_workshop_mode())
-	# 未满包 → 非工坊态
+	check("C-025R 满包→is_bag_full true", he.is_bag_full())
 	he.cats = _dummy_cats(23)
-	he.slots[0]["status"] = "empty"
-	check("未满包→工坊态false", not he.is_workshop_mode())
+	check("C-027R 未满包→is_bag_full false", not he.is_bag_full())
+	check("C-028 H-8 工坊态API已移除", not he.has_method("is_workshop_mode") and not he.has_method("toggle_workshop_override"))
 	he.free()
 
 # ============================ 十三、探索（基础逻辑）======================
