@@ -599,6 +599,13 @@ func _on_hatch_complete(_cat_data) -> void:
 func is_bag_full() -> bool:
 	return cats.size() >= _get_max_capacity()
 
+# ── C2 保底可视化（P3）：剩 0 = 下一颗必出 ──
+func get_epic_pity_remaining() -> int:
+	return max(EPIC_PITY - epic_pity_count, 0)
+
+func get_legendary_pity_remaining() -> int:
+	return max(LEGENDARY_PITY - legendary_pity_count, 0)
+
 # ── GDD v2.17 0.5s 自动落蛋 + 新手首蛋 ──
 
 func _do_assign_empty_slots() -> void:

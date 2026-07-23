@@ -29,12 +29,50 @@ func _ready() -> void:
 			if not slot.slot_pressed.is_connected(_on_slot_pressed):
 				slot.slot_pressed.connect(_on_slot_pressed)
 			slot_node.add_child(slot)
+	_build_anticipation_labels()
 	_connect_data()
 	_refresh_all()
 
 
 func on_enter(_data: Dictionary = {}) -> void:
 	_refresh_all()
+
+
+# ── C2 期待感（P3）：保底进度 + 品种解锁预告（文字版，B4 进度条皮肤到货后换）──
+var _pity_label: Label
+var _unlock_label: Label
+
+func _build_anticipation_labels() -> void:
+	_pity_label = Label.new()
+	_pity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_pity_label.position = Vector2(0.0, 1128.0)
+	_pity_label.size = Vector2(720.0, 26.0)
+	_pity_label.add_theme_font_size_override("font_size", 14)
+	_pity_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	add_child(_pity_label)
+	_unlock_label = Label.new()
+	_unlock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_unlock_label.position = Vector2(0.0, 1156.0)
+	_unlock_label.size = Vector2(720.0, 26.0)
+	_unlock_label.add_theme_font_size_override("font_size", 14)
+	_unlock_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
+	add_child(_unlock_label)
+
+func _refresh_anticipation() -> void:
+	if _pity_label == null:
+		return
+	if HatchEngine:
+		var epic_left: int = HatchEngine.get_epic_pity_remaining()
+		var leg_left: int = HatchEngine.get_legendary_pity_remaining()
+		var epic_text: String = "下一颗必出史诗！" if epic_left <= 0 else "距必出史诗还剩 %d 颗" % epic_left
+		var leg_text: String = "下一颗必出传说！" if leg_left <= 0 else "距必出传说还剩 %d 颗" % leg_left
+		_pity_label.text = "✨ %s · %s" % [epic_text, leg_text]
+	var hint: Dictionary = BreedUnlockEngine.get_next_unlock_hint() if BreedUnlockEngine else {}
+	if hint.is_empty():
+		_unlock_label.visible = false
+	else:
+		_unlock_label.visible = true
+		_unlock_label.text = "🐾 再孵 %d 只%s，会有新朋友来花园" % [int(hint.get("remaining", 0)), String(hint.get("need_breed_name", ""))]
 
 
 func handle_back() -> bool:
@@ -67,6 +105,7 @@ func _connect_data() -> void:
 func _refresh_all() -> void:
 	_refresh_slots()
 	_refresh_ad_button()
+	_refresh_anticipation()
 
 
 func _refresh_slots() -> void:
@@ -174,7 +213,16 @@ func _on_hatch_progress(_slot: int, _progress: float) -> void:
 
 func _on_hatch_complete(cat_data) -> void:
 	_refresh_slots()
+	_refresh_anticipation()
 	UIManager.push("res://scenes/S08_HatchShow.tscn", {"cat": cat_data})
+	# C2 解锁演出强化：新品种解锁瞬间明确告知（原先只有静默布尔标记）
+	if BreedUnlockEngine and BreedUnlockEngine.is_new_breed_unlocked():
+		var breed_name := "新朋友"
+		match BreedUnlockEngine.get_last_unlocked_breed():
+			"british": breed_name = "英短"
+			"siamese": breed_name = "暹罗"
+		if Popups:
+			Popups.show_toast("🎉 %s解锁！之后的蛋里可能会遇见它" % breed_name)
 
 
 func _on_energy_changed(_current: float, _pool_max: float) -> void:
