@@ -9,6 +9,7 @@ const RELEASE_PLAY_COOLDOWN := 21600.0
 const RELEASE_PHOTO_COOLDOWN := 3600.0
 const DEBUG_FEED_COOLDOWN := 30.0
 const DEBUG_PLAY_COOLDOWN := 60.0
+# 保留旧文件以兼容历史版本；主权威快照由 SaveManager 管理。
 const SAVE_PATH: String = "user://interaction.cfg"
 
 var current_cat_card: Control = null
@@ -19,8 +20,10 @@ var _cat_cooldowns: Dictionary = {}
 var _bound_garden: Node = null
 var _cat_card_layer: CanvasLayer = null
 var _affection: Dictionary = {}
+var _save_applied: bool = false
 func _ready() -> void:
-	_load_cooldowns()
+	if not _save_applied:
+		_load_cooldowns()
 
 	_try_find_garden()
 	if _bound_garden == null and UIManager != null:
@@ -215,6 +218,17 @@ func do_interact(cat_id: String, type: String) -> int:
 func get_affection(cat_id: String) -> int:
 	return _affection.get(cat_id, 0)
 
+func get_save_data() -> Dictionary:
+	return {
+		"cat_cooldowns": _cat_cooldowns.duplicate(true),
+		"affection": _affection.duplicate(true),
+	}
+
+func apply_save(data: Dictionary) -> void:
+	_save_applied = true
+	_cat_cooldowns = Dictionary(data.get("cat_cooldowns", {})).duplicate(true)
+	_affection = Dictionary(data.get("affection", {})).duplicate(true)
+
 
 # M3-3.3: 系统性好感加成入口（不走互动冷却，不触发互动计数）——
 # 用于棋盘委托完成等玩法奖励通道
@@ -286,6 +300,9 @@ func _save_cooldowns() -> void:
 			continue
 		cfg.set_value("cooldowns", cat_id, _serialize_cooldown_entry(per_type))
 	cfg.save(SAVE_PATH)
+	var sm := get_node_or_null("/root/SaveManager")
+	if sm and sm.has_method("save_all"):
+		sm.save_all()
 
 
 func _load_cooldowns() -> void:
@@ -327,6 +344,9 @@ func reset_all() -> void:
 	_cat_cooldowns.clear()
 	_affection.clear()
 	_save_cooldowns()
+	var sm := get_node_or_null("/root/SaveManager")
+	if sm and sm.has_method("save_all"):
+		sm.save_all()
 
 
 # 清除指定猫的全部冷却（看广告刷新冷却入口）

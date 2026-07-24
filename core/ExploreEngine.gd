@@ -1,6 +1,6 @@
 # ExploreEngine — 猫咪探索系统 (Autoload)
 # 不要加 class_name：已注册为同名 autoload，class_name 会与单例命名冲突。
-# 用独立的 user://explore.cfg 存档，不参与 SaveManager 的 save.cfg。
+# 兼容保留独立 user://explore.cfg；主权威快照由 SaveManager 的 [explore] section 接管。
 # 测试以 load("res://core/ExploreEngine.gd") 直接驱动脚本资源，故 API 全为 static。
 extends Node
 
@@ -57,18 +57,22 @@ static var _daily_location_pools: Dictionary = {}
 static var _last_chosen_location: Dictionary = {}
 # cat_id -> 上一次所选地点是否命中高偏好（决定返回物 +1）。
 static var _last_location_chosen_is_high: Dictionary = {}
+static var _save_applied: bool = false
 static var _spotlight_boost := 0.15
 static var _rng := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	_rng.randomize()
-	_load()
+	if not _save_applied:
+		_load()
 
 # ---- 状态 ----
 static func reset_all() -> void:
+	_save_applied = true
 	_explorers = {}
 	_hatched_count = 0
 	_collected_postcards = []
+	_travel_stamps = 0
 	_first_explore_flags = {}
 	_last_reward_type = {}
 	_daily_location_pools = {}
@@ -76,6 +80,32 @@ static func reset_all() -> void:
 	_last_location_chosen_is_high = {}
 	_rng.randomize()
 	_save()
+
+static func get_save_data() -> Dictionary:
+	return {
+		"explorers": _explorers.duplicate(true),
+		"hatched_count": _hatched_count,
+		"collected_postcards": _collected_postcards.duplicate(),
+		"travel_stamps": _travel_stamps,
+		"first_explore_flags": _first_explore_flags.duplicate(true),
+		"last_reward_type": _last_reward_type.duplicate(true),
+		"daily_location_pools": _daily_location_pools.duplicate(true),
+		"last_chosen_location": _last_chosen_location.duplicate(true),
+		"last_location_chosen_is_high": _last_location_chosen_is_high.duplicate(true),
+	}
+
+static func apply_save(data: Dictionary) -> void:
+	_save_applied = true
+	_explorers = Dictionary(data.get("explorers", {})).duplicate(true)
+	_hatched_count = max(int(data.get("hatched_count", 0)), 0)
+	_collected_postcards = Array(data.get("collected_postcards", [])).duplicate()
+	_travel_stamps = max(int(data.get("travel_stamps", 0)), 0)
+	_first_explore_flags = Dictionary(data.get("first_explore_flags", {})).duplicate(true)
+	_last_reward_type = Dictionary(data.get("last_reward_type", {})).duplicate(true)
+	_daily_location_pools = Dictionary(data.get("daily_location_pools", {})).duplicate(true)
+	_last_chosen_location = Dictionary(data.get("last_chosen_location", {})).duplicate(true)
+	_last_location_chosen_is_high = Dictionary(data.get("last_location_chosen_is_high", {})).duplicate(true)
+	_check_daily_pool_reset()
 
 static func get_slot_count() -> int:
 	return SLOT_COUNT
@@ -451,11 +481,17 @@ static func _save() -> void:
 	cfg.set_value(SECTION, "collected_postcards", _collected_postcards)
 	cfg.set_value(SECTION, "travel_stamps", _travel_stamps)
 	cfg.set_value(SECTION, "first_explore_flags", _first_explore_flags)
+	cfg.set_value(SECTION, "last_reward_type", _last_reward_type)
 	cfg.set_value(SECTION, "daily_location_pools", _daily_location_pools)
 	cfg.set_value(SECTION, "last_chosen_location", _last_chosen_location)
 	cfg.set_value(SECTION, "last_location_chosen_is_high", _last_location_chosen_is_high)
 	if cfg.save(CFG_PATH) != OK:
 		push_error("[ExploreEngine] Save failed: %s" % CFG_PATH)
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree != null and tree.root != null:
+		var sm := tree.root.get_node_or_null("/root/SaveManager")
+		if sm != null and sm.has_method("save_all"):
+			sm.save_all()
 
 static func _load() -> void:
 	var cfg := ConfigFile.new()
@@ -466,6 +502,7 @@ static func _load() -> void:
 	_collected_postcards = cfg.get_value(SECTION, "collected_postcards", [])
 	_travel_stamps = int(cfg.get_value(SECTION, "travel_stamps", 0))
 	_first_explore_flags = cfg.get_value(SECTION, "first_explore_flags", {})
+	_last_reward_type = cfg.get_value(SECTION, "last_reward_type", {})
 	_daily_location_pools = cfg.get_value(SECTION, "daily_location_pools", {})
 	_last_chosen_location = cfg.get_value(SECTION, "last_chosen_location", {})
 	_last_location_chosen_is_high = cfg.get_value(SECTION, "last_location_chosen_is_high", {})

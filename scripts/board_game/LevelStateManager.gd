@@ -1,6 +1,6 @@
 # LevelStateManager — 猫咪合合乐 关卡状态管理器 (Autoload)
 # 不要加 class_name：已注册为同名 autoload，class_name 会与单例命名冲突。
-# 独立存档 user://cat_merge_save.cfg（ConfigFile），与 InventoryManager 等风格一致。
+# 保留 user://cat_merge_save.cfg 作为旧版兼容缓存；主权威快照由 SaveManager 管理。
 extends Node
 
 const BoardGame := preload("res://scripts/board_game/BoardGame.gd")
@@ -53,10 +53,13 @@ var first_three_star_claimed: bool = false  # D4
 var claimed_milestones: Array = []  # M3-3.1: 已领取的里程碑胜场数
 var earned_titles: Array = []  # M3-3.1: 已获得的称号
 var board_decor_counts: Dictionary = {}  # B6: 棋盘装饰累计获得数（decor_id → count）
+var _session_saved: bool = false
+var _central_save_applied: bool = false
 
 
 func _ready() -> void:
-	_load_meta()
+	if not _central_save_applied:
+		_load_meta()
 	_ensure_game()
 
 
@@ -82,11 +85,17 @@ func save() -> bool:
 		push_warning("LevelStateManager.save 失败: %d" % err)
 		return false
 	saved.emit()
+	_session_saved = true
+	var sm := get_node_or_null("/root/SaveManager")
+	if sm and sm.has_method("save_all"):
+		sm.save_all()
 	return true
 
 
 func load() -> bool:
 	"""从存档恢复对局。无有效存档时返回 false。"""
+	if _central_save_applied and _session_saved:
+		return true
 	if not has_saved():
 		return false
 	var cfg := ConfigFile.new()
@@ -94,6 +103,7 @@ func load() -> bool:
 		return false
 	var g := _ensure_game()
 	g.deserialize_state(cfg.get_value(SECTION, "state", {}))
+	_session_saved = true
 	loaded.emit()
 	return true
 
@@ -111,14 +121,55 @@ func has_saved() -> bool:
 func delete() -> void:
 	"""删除对局存档，但保留 [meta]（累计胜场/棋盘等级不因开新局而清空）。"""
 	if not FileAccess.file_exists(SAVE_PATH):
+		_session_saved = false
+		var missing_sm := get_node_or_null("/root/SaveManager")
+		if missing_sm and missing_sm.has_method("save_all"):
+			missing_sm.save_all()
 		return
 	var cfg := ConfigFile.new()
 	if cfg.load(SAVE_PATH) != OK:
 		DirAccess.remove_absolute(SAVE_PATH)
+		_session_saved = false
+		var invalid_sm := get_node_or_null("/root/SaveManager")
+		if invalid_sm and invalid_sm.has_method("save_all"):
+			invalid_sm.save_all()
 		return
 	if cfg.has_section(SECTION):
 		cfg.erase_section(SECTION)
 	cfg.save(SAVE_PATH)
+	_session_saved = false
+	var sm := get_node_or_null("/root/SaveManager")
+	if sm and sm.has_method("save_all"):
+		sm.save_all()
+
+func get_save_data() -> Dictionary:
+	var state: Dictionary = {}
+	if _session_saved and game != null:
+		state = game.serialize_state()
+	return {
+		"has_session": _session_saved,
+		"state": state,
+		"total_wins": total_wins,
+		"board_level": board_level,
+		"first_three_star_claimed": first_three_star_claimed,
+		"claimed_milestones": claimed_milestones.duplicate(true),
+		"earned_titles": earned_titles.duplicate(true),
+		"board_decor_counts": board_decor_counts.duplicate(true),
+	}
+
+func apply_save(data: Dictionary) -> void:
+	_central_save_applied = true
+	total_wins = max(int(data.get("total_wins", 0)), 0)
+	board_level = int(data.get("board_level", BoardGameData.BoardLevel.LV1))
+	board_level = maxi(board_level, BoardGameData.calc_board_level(total_wins))
+	first_three_star_claimed = bool(data.get("first_three_star_claimed", false))
+	claimed_milestones = Array(data.get("claimed_milestones", [])).duplicate()
+	earned_titles = Array(data.get("earned_titles", [])).duplicate()
+	board_decor_counts = Dictionary(data.get("board_decor_counts", {})).duplicate(true)
+	_session_saved = bool(data.get("has_session", false))
+	var state_data: Variant = data.get("state", {})
+	if _session_saved and state_data is Dictionary:
+		_ensure_game().deserialize_state(Dictionary(state_data))
 
 
 func give_up() -> void:
@@ -268,6 +319,7 @@ func _load_meta() -> void:
 	claimed_milestones = Array(cfg.get_value(META_SECTION, "claimed_milestones", []))  # M3-3.1
 	earned_titles = Array(cfg.get_value(META_SECTION, "earned_titles", []))  # M3-3.1
 	board_decor_counts = Dictionary(cfg.get_value(META_SECTION, "board_decor_counts", {}))  # B6
+	_session_saved = cfg.has_section_key(SECTION, "state")
 	# 自愈：即便 board_level 丢失/损坏，也不低于当前胜场应有的等级（仍保证不降级）
 	board_level = maxi(board_level, BoardGameData.calc_board_level(total_wins))
 
@@ -285,6 +337,21 @@ func _save_meta() -> void:
 	var err := cfg.save(SAVE_PATH)
 	if err != OK:
 		push_warning("LevelStateManager._save_meta 失败: %d" % err)
+	var sm := get_node_or_null("/root/SaveManager")
+	if sm and sm.has_method("save_all"):
+		sm.save_all()
+
+func reset_all() -> void:
+	total_wins = 0
+	board_level = BoardGameData.BoardLevel.LV1
+	first_three_star_claimed = false
+	claimed_milestones = []
+	earned_titles = []
+	board_decor_counts = {}
+	_session_saved = false
+	_central_save_applied = true
+	delete()
+	_save_meta()
 
 
 func _ensure_game() -> BoardGame:

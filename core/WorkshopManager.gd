@@ -11,6 +11,7 @@ signal progress_changed(steps_into_box: int, box_steps: int)
 const BOX_STEPS := 3000
 const DAILY_BOX_CAP := 3
 const UNOPENED_CAP := 5
+# 保留旧文件以兼容历史版本；主权威快照由 SaveManager 管理。
 const SAVE_PATH := "user://workshop.cfg"
 # 配饰重复折爱心花瓣；花卉可重复持有但每种上限 5（C3 折算总表），超限折 10 花瓣
 const DUPE_PETALS := {
@@ -40,6 +41,8 @@ func _on_steps_updated(delta: int, _total: int) -> void:
 	box_step_counter += delta
 	_mint_boxes()
 	progress_changed.emit(box_step_counter, BOX_STEPS)
+	if SaveManager:
+		SaveManager.save_all()
 
 
 # 铸盒：满 3000 步一盒；日上限 3、未开上限 5。达上限时计数器继续累计、
@@ -140,6 +143,12 @@ func apply_save(data: Dictionary) -> void:
 	boxes_today = max(int(data.get("boxes_today", 0)), 0)
 	boxes_date = String(data.get("boxes_date", ""))
 	_check_daily_reset()
+
+func reset_all() -> void:
+	box_step_counter = 0
+	unopened_boxes = 0
+	boxes_today = 0
+	boxes_date = ""
 
 
 # 旧档迁移（v2.2 §6.4）：旧槽位能量合计 ⌊Σ/3000⌋ 折为待开礼盒（≤5），

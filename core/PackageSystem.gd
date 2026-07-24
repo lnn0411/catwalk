@@ -95,3 +95,6 @@ func apply_save(data: Dictionary) -> void:
 		_INITIAL_CAPACITY,
 		_HARD_CAP
 	)
+
+func reset_all() -> void:
+	backpack_max_capacity = _INITIAL_CAPACITY

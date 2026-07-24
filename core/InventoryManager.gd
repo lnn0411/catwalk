@@ -1,6 +1,6 @@
 # InventoryManager — 道具背包账本 (Autoload)
 # 不要加 class_name：已注册为同名 autoload，class_name 会与单例命名冲突。
-# 自带独立存档 user://inventory.cfg（ConfigFile），与 CurrencyManager 风格一致。
+# 保留 user://inventory.cfg 作为旧版兼容缓存；主权威快照由 SaveManager 管理。
 extends Node
 
 const SAVE_PATH := "user://inventory.cfg"
@@ -27,11 +27,13 @@ const VALID_TYPES := [
 
 var _counts: Dictionary = {}
 var _processed_ids: Array = []
+var _save_applied: bool = false
 
 func _ready() -> void:
 	for t in VALID_TYPES:
 		_counts[t] = 0
-	_load()
+	if not _save_applied:
+		_load()
 
 # ---- API ----
 
@@ -82,6 +84,25 @@ func get_all_counts() -> Dictionary:
 		out[t] = int(_counts.get(t, 0))
 	return out
 
+func get_save_data() -> Dictionary:
+	return {
+		"counts": get_all_counts(),
+		"processed_ids": _processed_ids.duplicate(),
+	}
+
+func apply_save(data: Dictionary) -> void:
+	_save_applied = true
+	for item_type in VALID_TYPES:
+		_counts[item_type] = 0
+	var saved_counts: Dictionary = Dictionary(data.get("counts", {}))
+	for item_type in VALID_TYPES:
+		_counts[item_type] = max(int(saved_counts.get(item_type, 0)), 0)
+	_processed_ids = []
+	for event_id in Array(data.get("processed_ids", [])):
+		_processed_ids.append(String(event_id))
+	while _processed_ids.size() > MAX_PROCESSED_IDS:
+		_processed_ids.pop_front()
+
 # 合成：消耗 cost 个 from_type，产出 1 个 to_type
 func synthesize(from_type: String, to_type: String, cost: int) -> bool:
 	if not _counts.has(from_type) or not _counts.has(to_type):
@@ -126,3 +147,12 @@ func _save() -> void:
 func _after_change(item_type: String) -> void:
 	_save()
 	EventBus.inventory_changed.emit(item_type, _counts[item_type])
+	var sm := get_node_or_null("/root/SaveManager")
+	if sm and sm.has_method("save_all"):
+		sm.save_all()
+
+func reset_all() -> void:
+	for item_type in VALID_TYPES:
+		_counts[item_type] = 0
+	_processed_ids.clear()
+	_save()

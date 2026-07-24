@@ -79,6 +79,9 @@ func apply_save(data: Dictionary) -> void:
 	epic_pity_count = max(int(data.get("epic_pity_count", 0)), 0)
 	legendary_pity_count = max(int(data.get("legendary_pity_count", 0)), 0)
 
+func reset_all() -> void:
+	reset_pity()
+
 func get_gift_data(gift_id: String) -> Dictionary:
 	var d := Dictionary(GIFT_CATALOG.get(gift_id, {}))
 	return d.duplicate(true)
