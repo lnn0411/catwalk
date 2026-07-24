@@ -54,6 +54,8 @@ func _ready() -> void:
 	_t_order_click_limit()
 	_t_order_serialize()
 	_t_telemetry_roundtrip()
+	_t_ticket_purchase_limits()
+	_t_rescue_remove_items()
 
 	print("-".repeat(56))
 	print("结果: %d 通过 / %d 失败" % [_pass, _fail])
@@ -742,6 +744,67 @@ func _t_order_serialize() -> void:
 	_check(restored.frenzy_modes_used == [BoardGameData.FrenzyMode.GUARD], "狂欢选择记录恢复")
 	_check(restored.undo_paid_count == 2, "付费撤销计数恢复")
 	restored.queue_free()
+	b.queue_free()
+
+
+func _t_ticket_purchase_limits() -> void:
+	print("[门票链路 金币兑换/广告日限]")
+	if TicketManager == null or CurrencyManager == null:
+		_check(false, "TicketManager/CurrencyManager autoload 可用")
+		return
+	# 快照现场，测试后恢复
+	var save_tickets: int = TicketManager.tickets
+	var save_coin: int = TicketManager.daily_coin_tickets
+	var save_ad: int = TicketManager.daily_ad_tickets
+	var save_gold: int = CurrencyManager.gold_coins
+	var save_login: bool = TicketManager._login_claimed_today
+
+	TicketManager.tickets = 0
+	TicketManager.daily_coin_tickets = 0
+	TicketManager.daily_ad_tickets = 0
+	CurrencyManager.gold_coins = 120
+	_check(TicketManager.buy_with_coins(), "金币充足第1次兑换成功")
+	_check(TicketManager.tickets == 1 and CurrencyManager.gold_coins == 70, "扣50金+1票")
+	_check(TicketManager.buy_with_coins(), "第2次兑换成功")
+	_check(not TicketManager.buy_with_coins(), "第3次达日限被拒")
+	CurrencyManager.gold_coins = 30
+	TicketManager.daily_coin_tickets = 0
+	_check(not TicketManager.buy_with_coins(), "金币不足被拒且不扣款")
+	_check(CurrencyManager.gold_coins == 30, "拒绝后金币不变")
+	for i in range(3):
+		_check(TicketManager.add_ad_ticket(), "第%d次广告票成功" % (i + 1))
+	_check(not TicketManager.add_ad_ticket(), "第4次广告达日限被拒")
+	_check(TicketManager.is_login_claimed_today() == save_login, "登录状态getter与内部一致")
+
+	# 恢复现场
+	TicketManager.tickets = save_tickets
+	TicketManager.daily_coin_tickets = save_coin
+	TicketManager.daily_ad_tickets = save_ad
+	CurrencyManager.gold_coins = save_gold
+	TicketManager.tickets_changed.emit(TicketManager.tickets)
+
+
+func _t_rescue_remove_items() -> void:
+	print("[救局腾位 引擎方法]")
+	var b := _fresh()
+	b.grid.clear()
+	b.undo_stack.clear()
+	b.special_tiles.clear()
+	b.generator_remaining = 0
+	var lost := [false]
+	b.game_lost.connect(func() -> void:
+		lost[0] = true
+	)
+	var p1 := Vector2i(0, 0)
+	var p2 := Vector2i(1, 0)
+	var p3 := Vector2i(2, 0)
+	b.grid[p1] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.ONE, p1)
+	b.grid[p2] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.TWO, p2)
+	b.grid[p3] = BoardItem.create(b.current_main_chain, BoardGameData.StarLevel.THREE, p3)
+	var removed := b.remove_items_for_rescue([p1, p2, p3])
+	_check(removed == 2, "只移除⭐1/⭐2（⭐3保护），实际移除%d" % removed)
+	_check(not b.grid.has(p1) and not b.grid.has(p2) and b.grid.has(p3), "棋盘状态正确")
+	_check(lost[0] and b.game_state == BoardGameData.GameState.LOST, "移除后无解触发死局重查")
 	b.queue_free()
 
 

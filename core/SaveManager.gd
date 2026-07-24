@@ -68,9 +68,14 @@ func load_and_apply() -> void:
 	# 避免冷启动时"应用关闭期间累积的步数"在首帧丢失。
 	if StepEngine and StepEngine.has_method("_refresh_plugin_steps"):
 		StepEngine._refresh_plugin_steps()
-	# 首次登录发放门票奖励（跨天自动触发）
+	# 首次登录发放门票奖励（跨天自动触发）。
+	# 新手期判定用账号创建时间（EnergyEngine.created_at），7天内每日3张
 	if tm and tm.has_method("add_login_bonus"):
-		tm.add_login_bonus(false)
+		var is_new_player := false
+		if EnergyEngine != null and float(EnergyEngine.created_at) > 0.0:
+			var days_since_install := (Time.get_unix_time_from_system() - float(EnergyEngine.created_at)) / 86400.0
+			is_new_player = days_since_install < float(tm.NEW_PLAYER_DAYS)
+		tm.add_login_bonus(is_new_player)
 
 func reset_all() -> void:
 	_config.clear()

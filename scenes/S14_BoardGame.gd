@@ -22,8 +22,21 @@ const CELL_GAP := 8.0
 const UI_TEXT_COLOR := Color("4F453C")
 const GET_TICKET_WIDTH := 520.0
 
-const TX_BTN_PRIMARY := preload("res://assets/art/ui/buttons/btn_primary.png")
-const TX_BTN_SECONDARY := preload("res://assets/art/ui/buttons/btn_secondary.png")
+# 三态按钮贴图（@1x 运行时资源，@2x 原稿在 assets/art/src/board_ui_2x/）
+const TX_BTN_PRIMARY_N := preload("res://assets/art/ui/buttons/btn_primary_n.png")
+const TX_BTN_PRIMARY_P := preload("res://assets/art/ui/buttons/btn_primary_p.png")
+const TX_BTN_PRIMARY_D := preload("res://assets/art/ui/buttons/btn_primary_d.png")
+const TX_BTN_SECONDARY_N := preload("res://assets/art/ui/buttons/btn_secondary_n.png")
+const TX_BTN_SECONDARY_P := preload("res://assets/art/ui/buttons/btn_secondary_p.png")
+const TX_BTN_SECONDARY_D := preload("res://assets/art/ui/buttons/btn_secondary_d.png")
+const TX_POPUP_BG_9P := preload("res://assets/art/ui/panels/popup_bg_9p.png")
+# 兼容别名：旧逐态调用的 normal/hover 走常态贴图
+const TX_BTN_PRIMARY := TX_BTN_PRIMARY_N
+const TX_BTN_SECONDARY := TX_BTN_SECONDARY_N
+# 九宫格参数（@1x：按钮 240×64 边距 32/20，弹窗 400×300 四边 40）
+const BTN_9P_MARGIN_H := 32.0
+const BTN_9P_MARGIN_V := 20.0
+const POPUP_9P_MARGIN := 40.0
 
 var board: BoardGame
 var _cells: Dictionary = {}  # Vector2i -> BoardCell
@@ -45,7 +58,15 @@ var _ad_rescue_selected: Dictionary = {}  # Vector2i -> true
 var _ad_rescue_highlights: Dictionary = {}  # Vector2i -> Panel
 var _ad_rescue_mode: bool = false
 var _dbg_ticket_btn: Button
-var _get_ticket_dialog: Control           # 门票不足弹窗
+var _get_ticket_dialog: Control           # 门票不足弹窗（行动面板）
+var _gt_step_label: Label                 # 步数进度行
+var _gt_interact_label: Label             # 互动进度行
+var _gt_login_label: Label                # 登录状态行
+var _gt_ad_btn: Button                    # 看广告按钮
+var _gt_coin_btn: Button                  # 金币兑换按钮
+var _gt_ok_btn: TextureButton             # 确认按钮（有票→开始游戏，无票→知道了）
+var _gt_ok_label: Label                   # 确认按钮文字
+var _gt_ok_is_start: bool = false         # 确认按钮当前模式
 var _get_ticket_result_label: Label       # 弹窗内文字（备用）
 var _has_three_star_bonus: bool = false  # D4
 var _excitement_bar: ProgressBar          # 兴奋值条
@@ -91,6 +112,9 @@ func _ready() -> void:
 	if LevelStateManager != null and LevelStateManager.has_signal("win_milestone_reached"):  # M3-3.1
 		if not LevelStateManager.win_milestone_reached.is_connected(_on_win_milestone):
 			LevelStateManager.win_milestone_reached.connect(_on_win_milestone)
+	# 门票行动面板：后台获得门票（走路/互动）时若弹窗开着实时刷新
+	if TicketManager != null and not TicketManager.tickets_changed.is_connected(_on_tickets_changed):
+		TicketManager.tickets_changed.connect(_on_tickets_changed)
 	_build_ui()
 	_start_game()
 
@@ -184,9 +208,7 @@ func _build_top_bar() -> Control:
 	back.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	back.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	back.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	back.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
-	back.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	back.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
+	_apply_btn_art(back, false)
 	back.pressed.connect(_on_back_pressed)
 	hbox.add_child(back)
 
@@ -306,12 +328,10 @@ func _build_excitement_bar() -> Control:
 	_frenzy_button.name = "FrenzyButton"
 	_frenzy_button.text = "🎉狂欢!"
 	_frenzy_button.visible = false
-	_frenzy_button.custom_minimum_size = Vector2(80, 28)
+	_frenzy_button.custom_minimum_size = Vector2(108, 44)  # 九宫格最小安全尺寸（角不挤压）
 	_frenzy_button.add_theme_font_size_override("font_size", 14)
 	_frenzy_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	_frenzy_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
-	_frenzy_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	_frenzy_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
+	_apply_btn_art(_frenzy_button, true)
 	_frenzy_button.pressed.connect(_on_frenzy_pressed)
 	container.add_child(_frenzy_button)
 
@@ -329,11 +349,74 @@ func _make_excitement_fill_style() -> StyleBoxFlat:
 static func _btn_style(texture: Texture2D) -> StyleBoxTexture:
 	var style := StyleBoxTexture.new()
 	style.texture = texture
+	# 九宫格切图：四角固定、中段拉伸（配合三态贴图 240×64）
+	style.texture_margin_left = BTN_9P_MARGIN_H
+	style.texture_margin_right = BTN_9P_MARGIN_H
+	style.texture_margin_top = BTN_9P_MARGIN_V
+	style.texture_margin_bottom = BTN_9P_MARGIN_V
 	style.content_margin_left = 12.0
 	style.content_margin_right = 12.0
 	style.content_margin_top = 8.0
 	style.content_margin_bottom = 8.0
 	return style
+
+
+# 扁平三态按钮样式（与全局 StyleBoxFlat 纸质风一致；参照基准件"知道了"：
+# 扁平填充 + 细琥珀描边，零高光）。v1 贴图立体风与游戏风格冲突暂弃用，
+# 贴图版通道保留在 _btn_style/TX_BTN_*，美术 v1.1 交付后可切回。
+static func _flat_btn_style(bg: Color, border: Color, pressed: bool = false) -> StyleBoxFlat:
+	var s := StyleBoxFlat.new()
+	s.bg_color = bg
+	s.border_color = border
+	s.set_border_width_all(2)
+	s.set_corner_radius_all(16)
+	s.content_margin_left = 12.0
+	s.content_margin_right = 12.0
+	# 按下态内容下沉 2px，模拟按压
+	s.content_margin_top = 10.0 if pressed else 8.0
+	s.content_margin_bottom = 6.0 if pressed else 8.0
+	return s
+
+
+# 统一按钮美术：三态（常态/按下/禁用，hover复用常态）+ 文字配色一次成型。
+# 新增按钮一律走这里，禁止裸 Button。
+static func _apply_btn_art(btn: Button, primary: bool = true) -> void:
+	var style_n: StyleBoxFlat
+	var style_p: StyleBoxFlat
+	if primary:
+		style_n = _flat_btn_style(Palette.AMBER, Palette.AMBER_PRESS)
+		style_p = _flat_btn_style(Palette.AMBER_PRESS, Palette.AMBER_PRESS, true)
+	else:
+		style_n = _flat_btn_style(Palette.PAPER_CREAM, Palette.AMBER_PRESS)
+		style_p = _flat_btn_style(Palette.BG_CEMENT, Palette.AMBER_PRESS, true)
+	var style_d := _flat_btn_style(Palette.BG_CEMENT, Palette.BORDER)
+	btn.add_theme_stylebox_override("normal", style_n)
+	btn.add_theme_stylebox_override("hover", style_n)
+	btn.add_theme_stylebox_override("pressed", style_p)
+	btn.add_theme_stylebox_override("disabled", style_d)
+	btn.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	btn.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
+	btn.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
+	btn.add_theme_color_override("font_disabled_color", Color(UI_TEXT_COLOR, 0.4))
+
+
+static func _popup_panel_style() -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = TX_POPUP_BG_9P
+	style.texture_margin_left = POPUP_9P_MARGIN
+	style.texture_margin_right = POPUP_9P_MARGIN
+	style.texture_margin_top = POPUP_9P_MARGIN
+	style.texture_margin_bottom = POPUP_9P_MARGIN
+	style.content_margin_left = 36.0
+	style.content_margin_right = 36.0
+	style.content_margin_top = 32.0
+	style.content_margin_bottom = 28.0
+	return style
+
+
+# 统一弹窗底：九宫格 popup_bg_9p（四角猫爪暗纹固定，中段自由拉伸）
+static func _apply_dialog_panel_art(panel: PanelContainer) -> void:
+	panel.add_theme_stylebox_override("panel", _popup_panel_style())
 
 
 func _build_grid() -> Control:
@@ -410,10 +493,7 @@ func _build_bottom_bar() -> Control:
 	_undo_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	_undo_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
 	_undo_button.add_theme_color_override("font_disabled_color", UI_TEXT_COLOR)
-	_undo_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
-	_undo_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	_undo_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
-	_undo_button.add_theme_stylebox_override("disabled", _btn_style(TX_BTN_SECONDARY))
+	_apply_btn_art(_undo_button, false)
 	# disabled 态半透明灰（Button 无 disabled_changed 信号，故在 _refresh_all 中同步 modulate）
 	_undo_button.pressed.connect(_on_undo_pressed)
 	bar.add_child(_undo_button)
@@ -425,9 +505,7 @@ func _build_bottom_bar() -> Control:
 	_restart_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	_restart_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	_restart_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	_restart_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
-	_restart_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	_restart_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
+	_apply_btn_art(_restart_button, false)
 	_restart_button.pressed.connect(_start_game)
 	bar.add_child(_restart_button)
 
@@ -442,15 +520,8 @@ func _build_result_overlay() -> void:
 	add_child(_result_overlay)
 
 	var panel := PanelContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Palette.PAPER_CREAM
-	style.set_corner_radius_all(24)
-	style.content_margin_left = 48.0
-	style.content_margin_right = 48.0
-	style.content_margin_top = 36.0
-	style.content_margin_bottom = 36.0
-	panel.add_theme_stylebox_override("panel", style)
+	panel.custom_minimum_size = Vector2(500, 0)
+	_apply_dialog_panel_art(panel)
 	_result_overlay.add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -459,6 +530,8 @@ func _build_result_overlay() -> void:
 
 	_result_label = Label.new()
 	_result_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_result_label.custom_minimum_size = Vector2(404, 0)
 	_result_label.add_theme_font_size_override("font_size", 30)
 	_result_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	vbox.add_child(_result_label)
@@ -470,9 +543,7 @@ func _build_result_overlay() -> void:
 	_result_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	_result_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	_result_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	_result_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
-	_result_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	_result_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
+	_apply_btn_art(_result_button, true)
 	_result_button.pressed.connect(func():
 		_result_overlay.visible = false
 		if TicketManager != null and TicketManager.get_tickets() <= 0:
@@ -482,6 +553,9 @@ func _build_result_overlay() -> void:
 			_start_game()
 	)
 	vbox.add_child(_result_button)
+
+	# 子节点全部添加后再居中——此时面板已有完整高度
+	panel.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
 
 
 func _build_ad_rescue_dialog() -> void:
@@ -529,9 +603,7 @@ func _build_ad_rescue_dialog() -> void:
 	watch_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	watch_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	watch_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	watch_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_PRIMARY))
-	watch_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_PRIMARY))
-	watch_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_PRIMARY))
+	_apply_btn_art(watch_button, true)
 	watch_button.pressed.connect(_enter_ad_rescue_mode)
 	buttons.add_child(watch_button)
 
@@ -542,9 +614,7 @@ func _build_ad_rescue_dialog() -> void:
 	give_up_button.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	give_up_button.add_theme_color_override("font_hover_color", UI_TEXT_COLOR)
 	give_up_button.add_theme_color_override("font_pressed_color", UI_TEXT_COLOR)
-	give_up_button.add_theme_stylebox_override("normal", _btn_style(TX_BTN_SECONDARY))
-	give_up_button.add_theme_stylebox_override("hover", _btn_style(TX_BTN_SECONDARY))
-	give_up_button.add_theme_stylebox_override("pressed", _btn_style(TX_BTN_SECONDARY))
+	_apply_btn_art(give_up_button, false)
 	give_up_button.pressed.connect(_on_ad_rescue_give_up_pressed)
 	buttons.add_child(give_up_button)
 
@@ -633,38 +703,23 @@ func _build_get_ticket_dialog() -> void:
 	dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_get_ticket_dialog.add_child(dim)
 
-	# 居中卡片（比基础 560×280 高些容纳 5 条获取方式）
+	# 居中卡片（行动面板：3 状态行 + 2 按钮 + 直达入口）
 	var card := Control.new()
-	_center_control(card, Vector2(560, 370))
+	_center_control(card, Vector2(480, 360))
 	_get_ticket_dialog.add_child(card)
 
 	# 底图贴图（加载失败回退 StyleBoxFlat）
-	var popup_tex := ResourceLoader.load("res://assets/art/ui/panels/popup_bg.png")
-	if popup_tex != null:
-		var panel := TextureRect.new()
-		panel.texture = popup_tex
-		panel.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		panel.stretch_mode = TextureRect.STRETCH_SCALE
-		panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		card.add_child(panel)
-	else:
-		var panel := PanelContainer.new()
-		panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		var style := StyleBoxFlat.new()
-		style.bg_color = Palette.PAPER_CREAM
-		style.set_corner_radius_all(24)
-		panel.add_theme_stylebox_override("panel", style)
-		card.add_child(panel)
+	# 九宫格弹窗底（旧整图拉伸在 560×500 下会糊，换 popup_bg_9p）
+	var panel := Panel.new()
+	panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	panel.add_theme_stylebox_override("panel", _popup_panel_style())
+	card.add_child(panel)
 
 	# VBox 内容
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_theme_constant_override("separation", 8)
-	box.add_theme_constant_override("margin_left", 36)
-	box.add_theme_constant_override("margin_right", 36)
-	box.add_theme_constant_override("margin_top", 32)
-	box.add_theme_constant_override("margin_bottom", 24)
 	card.add_child(box)
 
 	# 标题
@@ -683,88 +738,77 @@ func _build_get_ticket_dialog() -> void:
 	# 获取方式标题
 	var get_title := Label.new()
 	get_title.text = "🎯 获取门票"
-	get_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	get_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	get_title.add_theme_font_size_override("font_size", 18)
 	get_title.add_theme_color_override("font_color", UI_TEXT_COLOR)
 	box.add_child(get_title)
 
-	# row1: 步数 + 互动
-	var row1 := HBoxContainer.new()
-	row1.alignment = BoxContainer.ALIGNMENT_CENTER
-	row1.add_theme_constant_override("separation", 24)
-	box.add_child(row1)
+	# 行动面板：被动途径显示实时进度，主动途径挂可点按钮
+	_gt_step_label = Label.new()
+	_gt_step_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gt_step_label.add_theme_font_size_override("font_size", 16)
+	_gt_step_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	box.add_child(_gt_step_label)
 
-	var step_label := Label.new()
-	step_label.text = "🚶 每1500步 → 1张"
-	step_label.add_theme_font_size_override("font_size", 16)
-	step_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	row1.add_child(step_label)
+	_gt_interact_label = Label.new()
+	_gt_interact_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gt_interact_label.add_theme_font_size_override("font_size", 16)
+	_gt_interact_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	box.add_child(_gt_interact_label)
 
-	var interact_label := Label.new()
-	interact_label.text = "🐱 互动5次 → 1张"
-	interact_label.add_theme_font_size_override("font_size", 16)
-	interact_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	row1.add_child(interact_label)
+	_gt_login_label = Label.new()
+	_gt_login_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gt_login_label.add_theme_font_size_override("font_size", 16)
+	_gt_login_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	box.add_child(_gt_login_label)
 
-	# row2: 登录 + 广告
-	var row2 := HBoxContainer.new()
-	row2.alignment = BoxContainer.ALIGNMENT_CENTER
-	row2.add_theme_constant_override("separation", 24)
-	box.add_child(row2)
+	# 主动按钮行：看广告 + 金币兑换
+	var action_row := HBoxContainer.new()
+	action_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	action_row.add_theme_constant_override("separation", 20)
+	box.add_child(action_row)
 
-	var login_label := Label.new()
-	login_label.text = "🎁 每日登录 → 1张"
-	login_label.add_theme_font_size_override("font_size", 16)
-	login_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	row2.add_child(login_label)
+	_gt_ad_btn = Button.new()
+	_gt_ad_btn.custom_minimum_size = Vector2(190, 50)
+	_gt_ad_btn.add_theme_font_size_override("font_size", 17)
+	_apply_btn_art(_gt_ad_btn, true)
+	_gt_ad_btn.pressed.connect(_on_gt_ad_pressed)
+	action_row.add_child(_gt_ad_btn)
 
-	var ad_label := Label.new()
-	ad_label.text = "📺 看广告 → 1张"
-	ad_label.add_theme_font_size_override("font_size", 16)
-	ad_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	row2.add_child(ad_label)
+	_gt_coin_btn = Button.new()
+	_gt_coin_btn.custom_minimum_size = Vector2(190, 50)
+	_gt_coin_btn.add_theme_font_size_override("font_size", 17)
+	_apply_btn_art(_gt_coin_btn, true)
+	_gt_coin_btn.pressed.connect(_on_gt_coin_pressed)
+	action_row.add_child(_gt_coin_btn)
 
-	# 金币兑换
-	var coin_label := Label.new()
-	coin_label.text = "🪙 金币×50换1张（每日限2张）"
-	coin_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	coin_label.add_theme_font_size_override("font_size", 16)
-	coin_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	box.add_child(coin_label)
-
-	# 分隔线
-	var sep2 := HSeparator.new()
-	sep2.custom_minimum_size = Vector2(0, 2)
-	box.add_child(sep2)
-
-	# 知道了按钮（btn_confirm_name.png 贴图 + 叠加文字）
+	# 确认按钮（有票→开始游戏，无票→知道了）
 	var btn_row := HBoxContainer.new()
 	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	box.add_child(btn_row)
 
-	var ok_btn := TextureButton.new()
-	ok_btn.custom_minimum_size = Vector2(170, 70)
+	_gt_ok_btn = TextureButton.new()
+	_gt_ok_btn.custom_minimum_size = Vector2(170, 70)
 	var btn_tex := ResourceLoader.load("res://assets/art/ui/incubation/components/btn_confirm_name.png")
 	if btn_tex != null:
-		ok_btn.texture_normal = btn_tex
-	ok_btn.ignore_texture_size = true
-	ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
-	ok_btn.pressed.connect(func():
-		_get_ticket_dialog.visible = false
-		UIManager.pop()
-	)
-	btn_row.add_child(ok_btn)
+		_gt_ok_btn.texture_normal = btn_tex
+	_gt_ok_btn.ignore_texture_size = true
+	_gt_ok_btn.stretch_mode = TextureButton.STRETCH_SCALE
+	_gt_ok_btn.pressed.connect(_on_gt_ok_pressed)
+	btn_row.add_child(_gt_ok_btn)
 
 	# 按钮 Label 叠加
-	var btn_label := Label.new()
-	btn_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	btn_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	btn_label.text = "知道了"
-	btn_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	btn_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	btn_label.add_theme_font_size_override("font_size", 18)
-	btn_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
-	ok_btn.add_child(btn_label)
+	_gt_ok_label = Label.new()
+	_gt_ok_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_gt_ok_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_gt_ok_label.text = "知道了"
+	_gt_ok_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_gt_ok_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_gt_ok_label.add_theme_font_size_override("font_size", 18)
+	_gt_ok_label.add_theme_color_override("font_color", UI_TEXT_COLOR)
+	_gt_ok_btn.add_child(_gt_ok_label)
+
+	_gt_ok_is_start = false
 
 
 static func _center_control(control: Control, control_size: Vector2) -> void:
@@ -779,10 +823,87 @@ static func _center_control(control: Control, control_size: Vector2) -> void:
 
 
 func _show_get_ticket_dialog() -> void:
+	_refresh_get_ticket_dialog()
 	_get_ticket_dialog.visible = true
 	_get_ticket_dialog.modulate = Color(1, 1, 1, 0)
 	var tween := create_tween()
 	tween.tween_property(_get_ticket_dialog, "modulate:a", 1.0, 0.25)
+
+
+func _refresh_get_ticket_dialog() -> void:
+	"""行动面板实时状态：被动途径显示进度，主动按钮显示剩余次数与可用性"""
+	if TicketManager == null:
+		return
+	var remaining: Dictionary = TicketManager.get_daily_remaining()
+	# 步数：今日已得/上限 + 距下一张还差多少步
+	var steps_left: int = int(remaining.get("steps", 0))
+	var steps_progress: int = int(remaining.get("steps_progress", 0))
+	if steps_left > 0:
+		_gt_step_label.text = "🚶 走路：还差 %d 步 → 1张（今日还可得 %d 张）" % [TicketManager.STEPS_PER_TICKET - steps_progress, steps_left]
+	else:
+		_gt_step_label.text = "🚶 走路：今日已达上限 ✓"
+	# 互动
+	var interact_left: int = int(remaining.get("interaction", 0))
+	if interact_left > 0:
+		_gt_interact_label.text = "🐱 互动：每 %d 次 → 1张（今日还可得 %d 张）" % [TicketManager.INTERACTIONS_PER_TICKET, interact_left]
+	else:
+		_gt_interact_label.text = "🐱 互动：今日已达上限 ✓"
+	# 登录
+	if TicketManager.has_method("is_login_claimed_today") and TicketManager.is_login_claimed_today():
+		_gt_login_label.text = "🎁 每日登录：今日已领 ✓"
+	else:
+		_gt_login_label.text = "🎁 每日登录 → 1张"
+	# 看广告按钮
+	var ad_left: int = int(remaining.get("ad", 0))
+	_gt_ad_btn.text = "📺 看广告 +1（剩%d）" % ad_left
+	_gt_ad_btn.disabled = ad_left <= 0
+	# 金币兑换按钮
+	var coin_left: int = int(remaining.get("coin", 0))
+	var gold: int = int(CurrencyManager.gold_coins) if CurrencyManager != null else 0
+	_gt_coin_btn.text = "💰 %d金兑换（剩%d）" % [TicketManager.COIN_COST_PER_TICKET, coin_left]
+	_gt_coin_btn.disabled = coin_left <= 0 or gold < TicketManager.COIN_COST_PER_TICKET
+	if gold < TicketManager.COIN_COST_PER_TICKET and coin_left > 0:
+		_gt_coin_btn.text += " 金币不足"
+	# 门票≥1 → 按钮变为"开始游戏"
+	var has_tickets: bool = TicketManager.get_tickets() > 0
+	_gt_ok_is_start = has_tickets
+	_gt_ok_label.text = "🎮 开始游戏" if has_tickets else "知道了"
+	_refresh_ticket_label()
+
+
+func _on_gt_ok_pressed() -> void:
+	_get_ticket_dialog.visible = false
+	if _gt_ok_is_start:
+		_start_game()
+	else:
+		UIManager.pop()
+
+
+func _on_gt_coin_pressed() -> void:
+	if TicketManager == null:
+		return
+	if TicketManager.buy_with_coins():
+		Juice.reward()
+		Popups.show_toast("兑换成功！门票+1")
+	else:
+		Popups.show_toast("兑换失败：金币不足或今日已达上限")
+	_refresh_get_ticket_dialog()
+
+
+func _on_gt_ad_pressed() -> void:
+	# 广告桩：无 SDK 时确认即发放；接入激励视频后仅替换 _watch_ad_then 内部实现
+	_watch_ad_then(func() -> void:
+		if TicketManager != null and TicketManager.add_ad_ticket():
+			Juice.reward()
+			Popups.show_toast("感谢观看！门票+1")
+		_refresh_get_ticket_dialog()
+	)
+
+
+func _watch_ad_then(on_finished: Callable) -> void:
+	"""激励视频挂点。当前为占位实现（确认弹窗模拟观看完成）；
+	正式接入广告 SDK 时只改此函数：拉起视频 → 播放完成回调 on_finished"""
+	Popups.show_confirm("📺 观看广告", "观看一段广告视频\n完成后获得门票×1", on_finished)
 
 
 # ---------------- 对局流程 ----------------
@@ -856,11 +977,20 @@ func _refresh_all() -> void:
 	_excitement_label.text = "%d/%d" % [board.excitement, BoardGameData.EXCITEMENT_MAX]
 	# 更新目标横幅
 	_on_highest_star_changed(board.highest_star_achieved)
+	# 委托局进度并入全局刷新——撤销/救局/帮忙生成等所有路径不再滞留旧值
+	if not board.active_order.is_empty():
+		_refresh_order_goal_label()
 
 
 func _refresh_ticket_label() -> void:
 	if TicketManager != null:
 		_ticket_label.text = "🎟 ×%d" % TicketManager.get_tickets()
+
+
+func _on_tickets_changed(_count: int) -> void:
+	_refresh_ticket_label()
+	if _get_ticket_dialog != null and _get_ticket_dialog.visible:
+		_refresh_get_ticket_dialog()
 
 
 func _get_total_board_wins() -> int:
@@ -916,6 +1046,12 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 	var item: BoardItem = board.get_item(pos)
 	if item != null and item.chain == board.current_sub_chain and item.star == BoardGameData.StarLevel.THREE:
 		var extra := "\n首次送出可返还 2 次生成器！" if not board.sub_chain_exit_used else ""
+		# 委托局：该物品可能是订单素材，送出前明确提醒
+		if not board.active_order.is_empty():
+			for req in board.get_order_progress():
+				if String(req["role"]) == "sub" and int(req["star"]) == BoardGameData.StarLevel.THREE:
+					extra += "\n⚠️ 注意：它是本局委托需要的素材！"
+					break
 		Popups.show_confirm(
 			"副链出口",
 			"把「%s」送给猫咪们？%s" % [item.get_display_name(), extra],
@@ -1088,26 +1224,27 @@ func _on_cat_apology(_cat_name: String) -> void:
 
 func _on_game_won() -> void:
 	_clear_frenzy_effects()
+	_frenzy_button.visible = false  # 终局隐藏，防结算层下残留可点
 	_refresh_all()
 	_stop_walk_cat()
 
 	var stars := board.star_rating if board != null else 0  # D4
 	_log_game_telemetry("win")  # M4-4.2
 
-	# 记录累计胜场；若触发升档则弹出说明卡（等级仅升不降，持久化）
-	_record_win_and_maybe_upgrade()
+	# 记录累计胜场；升档信息合并进胜利弹窗（防 Popups CanvasLayer 遮挡）
+	var level_up_text := _record_win_and_maybe_upgrade()
 
 	# M3-3.2: 捣蛋日通关奖励二选一（补偿多一次捣乱）
 	if bool(board.active_twist.get("reward_double_roll", false)):
-		_show_reward_choice_dialog(stars)
+		_show_reward_choice_dialog(stars, level_up_text)
 		return
 
 	# M1-5: 奖励按棋盘等级分表 roll，兑现「奖励更丰厚」
 	var reward: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
-	_finish_win_flow(stars, reward)
+	_finish_win_flow(stars, reward, level_up_text)
 
 
-func _show_reward_choice_dialog(stars: int) -> void:
+func _show_reward_choice_dialog(stars: int, level_up_text: String = "") -> void:
 	# M3-3.2: 捣蛋日——roll 两次奖励让玩家二选一
 	var reward_a: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
 	var reward_b: Dictionary = BoardRewardSystem.roll_reward(board.board_level)
@@ -1122,6 +1259,7 @@ func _show_reward_choice_dialog(stars: int) -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(460, 0)
 	panel.position = Vector2(-230, -120)
+	_apply_dialog_panel_art(panel)
 	overlay.add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -1141,15 +1279,17 @@ func _show_reward_choice_dialog(stars: int) -> void:
 			display = "猫罐头×3"
 		btn.text = display
 		btn.custom_minimum_size = Vector2(0, 64)
+		btn.add_theme_font_size_override("font_size", 20)
+		_apply_btn_art(btn, true)
 		var chosen: Dictionary = reward
 		btn.pressed.connect(func() -> void:
 			overlay.queue_free()
-			_finish_win_flow(stars, chosen)
+			_finish_win_flow(stars, chosen, level_up_text)
 		)
 		vbox.add_child(btn)
 
 
-func _finish_win_flow(stars: int, reward: Dictionary) -> void:
+func _finish_win_flow(stars: int, reward: Dictionary, level_up_suffix: String = "") -> void:
 	var star_str := ""  # D4
 	for _i in range(stars):  # D4
 		star_str += "⭐"  # D4
@@ -1181,6 +1321,8 @@ func _finish_win_flow(stars: int, reward: Dictionary) -> void:
 		var info: Dictionary = LevelStateManager.call("get_next_milestone_info")
 		result_text += "\n🐾 累计%d胜 · 距下一里程碑还差%d胜" % [_get_total_board_wins(), int(info.get("remaining", 0))]
 	_result_label.text = result_text  # D4
+	if not level_up_suffix.is_empty():
+		_result_label.text += "\n" + level_up_suffix
 	_show_result()
 	Juice.pattern_legendary()
 
@@ -1241,29 +1383,25 @@ func _on_three_star_bonus(item_name: String, _count: int) -> void:
 	_add_reward_to_inventory("cat_can_pack", item_name)
 
 
-func _record_win_and_maybe_upgrade() -> void:
+func _record_win_and_maybe_upgrade() -> String:
 	if LevelStateManager == null or not LevelStateManager.has_method("record_win"):
-		return
+		return ""
 	var new_level := int(LevelStateManager.call("record_win"))
-	if new_level > BoardGameData.BoardLevel.LV1:
-		_show_level_up_popup(new_level)
-
-
-func _show_level_up_popup(new_level: int) -> void:
-	# 升档说明卡（§19.9 D8）：纯参数提升，无惩罚无降级
-	var content := ""
+	if new_level <= BoardGameData.BoardLevel.LV1:
+		return ""
+	# 升档信息合并进胜利弹窗，不弹独立 Popups 防止遮挡
+	var level_text := ""
 	match new_level:
 		BoardGameData.BoardLevel.LV2:
-			content = "进入成长期 🐾\n捣乱增加但奖励更丰厚"
+			level_text = "\n🏅 棋盘进入成长期 🐾 捣乱增加但奖励更丰厚"
 		BoardGameData.BoardLevel.LV3:
-			content = "进入挑战期 ⭐\n难度最高但收益最大"
+			level_text = "\n🏅 棋盘进入挑战期 ⭐ 难度最高但收益最大"
 		_:
-			content = "棋盘参数已提升"
+			level_text = "\n🏅 棋盘参数已提升"
 	var reward_desc := String(BoardGameData.get_level_config(new_level).get("reward_desc", ""))
 	if not reward_desc.is_empty():
-		content += "\n奖励：%s" % reward_desc
-	if Popups != null:
-		Popups.show_confirm("🎉 棋盘升级！", content, Callable())
+		level_text += "\n奖励：%s" % reward_desc
+	return level_text
 
 
 func _on_sub_chain_completed(_item: BoardItem) -> void:
@@ -1331,6 +1469,7 @@ func _process_b6_decor(decor_id: String) -> String:
 
 func _on_game_lost() -> void:
 	_clear_frenzy_effects()
+	_frenzy_button.visible = false  # 终局隐藏，防结算层下残留可点
 	_refresh_all()
 	_stop_walk_cat()
 	if board.ad_rescue_restore_used or board.swiped_items.is_empty():
@@ -1400,11 +1539,12 @@ func _remove_selected_items() -> void:
 			tween.tween_property(cell, "modulate:a", 0.0, 0.18)
 	await tween.finished
 	for pos in selected_positions:
-		board.grid.erase(pos)
 		if _cells.has(pos):
 			var cell: Control = _cells[pos]
 			cell.scale = Vector2.ONE
 			cell.modulate = Color.WHITE
+	# 走引擎方法移除（含死局重查与委托进度刷新），禁止 UI 直改 grid
+	board.remove_items_for_rescue(selected_positions)
 	board.ad_rescue()
 	_exit_ad_rescue_mode()
 	_refresh_all()
@@ -1576,6 +1716,9 @@ func _on_combo_triggered(count: int) -> void:
 
 func _on_frenzy_ready() -> void:
 	# 兴奋值满，显示狂欢按钮 + 弹入脉冲 + 金色呼吸循环
+	# 本局狂欢次数用尽则不再展示（trigger_frenzy 会拒绝，避免可点无反馈）
+	if board.frenzy_triggers_used >= BoardGameData.FRENZY_MAX_TRIGGERS:
+		return
 	# frenzy_ready 会在兴奋值满时反复触发，已展示则跳过避免动画堆叠
 	if _frenzy_button.visible:
 		return
@@ -1617,6 +1760,7 @@ func _show_frenzy_choice_dialog() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(460, 0)
 	panel.position = Vector2(-230, -140)
+	_apply_dialog_panel_art(panel)
 	overlay.add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -1632,6 +1776,8 @@ func _show_frenzy_choice_dialog() -> void:
 	var guard_btn := Button.new()
 	guard_btn.text = "🛡 猫猫护卫\n抵消下一次捣乱"
 	guard_btn.custom_minimum_size = Vector2(0, 72)
+	guard_btn.add_theme_font_size_override("font_size", 18)
+	_apply_btn_art(guard_btn, true)
 	guard_btn.pressed.connect(func() -> void:
 		if board.trigger_frenzy(BoardGameData.FrenzyMode.GUARD):
 			_reset_frenzy_button_visuals()
@@ -1643,6 +1789,8 @@ func _show_frenzy_choice_dialog() -> void:
 	var help_btn := Button.new()
 	help_btn.text = "✨ 猫猫帮忙\n立即免费生成2个主链物品"
 	help_btn.custom_minimum_size = Vector2(0, 72)
+	help_btn.add_theme_font_size_override("font_size", 18)
+	_apply_btn_art(help_btn, true)
 	help_btn.pressed.connect(func() -> void:
 		if board.trigger_frenzy(BoardGameData.FrenzyMode.HELP):
 			_reset_frenzy_button_visuals()
@@ -1654,7 +1802,9 @@ func _show_frenzy_choice_dialog() -> void:
 
 	var later_btn := Button.new()
 	later_btn.text = "稍后再说"
-	later_btn.flat = true
+	later_btn.custom_minimum_size = Vector2(0, 56)
+	later_btn.add_theme_font_size_override("font_size", 17)
+	_apply_btn_art(later_btn, false)
 	later_btn.pressed.connect(overlay.queue_free)
 	vbox.add_child(later_btn)
 
@@ -1696,14 +1846,14 @@ func _on_frenzy_activated(_mode: int) -> void:
 			if _grid_panel == null: return
 			var style: StyleBoxFlat = _grid_panel.get_theme_stylebox("panel").duplicate()
 			style.border_color = Color(1.0, 0.75 + 0.25 * v, 0.0)
-			style.border_width = int(3 + v * 2)
+			style.set_border_width_all(int(3 + v * 2))
 			_grid_panel.add_theme_stylebox_override("panel", style)
 		, 0.0, 1.0, 0.4)
 		_frenzy_border_tween.tween_method(func(v: float):
 			if _grid_panel == null: return
 			var style: StyleBoxFlat = _grid_panel.get_theme_stylebox("panel").duplicate()
 			style.border_color = Color(1.0, 0.75 + 0.25 * v, 0.0)
-			style.border_width = int(3 + v * 2)
+			style.set_border_width_all(int(3 + v * 2))
 			_grid_panel.add_theme_stylebox_override("panel", style)
 		, 1.0, 0.0, 0.4)
 
@@ -1820,7 +1970,9 @@ func _spawn_golden_stars() -> void:
 
 
 func _on_frenzy_items_spawned(positions: Array) -> void:
-	# M2-K8: 猫猫帮忙生成物品——播放生成动画
+	# M2-K8: 猫猫帮忙生成物品——先重绘格子再播生成动画
+	# （物品只进逻辑棋盘，不 refresh 则界面看不到，与 _on_generator_produced 同序）
+	_refresh_all()
 	Popups.show_toast("✨ 猫猫们帮忙生成了%d个物品！" % positions.size())
 	for pos in positions:
 		if _cells.has(pos):
@@ -1849,6 +2001,7 @@ func _show_order_prompt() -> void:
 	panel.set_anchors_preset(Control.PRESET_CENTER)
 	panel.custom_minimum_size = Vector2(480, 0)
 	panel.position = Vector2(-240, -140)
+	_apply_dialog_panel_art(panel)
 	overlay.add_child(panel)
 
 	var vbox := VBoxContainer.new()
@@ -1870,6 +2023,8 @@ func _show_order_prompt() -> void:
 	var accept_btn := Button.new()
 	accept_btn.text = "接受委托"
 	accept_btn.custom_minimum_size = Vector2(0, 60)
+	accept_btn.add_theme_font_size_override("font_size", 20)
+	_apply_btn_art(accept_btn, true)
 	accept_btn.pressed.connect(func() -> void:
 		_order_mode_pref = 1
 		overlay.queue_free()
@@ -1880,6 +2035,8 @@ func _show_order_prompt() -> void:
 	var normal_btn := Button.new()
 	normal_btn.text = "普通对局"
 	normal_btn.custom_minimum_size = Vector2(0, 48)
+	normal_btn.add_theme_font_size_override("font_size", 17)
+	_apply_btn_art(normal_btn, false)
 	normal_btn.pressed.connect(func() -> void:
 		_order_mode_pref = 0
 		overlay.queue_free()
