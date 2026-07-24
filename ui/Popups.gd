@@ -92,12 +92,15 @@ static func queue_reward_line(line: String) -> void:
 	tree.process_frame.connect(_flush_reward_lines, CONNECT_ONE_SHOT)
 
 static func _flush_reward_lines() -> void:
+	# v1 实现（评审标注）：toast 文本合并；总案 §2.3 的「步数惊喜卡」
+	# 列表式卡片样式随美术 A5_surprise_card 到货后在后续迭代落地。
 	_reward_flush_scheduled = false
 	if _pending_reward_lines.is_empty():
 		return
 	var merged := " ＋ ".join(_pending_reward_lines)
+	var prefix := "🎉 步数惊喜｜" if _pending_reward_lines.size() >= 2 else "🎉 "
 	_pending_reward_lines.clear()
-	show_toast("🎉 " + merged)
+	show_toast(prefix + merged)
 
 static func show_input(title: String, placeholder: String, on_submit: Callable) -> void:
 	var root := _get_root()

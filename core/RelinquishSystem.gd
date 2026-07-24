@@ -3,6 +3,7 @@
 extends Node
 
 const WEEKLY_PETAL_CAP := 500
+const EMERGENCY_EXEMPT_PER_WEEK := 10  # A4 紧急通道每周花瓣豁免次数上限
 const GOLD_REWARD := 50
 
 const SPECIES_BASE := {
@@ -35,6 +36,7 @@ const LEVEL_FACTOR := {
 }
 
 var this_week_petals_gained: int = 0
+var emergency_exemptions_used: int = 0
 var week_reset_timestamp: int = 0
 var relinquished_event_ids: Array = []
 
@@ -55,6 +57,7 @@ func _check_weekly_reset() -> void:
 	}))
 	if week_reset_timestamp < this_monday:
 		this_week_petals_gained = 0
+		emergency_exemptions_used = 0
 		week_reset_timestamp = this_monday
 
 
@@ -84,9 +87,18 @@ func relinquish_cat(cat_data: Dictionary, relinquish_event_id: String) -> Dictio
 	var petals := _calculate_love_petals(cat_data)
 	var awarded_petals := 0
 
-	if petals > 0 and this_week_petals_gained < WEEKLY_PETAL_CAP:
-		awarded_petals = min(petals, WEEKLY_PETAL_CAP - this_week_petals_gained)
-		this_week_petals_gained += awarded_petals
+	# A4 紧急通道（总案裁决，2026-07-23 定稿）：包满状态下的送养即紧急送养——
+	# 花瓣不计周限（独立通道），每周 ≤EMERGENCY_EXEMPT_PER_WEEK 次豁免防套利；
+	# 豁免用尽回落正常周限口径。送养动作本身永不因周限被拦截（每次保底 +50 金）。
+	var emergency: bool = HatchEngine != null and HatchEngine.is_bag_full()
+	if petals > 0:
+		if emergency and emergency_exemptions_used < EMERGENCY_EXEMPT_PER_WEEK:
+			emergency_exemptions_used += 1
+			awarded_petals = petals
+		elif this_week_petals_gained < WEEKLY_PETAL_CAP:
+			awarded_petals = min(petals, WEEKLY_PETAL_CAP - this_week_petals_gained)
+			this_week_petals_gained += awarded_petals
+	if awarded_petals > 0:
 		if CurrencyManager:
 			CurrencyManager.add_love_petals(awarded_petals, "relinquish")
 		if EventBus:
@@ -100,6 +112,7 @@ func relinquish_cat(cat_data: Dictionary, relinquish_event_id: String) -> Dictio
 
 func apply_save(data: Dictionary) -> void:
 	this_week_petals_gained = max(int(data.get("this_week_petals_gained", 0)), 0)
+	emergency_exemptions_used = max(int(data.get("emergency_exemptions_used", 0)), 0)
 	week_reset_timestamp = int(data.get("week_reset_timestamp", 0))
 	relinquished_event_ids = Array(data.get("relinquished_event_ids", []))
 
@@ -107,6 +120,7 @@ func apply_save(data: Dictionary) -> void:
 func get_save_data() -> Dictionary:
 	return {
 		"this_week_petals_gained": this_week_petals_gained,
+		"emergency_exemptions_used": emergency_exemptions_used,
 		"week_reset_timestamp": week_reset_timestamp,
 		"relinquished_event_ids": relinquished_event_ids.duplicate(true),
 	}
@@ -114,6 +128,7 @@ func get_save_data() -> Dictionary:
 
 func reset_all() -> void:
 	this_week_petals_gained = 0
+	emergency_exemptions_used = 0
 	week_reset_timestamp = 0
 	relinquished_event_ids = []
 

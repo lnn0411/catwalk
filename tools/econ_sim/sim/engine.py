@@ -76,8 +76,9 @@ class SimState:
         self.pokedex = set()
         self.first_exploration_done = False
         self._adoptions_this_week = 0
-        # P1/A4 落地口径: 花瓣周限 500 对全部送养生效, 超限转保底金币
+        # A4 紧急通道: 周限 500 + 包满送养每周 ≤10 次花瓣豁免(与客户端同构)
         self.adoption_petals_this_week = 0
+        self.emergency_exemptions_used = 0
         # 孵化稀有度保底: 连续 miss 计数(与客户端 HatchEngine 同构)
         self.hatch_epic_miss = 0
         self.hatch_leg_miss = 0
@@ -277,6 +278,7 @@ class SimEngine:
         if day % int(self.params["cat_inventory"]["adoption_reset_day"] or 7) == 1:
             state._adoptions_this_week = 0
             state.adoption_petals_this_week = 0
+            state.emergency_exemptions_used = 0
 
         step_energy = calc_energy(
             step_count,
@@ -537,10 +539,10 @@ class SimEngine:
         priority = [c for c in get_rancher_priority_cats(state) if not c.get("is_active")]
         if not priority:
             return False
-        self._settle_adoption(state, priority[0])
+        self._settle_adoption(state, priority[0], emergency=True)
         return True
 
-    def _settle_adoption(self, state: SimState, cat: dict) -> None:
+    def _settle_adoption(self, state: SimState, cat: dict, emergency: bool = False) -> None:
         state.cats.remove(cat)
         state.total_adoptions += 1
         state._adoptions_this_week += 1
@@ -553,10 +555,18 @@ class SimEngine:
         if int(cat["level"]) <= 1:
             return
         revenue = self._adoption_revenue_petals(cat)
-        weekly_cap = int(self.params["cat_inventory"]["adoption_weekly_limit"])
-        room = max(0, weekly_cap - state.adoption_petals_this_week)
-        granted = min(revenue, room)
-        state.adoption_petals_this_week += granted
+        if revenue <= 0:
+            return
+        # A4 紧急通道(评审定稿, 与 RelinquishSystem 同构): 包满状态送养的花瓣
+        # 不计周限, 每周 ≤10 次豁免; 豁免用尽回落正常周限口径.
+        if emergency and state.emergency_exemptions_used < 10:
+            state.emergency_exemptions_used += 1
+            granted = revenue
+        else:
+            weekly_cap = int(self.params["cat_inventory"]["adoption_weekly_limit"])
+            room = max(0, weekly_cap - state.adoption_petals_this_week)
+            granted = min(revenue, room)
+            state.adoption_petals_this_week += granted
         if granted > 0:
             state.love_petals += granted
             state.flow("love_petals_in_adoption", granted)
