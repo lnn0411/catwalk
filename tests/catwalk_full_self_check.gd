@@ -245,6 +245,8 @@ func _section_scene_load() -> void:
 		["res://scenes/S11_Settings.tscn", "Control"],
 		["res://scenes/S12_Shop.tscn", "Control"],
 		["res://scenes/S13_Friends.tscn", "Control"],
+		["res://scenes/S14_BoardGame.tscn", "Control"],
+		["res://scenes/WorkshopPage.tscn", "Control"],
 		["res://scenes/S90_NetworkError.tscn", "Control"],
 		["res://scenes/S91_PermDenied.tscn", "Control"],
 		["res://scenes/S92_SleepReturn.tscn", "Control"],

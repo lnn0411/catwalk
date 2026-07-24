@@ -842,7 +842,7 @@ func _on_companion_pressed() -> void:
 func _on_workshop_button() -> void:
 	if TutorialManager and TutorialManager.is_running():
 		return
-	UIManager.push("res://scenes/WorkshopPage.gd")
+	UIManager.push("res://scenes/WorkshopPage.tscn")
 
 func _refresh_workshop_fab() -> void:
 	var btn := get_node_or_null("WorkshopBtn") as Button
