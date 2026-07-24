@@ -97,15 +97,15 @@ func _t_energy_engine() -> void:
 		return
 	var E = load("res://core/EnergyEngine.gd")
 
-	# A1 能量公式各 Tier 边界（对照 GDD §2.1 表，非新手 t1=0.3）
-	_eq("calcEnergy 500步",   E.calc_energy(500, false), 150)
-	_eq("calcEnergy 1000步",  E.calc_energy(1000, false), 300)
-	_eq("calcEnergy 1500步",  E.calc_energy(1500, false), 800)
-	_eq("calcEnergy 5000步",  E.calc_energy(5000, false), 4700)
-	_eq("calcEnergy 8000步",  E.calc_energy(8000, false), 9200)
-	# A2 新手保护期 t1=0.8
-	_eq("calcEnergy 500步(新手)",  E.calc_energy(500, true), 400)
-	_eq("calcEnergy 1500步(新手)", E.calc_energy(1500, true), 1300)
+	# A1 能量公式各 Tier 边界（P1 费率翻转：1.1/1.0/0.8/0.4）
+	_eq("calcEnergy 500步",   E.calc_energy(500, false), 550)
+	_eq("calcEnergy 1000步",  E.calc_energy(1000, false), 1100)
+	_eq("calcEnergy 1500步",  E.calc_energy(1500, false), 1650)
+	_eq("calcEnergy 5000步",  E.calc_energy(5000, false), 4950)
+	_eq("calcEnergy 8000步",  E.calc_energy(8000, false), 6550)
+	# A2 新手保护期：首 7 天全段 ×1.2
+	_eq("calcEnergy 500步(新手)",  E.calc_energy(500, true), 660)
+	_eq("calcEnergy 1500步(新手)", E.calc_energy(1500, true), 1980)
 
 	# A3 新手保护判定
 	E.created_at = Time.get_unix_time_from_system()

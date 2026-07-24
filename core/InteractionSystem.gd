@@ -406,6 +406,40 @@ func _set_cat_card_data(card: Control, cat_id: String, cat_data, screen_position
 		card.set_cat_data(cat_data)
 
 
+# ── C2 零食统一通道（P4，总案裁决）───────────────────────────
+# 所有零食（棋盘小鱼干/罐头、商店零食、探索合成零食）走此唯一入口：
+# 每猫日 ≤3 次；不计入 annoyed 计数（"道歉零食"，annoyed 期间也可喂）；
+# 好感按物品。日计数器不持久化（重启即重置，宽松方向，不伤玩家）。
+const SNACK_AFFECTION := {
+	"fish_treat": 1,
+	"cat_can": 3,
+	"snack": 3,
+}
+const SNACK_DAILY_LIMIT_PER_CAT := 3
+var _snack_daily: Dictionary = {}  # cat_id -> {"date": String, "count": int}
+
+func feed_snack(cat_id: String, item_type: String) -> Dictionary:
+	if cat_id == "" or not SNACK_AFFECTION.has(item_type):
+		return {"success": false, "reason": "无效投喂"}
+	if CatStateGuard and not CatStateGuard.is_allowed(CatStateGuard.Action.FEED_SNACK, cat_id):
+		return {"success": false, "reason": "它不在花园里"}
+	var date: Dictionary = Time.get_date_dict_from_system()
+	var today := "%04d-%02d-%02d" % [int(date["year"]), int(date["month"]), int(date["day"])]
+	var record: Dictionary = _snack_daily.get(cat_id, {"date": today, "count": 0})
+	if String(record.get("date", "")) != today:
+		record = {"date": today, "count": 0}
+	if int(record["count"]) >= SNACK_DAILY_LIMIT_PER_CAT:
+		return {"success": false, "reason": "它今天吃饱啦"}
+	record["count"] = int(record["count"]) + 1
+	_snack_daily[cat_id] = record
+	var gain := int(SNACK_AFFECTION[item_type])
+	_affection[cat_id] = _affection.get(cat_id, 0) + gain
+	var cat = HatchEngine.get_cat_by_id(cat_id) if HatchEngine else null
+	if cat != null and cat is CatData:
+		cat.friendship += gain
+	# 刻意不调用 EmotionStateMachine.record_interaction —— 零食不计打扰
+	return {"success": true, "affection": gain, "remaining": SNACK_DAILY_LIMIT_PER_CAT - int(record["count"])}
+
 func _get_affection_gain(type: String) -> int:
 	match type:
 		"feed":

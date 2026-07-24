@@ -17,6 +17,16 @@ static func get_breed_multiplier(breed: String) -> float:
 static func calc_exp(steps: int, multiplier: float) -> int:
 	return int(max(steps, 0) * multiplier)
 
+# P1 经验软拐点（修 A4）：日步数 ≤4000 全额、超出部分 50%；品种系数在拐点后乘。
+# 必须以「当日累计步数」调用并做边际差值，不可对 delta 直接套拐点。
+const EXP_KNEE_STEPS := 4000
+const EXP_OVER_RATIO := 0.5
+
+static func calc_daily_exp(today_steps: int, multiplier: float) -> int:
+	var s: int = max(today_steps, 0)
+	var effective: float = float(min(s, EXP_KNEE_STEPS)) + float(max(s - EXP_KNEE_STEPS, 0)) * EXP_OVER_RATIO
+	return int(effective * multiplier)
+
 static func get_level(exp: int) -> int:
 	var level: int = 1
 	for i in range(THRESHOLDS.size()):

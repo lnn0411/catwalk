@@ -3,40 +3,53 @@
   "_version": "v3.2-2026-07-22",
   "_key_note": "键名与 GDD §18.1 速查表及各章参数表一一对应",
   "steps": {
+    "_note": "P1 费率翻转（launch_overhaul_master_plan P1 / energy_hatch_redesign_plan §2.1）：前置友好+后段软帽，替代旧递增费率",
     "tier_thresholds": [
-      1000,
-      3000,
-      5000
+      1500,
+      4000,
+      6000
     ],
     "tier_coefficients": [
-      0.3,
+      1.1,
       1.0,
-      1.2,
-      1.5
+      0.8,
+      0.4
     ],
     "new_player_protection_days": 7,
-    "new_player_t1_coefficient": 0.8,
+    "new_player_global_coefficient": 1.2,
     "max_energy_pool": 15000,
     "overflow_warning_threshold": 0.9,
     "energy_per_hatch": 4250,
-    "nurture_workshop_energy_per_box": 3000,
     "energy_routing_priority": [
       "incubating_egg",
-      "workshop_box",
       "main_pool",
       "overflow_cutoff"
     ],
+    "step_chests": {
+      "thresholds": [3000, 6000, 10000],
+      "gold": [10, 20, 30],
+      "_note": "今日步数宝箱（P1 仅数值结算；互动道具与演出在 P2 合流卡）"
+    },
     "_steps_energy_reference": {
-      "very_low_500": 150,
-      "low_1500": 800,
-      "medium_5000": 4700,
-      "high_8000": 9200,
-      "new_player_1500": 1300
+      "very_low_500": 550,
+      "low_1500": 1650,
+      "medium_5000": 4950,
+      "high_8000": 6550,
+      "new_player_1500": 1980
     }
   },
   "hatching": {
     "slots": 4,
     "energy_per_egg": 4250,
+    "egg_cost_curve": {
+      "_note": "P1 孵化成本成长曲线；蛋序号按客户端计（#1=教学蛋免费）。sim 的第 k 次孵化 = 客户端第 k+1 颗蛋",
+      "early": {"2": 1500, "3": 2500, "4": 3500},
+      "base": 4250,
+      "late_from_egg": 20,
+      "late_step_every": 10,
+      "late_step_amount": 250,
+      "late_cap": 6000
+    },
     "first_cat_breed": "orange",
     "first_cat_unlock_energy": 4250,
     "rarity_weights": {
@@ -53,6 +66,7 @@
       "orange_required_for_british": 3,
       "british_required_for_siamese": 3
     },
+    "_breed_pool_weights_note": "P5 废弃: 客户端为均匀随机+5次未出保底排除(BreedUnlockEngine), sim 已同构实现; 下表仅存档备查",
     "breed_pool_weights": {
       "orange_only": {
         "orange": 1.0,
@@ -82,7 +96,7 @@
     "expansion_tiers": [
       {
         "unlock_at_pokedex": 4,
-        "cost_gold": 5000,
+        "cost_gold": 7000,
         "new_capacity": 28
       },
       {
@@ -166,14 +180,30 @@
     "adoption_reset_day": 0
   },
   "workshop": {
-    "energy_per_box": 3000,
-    "unbox_energy_cost": 1500,
-    "max_slots": 4,
-    "box_categories": [
-      "cat_accessory",
-      "flower_seed",
-      "furniture_component"
-    ]
+    "_note": "C1 步数礼盒模型（P1 sim 先行采用此口径校准，客户端 P2 实装）。旧能量槽模型已废弃",
+    "box_steps": 3000,
+    "daily_box_cap": 3,
+    "unopened_cap": 5,
+    "gift_pool": {
+      "accessories": {"common": 5, "rare": 5, "epic": 4, "legendary": 2},
+      "flowers": {"common": 2, "rare": 2, "epic": 2, "legendary": 2}
+    },
+    "rarity_weights": {
+      "common": 0.7,
+      "rare": 0.2,
+      "epic": 0.08,
+      "legendary": 0.02
+    },
+    "pity": {
+      "epic_miss_max": 20,
+      "legendary_miss_max": 80
+    },
+    "dupe_accessory_petals": {
+      "common": 10,
+      "rare": 25,
+      "epic": 60,
+      "legendary": 150
+    }
   },
   "board_game": {
     "grid_size": 5,
@@ -188,7 +218,7 @@
     "ticket_ad_daily_limit": 3,
     "ticket_gold_cost": 50,
     "ticket_gold_daily_limit": 2,
-    "ticket_new_player_days": 7,
+    "ticket_new_player_days": 10,
     "clear_rate": 0.96,
     "revive_ads_enabled": true,
     "reward_probabilities": {
@@ -339,11 +369,14 @@
   },
   "ads": {
     "slot_1": {
-      "name": "能量补充",
-      "reward_type": "energy",
-      "reward_amount": 3000,
+      "name": "今日步行加成",
+      "reward_type": "energy_step_linked",
+      "coefficient": 0.3,
+      "cap_per_view": 3000,
       "daily_limit": 3,
-      "location": "hatchery_page"
+      "min_steps_for_button": 1000,
+      "location": "hatchery_page",
+      "_note": "P1 广告步行放大器：单次 = min(cap, coefficient × 当日步数能量)；占比结构性 ≤47.4%"
     },
     "slot_2": {
       "name": "签到重roll",
@@ -409,7 +442,7 @@
       "energy_pack_amount": 3000
     },
     "capacity_expansion_cost": {
-      "first": 5000,
+      "first": 7000,
       "second": 10000,
       "third": 0
     },
@@ -450,7 +483,7 @@
     "board_snack_affection": 1,
     "board_snack_can_affection": 3,
     "board_snack_daily_limit_per_cat": 3,
-    "annoyed_threshold_per_hour": 4,
+    "annoyed_threshold_per_hour": 5,
     "daily_interactions_idealized": 10,
     "affection_per_day_approximation": [
       10,
@@ -462,6 +495,18 @@
       "orange": 1.0,
       "british": 1.2,
       "siamese": 1.5
+    },
+    "xp_soft_knee": {
+      "full_amount_steps": 4000,
+      "over_ratio": 0.5,
+      "_note": "P1 经验软拐点：日步数≤4000 全额、超出 50%；按当日累计边际计算，品种系数在拐点后乘"
+    },
+    "bond": {
+      "exp_per_point": 1000,
+      "daily_cap": 5,
+      "total_cap": 300,
+      "star_thresholds": [100, 200, 300],
+      "_note": "N12 满级经验转羁绊；星级阈值[待定]，演出 v1.1"
     },
     "level_thresholds": [
       0,
@@ -550,7 +595,8 @@
   },
   "newbie_goals": {
     "daily_gold": 50,
-    "duration_days": 7
+    "duration_days": 14,
+    "_note": "B5 新手缓坡：能量×1.2 至 D7、登录票 3 张至 D10、目标金币至 D14"
   },
   "achievement_rewards": {
     "step_milestones": [
@@ -637,10 +683,12 @@
       "max_cycles_p95": 6
     },
     "A2_gold_non_negative": true,
-    "A2_first_expansion_day_range": [
-      20,
-      40
-    ],
+    "A2_first_expansion_day_range_by_activity": {
+      "medium": [18, 42],
+      "high": [15, 40],
+      "low": "observe",
+      "_note": "P1 收敛: 首档 7000 金下中活跃自然分布 19~40(月卡+100金/日 提前~2天属付费权益), 以带宽承认; GDD 意图中轴 D20-40 保持"
+    },
     "A3_ad_energy_ratio_max": 0.5,
     "A4_orange_max_level_days": {
       "target": 30,
@@ -648,12 +696,16 @@
     },
     "A5a_legendary_acquisition_rate": "observe_only",
     "A5b_legendary_pity_trigger_ratio": {
-      "target": 0.3,
-      "tolerance_pp": 0.05,
-      "min_hatches": 120
+      "target": 0.22,
+      "tolerance_pp": 0.08,
+      "min_hatches": 120,
+      "_note": "P5 校准: 合并统计保底传说/全部传说。无截尾理论值 0.99^120≈0.301, 但 30/90 天有限窗口存在截尾偏置(末段未完成的保底窗口只产自然传说), 合并观测中心实测 ≈0.20~0.21(两轮 0.212/0.198), 靶心按有限窗口统计量校准为 0.22±0.08"
     },
     "A6_medium_overflow_cutoff": "daily_zero",
-    "A6_high_overflow_cutoff": "max_1_per_week",
+    "A6_high_overflow_cutoff": {
+      "max_overflow_day_ratio": 0.143,
+      "max_daily_overflow_mean": 500
+    },
     "A7_tickets_no_ad_medium": {
       "min": 3,
       "max": 4
@@ -665,6 +717,9 @@
     "A8_B6_gold_injection_correct": true,
     "A8_dead_items_90d": 0,
     "A9_currency_divergence_check": "end_balance_less_10x_monthly_mean",
-    "A10_adoption_safety_valve": "observe_only"
+    "A10_adoption_safety_valve": "observe_only",
+    "A12_low_hatches_30d_min": 9,
+    "A13_first_hatch_day_max": 2,
+    "A14_no_adopt_monthly_petals_min": 150
   }
 }

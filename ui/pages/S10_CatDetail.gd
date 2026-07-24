@@ -82,6 +82,10 @@ func _refresh() -> void:
 	$VBox/Head/BreedSub.text = breed
 	
 	$VBox/Scroll/Body/StatsRow/LevelCard/LvValue.text = "Lv.%d" % lv
+	# B7 语义分轨：羁绊=🐾 同行的岁月（满级步行转化），好感=❤ 当下的关怀（互动）
+	if lv >= 10:
+		var bond: int = int(_cat_data.get("bond_points", 0))
+		$VBox/Scroll/Body/StatsRow/LevelCard/LvValue.text = "Lv.MAX 🐾%d" % bond
 	var xp_pct: float = clampf((lv % 10) / 10.0, 0.05, 1.0)
 	$VBox/Scroll/Body/StatsRow/LevelCard/LvBar/LvBarFill.size.x = 90.0 * xp_pct
 	

@@ -38,10 +38,16 @@ const BREED_LOCATION_PREFERENCES := {
 static var _explorers: Dictionary = {}
 static var _hatched_count: int = 0
 static var _collected_postcards: Array = []
+# C1 邮票（P3）：明信片池抽干后的替代产出，附带保底金币
+const STAMP_FALLBACK_GOLD := 50
+static var _travel_stamps: int = 0
 
 # 公开 getter
 static func get_collected_postcard_ids() -> Array:
 	return _collected_postcards.duplicate()
+
+static func get_travel_stamp_count() -> int:
+	return _travel_stamps
 static var _first_explore_flags: Dictionary = {}
 # cat_id -> 上一次 roll 出的奖励类型，用于「连续 postcard 防重复」。
 static var _last_reward_type: Dictionary = {}
@@ -86,10 +92,22 @@ static func on_hatch() -> void:
 	_hatched_count += 1
 	_save()
 
+# A3 状态矩阵硬校验（UI 侧 CatStateGuard 预检负责文案，此处兜底防绕过）
+static func _guard_allows_dispatch(cat_id: String) -> bool:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree == null or tree.root == null:
+		return true
+	var guard = tree.root.get_node_or_null("/root/CatStateGuard")
+	if guard == null:
+		return true
+	return guard.is_allowed(guard.Action.DISPATCH, cat_id)
+
 static func dispatch(cat_id: String, duration_hours: int) -> bool:
 	if not VALID_DURATIONS.has(duration_hours):
 		return false
 	if is_exploring(cat_id):
+		return false
+	if not _guard_allows_dispatch(cat_id):
 		return false
 	if _active_count() >= _available_slot_count():
 		return false
@@ -145,6 +163,8 @@ static func dispatch_with_location(cat_id: String, duration_hours: int, chosen_l
 		return false
 	if is_exploring(cat_id):
 		return false
+	if not _guard_allows_dispatch(cat_id):
+		return false
 	if _active_count() >= _available_slot_count():
 		return false
 	var now := _safe_unix_time()
@@ -189,7 +209,15 @@ static func collect(cat_id: String, cat_species: String = "") -> Dictionary:
 			if Engine.has_singleton("EventBus"):
 				Engine.get_singleton("EventBus").emit_postcard_obtained(postcard_id, location_type)
 		else:
-			reward_type = "ingredient"
+			# C1 邮票裁决（P3）：明信片池抽干时不再静默降级为食材——
+			# 改发「旅行邮票」+ 50 金币，保住"猫带回礼物"的期待价值。
+			reward_type = "stamp"
+			_travel_stamps += 1
+			var tree := Engine.get_main_loop() as SceneTree
+			if tree != null and tree.root != null:
+				var cm = tree.root.get_node_or_null("/root/CurrencyManager")
+				if cm != null:
+					cm.add_gold(STAMP_FALLBACK_GOLD, "travel_stamp")
 	elif reward_type == "frame_variant" or reward_type == "food_fragment":
 		# N10 新类型：仅记录 reward_type，本版本不做额外产出处理（相框/碎片系统另行结算）。
 		pass
@@ -421,6 +449,7 @@ static func _save() -> void:
 	cfg.set_value(SECTION, "explorers", _explorers)
 	cfg.set_value(SECTION, "hatched_count", _hatched_count)
 	cfg.set_value(SECTION, "collected_postcards", _collected_postcards)
+	cfg.set_value(SECTION, "travel_stamps", _travel_stamps)
 	cfg.set_value(SECTION, "first_explore_flags", _first_explore_flags)
 	cfg.set_value(SECTION, "daily_location_pools", _daily_location_pools)
 	cfg.set_value(SECTION, "last_chosen_location", _last_chosen_location)
@@ -435,6 +464,7 @@ static func _load() -> void:
 	_explorers = cfg.get_value(SECTION, "explorers", {})
 	_hatched_count = int(cfg.get_value(SECTION, "hatched_count", 0))
 	_collected_postcards = cfg.get_value(SECTION, "collected_postcards", [])
+	_travel_stamps = int(cfg.get_value(SECTION, "travel_stamps", 0))
 	_first_explore_flags = cfg.get_value(SECTION, "first_explore_flags", {})
 	_daily_location_pools = cfg.get_value(SECTION, "daily_location_pools", {})
 	_last_chosen_location = cfg.get_value(SECTION, "last_chosen_location", {})

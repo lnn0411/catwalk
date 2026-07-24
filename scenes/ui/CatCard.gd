@@ -491,15 +491,29 @@ func _on_explore_location_chosen(chosen_location: String, duration_hours: int, d
 	_close_overlay(dialog)
 	if cat_id == "":
 		return
+	# A3 状态矩阵预检：拦截原因用玩家文案（携带中/睡觉中等）
+	if CatStateGuard:
+		var verdict: Dictionary = CatStateGuard.can(CatStateGuard.Action.DISPATCH, cat_id)
+		if not bool(verdict.get("allowed", true)):
+			_show_feedback(String(verdict.get("reason", "现在不能出发")))
+			return
 	if ExploreEngine.dispatch_with_location(cat_id, duration_hours, chosen_location):
 		var remaining := ExploreEngine.get_remaining_seconds(cat_id)
 		if EventBus:
 			EventBus.emit_explore_dispatched(cat_id, Time.get_unix_time_from_system() + remaining)
-		_show_feedback("🧭 已出发探索")
+		# C4 品种视角可见性：明信片按品种视角收集，出发时明示
+		_show_feedback("🧭 已出发探索 · 会带回%s视角的明信片" % _breed_display_name())
 		_check_explore_state()
 		refresh_interaction_buttons()
 	else:
 		_show_feedback("探索名额已满")
+
+func _breed_display_name() -> String:
+	var breed := String(_get_cat_property("species", _get_cat_property("breed", "orange")))
+	match breed:
+		"british": return "英短"
+		"siamese": return "暹罗"
+		_: return "橘猫"
 
 
 # fallback：旧的按时长派遣入口，当前流程不再调用

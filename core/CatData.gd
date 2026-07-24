@@ -36,6 +36,7 @@ const BREED_CHARACTER_SCENES := {
 @export var display_name: String = ""
 @export var level: int = 1
 @export var exp: int = 0
+@export var bond_points: int = 0
 @export var friendship: int = 0
 @export var created_at: float = 0.0
 @export var diary_picks: Array = [-1, -1, -1, -1, -1]
@@ -72,6 +73,25 @@ static func is_default_name(display_name: String) -> bool:
 static func get_hatch_cost(species_name: String) -> int:
 	return int(BREED_COSTS.get(species_name, BREED_COSTS[BREED_ORANGE]))
 
+# P1 孵化成本成长曲线（energy_hatch_redesign_plan §2.2）：
+# 第2~4颗 1500/2500/3500，5~19颗 4250，20颗起每10颗 +250 封顶 6000。
+# egg_number 从 1 计；#1 为教学蛋（免费送满，落蛋逻辑不会以曲线询问它）。
+const EGG_COST_EARLY := {2: 1500, 3: 2500, 4: 3500}
+const EGG_COST_LATE_FROM := 20
+const EGG_COST_LATE_EVERY := 10
+const EGG_COST_LATE_STEP := 250
+const EGG_COST_LATE_CAP := 6000
+
+static func get_hatch_cost_for_egg(egg_number: int) -> int:
+	if egg_number <= 1:
+		return HATCH_ENERGY_REQUIRED
+	if EGG_COST_EARLY.has(egg_number):
+		return int(EGG_COST_EARLY[egg_number])
+	if egg_number < EGG_COST_LATE_FROM:
+		return HATCH_ENERGY_REQUIRED
+	var late_tiers: int = 1 + int(floor(float(egg_number - EGG_COST_LATE_FROM) / float(EGG_COST_LATE_EVERY)))
+	return mini(HATCH_ENERGY_REQUIRED + EGG_COST_LATE_STEP * late_tiers, EGG_COST_LATE_CAP)
+
 static func get_character_script_path(species_name: String) -> String:
 	return String(BREED_CHARACTER_SCENES.get(species_name, BREED_CHARACTER_SCENES[BREED_ORANGE]))
 
@@ -86,6 +106,7 @@ static func serialize(cat) -> Dictionary:
 		"display_name": cat.display_name,
 		"level": cat.level,
 		"exp": cat.exp,
+		"bond_points": cat.bond_points,
 		"friendship": cat.friendship,
 		"created_at": cat.created_at,
 		"diary_picks": cat.diary_picks.duplicate(),
@@ -102,6 +123,7 @@ static func deserialize(data: Dictionary):
 	cat.display_name = String(data.get("display_name", data.get("name", get_default_name(species_name, index))))
 	cat.level = int(data.get("level", 1))
 	cat.exp = int(data.get("exp", 0))
+	cat.bond_points = int(data.get("bond_points", 0))
 	cat.friendship = int(data.get("friendship", 0))
 	cat.created_at = float(data.get("created_at", Time.get_unix_time_from_system()))
 	cat.diary_picks = Array(data.get("diary_picks", [-1, -1, -1, -1, -1]))

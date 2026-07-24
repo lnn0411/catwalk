@@ -14,6 +14,7 @@ var _unlocked: Array[String] = [CatData.BREED_ORANGE]
 var _hatch_counts: Dictionary = {}
 var _pity_counters: Dictionary = {}
 var _new_breed_unlocked: bool = false
+var _last_unlocked_breed: String = ""
 var _last_pity_breed: String = ""
 var _rng := RandomNumberGenerator.new()
 
@@ -156,6 +157,27 @@ func _unlock_breed(breed: String) -> void:
 	if not _unlocked.has(breed):
 		_unlocked.append(breed)
 		_new_breed_unlocked = true
+		_last_unlocked_breed = breed
+
+
+func get_last_unlocked_breed() -> String:
+	return _last_unlocked_breed
+
+
+# C2 品种解锁预告（P3）：「再孵 N 只橘猫，会有新朋友来花园」。
+# 全部解锁后返回空字典。
+func get_next_unlock_hint() -> Dictionary:
+	if not _unlocked.has(CatData.BREED_BRITISH):
+		return {
+			"need_breed_name": "橘猫",
+			"remaining": max(UNLOCK_CHAIN_COUNT - get_hatch_count(CatData.BREED_ORANGE), 0),
+		}
+	if not _unlocked.has(CatData.BREED_SIAMESE):
+		return {
+			"need_breed_name": "英短",
+			"remaining": max(UNLOCK_CHAIN_COUNT - get_hatch_count(CatData.BREED_BRITISH), 0),
+		}
+	return {}
 
 
 func _get_pity_breed(choices: Array[String]) -> String:

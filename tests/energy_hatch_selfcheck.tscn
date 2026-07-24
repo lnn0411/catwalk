@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://energyhatch_check"]
+
+[ext_resource type="Script" path="res://tests/energy_hatch_selfcheck.gd" id="1_ehcheck"]
+
+[node name="EnergyHatchSelfCheck" type="Node"]
+script = ExtResource("1_ehcheck")

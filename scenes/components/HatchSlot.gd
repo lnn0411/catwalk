@@ -108,7 +108,8 @@ func set_data(slot: Dictionary) -> void:
 			_hint.visible = false
 			_prog_bg.visible = false
 			_status.visible = true
-			_status.text = "孵%d只解锁" % _unlock_count()
+			# B4 裁决：不暗示"孵化更快"——串行灌注下多槽只是等候队列
+			_status.text = "等候队列 · 孵%d只开启" % _unlock_count()
 			_status.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
 		"empty":
 			_style_card(false)

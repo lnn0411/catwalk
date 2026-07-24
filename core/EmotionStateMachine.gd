@@ -6,7 +6,9 @@ signal annoyed_exited(cat_id: String)
 
 enum EmotionState { IDLE, COUNTING, ANNOYED, RECOVERY }
 
-const INTERACTION_THRESHOLD := 4
+# 总案裁决 A1：阈值 4→5——四键一轮（4 次）安全，连刷两轮才触发 annoyed；
+# 零食投喂通道不计入本计数（InteractionSystem 侧不调用 register_interaction）。
+const INTERACTION_THRESHOLD := 5
 const COUNTING_WINDOW_SEC := 3600.0
 const ANNOYED_DURATION_SEC := 600.0
 

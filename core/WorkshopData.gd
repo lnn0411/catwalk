@@ -21,15 +21,17 @@ const RARITY_WEIGHTS := {
 	RARITY_LEGENDARY: 2,
 }
 
+# C1 定稿（美术清单 A1）：配饰 16 + 花卉 8，共 24 件，无家具无玩具。
+# 新增 8 件配饰的 icon_path 指向美术清单最终入库路径（到货即生效，UI 缺图走占位）。
 const GIFT_CATALOG := {
-	"toy_yarn":      { "id": "toy_yarn",      "name": "毛线球",   "category": CATEGORY_TOY,    "rarity": RARITY_COMMON,    "icon_path": "res://assets/temp/workshop/toy_yarn.png",      "description": "最经典的猫咪玩具，永远玩不腻" },
-	"toy_wand":      { "id": "toy_wand",      "name": "逗猫棒",   "category": CATEGORY_TOY,    "rarity": RARITY_COMMON,    "icon_path": "res://assets/temp/workshop/toy_wand.png",      "description": "带铃铛和羽毛，猫咪的最爱" },
-	"toy_mouse":     { "id": "toy_mouse",     "name": "小老鼠",   "category": CATEGORY_TOY,    "rarity": RARITY_COMMON,    "icon_path": "res://assets/temp/workshop/toy_mouse.png",     "description": "会吱吱叫的发条老鼠" },
-	"toy_tunnel":    { "id": "toy_tunnel",    "name": "隧道筒",   "category": CATEGORY_TOY,    "rarity": RARITY_RARE,      "icon_path": "res://assets/temp/workshop/toy_tunnel.png",    "description": "可折叠的猫咪隧道" },
-	"toy_laser":     { "id": "toy_laser",     "name": "激光笔",   "category": CATEGORY_TOY,    "rarity": RARITY_RARE,      "icon_path": "res://assets/temp/workshop/toy_laser.png",     "description": "一个红色光点就能让猫咪疯狂" },
-	"toy_butterfly": { "id": "toy_butterfly", "name": "电动蝴蝶", "category": CATEGORY_TOY,    "rarity": RARITY_EPIC,      "icon_path": "res://assets/temp/workshop/toy_butterfly.png", "description": "扑翼蝴蝶，自动飞行绕圈" },
-	"toy_castle":    { "id": "toy_castle",    "name": "猫城堡",   "category": CATEGORY_TOY,    "rarity": RARITY_EPIC,      "icon_path": "res://assets/temp/workshop/toy_castle.png",    "description": "多层猫爬架微缩版" },
-	"toy_mirror":    { "id": "toy_mirror",    "name": "魔法镜球", "category": CATEGORY_TOY,    "rarity": RARITY_LEGENDARY, "icon_path": "res://assets/temp/workshop/toy_mirror.png",    "description": "镜面反射光斑，猫咪永远抓不到" },
+	"deco_bowtie":      { "id": "deco_bowtie",      "name": "小领结",   "category": CATEGORY_DECO, "rarity": RARITY_COMMON, "icon_path": "res://assets/art/workshop/icons/deco_bowtie_icon.png",      "description": "正式场合的小绅士" },
+	"deco_straw":       { "id": "deco_straw",       "name": "编织草帽", "category": CATEGORY_DECO, "rarity": RARITY_COMMON, "icon_path": "res://assets/art/workshop/icons/deco_straw_icon.png",       "description": "夏日限定的清凉" },
+	"deco_glasses":     { "id": "deco_glasses",     "name": "圆框眼镜", "category": CATEGORY_DECO, "rarity": RARITY_COMMON, "icon_path": "res://assets/art/workshop/icons/deco_glasses_icon.png",     "description": "看起来学问很大" },
+	"deco_tie":         { "id": "deco_tie",         "name": "小领带",   "category": CATEGORY_DECO, "rarity": RARITY_RARE,   "icon_path": "res://assets/art/workshop/icons/deco_tie_icon.png",         "description": "上班猫的标配" },
+	"deco_santa":       { "id": "deco_santa",       "name": "圣诞围巾", "category": CATEGORY_DECO, "rarity": RARITY_RARE,   "icon_path": "res://assets/art/workshop/icons/deco_santa_icon.png",       "description": "红白配色的节日气氛" },
+	"deco_cape":        { "id": "deco_cape",        "name": "小披风",   "category": CATEGORY_DECO, "rarity": RARITY_RARE,   "icon_path": "res://assets/art/workshop/icons/deco_cape_icon.png",        "description": "风一吹就是超级英雄" },
+	"deco_flowercrown": { "id": "deco_flowercrown", "name": "花冠",     "category": CATEGORY_DECO, "rarity": RARITY_EPIC,   "icon_path": "res://assets/art/workshop/icons/deco_flowercrown_icon.png", "description": "春天编成的王冠" },
+	"deco_boots":       { "id": "deco_boots",       "name": "小靴子",   "category": CATEGORY_DECO, "rarity": RARITY_EPIC,   "icon_path": "res://assets/art/workshop/icons/deco_boots_icon.png",       "description": "穿靴子的猫，认真的" },
 	"deco_scarf":    { "id": "deco_scarf",    "name": "小围巾",   "category": CATEGORY_DECO,   "rarity": RARITY_COMMON,    "icon_path": "res://assets/temp/workshop/deco_scarf.png",    "description": "暖色针织围巾" },
 	"deco_ribbon":   { "id": "deco_ribbon",   "name": "蝴蝶结",   "category": CATEGORY_DECO,   "rarity": RARITY_COMMON,    "icon_path": "res://assets/temp/workshop/deco_ribbon.png",   "description": "粉色丝绸蝴蝶结" },
 	"deco_bell":     { "id": "deco_bell",     "name": "铃铛项圈", "category": CATEGORY_DECO,   "rarity": RARITY_RARE,      "icon_path": "res://assets/temp/workshop/deco_bell.png",     "description": "清脆铃铛，走一步响一声" },

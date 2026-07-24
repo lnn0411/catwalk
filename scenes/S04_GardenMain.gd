@@ -546,10 +546,10 @@ func _build_hud() -> void:
 	_empty_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	root.add_child(_empty_label)
 
-	# 「爱意工坊」入口按钮 — 工坊态时显示
+	# C1：「爱意工坊」FAB 常驻（有待拆礼盒时显 ×N，无盒半透明）
 	var workshop_btn := Button.new()
 	workshop_btn.name = "WorkshopBtn"
-	workshop_btn.text = "🌸 爱意工坊"
+	workshop_btn.text = "🎁 爱意工坊"
 	workshop_btn.flat = true
 	workshop_btn.anchor_left = 0.0
 	workshop_btn.anchor_right = 0.0
@@ -560,8 +560,9 @@ func _build_hud() -> void:
 	workshop_btn.offset_top = -116.0
 	workshop_btn.offset_bottom = -76.0
 	workshop_btn.add_theme_font_size_override("font_size", 15)
-	workshop_btn.visible = false
+	workshop_btn.visible = true
 	root.add_child(workshop_btn)
+	_refresh_workshop_fab()
 	if workshop_btn.pressed.is_connected(_on_workshop_button):
 		pass
 	else:
@@ -680,12 +681,20 @@ func _connect_data() -> void:
 	if EnergyEngine and not EnergyEngine.energy_changed.is_connected(_on_energy_changed):
 		EnergyEngine.energy_changed.connect(_on_energy_changed)
 	if EventBus:
-		if not EventBus.workshop_activated.is_connected(_on_workshop_activated):
-			EventBus.workshop_activated.connect(_on_workshop_activated)
 		if not EventBus.hatch_activated.is_connected(_on_hatched_activated):
 			EventBus.hatch_activated.connect(_on_hatched_activated)
 		if not EventBus.currency_changed.is_connected(_on_currency_changed):
 			EventBus.currency_changed.connect(_on_currency_changed)
+	# C1 工坊 FAB 红点 + A5 奖励合流 + B3 池满温和提示
+	if WorkshopManager:
+		if not WorkshopManager.box_minted.is_connected(_on_workshop_box_minted):
+			WorkshopManager.box_minted.connect(_on_workshop_box_minted)
+		if not WorkshopManager.box_opened.is_connected(_on_workshop_box_opened):
+			WorkshopManager.box_opened.connect(_on_workshop_box_opened)
+	if StepEngine and not StepEngine.step_chest_opened.is_connected(_on_step_chest_opened):
+		StepEngine.step_chest_opened.connect(_on_step_chest_opened)
+	if EnergyEngine and not EnergyEngine.pool_became_full.is_connected(_on_pool_became_full):
+		EnergyEngine.pool_became_full.connect(_on_pool_became_full)
 	if CatScreenManager and not CatScreenManager.screen_cats_changed.is_connected(_on_screen_cats_changed):
 		CatScreenManager.screen_cats_changed.connect(_on_screen_cats_changed)
 
@@ -834,10 +843,38 @@ func _on_workshop_button() -> void:
 		return
 	UIManager.push("res://scenes/WorkshopPage.gd")
 
-func _on_workshop_activated() -> void:
-	var btn := get_node_or_null("WorkshopBtn")
-	if btn != null:
-		btn.visible = true
+func _refresh_workshop_fab() -> void:
+	var btn := get_node_or_null("WorkshopBtn") as Button
+	if btn == null:
+		return
+	var unopened: int = WorkshopManager.get_unopened_count() if WorkshopManager else 0
+	if unopened > 0:
+		btn.text = "🎁 爱意工坊 ×%d" % unopened
+		btn.modulate = Color(1, 1, 1, 1)
+	else:
+		btn.text = "🎁 爱意工坊"
+		btn.modulate = Color(1, 1, 1, 0.6)
+
+func _on_workshop_box_minted(_unopened: int) -> void:
+	_refresh_workshop_fab()
+	if Popups:
+		Popups.queue_reward_line("🎁 工坊礼盒做好了，去拆吧")
+
+func _on_workshop_box_opened(_gift_id: String, _dupe_petals: int) -> void:
+	_refresh_workshop_fab()
+
+func _on_step_chest_opened(_index: int, gold: int) -> void:
+	if Popups:
+		Popups.queue_reward_line("📦 今日步数宝箱 +%d金币" % gold)
+
+# B3 池满温和提示（每自然日仅首次；文案分支见总案 §2.6-A）
+func _on_pool_became_full() -> void:
+	if Popups == null:
+		return
+	if HatchEngine and HatchEngine.is_bag_full():
+		Popups.show_toast("🌸 能量罐满啦～花园住满了，送养或扩容后继续吧")
+	else:
+		Popups.show_toast("🌸 能量罐满啦～孵颗蛋腾腾地方吧")
 
 func _on_hatched_activated() -> void:
 	var btn := get_node_or_null("WorkshopBtn")
