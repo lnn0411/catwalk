@@ -396,7 +396,15 @@ func _close_picker() -> void:
 
 func _load_daily() -> void:
 	_daily_cfg = ConfigFile.new()
-	_daily_cfg.load(CFG_PATH)
+	var central_data: Dictionary = {}
+	if SaveManager and SaveManager.has_method("get_feed_daily_data"):
+		central_data = SaveManager.get_feed_daily_data()
+	if not central_data.is_empty() and (not Dictionary(central_data.get("counts", {})).is_empty() or str(central_data.get("date", "")) != ""):
+		_daily_cfg.set_value(CFG_SECTION, "date", String(central_data.get("date", "")))
+		for cat_id in Dictionary(central_data.get("counts", {})):
+			_daily_cfg.set_value(CFG_SECTION, str(cat_id), int(central_data["counts"][cat_id]))
+	else:
+		_daily_cfg.load(CFG_PATH)
 	var last := str(_daily_cfg.get_value(CFG_SECTION, "date", ""))
 	if last != _today_key():
 		# 跨天：清空所有猫的当日计数
@@ -404,6 +412,9 @@ func _load_daily() -> void:
 			_daily_cfg.erase_section(CFG_SECTION)
 		_daily_cfg.set_value(CFG_SECTION, "date", _today_key())
 		_daily_cfg.save(CFG_PATH)
+		if SaveManager and SaveManager.has_method("set_feed_daily_data"):
+			SaveManager.set_feed_daily_data({"date": _today_key(), "counts": {}})
+			SaveManager.save_all()
 
 
 func _feed_count_today(cat_id: String) -> int:
@@ -415,6 +426,11 @@ func _record_feed(cat_id: String) -> void:
 	_daily_cfg.set_value(CFG_SECTION, "date", _today_key())
 	_daily_cfg.set_value(CFG_SECTION, cat_id, n)
 	_daily_cfg.save(CFG_PATH)
+	if SaveManager and SaveManager.has_method("set_feed_daily_data"):
+		var counts: Dictionary = Dictionary(SaveManager.get_feed_daily_data().get("counts", {})).duplicate(true)
+		counts[cat_id] = n
+		SaveManager.set_feed_daily_data({"date": _today_key(), "counts": counts})
+		SaveManager.save_all()
 
 
 func _today_key() -> String:

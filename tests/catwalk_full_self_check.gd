@@ -269,6 +269,7 @@ func _section_core_systems() -> void:
 	_check_hatch_engine()
 	_check_explore_engine()
 	_check_save_manager()
+	_check_level_state_manager()
 	_check_event_bus()
 	_check_currency_manager()
 	_check_interaction_system()
@@ -313,7 +314,7 @@ func _check_hatch_engine() -> void:
 
 func _check_explore_engine() -> void:
 	var n := _check_singleton("CORE_SYSTEMS", "ExploreEngine")
-	_check_methods("CORE_SYSTEMS", n, ["get_slot_count", "is_slot_available", "dispatch", "collect"], "ExploreEngine")
+	_check_methods("CORE_SYSTEMS", n, ["get_slot_count", "is_slot_available", "dispatch", "collect", "get_save_data", "apply_save"], "ExploreEngine")
 	_check("CORE_SYSTEMS", _const_value("res://core/ExploreEngine.gd", "SLOT_COUNT", 0) == 2, "ExploreEngine.SLOT_COUNT = 2")
 	_check("CORE_SYSTEMS", _const_value("res://core/ExploreEngine.gd", "SLOT1_HATCH_REQ", 0) == 5, "ExploreEngine.SLOT1_HATCH_REQ = 5")
 	_check("CORE_SYSTEMS", _const_value("res://core/ExploreEngine.gd", "VALID_DURATIONS", []) == [1, 2, 4], "ExploreEngine durations 1/2/4")
@@ -322,6 +323,13 @@ func _check_explore_engine() -> void:
 func _check_save_manager() -> void:
 	var n := _check_singleton("CORE_SYSTEMS", "SaveManager")
 	_check_methods("CORE_SYSTEMS", n, ["save_all", "load_and_apply", "reset_all"], "SaveManager")
+	_check("CORE_SYSTEMS", n != null and n.has_method("get_feed_daily_data"), "SaveManager owns backpack daily feed state")
+	_check("CORE_SYSTEMS", _const_value("res://core/SaveManager.gd", "SAVE_SCHEMA_VERSION", 0) >= 2, "SaveManager schema version >= 2")
+
+
+func _check_level_state_manager() -> void:
+	var n := _check_singleton("CORE_SYSTEMS", "LevelStateManager")
+	_check_methods("CORE_SYSTEMS", n, ["get_save_data", "apply_save", "reset_all"], "LevelStateManager")
 
 
 func _check_event_bus() -> void:
@@ -338,7 +346,7 @@ func _check_currency_manager() -> void:
 
 func _check_interaction_system() -> void:
 	var n := _check_singleton("CORE_SYSTEMS", "InteractionSystem")
-	_check_methods("CORE_SYSTEMS", n, ["do_interact", "try_interact", "can_interact", "get_affection", "get_cooldown_remaining"], "InteractionSystem")
+	_check_methods("CORE_SYSTEMS", n, ["do_interact", "try_interact", "can_interact", "get_affection", "get_cooldown_remaining", "get_save_data", "apply_save"], "InteractionSystem")
 
 
 func _check_level_system() -> void:
@@ -383,7 +391,7 @@ func _check_cat_data() -> void:
 
 func _check_inventory_manager() -> void:
 	var n := _check_singleton("CORE_SYSTEMS", "InventoryManager")
-	_check_methods("CORE_SYSTEMS", n, ["add_item", "has_item", "consume_item", "get_count", "synthesize"], "InventoryManager")
+	_check_methods("CORE_SYSTEMS", n, ["add_item", "has_item", "consume_item", "get_count", "synthesize", "get_save_data", "apply_save"], "InventoryManager")
 	_check("CORE_SYSTEMS", _has_const("res://core/InventoryManager.gd", "ITEM_SNACK"), "InventoryManager.ITEM_SNACK exists")
 
 
@@ -414,7 +422,7 @@ func _check_relinquish_system() -> void:
 
 func _check_signin_system() -> void:
 	var n := _check_singleton("CORE_SYSTEMS", "SigninSystem")
-	_check_methods("CORE_SYSTEMS", n, ["signin", "get_current_day", "get_streak", "use_makeup_card", "reset_all"], "SigninSystem")
+	_check_methods("CORE_SYSTEMS", n, ["signin", "get_current_day", "get_streak", "use_makeup_card", "reset_all", "get_save_data", "apply_save"], "SigninSystem")
 	_check("CORE_SYSTEMS", _const_value("res://core/SigninSystem.gd", "CYCLE_LENGTH", 0) == 7, "SigninSystem.CYCLE_LENGTH = 7")
 
 

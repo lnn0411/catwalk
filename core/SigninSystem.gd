@@ -1,5 +1,6 @@
 extends Node
 
+# 保留旧文件以兼容历史版本；主权威快照由 SaveManager 管理。
 const SAVE_PATH: String = "user://signin.cfg"
 const CYCLE_LENGTH: int = 7
 const MAX_MAKEUP: int = 2
@@ -44,6 +45,25 @@ static func _load() -> ConfigFile:
 
 static func _save(cfg: ConfigFile) -> void:
 	cfg.save(SAVE_PATH)
+
+static func get_save_data() -> Dictionary:
+	var cfg := _load()
+	return {
+		"last_date": String(cfg.get_value("state", "last_date", "")),
+		"day": int(cfg.get_value("state", "day", 0)),
+		"streak": int(cfg.get_value("state", "streak", 0)),
+		"makeup_used": int(cfg.get_value("state", "makeup_used", 0)),
+		"last_reward": Dictionary(cfg.get_value("state", "last_reward", {})),
+	}
+
+static func apply_save(data: Dictionary) -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("state", "last_date", String(data.get("last_date", "")))
+	cfg.set_value("state", "day", max(int(data.get("day", 0)), 0))
+	cfg.set_value("state", "streak", max(int(data.get("streak", 0)), 0))
+	cfg.set_value("state", "makeup_used", clampi(int(data.get("makeup_used", 0)), 0, MAX_MAKEUP))
+	cfg.set_value("state", "last_reward", Dictionary(data.get("last_reward", {})))
+	_save(cfg)
 
 static func _reward_for(day: int) -> Dictionary:
 	match day:
@@ -105,6 +125,8 @@ static func signin() -> Dictionary:
 	cfg.set_value("state", "makeup_used", makeup_used)
 	cfg.set_value("state", "last_reward", reward)
 	_save(cfg)
+	if CurrencyManager and SaveManager:
+		SaveManager.save_all()
 	return {"day": day, "reward": reward}
 
 static func get_current_day() -> int:
@@ -133,6 +155,8 @@ static func use_makeup_card() -> bool:
 	cfg.set_value("state", "day", day)
 	cfg.set_value("state", "makeup_used", makeup_used + 1)
 	_save(cfg)
+	if SaveManager:
+		SaveManager.save_all()
 	return true
 
 static func _simulate_next_day() -> void:

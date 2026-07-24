@@ -40,6 +40,7 @@ const BREED_CHARACTER_SCENES := {
 @export var friendship: int = 0
 @export var created_at: float = 0.0
 @export var diary_picks: Array = [-1, -1, -1, -1, -1]
+@export var diary_has_unread: bool = false
 
 static func create(cat_id: String, species_name: String, cat_rarity: String, index: int):
 	var cat = load("res://core/CatData.gd").new()
@@ -110,6 +111,7 @@ static func serialize(cat) -> Dictionary:
 		"friendship": cat.friendship,
 		"created_at": cat.created_at,
 		"diary_picks": cat.diary_picks.duplicate(),
+		"diary_has_unread": cat.diary_has_unread,
 	}
 
 static func deserialize(data: Dictionary):
@@ -127,4 +129,5 @@ static func deserialize(data: Dictionary):
 	cat.friendship = int(data.get("friendship", 0))
 	cat.created_at = float(data.get("created_at", Time.get_unix_time_from_system()))
 	cat.diary_picks = Array(data.get("diary_picks", [-1, -1, -1, -1, -1]))
+	cat.diary_has_unread = bool(data.get("diary_has_unread", false))
 	return cat

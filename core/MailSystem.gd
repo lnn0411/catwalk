@@ -181,3 +181,8 @@ func apply_save(data: Dictionary) -> void:
 	_last_day_key = _today_key()
 	# 首次登录当天检查（离线期间跨过的节日不补发，只补当天）
 	_check_and_deliver(_last_day_key)
+
+func reset_all() -> void:
+	last_mail_check_date = ""
+	mailed_holidays = []
+	_last_day_key = _today_key()
