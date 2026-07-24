@@ -546,20 +546,21 @@ func _build_hud() -> void:
 	_empty_label.add_theme_color_override("font_color", Palette.TEXT_PRIMARY)
 	root.add_child(_empty_label)
 
-	# C1：「爱意工坊」FAB 常驻（有待拆礼盒时显 ×N，无盒半透明）
+	# C1：「爱意工坊」FAB 常驻（右下角、底部导航上方——总案/蓝本 §3.6 位）。
+	# 旧摆位（左下 -116~-76）落在 BottomNav 的 118px 带内且被其点击层遮挡，
+	# 旧设计里该按钮默认隐藏所以从未暴露；常驻化后必须移出导航区。
 	var workshop_btn := Button.new()
 	workshop_btn.name = "WorkshopBtn"
 	workshop_btn.text = "🎁 爱意工坊"
-	workshop_btn.flat = true
-	workshop_btn.anchor_left = 0.0
-	workshop_btn.anchor_right = 0.0
+	workshop_btn.anchor_left = 1.0
+	workshop_btn.anchor_right = 1.0
 	workshop_btn.anchor_top = 1.0
 	workshop_btn.anchor_bottom = 1.0
-	workshop_btn.offset_left = 152.0
-	workshop_btn.offset_right = 310.0
-	workshop_btn.offset_top = -116.0
-	workshop_btn.offset_bottom = -76.0
-	workshop_btn.add_theme_font_size_override("font_size", 15)
+	workshop_btn.offset_left = -208.0
+	workshop_btn.offset_right = -24.0
+	workshop_btn.offset_top = -234.0
+	workshop_btn.offset_bottom = -174.0
+	workshop_btn.add_theme_font_size_override("font_size", 16)
 	workshop_btn.visible = true
 	root.add_child(workshop_btn)
 	_refresh_workshop_fab()
