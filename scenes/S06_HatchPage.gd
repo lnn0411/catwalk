@@ -45,14 +45,14 @@ var _unlock_label: Label
 func _build_anticipation_labels() -> void:
 	_pity_label = Label.new()
 	_pity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_pity_label.position = Vector2(0.0, 1128.0)
+	_pity_label.position = Vector2(0.0, 1124.0)
 	_pity_label.size = Vector2(720.0, 26.0)
 	_pity_label.add_theme_font_size_override("font_size", 14)
 	_pity_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
 	add_child(_pity_label)
 	_unlock_label = Label.new()
 	_unlock_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_unlock_label.position = Vector2(0.0, 1156.0)
+	_unlock_label.position = Vector2(0.0, 1152.0)
 	_unlock_label.size = Vector2(720.0, 26.0)
 	_unlock_label.add_theme_font_size_override("font_size", 14)
 	_unlock_label.add_theme_color_override("font_color", Palette.TEXT_SECONDARY)
